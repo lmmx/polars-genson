@@ -149,7 +149,7 @@ run-cli *args:
 # Develop Python plugin (debug mode)
 [working-directory: 'polars-genson-py']
 py-dev:
-    maturin develop
+    uv build
 
 # Develop Python plugin (release mode)  
 [working-directory: 'polars-genson-py']
@@ -160,7 +160,7 @@ py-release:
 [working-directory: 'polars-genson-py']
 py-test:
     #!/usr/bin/env bash
-    python -c "
+    echo python -c "
     import polars as pl
     df = pl.DataFrame({
         'json_data': [

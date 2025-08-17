@@ -16,15 +16,23 @@ pub struct GensonKwargs {
 
     #[serde(default)]
     pub debug: bool,
+
+    #[serde(default = "default_merge_schemas")]
+    pub merge_schemas: bool,
 }
 
 fn default_ignore_outer_array() -> bool {
     true
 }
 
+fn default_merge_schemas() -> bool {
+    true
+}
+
 /// Computes output type for the expression
 fn infer_json_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Field> {
-    // Return a JSON string representing the schema
+    // Return a JSON object (represented as string in Polars)
+    // If merge_schemas=false, this will be a list of schemas
     Ok(Field::new("schema".into(), DataType::String))
 }
 
@@ -38,13 +46,11 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
         PolarsError::ComputeError("Expected a string column for JSON schema inference".into())
     })?;
 
-    // Collect all non-null string values
+    // Collect all non-null string values from ALL rows
     let mut json_strings = Vec::new();
-    for opt_str in string_chunked.iter() {
-        if let Some(s) = opt_str {
-            if !s.trim().is_empty() {
-                json_strings.push(s.to_string());
-            }
+    for s in string_chunked.iter().flatten() {
+        if !s.trim().is_empty() {
+            json_strings.push(s.to_string());
         }
     }
 
@@ -67,21 +73,63 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
             "DEBUG: Config: ignore_outer_array={}, ndjson={}",
             config.ignore_outer_array, kwargs.ndjson
         );
+        for (i, json_str) in json_strings.iter().take(3).enumerate() {
+            eprintln!("DEBUG: Sample JSON {}: {}", i + 1, json_str);
+        }
     }
 
-    // Infer schema using the core function
-    let result = infer_schema_from_strings(&json_strings, config)
-        .map_err(|e| PolarsError::ComputeError(format!("Schema inference failed: {}", e).into()))?;
+    if kwargs.merge_schemas {
+        // Original behavior: merge all schemas into one
+        let result = infer_schema_from_strings(&json_strings, config).map_err(|e| {
+            PolarsError::ComputeError(format!("Schema inference failed: {}", e).into())
+        })?;
 
-    if kwargs.debug {
-        eprintln!("DEBUG: Processed {} objects", result.processed_count);
+        if kwargs.debug {
+            eprintln!("DEBUG: Processed {} objects", result.processed_count);
+            eprintln!(
+                "DEBUG: Merged schema: {}",
+                serde_json::to_string_pretty(&result.schema)
+                    .unwrap_or_else(|_| "Failed to serialize".to_string())
+            );
+        }
+
+        // Convert schema to pretty JSON string
+        let schema_json = serde_json::to_string_pretty(&result.schema).map_err(|e| {
+            PolarsError::ComputeError(format!("Failed to serialize schema: {}", e).into())
+        })?;
+
+        // Create a series with the same length as input, but all values are the same schema
+        let schema_values: Vec<Option<&str>> = vec![Some(schema_json.as_str()); series.len()];
+        Ok(Series::new("schema".into(), schema_values))
+    } else {
+        // New behavior: infer schema for each row individually
+        let mut individual_schemas = Vec::new();
+
+        for json_str in &json_strings {
+            let single_result = infer_schema_from_strings(&[json_str.clone()], config.clone())
+                .map_err(|e| {
+                    PolarsError::ComputeError(
+                        format!("Schema inference failed for individual JSON: {}", e).into(),
+                    )
+                })?;
+            individual_schemas.push(single_result.schema);
+        }
+
+        if kwargs.debug {
+            eprintln!(
+                "DEBUG: Generated {} individual schemas",
+                individual_schemas.len()
+            );
+        }
+
+        // Return array of schemas as JSON
+        let schemas_json = serde_json::to_string_pretty(&individual_schemas).map_err(|e| {
+            PolarsError::ComputeError(format!("Failed to serialize schemas: {}", e).into())
+        })?;
+
+        // For individual schemas, we could return per-row results, but for simplicity
+        // we'll return the array of all schemas in each row
+        let schema_values: Vec<Option<&str>> = vec![Some(schemas_json.as_str()); series.len()];
+        Ok(Series::new("schema".into(), schema_values))
     }
-
-    // Convert schema to JSON string
-    let schema_json = serde_json::to_string(&result.schema).map_err(|e| {
-        PolarsError::ComputeError(format!("Failed to serialize schema: {}", e).into())
-    })?;
-
-    // Return as single-value series
-    Ok(Series::new("schema".into(), &[schema_json]))
 }
