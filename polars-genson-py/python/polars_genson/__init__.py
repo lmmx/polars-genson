@@ -1,3 +1,5 @@
+"""A Polars plugin for JSON schema inference from string columns using genson-rs."""
+
 from __future__ import annotations
 
 import inspect
@@ -15,9 +17,9 @@ lib = Path(__file__).parent
 
 
 def plug(expr: pl.Expr, **kwargs) -> pl.Expr:
-    """
-    Wrap Polars' `register_plugin_function` helper to always
-    pass the same `lib` (the directory where _polars_genson.so/pyd lives).
+    """Wrap Polars' `register_plugin_function` helper to always pass the same `lib`.
+
+    Always pass the same `lib` (the directory where _polars_genson.so/pyd lives).
     """
     func_name = inspect.stack()[1].function
     return register_plugin_function(
@@ -37,8 +39,7 @@ def infer_json_schema(
     schema_uri: str | None = "AUTO",
     debug: bool = False,
 ) -> pl.Expr:
-    """
-    Infer JSON schema from a string column containing JSON data.
+    """Infer JSON schema from a string column containing JSON data.
 
     Parameters
     ----------
@@ -53,7 +54,7 @@ def infer_json_schema(
     debug : bool, default False
         Whether to print debug information
 
-    Returns
+    Returns:
     -------
     pl.Expr
         Expression representing the inferred JSON schema
@@ -85,8 +86,7 @@ class GensonNamespace:
         schema_uri: str | None = "AUTO",
         debug: bool = False,
     ) -> dict:
-        """
-        Infer JSON schema from a string column containing JSON data.
+        """Infer JSON schema from a string column containing JSON data.
 
         Parameters
         ----------
@@ -101,7 +101,7 @@ class GensonNamespace:
         debug : bool, default False
             Whether to print debug information
 
-        Returns
+        Returns:
         -------
         dict
             The inferred JSON schema as a dictionary

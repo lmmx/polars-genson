@@ -1,6 +1,6 @@
 default: lint
 
-lint: ty check
+lint: ty ruff-check
 fmt: ruff-fmt code-quality-fix
 
 precommit:    lint fmt code-quality
@@ -55,8 +55,15 @@ test-ci *args:
 # -------------------------------------
 
 [working-directory: 'polars-genson-py']
+ruff-check mode="":
+   ruff check . {{mode}}
+
+[working-directory: 'polars-genson-py']
+ruff-fix:
+   just ruff-check --fix
+
+[working-directory: 'polars-genson-py']
 ruff-fmt:
-   #!/usr/bin/env bash
    ruff format .
 
 # Type checking
