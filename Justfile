@@ -204,7 +204,7 @@ fix-eof-ws mode="":
     whitespace-format --add-new-line-marker-at-end-of-file \
           --new-line-marker=linux \
           --normalize-new-line-markers \
-          --exclude ".git/|target/|.json$|.lock$|.parquet$|.venv/|.stubs/" \
+          --exclude ".git/|target/|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
           $ARGS \
           .
 

@@ -1,12 +1,11 @@
 [dependencies]
-genson-core = {path = "../genson-core"}
-serde_json = {workspace = true}
-polars = {workspace = true, features = ["lazy", "json", "strings"]}
+genson-core = { path = "../genson-core" }
+serde_json = { workspace = true }
 
 [package]
-name = "genson-cli"
-version = "0.1.0"
-edition = "2021"
-license = "MIT"
 authors = ["Louis Maddox <louismmx@gmail.com>"]
 description = "Command-line interface for JSON schema inference"
+edition = "2021"
+license = "MIT"
+name = "genson-cli"
+version = "0.1.0"

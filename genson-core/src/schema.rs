@@ -39,7 +39,7 @@ pub fn infer_schema_from_strings(
 
     // Create schema builder
     let mut builder = get_builder(config.schema_uri.as_deref());
-    
+
     // Build config for genson-rs
     let build_config = BuildConfig {
         delimiter: config.delimiter,
@@ -55,7 +55,7 @@ pub fn infer_schema_from_strings(
         }
 
         let mut bytes = json_str.as_bytes().to_vec();
-        
+
         // Build schema incrementally
         let _schema = build_json_schema(&mut builder, &mut bytes, &build_config);
         processed_count += 1;
@@ -63,7 +63,7 @@ pub fn infer_schema_from_strings(
 
     // Get final schema
     let final_schema = builder.to_schema();
-    
+
     Ok(SchemaInferenceResult {
         schema: final_schema,
         processed_count,

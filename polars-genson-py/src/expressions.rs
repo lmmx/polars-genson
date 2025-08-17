@@ -1,7 +1,7 @@
+use genson_core::{infer_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
-use genson_core::{infer_schema_from_strings, SchemaInferenceConfig};
 
 #[derive(Deserialize)]
 pub struct GensonKwargs {
@@ -32,7 +32,7 @@ fn infer_json_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Field>
 #[polars_expr(output_type_func=infer_json_schema_output_type)]
 pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<Series> {
     let series = &inputs[0];
-    
+
     // Ensure we have a string column
     let string_chunked = series.str().map_err(|_| {
         PolarsError::ComputeError("Expected a string column for JSON schema inference".into())
@@ -50,7 +50,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
 
     if json_strings.is_empty() {
         return Err(PolarsError::ComputeError(
-            "No valid JSON strings found in column".into()
+            "No valid JSON strings found in column".into(),
         ));
     }
 
@@ -63,8 +63,10 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
 
     if kwargs.debug {
         eprintln!("DEBUG: Processing {} JSON strings", json_strings.len());
-        eprintln!("DEBUG: Config: ignore_outer_array={}, ndjson={}", 
-                 config.ignore_outer_array, kwargs.ndjson);
+        eprintln!(
+            "DEBUG: Config: ignore_outer_array={}, ndjson={}",
+            config.ignore_outer_array, kwargs.ndjson
+        );
     }
 
     // Infer schema using the core function
@@ -76,8 +78,9 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
     }
 
     // Convert schema to JSON string
-    let schema_json = serde_json::to_string(&result.schema)
-        .map_err(|e| PolarsError::ComputeError(format!("Failed to serialize schema: {}", e).into()))?;
+    let schema_json = serde_json::to_string(&result.schema).map_err(|e| {
+        PolarsError::ComputeError(format!("Failed to serialize schema: {}", e).into())
+    })?;
 
     // Return as single-value series
     Ok(Series::new("schema".into(), &[schema_json]))

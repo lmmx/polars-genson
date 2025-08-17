@@ -6,11 +6,11 @@ use genson_core::{infer_json_schema, SchemaInferenceConfig};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    
+
     // Handle command line options
     let mut config = SchemaInferenceConfig::default();
     let mut input_file = None;
-    
+
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
@@ -45,14 +45,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // For CLI, we treat the entire input as one JSON string
     // In a real Polars context, we'd have multiple rows
     let json_strings = vec![input];
-    
+
     // Infer schema
     let result = infer_json_schema(&json_strings, Some(config))
         .map_err(|e| format!("Schema inference failed: {}", e))?;
 
     // Pretty-print the schema
     println!("{}", serde_json::to_string_pretty(&result.schema)?);
-    
+
     eprintln!("Processed {} JSON object(s)", result.processed_count);
 
     Ok(())
