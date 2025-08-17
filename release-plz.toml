@@ -1,0 +1,17 @@
+[changelog]
+commit_parsers = [
+  { message = "!:", group = "<!-- 0 -->Breaking" },
+  { message = "^build", group = "<!-- 7 -->Build System and CI" },
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^ci", group = "<!-- 7 -->Build System and CI" },
+  { message = "^doc", group = "<!-- 4 -->Documentation" },
+  { message = "^feat", group = "<!-- 1 -->Features" },
+  { message = "^fix", group = "<!-- 2 -->Bug Fixes" },
+  { message = "^perf", group = "<!-- 3 -->Performance" },
+  { message = "^refactor", group = "<!-- 5 -->Refactor" },
+  { message = "^revert", skip = true },
+  { message = "^style", group = "<!-- 8 -->Styling" },
+  { message = "^test", group = "<!-- 6 -->Testing" },
+  # Separate to avoid matching all (do not sort)
+  { message = ".*", group = "<!-- 9 -->Other" },
+]
