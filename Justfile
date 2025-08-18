@@ -273,7 +273,7 @@ fix-eof-ws mode="":
     whitespace-format --add-new-line-marker-at-end-of-file \
           --new-line-marker=linux \
           --normalize-new-line-markers \
-          --exclude ".git/|target/|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
+          --exclude ".git/|target/|dist/|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
           $ARGS \
           .
 
@@ -355,3 +355,28 @@ refresh-stubs *args="":
         unset DEBUG_PYSNOOPER
     fi
 
+
+# Release a new version, pass --help for options to `uv version --bump`
+[working-directory: 'polars-genson-py']
+release bump_level="patch":
+    #!/usr/bin/env bash
+    set -e  # Exit on any error
+    
+    # Exit early if help was requested
+    if [[ "{{bump_level}}" == "--help" ]]; then
+        uv version --help
+        exit 0
+    fi
+
+    uv version --bump {{bump_level}}
+    
+    git add --all
+    git commit -m "chore(temp): version check"
+    new_version=$(uv version --short)
+    git reset --soft HEAD~1
+    git add --all
+    git commit -m  "chore(release): bump -> v$new_version"
+    branch_name=$(git rev-parse --abbrev-ref HEAD);
+    git push origin $branch_name
+    uv build
+    uv publish -u __token__ -p $(keyring get PYPIRC_TOKEN "")
