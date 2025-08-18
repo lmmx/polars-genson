@@ -51,7 +51,7 @@ print("Input DataFrame:")
 print(df)
 ```
 
-```
+```python
 shape: (3, 1)
 ┌─────────────────────────────────┐
 │ json_data                       │
