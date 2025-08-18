@@ -19,7 +19,9 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python",
 ]
-dependencies = []
+dependencies = [
+    "orjson>=3.11.2",
+]
 description = "A Polars plugin for JSON schema inference using genson-rs."
 name = "polars-genson"
 readme = "README.md"
@@ -47,13 +49,15 @@ markers = ["failing: Tests that don't work"]
 [tool.uv]
 # Build Rust code in development mode (faster builds)
 config-settings = { build-args = "--profile=dev" }
-default-groups = ["debug", "dev", "test"]
+default-groups = ["build", "debug", "dev", "test"]
 
 [dependency-groups]
 debug = ["pysnooper>=1.2.3"]
-dev = [
+build = [
     "maturin>=1.9.3",
     "patchelf>=0.17.2.4",
+]
+dev = [
     "polars>=1.32.3",
 ]
 test = ["pytest>=8.4.1"]

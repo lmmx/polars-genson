@@ -1,3 +1,5 @@
+"""Configuration for pytest tests."""
+
 import polars as pl
 
 # Configure Polars for tests

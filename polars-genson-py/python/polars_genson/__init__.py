@@ -5,28 +5,32 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
+import orjson
 import polars as pl
 from polars.api import register_dataframe_namespace
 from polars.plugins import register_plugin_function
 
 from .utils import parse_into_expr, parse_version  # noqa: F401
 
-__all__ = ["infer_json_schema"]
+# Determine the correct plugin path
+if parse_version(pl.__version__) < parse_version("0.20.16"):
+    from polars.utils.udfs import _get_shared_lib_location
 
-lib = Path(__file__).parent
+    lib: str | Path = _get_shared_lib_location(__file__)
+else:
+    lib = Path(__file__).parent
+
+__all__ = ["infer_json_schema"]
 
 
 def plug(expr: pl.Expr, **kwargs) -> pl.Expr:
-    """Wrap Polars' `register_plugin_function` helper to always pass the same `lib`.
-
-    Always pass the same `lib` (the directory where _polars_genson.so/pyd lives).
-    """
+    """Wrap Polars' `register_plugin_function` helper to always pass the same `lib`."""
     func_name = inspect.stack()[1].function
     return register_plugin_function(
         plugin_path=lib,
         function_name=func_name,
         args=expr,
-        is_elementwise=True,
+        is_elementwise=False,  # This is an aggregation across rows
         kwargs=kwargs,
     )
 
@@ -37,6 +41,7 @@ def infer_json_schema(
     ignore_outer_array: bool = True,
     ndjson: bool = False,
     schema_uri: str | None = "AUTO",
+    merge_schemas: bool = True,
     debug: bool = False,
 ) -> pl.Expr:
     """Infer JSON schema from a string column containing JSON data.
@@ -51,6 +56,8 @@ def infer_json_schema(
         Whether to treat input as newline-delimited JSON
     schema_uri : str or None, default "AUTO"
         Schema URI to use for the generated schema ("AUTO" for auto-detection)
+    merge_schemas : bool, default True
+        Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
         Whether to print debug information
 
@@ -62,6 +69,7 @@ def infer_json_schema(
     kwargs = {
         "ignore_outer_array": ignore_outer_array,
         "ndjson": ndjson,
+        "merge_schemas": merge_schemas,
         "debug": debug,
     }
     if schema_uri is not None:
@@ -84,8 +92,9 @@ class GensonNamespace:
         ignore_outer_array: bool = True,
         ndjson: bool = False,
         schema_uri: str | None = "AUTO",
+        merge_schemas: bool = True,
         debug: bool = False,
-    ) -> dict:
+    ) -> dict | list[dict]:
         """Infer JSON schema from a string column containing JSON data.
 
         Parameters
@@ -98,13 +107,16 @@ class GensonNamespace:
             Whether to treat input as newline-delimited JSON
         schema_uri : str or None, default "AUTO"
             Schema URI to use for the generated schema ("AUTO" for auto-detection)
+        merge_schemas : bool, default True
+            Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False
             Whether to print debug information
 
         Returns:
         -------
-        dict
-            The inferred JSON schema as a dictionary
+        dict | list[dict]
+            The inferred JSON schema as a dictionary (if merge_schemas=True) or
+            list of schemas (if merge_schemas=False)
         """
         result = self._df.select(
             infer_json_schema(
@@ -112,10 +124,17 @@ class GensonNamespace:
                 ignore_outer_array=ignore_outer_array,
                 ndjson=ndjson,
                 schema_uri=schema_uri,
+                merge_schemas=merge_schemas,
                 debug=debug,
-            ).alias("schema")
+            ).first()
         )
 
-        # Extract the schema from the result
-        schema_value = result.get_column("schema").first()
-        return schema_value
+        # Extract the schema from the first column (whatever it's named)
+        schema_json = result.to_series().item()
+        if not isinstance(schema_json, str):
+            raise ValueError(f"Expected string schema, got {type(schema_json)}")
+
+        try:
+            return orjson.loads(schema_json)
+        except orjson.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse schema JSON: {e}") from e
