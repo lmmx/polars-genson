@@ -19,9 +19,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python",
 ]
-dependencies = [
-    "orjson>=3.11.2",
-]
+dependencies = ["orjson>=3.11.2"]
 description = "A Polars plugin for JSON schema inference using genson-rs."
 name = "polars-genson"
 readme = "README.md"
@@ -52,14 +50,9 @@ config-settings = { build-args = "--profile=dev" }
 default-groups = ["build", "debug", "dev", "test"]
 
 [dependency-groups]
+build = ["maturin>=1.9.3", "patchelf>=0.17.2.4"]
 debug = ["pysnooper>=1.2.3"]
-build = [
-    "maturin>=1.9.3",
-    "patchelf>=0.17.2.4",
-]
-dev = [
-    "polars>=1.32.3",
-]
+dev = ["polars>=1.32.3"]
 test = ["pytest>=8.4.1"]
 
 [tool.ruff.lint]

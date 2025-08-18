@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     # This extends DataFrame with the genson attribute
     class DataFrameNamespaceExtension:
         genson: "GensonNamespace"
-    
+
     # Monkey patch DataFrame for type checking
     class DataFrame(pl.DataFrame, DataFrameNamespaceExtension):
         pass
