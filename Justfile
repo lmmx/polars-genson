@@ -154,7 +154,7 @@ ty-ci:
     fi
     
     echo "🚀 Running ty check..."
-    just ty .
+    just t
 
 # -------------------------------------
 
