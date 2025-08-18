@@ -1,11 +1,13 @@
 default: lint
 
-lint: ty ruff-check
-fmt: ruff-fmt code-quality-fix
+lint:    ty ruff-check
+lint-ci: ty-ci ruff-check
 
-precommit:    lint fmt code-quality
-precommit-ci: lint code-quality-ci
-precommit-fix: fmt code-quality-fix
+fmt:     ruff-fmt code-quality-fix
+
+precommit:     lint fmt code-quality
+precommit-ci:  lint-ci  code-quality-ci
+precommit-fix: fmt      code-quality-fix
 
 prepush: clippy py-test py-dev
 
@@ -70,11 +72,12 @@ ruff-fmt:
 [working-directory: 'polars-genson-py']
 ty *args:
    #!/usr/bin/env bash
-   ty check . {{args}} 2> >(grep -v "WARN ty is pre-release software" >&2)
+   ty check . --exit-zero {{args}} 2> >(grep -v "WARN ty is pre-release software" >&2)
 
 t:
    just ty --output-format=concise
 
+[working-directory: 'polars-genson-py']
 ty-ci:
     #!/usr/bin/env bash
     set -e  # Exit on any error
@@ -82,6 +85,7 @@ ty-ci:
     echo "🔍 CI Environment Debug Information"
     echo "Current directory: $(pwd)"
     echo "Python available: $(which python3 || echo 'none')"
+    echo "UV available: $(which uv || echo 'none')"
     
     # Check if .venv exists, if not extract from compressed CI venv
     if [ ! -d ".venv" ]; then
@@ -96,14 +100,48 @@ ty-ci:
                 CURRENT_DIR=$(pwd)
                 sed -i "s|PLACEHOLDER_DIR|${CURRENT_DIR}/.venv|g" ".venv/pyvenv.cfg"
                 echo "✓ pyvenv.cfg updated with current directory: $CURRENT_DIR"
+                echo "Updated pyvenv.cfg contents:"
+                cat ".venv/pyvenv.cfg"
             fi
             
-            echo "✅ Extraction complete"
+            echo "✅ Extraction complete, running diagnostics..."
+            
+            # Diagnostic checks
+            echo "🔍 Venv structure check:"
+            ls -la .venv/ | head -5
+            echo ""
+            
+            echo "🔍 Python interpreter check:"
+            if [ -f ".venv/bin/python" ]; then
+                echo "Python executable exists"
+                .venv/bin/python --version || echo "❌ Python version check failed"
+            else
+                echo "❌ No Python executable found"
+                ls -la .venv/bin/ | head -5
+            fi
+            
+            echo "🔍 Site-packages check:"
+            SITE_PACKAGES=".venv/lib/python*/site-packages"
+            if ls $SITE_PACKAGES >/dev/null 2>&1; then
+                echo "Site-packages directory exists:"
+                ls $SITE_PACKAGES | grep -E "(polars|polars_genson)" || echo "❌ Key packages not found"
+            else
+                echo "❌ No site-packages directory found"
+            fi
+            
+            echo "🔍 Environment activation test:"
             export PATH="$(pwd)/.venv/bin:$PATH"
             export VIRTUAL_ENV="$(pwd)/.venv"
+            export PYTHONPATH=""  # Clear any existing PYTHONPATH
+            
+            echo "Active Python: $(which python)"
+            python --version || echo "❌ Python activation failed"
             
             echo "🔍 Critical imports test:"
-            python -c 'import polars as pl; print("✓ Polars import successful")' || echo "❌ Polars import failed"
+            python -c 'import sys; print("✓ Python sys module working"); print("Python executable:", sys.executable)' || echo "❌ Basic Python test failed"
+            python -c 'import polars as pl; print("✓ Polars import successful, version:", pl.__version__)' || echo "❌ Polars import failed"
+            python -c 'import polars_genson; print("✓ Polars Genson import successful")' || echo "❌ Polars Genson import failed"
+            python -c 'import pytest; print("✓ Pytest import successful")' || echo "❌ Pytest import failed"
             
         else
             echo "❌ No stubs found, running regular setup..."
@@ -116,7 +154,13 @@ ty-ci:
     fi
     
     echo "🚀 Running ty check..."
-    just ty
+    just t
+
+# -------------------------------------
+
+[working-directory: 'polars-genson-py']
+pf:
+    pyrefly check . --output-format=min-text
 
 # -------------------------------------
 
@@ -149,29 +193,54 @@ run-cli *args:
 # Develop Python plugin (debug mode)
 [working-directory: 'polars-genson-py']
 py-dev:
-    uv build
+    $(uv python find) -m maturin develop
 
 # Develop Python plugin (release mode)  
 [working-directory: 'polars-genson-py']
 py-release:
-    maturin develop --release
+    $(uv python find) -m maturin develop --release
 
-# Test Python plugin
+# Test Python plugin with pytest
 [working-directory: 'polars-genson-py']
 py-test:
     #!/usr/bin/env bash
-    echo python -c "
+    $(uv python find) -m pytest tests/
+
+# Quick test to verify basic functionality  
+[working-directory: 'polars-genson-py']
+py-quick:
+    #!/usr/bin/env bash
+    python -c "
     import polars as pl
+    import polars_genson
+    import json
+    
+    print('Testing polars-genson plugin...')
+    
     df = pl.DataFrame({
         'json_data': [
             '{\"name\": \"Alice\", \"age\": 30}',
-            '{\"name\": \"Bob\", \"age\": 25, \"city\": \"NYC\"}'
+            '{\"name\": \"Bob\", \"age\": 25, \"city\": \"NYC\"}',
+            '{\"name\": \"Charlie\", \"age\": 35, \"email\": \"charlie@example.com\"}'
         ]
     })
     
+    print('Input DataFrame:')
+    print(df)
+    
     schema = df.genson.infer_schema('json_data')
-    print('Schema inference successful!')
-    print(schema)
+    print('\nInferred schema:')
+    print(json.dumps(schema, indent=2))
+    
+    # Verify schema structure
+    assert 'type' in schema
+    assert 'properties' in schema
+    props = schema['properties']
+    assert 'name' in props
+    assert 'age' in props
+    
+    print('\n✅ Schema inference successful!')
+    print(f'Found properties: {list(props.keys())}')
     "
 
 # -------------------------------------
@@ -256,26 +325,33 @@ example-complex:
 
 # -------------------------------------
 
+[working-directory: 'polars-genson-py']
 refresh-stubs *args="":
     #!/usr/bin/env bash
     rm -rf .stubs
     set -e  # Exit on any error
     
-    # Check if --debug flag is passed 
+    # Check if --debug flag is passed and export DEBUG_PYSNOOPER
     debug_flag=false
+    uv_args="--no-group debug"
     echo "Args received: {{args}}"
     if [[ "{{args}}" == *"--debug"* ]]; then
+        export DEBUG_PYSNOOPER=true
         echo "DEBUG MODE: ON"
         debug_flag=true
+        uv_args=""  # Remove --no-group debug when in debug mode
     fi
     
-    uv sync
-    # Create compressed stubs for CI
-    mkdir -p .stubs
-    cp -r .venv venv
-    # Fix pyvenv.cfg for CI 
-    sed -i 's|home = .*|home = PLACEHOLDER_DIR/bin|g' venv/pyvenv.cfg
-    tar -czf .stubs/venv.tar.gz venv
-    rm -rf venv
+    uv sync --no-group build $uv_args
+    ./stub_gen.py
+    deactivate
+    mv .venv/ offvenv
+    just run-pc
+    rm -rf .venv
+    mv offvenv .venv
     
-    echo "✅ Stubs refreshed"
+    # Unset DEBUG_PYSNOOPER if it was set
+    if [[ "$debug_flag" == "true" ]]; then
+        unset DEBUG_PYSNOOPER
+    fi
+

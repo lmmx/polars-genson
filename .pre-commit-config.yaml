@@ -14,7 +14,7 @@ repos:
     hooks:
       - id: run-just-rust
         name: just (lints)
-        args: ['precommit']
+        args: ['precommit-ci']
         stages: [pre-commit]
       - id: run-just-rust
         alias: run-just-rust-prepush

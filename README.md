@@ -31,11 +31,14 @@ pip install polars-genson[polars-lts-cpu]
 
 The plugin adds a `genson` namespace to Polars DataFrames for JSON schema inference.
 
+## Quick Start
+
 ```python
 import polars as pl
-from polars_genson import infer_json_schema
+import polars_genson
+import json
 
-# Example DataFrame with JSON strings
+# Create a DataFrame with JSON strings
 df = pl.DataFrame({
     "json_data": [
         '{"name": "Alice", "age": 30}',
@@ -44,13 +47,79 @@ df = pl.DataFrame({
     ]
 })
 
-# Infer schema from the JSON column
-schema = df.genson.infer_schema("json_data")
-print(schema)
+print("Input DataFrame:")
+print(df)
+```
 
-# Use the schema to safely decode JSON with known structure
-decoded_df = df.with_columns(
-    pl.col("json_data").str.json_decode(schema=schema).alias("parsed_json")
+```
+shape: (3, 1)
+┌─────────────────────────────────┐
+│ json_data                       │
+│ ---                             │
+│ str                             │
+╞═════════════════════════════════╡
+│ {"name": "Alice", "age": 30}    │
+│ {"name": "Bob", "age": 25, "ci… │
+│ {"name": "Charlie", "age": 35,… │
+└─────────────────────────────────┘
+```
+
+```python
+# Infer schema from the JSON column using the genson namespace
+schema = df.genson.infer_schema("json_data")
+
+print("Inferred schema:")
+print(json.dumps(schema, indent=2))
+```
+
+```json
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "age": {
+      "type": "integer"
+    },
+    "city": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "age",
+    "name"
+  ],
+  "type": "object"
+}
+```
+
+The plugin automatically:
+- ✅ **Merges schemas** from all JSON objects in the column
+- ✅ **Identifies required fields** (present in all objects)
+- ✅ **Detects optional fields** (present in some objects)
+- ✅ **Infers correct types** (string, integer, etc.)
+
+## Advanced Usage
+
+```python
+# Use the expression directly for more control
+result = df.select(
+    polars_genson.infer_json_schema(
+        pl.col("json_data"),
+        merge_schemas=False,  # Get individual schemas instead of merged
+    ).alias("individual_schemas")
+)
+
+# Or use with different options
+schema = df.genson.infer_schema(
+    "json_data",
+    ignore_outer_array=False,  # Treat top-level arrays as arrays
+    ndjson=True,              # Handle newline-delimited JSON
+    merge_schemas=True        # Merge all schemas (default)
 )
 ```
 
