@@ -117,5 +117,5 @@ class GensonNamespace:
         )
 
         # Extract the schema from the result
-        schema_value = result.get_column("schema").item()
+        schema_value = result.get_column("schema").first()
         return schema_value

@@ -149,29 +149,54 @@ run-cli *args:
 # Develop Python plugin (debug mode)
 [working-directory: 'polars-genson-py']
 py-dev:
-    uv build
+    maturin develop
 
 # Develop Python plugin (release mode)  
 [working-directory: 'polars-genson-py']
 py-release:
     maturin develop --release
 
-# Test Python plugin
+# Test Python plugin with pytest
 [working-directory: 'polars-genson-py']
 py-test:
     #!/usr/bin/env bash
-    echo python -c "
+    $(uv python find) -m pytest tests/
+
+# Quick test to verify basic functionality  
+[working-directory: 'polars-genson-py']
+py-quick:
+    #!/usr/bin/env bash
+    python -c "
     import polars as pl
+    import polars_genson
+    import json
+    
+    print('Testing polars-genson plugin...')
+    
     df = pl.DataFrame({
         'json_data': [
             '{\"name\": \"Alice\", \"age\": 30}',
-            '{\"name\": \"Bob\", \"age\": 25, \"city\": \"NYC\"}'
+            '{\"name\": \"Bob\", \"age\": 25, \"city\": \"NYC\"}',
+            '{\"name\": \"Charlie\", \"age\": 35, \"email\": \"charlie@example.com\"}'
         ]
     })
     
+    print('Input DataFrame:')
+    print(df)
+    
     schema = df.genson.infer_schema('json_data')
-    print('Schema inference successful!')
-    print(schema)
+    print('\nInferred schema:')
+    print(json.dumps(schema, indent=2))
+    
+    # Verify schema structure
+    assert 'type' in schema
+    assert 'properties' in schema
+    props = schema['properties']
+    assert 'name' in props
+    assert 'age' in props
+    
+    print('\n✅ Schema inference successful!')
+    print(f'Found properties: {list(props.keys())}')
     "
 
 # -------------------------------------

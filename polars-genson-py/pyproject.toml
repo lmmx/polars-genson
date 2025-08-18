@@ -51,7 +51,11 @@ default-groups = ["debug", "dev", "test"]
 
 [dependency-groups]
 debug = ["pysnooper>=1.2.3"]
-dev = ["polars>=1.32.3"]
+dev = [
+    "maturin>=1.9.3",
+    "patchelf>=0.17.2.4",
+    "polars>=1.32.3",
+]
 test = ["pytest>=8.4.1"]
 
 [tool.ruff.lint]
