@@ -21,6 +21,7 @@ pub struct GensonKwargs {
     #[serde(default = "default_merge_schemas")]
     pub merge_schemas: bool,
 
+    #[allow(dead_code)]
     #[serde(default)]
     pub convert_to_polars: bool,
 }
@@ -171,6 +172,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
 }
 
 /// Polars expression that infers Polars schema from string column
+#[allow(unused_variables)]
 #[polars_expr(output_type_func=infer_polars_schema_output_type)]
 pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<Series> {
     if inputs.is_empty() {
