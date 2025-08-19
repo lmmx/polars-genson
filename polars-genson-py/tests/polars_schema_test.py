@@ -1,11 +1,10 @@
 import polars as pl
+import pytest
 from polars_genson import infer_polars_schema
 
 
 def test_basic_schema_inference():
-    """Test basic JSON schema inference"""
-    print("=== Test 1: Basic JSON Schema Inference ===")
-
+    """Test basic JSON schema inference with simple types"""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -16,43 +15,19 @@ def test_basic_schema_inference():
         }
     )
 
-    print("Input data:")
-    print(df)
-    print()
+    schema = df.genson.infer_polars_schema("json_col")
 
-    try:
-        result = df.select(
-            infer_polars_schema(
-                pl.col("json_col"),
-                ignore_outer_array=True,
-                ndjson=False,
-                merge_schemas=True,
-                debug=True,
-            )
-        )
-
-        print("Raw result:")
-        print(result)
-        print(f"Result type: {result.dtypes}")
-        print()
-
-        schema_fields = result.to_series().first()
-        print("Schema fields:")
-        for field in schema_fields:
-            print(f"  {field['name']}: {field['dtype']}")
-        print()
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
-    return True
+    assert schema == pl.Schema(
+        {
+            "age": pl.Int64,
+            "id": pl.Int64,
+            "name": pl.String,
+        }
+    )
 
 
 def test_mixed_types():
-    """Test with mixed JSON types"""
-    print("=== Test 2: Mixed Types ===")
-
+    """Test with mixed JSON types including floats and booleans"""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -63,35 +38,20 @@ def test_mixed_types():
         }
     )
 
-    print("Input data:")
-    print(df)
-    print()
+    schema = df.genson.infer_polars_schema("json_col")
 
-    try:
-        result = df.select(
-            infer_polars_schema(
-                pl.col("json_col"),
-                debug=False,
-            )
-        )
-
-        schema_fields = result.to_series().first()
-        print("Inferred schema:")
-        for field in schema_fields:
-            print(f"  {field['name']}: {field['dtype']}")
-        print()
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
-    return True
+    assert schema == pl.Schema(
+        {
+            "active": pl.Boolean,
+            "id": pl.Int64,
+            "name": pl.String,
+            "score": pl.Float64,
+        }
+    )
 
 
 def test_nested_objects():
-    """Test with nested objects"""
-    print("=== Test 3: Nested Objects ===")
-
+    """Test with nested objects/structs"""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -101,35 +61,18 @@ def test_nested_objects():
         }
     )
 
-    print("Input data:")
-    print(df)
-    print()
+    schema = df.genson.infer_polars_schema("json_col")
 
-    try:
-        result = df.select(
-            infer_polars_schema(
-                pl.col("json_col"),
-                debug=False,
-            )
-        )
-
-        schema_fields = result.to_series().first()
-        print("Inferred schema:")
-        for field in schema_fields:
-            print(f"  {field['name']}: {field['dtype']}")
-        print()
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
-    return True
+    assert schema == pl.Schema(
+        {
+            "metadata": pl.Struct({"created": pl.String}),
+            "user": pl.Struct({"id": pl.Int64, "name": pl.String}),
+        }
+    )
 
 
 def test_arrays():
-    """Test with arrays"""
-    print("=== Test 4: Arrays ===")
-
+    """Test with arrays of different types"""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -139,61 +82,137 @@ def test_arrays():
         }
     )
 
-    print("Input data:")
-    print(df)
-    print()
+    schema = df.genson.infer_polars_schema("json_col")
 
-    try:
-        result = df.select(
-            infer_polars_schema(
-                pl.col("json_col"),
-                debug=False,
-            )
-        )
-
-        schema_fields = result.to_series().first()
-        print("Inferred schema:")
-        for field in schema_fields:
-            print(f"  {field['name']}: {field['dtype']}")
-        print()
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
-    return True
+    assert schema == pl.Schema(
+        {
+            "id": pl.Int64,
+            "scores": pl.List(pl.Int64),
+            "tags": pl.List(pl.String),
+        }
+    )
 
 
-def main():
-    print("Testing Polars Schema Inference\n")
+def test_complex_nested_structure():
+    """Test with deeply nested structures"""
+    df = pl.DataFrame(
+        {
+            "json_col": [
+                '{"user": {"profile": {"name": "Alice", "settings": {"theme": "dark"}}}, "posts": [{"title": "Hello", "likes": 5}]}',
+                '{"user": {"profile": {"name": "Bob", "settings": {"theme": "light"}}}, "posts": [{"title": "World", "likes": 3}]}',
+            ]
+        }
+    )
 
-    tests = [
-        test_basic_schema_inference,
-        test_mixed_types,
-        test_nested_objects,
-        test_arrays,
-    ]
+    schema = df.genson.infer_polars_schema("json_col")
 
-    passed = 0
-    total = len(tests)
-
-    for test in tests:
-        try:
-            if test():
-                passed += 1
-                print("✅ PASSED\n")
-            else:
-                print("❌ FAILED\n")
-        except Exception as e:
-            print(f"❌ FAILED with exception: {e}\n")
-
-    print(f"Results: {passed}/{total} tests passed")
-
-    if passed == total:
-        print("🎉 All tests passed!")
-    else:
-        print("❌ Some tests failed")
+    assert schema == pl.Schema(
+        {
+            "posts": pl.List(pl.Struct({"likes": pl.Int64, "title": pl.String})),
+            "user": pl.Struct(
+                {
+                    "profile": pl.Struct(
+                        {"name": pl.String, "settings": pl.Struct({"theme": pl.String})}
+                    )
+                }
+            ),
+        }
+    )
 
 
-if __name__ == "__main__":
-    main()
+def test_optional_fields():
+    """Test with optional fields (some objects missing certain keys)"""
+    df = pl.DataFrame(
+        {
+            "json_col": [
+                '{"id": 1, "name": "Alice", "email": "alice@example.com"}',
+                '{"id": 2, "name": "Bob"}',  # Missing email
+                '{"id": 3, "name": "Charlie", "email": "charlie@example.com", "age": 30}',  # Has age
+            ]
+        }
+    )
+
+    schema = df.genson.infer_polars_schema("json_col")
+
+    assert schema == pl.Schema(
+        {
+            "age": pl.Int64,
+            "email": pl.String,
+            "id": pl.Int64,
+            "name": pl.String,
+        }
+    )
+
+
+def test_mixed_array_types():
+    """Test with arrays containing different types"""
+    df = pl.DataFrame(
+        {
+            "json_col": [
+                '{"mixed_numbers": [1, 2.5, 3], "string_array": ["a", "b", "c"]}',
+                '{"mixed_numbers": [4.1, 5, 6.7], "string_array": ["d", "e"]}',
+            ]
+        }
+    )
+
+    schema = df.genson.infer_polars_schema("json_col")
+
+    assert schema == pl.Schema(
+        {
+            "mixed_numbers": pl.List(pl.Float64),
+            "string_array": pl.List(pl.String),
+        }
+    )
+
+
+def test_empty_objects_and_arrays():
+    """Test with empty objects and arrays"""
+    df = pl.DataFrame(
+        {
+            "json_col": [
+                '{"empty_obj": {}, "empty_array": [], "data": {"value": 42}}',
+                '{"empty_obj": {}, "empty_array": [], "data": {"value": 84}}',
+            ]
+        }
+    )
+
+    schema = df.genson.infer_polars_schema("json_col")
+
+    assert schema == pl.Schema(
+        {
+            "data": pl.Struct({"value": pl.Int64}),
+            "empty_array": pl.List(pl.String),
+            "empty_obj": pl.String,
+        }
+    )
+
+
+def test_schema_consistency():
+    """Test that the same schema is returned for identical structure"""
+    df1 = pl.DataFrame({"json_col": ['{"a": 1, "b": "test"}']})
+
+    df2 = pl.DataFrame({"json_col": ['{"a": 2, "b": "different"}']})
+
+    schema1 = df1.genson.infer_polars_schema("json_col")
+    schema2 = df2.genson.infer_polars_schema("json_col")
+
+    assert schema1 == schema2
+    assert schema1 == pl.Schema(
+        {
+            "a": pl.Int64,
+            "b": pl.String,
+        }
+    )
+
+
+def test_single_row():
+    """Test schema inference with just one row"""
+    df = pl.DataFrame({"json_col": ['{"single": {"nested": {"value": [1, 2, 3]}}}']})
+
+    schema = df.genson.infer_polars_schema("json_col")
+
+    assert schema == pl.Schema(
+        {
+            "single": pl.Struct({"nested": pl.Struct({"value": pl.List(pl.Int64)})}),
+        }
+    )
