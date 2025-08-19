@@ -34,8 +34,6 @@ pub fn infer_schema_from_strings(
     json_strings: &[String],
     config: SchemaInferenceConfig,
 ) -> Result<SchemaInferenceResult, String> {
-    eprintln!("DEBUG: infer_schema_from_strings called with {} strings", json_strings.len());
-
     if json_strings.is_empty() {
         return Err("No JSON strings provided".to_string());
     }

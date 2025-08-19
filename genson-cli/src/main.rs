@@ -79,6 +79,7 @@ fn print_help() {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use std::process::Command;
     use std::io::Write;
     use tempfile::NamedTempFile;
@@ -126,12 +127,21 @@ mod tests {
             .output()
             .expect("Failed to execute CLI");
         
+        // Debug: print what we actually got
+        let stdout = String::from_utf8(output.stdout).unwrap_or_else(|_| "Invalid UTF-8".to_string());
+        let stderr = String::from_utf8(output.stderr).unwrap_or_else(|_| "Invalid UTF-8".to_string());
+        
+        eprintln!("=== CLI OUTPUT DEBUG ===");
+        eprintln!("Exit status: {}", output.status);
+        eprintln!("STDOUT: '{}'", stdout);
+        eprintln!("STDERR: '{}'", stderr);
+        eprintln!("========================");
+        
         // Should fail gracefully, not panic
         assert!(!output.status.success(), "CLI should fail with invalid JSON");
         
         // Should contain error message, not panic output
-        let stderr = String::from_utf8(output.stderr).expect("Invalid UTF-8 in stderr");
-        assert!(stderr.contains("Schema inference failed"), "Should contain error message");
+        assert!(stderr.contains("Schema inference failed"), "Should contain error message, but got: {}", stderr);
         assert!(!stderr.contains("panicked"), "Should not contain panic message");
         assert!(!stderr.contains("SIGABRT"), "Should not segfault");
     }
@@ -164,11 +174,20 @@ mod tests {
                 .output()
                 .expect(&format!("Failed to execute CLI for {}", description));
             
+            // Debug: print what we actually got
+            let stdout = String::from_utf8(output.stdout).unwrap_or_else(|_| "Invalid UTF-8".to_string());
+            let stderr = String::from_utf8(output.stderr).unwrap_or_else(|_| "Invalid UTF-8".to_string());
+            
+            eprintln!("=== CLI OUTPUT DEBUG for {} ===", description);
+            eprintln!("Exit status: {}", output.status);
+            eprintln!("STDOUT: '{}'", stdout);
+            eprintln!("STDERR: '{}'", stderr);
+            eprintln!("========================================");
+            
             // Should fail gracefully, not panic
             assert!(!output.status.success(), "CLI should fail with invalid JSON: {}", description);
             
             // Should not panic or segfault
-            let stderr = String::from_utf8(output.stderr).expect("Invalid UTF-8 in stderr");
             assert!(!stderr.contains("panicked"), "Should not panic for {}: {}", description, stderr);
             assert!(!stderr.contains("SIGABRT"), "Should not segfault for {}: {}", description, stderr);
             assert!(!stderr.contains("Aborted"), "Should not abort for {}: {}", description, stderr);
