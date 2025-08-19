@@ -275,7 +275,7 @@ fix-eof-ws mode="":
     whitespace-format --add-new-line-marker-at-end-of-file \
           --new-line-marker=linux \
           --normalize-new-line-markers \
-          --exclude ".git/|target/|dist/|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
+          --exclude ".git/|target/|dist/|\.so$|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
           $ARGS \
           .
 
