@@ -2,13 +2,12 @@ default: clippy
 
 # lint:    ty ruff-check
 lint: ruff-check
-lint-ci: clippy
 # lint-ci: ty-ci ruff-check
 
 fmt:     ruff-fmt code-quality-fix
 
 precommit:     lint fmt code-quality
-precommit-ci:  lint-ci  code-quality
+precommit-ci:           code-quality
 precommit-fix: fmt      code-quality-fix
 
 prepush: clippy py-test py-dev
@@ -45,11 +44,10 @@ check-py:
 
 # -------------------------------------
 
+clippy: clippy-all
+
 clippy-all:
     cargo clippy --workspace --all-targets --all-features --target-dir target/clippy-all-features -- -D warnings
-
-clippy:
-    cargo clippy --workspace --all-targets --target-dir target/clippy -- -D warnings
 
 # Fast clippy for individual packages
 clippy-core:
@@ -60,6 +58,10 @@ clippy-cli:
 
 clippy-py:
     cargo clippy -p polars-genson-py -- -D warnings
+
+vendor-ci:
+    mkdir -p .vendored
+    cargo vendor-filterer --versioned-dirs --platform=x86_64-unknown-linux-gnu .vendored/vendored.tar.gz --format=tar.gz
 
 # -------------------------------------
 
