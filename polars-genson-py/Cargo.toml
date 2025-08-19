@@ -1,20 +1,23 @@
 [dependencies]
-genson-core = {path = "../genson-core"}
-serde = {workspace = true, features = ["derive"]}
-serde_json = {workspace = true}
+genson-core = { path = "../genson-core" }
 polars.workspace = true
 polars-arrow.workspace = true
 pyo3.workspace = true
 pyo3-polars.workspace = true
+serde = { features = ["derive"], workspace = true }
+serde_json = { workspace = true }
 
 [lib]
-name = "_polars_genson"
 crate-type = ["cdylib"]
+name = "_polars_genson"
 
 [package]
-name = "polars-genson-py"
-version = "0.1.0"
-edition = "2021"
-license = "MIT"
 authors = ["Louis Maddox <louismmx@gmail.com>"]
 description = "Polars plugin for JSON schema inference using genson-rs"
+edition = "2021"
+license = "MIT"
+name = "polars-genson-py"
+version = "0.1.0"
+
+[package.metadata.cargo-machete]
+ignored = ["polars-arrow"]

@@ -10,11 +10,11 @@ default_install_hook_types:
 
 repos:
   - repo: https://github.com/lmmx/just-pre-commit
-    rev: v0.6.1
+    rev: v0.6.2
     hooks:
       - id: run-just-rust
         name: just (lints)
-        args: ['precommit']
+        args: ['precommit-ci']
         stages: [pre-commit]
       - id: run-just-rust
         alias: run-just-rust-prepush
@@ -27,7 +27,7 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: debug-statements
       - id: name-tests-test
