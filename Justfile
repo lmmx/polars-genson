@@ -373,23 +373,55 @@ refresh-stubs *args="":
 # Release a new version, pass --help for options to `uv version --bump`
 [working-directory: 'polars-genson-py']
 release bump_level="patch":
-    #!/usr/bin/env -S echo-comment --shell-flags="-e" --color blue
-
+    #!/usr/bin/env -S echo-comment --shell-flags="-e" --color bright-green
+    
     ## Exit early if help was requested
     if [[ "{{bump_level}}" == "--help" ]]; then
         uv version --help
         exit 0
     fi
-
+    
+    # 📈 Bump the version in pyproject.toml (patch/minor/major: {{bump_level}})
     uv version --bump {{bump_level}}
     
+    # 📦 Stage all changes (including the version bump)
     git add --all
+    
+    # 🔄 Create a temporary commit to capture the new version
     git commit -m "chore(temp): version check"
+     
+    # 🏷️ Extract the new version number that was just set, undo the commit
     new_version=$(uv version --short)
     git reset --soft HEAD~1
+     
+    # ✅ Stage everything again and create the real release commit
     git add --all
     git commit -m  "chore(release): bump -> v$new_version"
+    
     branch_name=$(git rev-parse --abbrev-ref HEAD);
+    # 🚀 Push the release commit to $branch_name
     git push origin $branch_name
-    uv build
+    
+    # ⏳ Wait for CI to build wheels, then download and publish them
+    test -z "$(compgen -G 'wheel*/')" || {
+      # 🛡️ Safety first: halt if there are leftover wheel* directories from previous runs
+      echo "Please delete the wheel*/ dirs:" >&2
+      ls wheel*/ -1d >&2
+      false
+    }
+    
+    # 📥 Download wheel artifacts from the completed CI run
+    ## -p wheel* downloads only artifacts matching the "wheel*" pattern
+    gh run watch "$(gh run list -L 1 --json databaseId --jq .[0].databaseId)" --exit-status
+    gh run download "$(gh run list -L 1 --json databaseId --jq .[0].databaseId)" -p wheel*
+    
+    # 🧹 Clean up any existing dist directory and create a fresh one
+    rm -rf dist/
+    mkdir dist/
+    
+    # 🎯 Move all wheel-* artifacts into dist/ and delete their temporary directories
+    mv wheel*/* dist/
+    rm -rf wheel*/
+    
+    # 🎊 Publish the CI-built wheels to PyPI
     uv publish -u __token__ -p $(keyring get PYPIRC_TOKEN "")
