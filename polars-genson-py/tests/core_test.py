@@ -5,7 +5,7 @@ import polars as pl
 
 # Import the plugin to register the namespace
 import polars_genson  # noqa: F401
-import pytest
+from pytest import raises
 
 
 def test_namespace_registration():
@@ -51,7 +51,7 @@ def test_empty_column():
     """Test handling of empty JSON column."""
     df = pl.DataFrame({"json_data": []})
 
-    with pytest.raises(Exception):  # Should raise an error for empty input
+    with raises(Exception):  # Should raise an error for empty input
         df.genson.infer_schema("json_data")
 
 
@@ -118,13 +118,33 @@ def test_invalid_json():
     )
 
     # Should handle invalid JSON gracefully or raise appropriate error
-    with pytest.raises(Exception):
+    with raises(Exception):
         df.genson.infer_schema("json_data")
+
+
+def test_invalid_ndjson_format():
+    """Test ndjson=True with invalid JSON on one line."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"name": "Alice", "age": 30}\n{"invalid": json}\n{"name": "Charlie", "age": 35}',
+                '{"name": "Bob", "age": 25}',
+            ]
+        }
+    )
+
+    # Should raise an error due to invalid JSON on the second line of first string
+    with raises(Exception) as exc_info:
+        df.genson.infer_schema("json_data", ndjson=True)
+
+    # Verify the error message contains information about the invalid JSON
+    error_message = str(exc_info.value)
+    assert "Invalid JSON input" in error_message or "JSON" in error_message
 
 
 def test_non_string_column():
     """Test error handling for non-string columns."""
     df = pl.DataFrame({"numbers": [1, 2, 3]})
 
-    with pytest.raises(Exception):
+    with raises(Exception):
         df.genson.infer_schema("numbers")
