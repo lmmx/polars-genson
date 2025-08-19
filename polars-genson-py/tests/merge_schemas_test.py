@@ -56,7 +56,7 @@ def test_merge_schemas_false():
         assert "properties" in schema
 
     # Schemas should be different from each other
-    schema_strs = [orjson.dumps(s, sort_keys=True) for s in schemas]
+    schema_strs = [orjson.dumps(s, option=orjson.OPT_SORT_KEYS) for s in schemas]
     assert len(set(schema_strs)) == 3  # All unique
 
 

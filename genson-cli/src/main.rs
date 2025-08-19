@@ -43,10 +43,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // For CLI, we treat the entire input as one JSON string
-    // In a real Polars context, we'd have multiple rows
     let json_strings = vec![input];
 
-    // Infer schema
+    // Infer schema - genson-core should handle any panics and return proper errors
     let result = infer_json_schema(&json_strings, Some(config))
         .map_err(|e| format!("Schema inference failed: {}", e))?;
 
@@ -76,4 +75,103 @@ fn print_help() {
     println!("    genson-cli data.json");
     println!("    echo '{{\"name\": \"test\"}}' | genson-cli");
     println!("    genson-cli --ndjson multi-line.jsonl");
+}
+
+#[cfg(test)]
+mod tests {
+    use std::process::Command;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_valid_json() {
+        let valid_json = r#"{"name": "Alice", "age": 30}"#;
+        
+        // Create a temporary file with valid JSON
+        let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        temp_file.write_all(valid_json.as_bytes()).expect("Failed to write to temp file");
+        
+        // Use relative path to the binary
+        let binary_path = "../target/debug/genson-cli";
+        
+        // Run the CLI binary directly
+        let output = Command::new(binary_path)
+            .arg(temp_file.path().to_str().unwrap())
+            .output()
+            .expect("Failed to execute CLI");
+        
+        // Should succeed
+        assert!(output.status.success(), "CLI should succeed with valid JSON");
+        
+        // Should contain schema output
+        let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8 in stdout");
+        assert!(stdout.contains("\"type\""), "Output should contain JSON schema");
+        assert!(stdout.contains("\"properties\""), "Output should contain properties");
+    }
+
+    #[test]
+    fn test_invalid_json() {
+        let invalid_json = r#"{"hello":"world}"#; // Missing closing quote
+        
+        // Create a temporary file with invalid JSON
+        let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        temp_file.write_all(invalid_json.as_bytes()).expect("Failed to write to temp file");
+        
+        // Use relative path to the binary
+        let binary_path = "../target/debug/genson-cli";
+        
+        // Run the CLI binary directly
+        let output = Command::new(binary_path)
+            .arg(temp_file.path().to_str().unwrap())
+            .output()
+            .expect("Failed to execute CLI");
+        
+        // Should fail gracefully, not panic
+        assert!(!output.status.success(), "CLI should fail with invalid JSON");
+        
+        // Should contain error message, not panic output
+        let stderr = String::from_utf8(output.stderr).expect("Invalid UTF-8 in stderr");
+        assert!(stderr.contains("Schema inference failed"), "Should contain error message");
+        assert!(!stderr.contains("panicked"), "Should not contain panic message");
+        assert!(!stderr.contains("SIGABRT"), "Should not segfault");
+    }
+
+    #[test]
+    fn test_malformed_json_variants() {
+        let test_cases = vec![
+            (r#"{"invalid": json}"#, "unquoted value"),
+            (r#"{"incomplete":"#, "incomplete string"),
+            (r#"{"trailing":,"#, "trailing comma"),
+            (r#"{invalid: "json"}"#, "unquoted key"),
+            (r#"{"nested": {"broken": json}}"#, "nested broken JSON"),
+        ];
+
+        // Use relative path to the binary
+        let binary_path = "../target/debug/genson-cli";
+
+        for (invalid_json, description) in test_cases {
+            println!("Testing: {}", description);
+            
+            // Create a temporary file with invalid JSON
+            let mut temp_file = NamedTempFile::new()
+                .expect(&format!("Failed to create temp file for {}", description));
+            temp_file.write_all(invalid_json.as_bytes())
+                .expect(&format!("Failed to write to temp file for {}", description));
+            
+            // Run the CLI binary directly
+            let output = Command::new(binary_path)
+                .arg(temp_file.path().to_str().unwrap())
+                .output()
+                .expect(&format!("Failed to execute CLI for {}", description));
+            
+            // Should fail gracefully, not panic
+            assert!(!output.status.success(), "CLI should fail with invalid JSON: {}", description);
+            
+            // Should not panic or segfault
+            let stderr = String::from_utf8(output.stderr).expect("Invalid UTF-8 in stderr");
+            assert!(!stderr.contains("panicked"), "Should not panic for {}: {}", description, stderr);
+            assert!(!stderr.contains("SIGABRT"), "Should not segfault for {}: {}", description, stderr);
+            assert!(!stderr.contains("Aborted"), "Should not abort for {}: {}", description, stderr);
+        }
+    }
 }

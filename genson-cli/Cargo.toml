@@ -9,3 +9,7 @@ edition = "2021"
 license = "MIT"
 name = "genson-cli"
 version = "0.1.0"
+
+
+[dev-dependencies]
+tempfile = "3"
