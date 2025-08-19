@@ -64,8 +64,10 @@ vendor-ci:
     mkdir -p .vendored
     cargo vendor-filterer --versioned-dirs --platform=x86_64-unknown-linux-gnu .vendored/vendored.tar.gz --format=tar.gz
 
+### #!/usr/bin/env echo-comment
+
 clippy-ci:
-    #!/usr/bin/env echo-comment
+    echo "Hello Pre-Commit?"
     set -e
     # Start: $(date)
     # 🔍 CI Environment Debug Information
