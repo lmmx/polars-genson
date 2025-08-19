@@ -62,3 +62,45 @@ fn test_malformed_json_variants() {
             .stderr(predicate::str::contains("SIGABRT").not());
     }
 }
+
+#[test]
+fn test_ndjson_format() {
+    // Create valid NDJSON content - each line is a separate JSON object
+    let ndjson_content = r#"{"name": "Alice", "age": 30}
+{"name": "Bob", "age": 25, "city": "NYC"}
+{"name": "Charlie", "score": 95.5}
+"#;
+
+    let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    temp_file.write_all(ndjson_content.as_bytes()).expect("Failed to write to temp file");
+
+    let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
+    cmd.arg("--ndjson").arg(temp_file.path());
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("\"type\""))
+        .stdout(predicate::str::contains("\"properties\""))
+        .stdout(predicate::str::contains("\"name\""))
+        .stdout(predicate::str::contains("\"age\""))
+        .stderr(predicate::str::contains("Processed 1 JSON object(s)"));
+}
+
+#[test]
+fn test_invalid_ndjson_format() {
+    // NDJSON with one invalid line
+    let invalid_ndjson = r#"{"name": "Alice", "age": 30}
+{"invalid": json}
+{"name": "Charlie", "score": 95.5}
+"#;
+
+    let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    temp_file.write_all(invalid_ndjson.as_bytes()).expect("Failed to write to temp file");
+
+    let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
+    cmd.arg("--ndjson").arg(temp_file.path());
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Invalid JSON input"))
+        .stderr(predicate::str::contains("panicked").not())
+        .stderr(predicate::str::contains("SIGABRT").not());
+}
