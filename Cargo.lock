@@ -857,6 +857,7 @@ name = "genson-core"
 version = "0.1.0"
 dependencies = [
  "genson-rs",
+ "predicates",
  "serde",
  "serde_json",
 ]
