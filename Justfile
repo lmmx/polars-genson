@@ -2,7 +2,7 @@ default: clippy
 
 # lint:    ty ruff-check
 lint: ruff-check
-lint-ci: clippy
+lint-ci: clippy-ci
 # lint-ci: ty-ci ruff-check
 
 fmt:     ruff-fmt code-quality-fix
@@ -50,6 +50,9 @@ clippy-all:
 
 clippy:
     cargo clippy --workspace --all-targets --target-dir target/clippy -- -D warnings
+
+clippy-ci:
+    cargo clippy --offline --workspace --all-targets --target-dir target/clippy -- -D warnings
 
 # Fast clippy for individual packages
 clippy-core:
