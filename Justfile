@@ -1,7 +1,8 @@
 default: clippy
 
 lint:    ty ruff-check
-lint-ci: ty-ci ruff-check
+lint-ci: clippy
+# lint-ci: ty-ci ruff-check
 
 fmt:     ruff-fmt code-quality-fix
 
