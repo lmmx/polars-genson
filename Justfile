@@ -248,7 +248,7 @@ py-quick:
     print('Input DataFrame:')
     print(df)
     
-    schema = df.genson.infer_schema('json_data')
+    schema = df.genson.infer_json_schema('json_data')
     print('\nInferred schema:')
     print(json.dumps(schema, indent=2))
     

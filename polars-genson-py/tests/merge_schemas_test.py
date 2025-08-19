@@ -17,7 +17,7 @@ def test_merge_schemas_true():
         }
     )
 
-    schema = df.genson.infer_schema("json_data", merge_schemas=True)
+    schema = df.genson.infer_json_schema("json_data", merge_schemas=True)
 
     # Should return a single merged schema
     assert isinstance(schema, dict)
@@ -43,7 +43,7 @@ def test_merge_schemas_false():
         }
     )
 
-    schemas = df.genson.infer_schema("json_data", merge_schemas=False)
+    schemas = df.genson.infer_json_schema("json_data", merge_schemas=False)
 
     # Should return a list of individual schemas
     assert isinstance(schemas, list)
@@ -85,10 +85,10 @@ def test_concordant_vs_discordant():
     )
 
     # Test concordant schemas
-    concordant_merged = concordant_df.genson.infer_schema(
+    concordant_merged = concordant_df.genson.infer_json_schema(
         "json_data", merge_schemas=True
     )
-    concordant_individual = concordant_df.genson.infer_schema(
+    concordant_individual = concordant_df.genson.infer_json_schema(
         "json_data", merge_schemas=False
     )
 
@@ -100,10 +100,10 @@ def test_concordant_vs_discordant():
     assert len(concordant_individual) == 3
 
     # Test discordant schemas
-    discordant_merged = discordant_df.genson.infer_schema(
+    discordant_merged = discordant_df.genson.infer_json_schema(
         "json_data", merge_schemas=True
     )
-    discordant_individual = discordant_df.genson.infer_schema(
+    discordant_individual = discordant_df.genson.infer_json_schema(
         "json_data", merge_schemas=False
     )
 

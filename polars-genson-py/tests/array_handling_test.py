@@ -15,7 +15,7 @@ def test_ignore_outer_array_true():
         }
     )
 
-    schema = df.genson.infer_schema("json_data", ignore_outer_array=True)
+    schema = df.genson.infer_json_schema("json_data", ignore_outer_array=True)
 
     # Should treat array elements as individual objects
     assert isinstance(schema, dict)
@@ -37,7 +37,7 @@ def test_ignore_outer_array_false():
         }
     )
 
-    schema = df.genson.infer_schema("json_data", ignore_outer_array=False)
+    schema = df.genson.infer_json_schema("json_data", ignore_outer_array=False)
 
     # Should treat arrays as arrays, not flatten them
     assert isinstance(schema, dict)
@@ -55,7 +55,7 @@ def test_ndjson_format():
         }
     )
 
-    schema = df.genson.infer_schema("json_data", debug=True, ndjson=True)
+    schema = df.genson.infer_json_schema("json_data", debug=True, ndjson=True)
 
     assert isinstance(schema, dict)
     assert "properties" in schema
@@ -78,7 +78,7 @@ def test_mixed_json_formats():
     )
 
     # With ignore_outer_array=True, should handle mixed formats
-    schema = df.genson.infer_schema("json_data", ignore_outer_array=True)
+    schema = df.genson.infer_json_schema("json_data", ignore_outer_array=True)
 
     assert isinstance(schema, dict)
     assert "properties" in schema
@@ -89,7 +89,7 @@ def test_empty_arrays():
     df = pl.DataFrame({"json_data": ["[]", '{"valid": "object"}']})
 
     # Should handle empty arrays gracefully
-    schema = df.genson.infer_schema("json_data")
+    schema = df.genson.infer_json_schema("json_data")
 
     assert isinstance(schema, dict)
 
@@ -105,7 +105,7 @@ def test_nested_arrays():
         }
     )
 
-    schema = df.genson.infer_schema("json_data")
+    schema = df.genson.infer_json_schema("json_data")
 
     assert isinstance(schema, dict)
     assert "properties" in schema

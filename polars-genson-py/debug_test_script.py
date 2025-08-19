@@ -28,9 +28,9 @@ try:
         print("   ✗ genson namespace NOT found")
         exit(1)
 
-    print("5. Calling infer_schema with debug...")
+    print("5. Calling infer_json_schema with debug...")
     try:
-        schema = df.genson.infer_schema("json_data", debug=True)
+        schema = df.genson.infer_json_schema("json_data", debug=True)
         print("   ✓ Schema inference completed!")
         print(f"   Schema type: {type(schema)}")
 

@@ -1,4 +1,4 @@
-use genson_core::{infer_schema_from_strings, SchemaInferenceConfig};
+use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
@@ -84,7 +84,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 schema_uri: kwargs.schema_uri.clone(),
             };
 
-            let schema_result = infer_schema_from_strings(&json_strings, config)
+            let schema_result = infer_json_schema_from_strings(&json_strings, config)
                 .map_err(|e| format!("Genson error: {}", e))?;
 
             serde_json::to_string_pretty(&schema_result.schema)
@@ -119,7 +119,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     schema_uri: kwargs.schema_uri.clone(),
                 };
 
-                let single_result = infer_schema_from_strings(&[json_str.clone()], config)
+                let single_result = infer_json_schema_from_strings(&[json_str.clone()], config)
                     .map_err(|e| format!("Individual genson error: {}", e))?;
                 individual_schemas.push(single_result.schema);
             }

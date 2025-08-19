@@ -1,11 +1,11 @@
-use genson_core::{infer_schema_from_strings, SchemaInferenceConfig};
+use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 
 #[test]
 fn test_single_invalid_json_honest() {
     println!("Testing invalid JSON: {{\"invalid\": json}}");
 
     let json_strings = vec![r#"{"invalid": json}"#.to_string()];
-    let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+    let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
     match result {
         Ok(schema_result) => {

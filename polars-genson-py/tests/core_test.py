@@ -12,7 +12,7 @@ def test_namespace_registration():
     """Test that the genson namespace is registered on DataFrames."""
     df = pl.DataFrame({"test": ["data"]})
     assert hasattr(df, "genson")
-    assert hasattr(df.genson, "infer_schema")
+    assert hasattr(df.genson, "infer_json_schema")
 
 
 def test_basic_schema_inference():
@@ -28,7 +28,7 @@ def test_basic_schema_inference():
     )
 
     # Infer schema using the namespace
-    schema = df.genson.infer_schema("json_data")
+    schema = df.genson.infer_json_schema("json_data")
 
     # Verify schema structure
     assert isinstance(schema, dict)
@@ -52,7 +52,7 @@ def test_empty_column():
     df = pl.DataFrame({"json_data": []})
 
     with raises(Exception):  # Should raise an error for empty input
-        df.genson.infer_schema("json_data")
+        df.genson.infer_json_schema("json_data")
 
 
 def test_null_values():
@@ -67,7 +67,7 @@ def test_null_values():
         }
     )
 
-    schema = df.genson.infer_schema("json_data")
+    schema = df.genson.infer_json_schema("json_data")
 
     # Should work despite null values
     assert isinstance(schema, dict)
@@ -119,7 +119,7 @@ def test_invalid_json():
 
     # Should handle invalid JSON gracefully or raise appropriate error
     with raises(Exception):
-        df.genson.infer_schema("json_data")
+        df.genson.infer_json_schema("json_data")
 
 
 def test_invalid_ndjson_format():
@@ -135,7 +135,7 @@ def test_invalid_ndjson_format():
 
     # Should raise an error due to invalid JSON on the second line of first string
     with raises(Exception) as exc_info:
-        df.genson.infer_schema("json_data", ndjson=True)
+        df.genson.infer_json_schema("json_data", ndjson=True)
 
     # Verify the error message contains information about the invalid JSON
     error_message = str(exc_info.value)
@@ -147,4 +147,4 @@ def test_non_string_column():
     df = pl.DataFrame({"numbers": [1, 2, 3]})
 
     with raises(Exception):
-        df.genson.infer_schema("numbers")
+        df.genson.infer_json_schema("numbers")

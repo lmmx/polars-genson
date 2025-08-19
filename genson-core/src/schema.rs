@@ -51,7 +51,7 @@ fn validate_ndjson(s: &str) -> Result<(), serde_json::Error> {
 }
 
 /// Infer JSON schema from a collection of JSON strings
-pub fn infer_schema_from_strings(
+pub fn infer_json_schema_from_strings(
     json_strings: &[String],
     config: SchemaInferenceConfig,
 ) -> Result<SchemaInferenceResult, String> {
@@ -151,7 +151,7 @@ mod tests {
             r#"{"name": "Bob", "age": 25, "city": "NYC"}"#.to_string(),
         ];
 
-        let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default())
+        let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default())
             .expect("Schema inference should succeed");
 
         // Test processed count
@@ -180,7 +180,7 @@ mod tests {
     #[test]
     fn test_empty_input() {
         let json_strings = vec![];
-        let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+        let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
         assert!(result.is_err());
 
@@ -223,7 +223,7 @@ mod tests {
 
             let json_strings = vec![valid_json.to_string(), invalid_json.to_string()];
 
-            let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+            let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
             // Should return an error instead of panicking
             assert!(result.is_err(), "Expected error for case: {}", description);
@@ -260,7 +260,7 @@ mod tests {
             r#"{"name": "Bob", "age": 25}"#.to_string(),
         ];
 
-        let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default())
+        let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default())
             .expect("Should succeed with valid JSON, skipping empty strings");
 
         // Should process only the 2 valid JSON strings
@@ -287,7 +287,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = infer_schema_from_strings(&json_strings, config_array)
+        let result = infer_json_schema_from_strings(&json_strings, config_array)
             .expect("Should handle array schema");
 
         let schema_str = result.schema.to_string();
@@ -306,7 +306,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = infer_schema_from_strings(&json_strings, config_object)
+        let result = infer_json_schema_from_strings(&json_strings, config_object)
             .expect("Should handle object schema from array items");
 
         let schema_str = result.schema.to_string();
@@ -341,7 +341,7 @@ mod tests {
             long_invalid_json.len()
         );
 
-        let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+        let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
         assert!(result.is_err(), "Expected error for very long invalid JSON");
 
@@ -407,7 +407,7 @@ mod tests {
             .to_string(),
         ];
 
-        let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default())
+        let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default())
             .expect("Should handle complex nested schema");
 
         assert_eq!(result.processed_count, 2);
@@ -444,7 +444,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = infer_schema_from_strings(&json_strings, config)
+        let result = infer_json_schema_from_strings(&json_strings, config)
             .expect("NDJSON schema inference should succeed");
 
         // All 3 objects should be processed
@@ -482,7 +482,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = infer_schema_from_strings(&json_strings, config);
+        let result = infer_json_schema_from_strings(&json_strings, config);
 
         assert!(result.is_err(), "Expected error for malformed NDJSON line");
 
