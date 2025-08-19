@@ -128,7 +128,7 @@ clippy-ci:
                 # Vendor directory exists:
                 find $VENDOR_CRATES -maxdepth 1 -type d -name "*-*" | wc -l | xargs -I {} echo "Found {} vendored crate directories"
             else
-                # ❌ No vendor directory found
+                : # ❌ No vendor directory found
             fi
 
             # 🔍 Offline build test:
