@@ -1,8 +1,8 @@
-use std::panic;
 use genson_core::{infer_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
+use std::panic;
 
 #[derive(Deserialize)]
 pub struct GensonKwargs {
@@ -96,14 +96,17 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 if kwargs.debug {
                     eprintln!("DEBUG: Successfully generated merged schema");
                 }
-                Ok(Series::new("schema".into(), vec![schema_json; series.len()]))
+                Ok(Series::new(
+                    "schema".into(),
+                    vec![schema_json; series.len()],
+                ))
             }
-            Ok(Err(e)) => {
-                Err(PolarsError::ComputeError(format!("Merged schema processing failed: {}", e).into()))
-            }
-            Err(_panic) => {
-                Err(PolarsError::ComputeError("Panic occurred during merged schema JSON processing".into()))
-            }
+            Ok(Err(e)) => Err(PolarsError::ComputeError(
+                format!("Merged schema processing failed: {}", e).into(),
+            )),
+            Err(_panic) => Err(PolarsError::ComputeError(
+                "Panic occurred during merged schema JSON processing".into(),
+            )),
         }
     } else {
         // New behavior: infer schema for each row individually
@@ -133,18 +136,24 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 }
 
                 // Return array of schemas as JSON
-                let schemas_json = serde_json::to_string_pretty(&individual_schemas).map_err(|e| {
-                    PolarsError::ComputeError(format!("Failed to serialize individual schemas: {}", e).into())
-                })?;
+                let schemas_json =
+                    serde_json::to_string_pretty(&individual_schemas).map_err(|e| {
+                        PolarsError::ComputeError(
+                            format!("Failed to serialize individual schemas: {}", e).into(),
+                        )
+                    })?;
 
-                Ok(Series::new("schema".into(), vec![schemas_json; series.len()]))
+                Ok(Series::new(
+                    "schema".into(),
+                    vec![schemas_json; series.len()],
+                ))
             }
-            Ok(Err(e)) => {
-                Err(PolarsError::ComputeError(format!("Individual schema inference failed: {}", e).into()))
-            }
-            Err(_panic) => {
-                Err(PolarsError::ComputeError("Panic occurred during individual schema inference".into()))
-            }
+            Ok(Err(e)) => Err(PolarsError::ComputeError(
+                format!("Individual schema inference failed: {}", e).into(),
+            )),
+            Err(_panic) => Err(PolarsError::ComputeError(
+                "Panic occurred during individual schema inference".into(),
+            )),
         }
     }
 }

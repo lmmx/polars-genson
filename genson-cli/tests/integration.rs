@@ -6,11 +6,13 @@ use tempfile::NamedTempFile;
 #[test]
 fn test_valid_json() {
     let valid_json = r#"{"name": "Alice", "age": 30}"#;
-    
+
     // Create a temporary file with valid JSON
     let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    temp_file.write_all(valid_json.as_bytes()).expect("Failed to write to temp file");
-    
+    temp_file
+        .write_all(valid_json.as_bytes())
+        .expect("Failed to write to temp file");
+
     let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
     cmd.arg(temp_file.path());
     cmd.assert()
@@ -46,13 +48,14 @@ fn test_malformed_json_variants() {
 
     for (invalid_json, description) in test_cases {
         println!("Testing: {}", description);
-        
+
         // Create a temporary file with invalid JSON
         let mut temp_file = NamedTempFile::new()
             .unwrap_or_else(|_| panic!("Failed to create temp file for {}", description));
-        temp_file.write_all(invalid_json.as_bytes())
+        temp_file
+            .write_all(invalid_json.as_bytes())
             .unwrap_or_else(|_| panic!("Failed to write to temp file for {}", description));
-        
+
         let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
         cmd.arg(temp_file.path());
         cmd.assert()
@@ -72,7 +75,9 @@ fn test_ndjson_format() {
 "#;
 
     let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    temp_file.write_all(ndjson_content.as_bytes()).expect("Failed to write to temp file");
+    temp_file
+        .write_all(ndjson_content.as_bytes())
+        .expect("Failed to write to temp file");
 
     let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
     cmd.arg("--ndjson").arg(temp_file.path());
@@ -94,7 +99,9 @@ fn test_invalid_ndjson_format() {
 "#;
 
     let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    temp_file.write_all(invalid_ndjson.as_bytes()).expect("Failed to write to temp file");
+    temp_file
+        .write_all(invalid_ndjson.as_bytes())
+        .expect("Failed to write to temp file");
 
     let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
     cmd.arg("--ndjson").arg(temp_file.path());

@@ -1979,7 +1979,6 @@ name = "polars-jsonschema-bridge"
 version = "0.1.0"
 dependencies = [
  "polars",
- "serde",
  "serde_json",
  "thiserror 2.0.15",
 ]

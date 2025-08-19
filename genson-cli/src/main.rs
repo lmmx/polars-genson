@@ -91,25 +91,30 @@ mod tests {
     #[test]
     fn test_cli_with_invalid_json_unit() {
         println!("=== Unit test calling CLI logic directly ===");
-        
+
         // Create a temp file with invalid JSON
         let invalid_json = r#"{"invalid": json}"#;
         let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
-        temp_file.write_all(invalid_json.as_bytes()).expect("Failed to write to temp file");
-        
+        temp_file
+            .write_all(invalid_json.as_bytes())
+            .expect("Failed to write to temp file");
+
         // Mock command line args to point to our temp file
         // let _original_args = env::args().collect::<Vec<_>>();
-        
+
         // We can't easily mock env::args(), so let's call the genson-core function directly
         // This bypasses the CLI argument parsing but tests the core logic
         let json_strings = vec![invalid_json.to_string()];
         let result = infer_json_schema(&json_strings, Some(SchemaInferenceConfig::default()));
-        
+
         println!("Result: {:?}", result);
-        
+
         match result {
             Ok(schema_result) => {
-                panic!("Expected error for invalid JSON but got success: {:?}", schema_result);
+                panic!(
+                    "Expected error for invalid JSON but got success: {:?}",
+                    schema_result
+                );
             }
             Err(error_msg) => {
                 println!("✅ Got error in unit test: {}", error_msg);
@@ -119,16 +124,16 @@ mod tests {
             }
         }
     }
-    
+
     #[test]
     fn test_genson_core_directly() {
         println!("=== Direct test of genson-core function ===");
-        
+
         let json_strings = vec![r#"{"invalid": json}"#.to_string()];
         let result = infer_json_schema(&json_strings, Some(SchemaInferenceConfig::default()));
-        
+
         println!("Direct result: {:?}", result);
-        
+
         match result {
             Ok(schema_result) => {
                 panic!("Expected error but got success: {:?}", schema_result);
