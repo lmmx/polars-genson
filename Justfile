@@ -16,7 +16,7 @@ prepush: clippy py-test py-dev
 ci: precommit prepush docs
 
 # Full development workflow
-dev-test: check build test py-dev py-test
+full: check clippy-all build test py-dev py-test
 
 # CI workflow
 ci-full: precommit-ci prepush py-dev py-test docs
@@ -64,7 +64,25 @@ clippy-py:
 # -------------------------------------
 
 test *args:
+    just test-core {{args}}
+    just test-cli {{args}}
+    just test-js {{args}}
+
+[working-directory: 'genson-core']
+test-core *args:
     cargo nextest run {{args}}
+    
+[working-directory: 'genson-cli']
+test-cli *args:
+    cargo nextest run {{args}}
+    
+test-pl *args:
+    just test-py {{args}}
+
+[working-directory: 'polars-jsonschema-bridge']
+test-js *args:
+    cargo nextest run {{args}}
+
 
 test-ci *args:
     #!/usr/bin/env -S echo-comment --color bright-green
@@ -183,11 +201,11 @@ pf:
 # -------------------------------------
 
 # Test CLI with example input
-test-cli input="'{\"name\": \"test\", \"value\": 42}'":
+run-cli input="'{\"name\": \"test\", \"value\": 42}'":
     echo '{{input}}' | cargo run -p genson-cli
 
 # Run CLI with file
-run-cli *args:
+run-cli-on *args:
     cargo run -p genson-cli -- {{args}}
 
 # -------------------------------------
