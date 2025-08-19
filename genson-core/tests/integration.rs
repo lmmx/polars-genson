@@ -20,7 +20,8 @@ fn test_invalid_json_integration() {
         let json_strings = vec![invalid_json.to_string()];
 
         // This should NOT panic - it should return a proper error
-        let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+        let result =
+            infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
         match result {
             Ok(schema_result) => {
