@@ -1,8 +1,10 @@
+"""Utility functions for polars-genson plugin."""
+
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import polars as pl
 
@@ -17,8 +19,7 @@ def parse_into_expr(
     list_as_lit: bool = True,
     dtype: PolarsDataType | None = None,
 ) -> pl.Expr:
-    """
-    Convert the user input into a polars.Expr.
+    """Convert the user input into a polars.Expr.
 
     - If `expr` is already an `pl.Expr`, we return it as-is.
     - If `expr` is a string and `str_as_lit=False`, interpret as `pl.col(expr)`.
@@ -35,9 +36,9 @@ def parse_into_expr(
 
 
 def parse_version(version: Sequence[str | int]) -> tuple[int, ...]:
-    """
-    Simple version parser; splits a version string like "0.20.16"
-    into a tuple of ints (0, 20, 16).
+    """Simple version parser; splits a version string like "0.20.16" into a tuple of ints.
+
+    Takes a version string like "0.20.16" and converts it into a tuple of ints (0, 20, 16).
     """
     if isinstance(version, str):
         version = version.split(".")
@@ -45,8 +46,7 @@ def parse_version(version: Sequence[str | int]) -> tuple[int, ...]:
 
 
 def format_time(minutes: int) -> str:
-    """
-    Convert minutes since midnight to "HH:MM" format.
+    """Convert minutes since midnight to "HH:MM" format.
 
     Args:
         minutes: Minutes since midnight
@@ -59,8 +59,7 @@ def format_time(minutes: int) -> str:
 
 
 def parse_constraint(constraint: str) -> tuple[str, int, str]:
-    """
-    Parse a constraint string into its components.
+    """Parse a constraint string into its components.
 
     Recognized formats:
     - "≥Xh apart"
@@ -88,8 +87,7 @@ def parse_constraint(constraint: str) -> tuple[str, int, str]:
 
 
 def parse_window(window: str) -> dict[str, str | int]:
-    """
-    Parse a window string into its components.
+    """Parse a window string into its components.
 
     Recognized formats:
     - "HH:MM" (anchor)
@@ -125,8 +123,7 @@ def parse_window(window: str) -> dict[str, str | int]:
 
 
 def parse_time(time_str: str) -> int:
-    """
-    Convert "HH:MM" string to minutes since midnight.
+    """Convert "HH:MM" string to minutes since midnight.
 
     Args:
         time_str: Time string in "HH:MM" format

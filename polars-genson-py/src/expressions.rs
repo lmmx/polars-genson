@@ -1,7 +1,8 @@
+use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
-use genson_core::{infer_schema_from_strings, SchemaInferenceConfig};
+use std::panic;
 
 #[derive(Deserialize)]
 pub struct GensonKwargs {
@@ -16,69 +17,189 @@ pub struct GensonKwargs {
 
     #[serde(default)]
     pub debug: bool,
+
+    #[serde(default = "default_merge_schemas")]
+    pub merge_schemas: bool,
+
+    #[allow(dead_code)]
+    #[serde(default)]
+    pub convert_to_polars: bool,
 }
 
 fn default_ignore_outer_array() -> bool {
     true
 }
 
-/// Computes output type for the expression
+fn default_merge_schemas() -> bool {
+    true
+}
+
+/// JSON Schema is a String
 fn infer_json_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Field> {
-    // Return a JSON string representing the schema
     Ok(Field::new("schema".into(), DataType::String))
+}
+
+/// Polars schema is serialised to String
+fn infer_polars_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Field> {
+    let schema_field_struct = DataType::Struct(vec![
+        Field::new("name".into(), DataType::String),
+        Field::new("dtype".into(), DataType::String),
+    ]);
+    Ok(Field::new(
+        "schema".into(),
+        DataType::List(Box::new(schema_field_struct)),
+    ))
 }
 
 /// Polars expression that infers JSON schema from string column
 #[polars_expr(output_type_func=infer_json_schema_output_type)]
 pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<Series> {
+    if inputs.is_empty() {
+        return Err(PolarsError::ComputeError("No input series provided".into()));
+    }
+
     let series = &inputs[0];
-    
+
     // Ensure we have a string column
     let string_chunked = series.str().map_err(|_| {
         PolarsError::ComputeError("Expected a string column for JSON schema inference".into())
     })?;
 
-    // Collect all non-null string values
+    // Collect all non-null string values from ALL rows
     let mut json_strings = Vec::new();
-    for opt_str in string_chunked.iter() {
-        if let Some(s) = opt_str {
-            if !s.trim().is_empty() {
-                json_strings.push(s.to_string());
-            }
+    for s in string_chunked.iter().flatten() {
+        if !s.trim().is_empty() {
+            json_strings.push(s.to_string());
         }
     }
 
     if json_strings.is_empty() {
         return Err(PolarsError::ComputeError(
-            "No valid JSON strings found in column".into()
+            "No valid JSON strings found in column".into(),
         ));
     }
 
-    // Configure schema inference
-    let config = SchemaInferenceConfig {
-        ignore_outer_array: kwargs.ignore_outer_array,
-        delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
-        schema_uri: kwargs.schema_uri,
-    };
-
     if kwargs.debug {
         eprintln!("DEBUG: Processing {} JSON strings", json_strings.len());
-        eprintln!("DEBUG: Config: ignore_outer_array={}, ndjson={}", 
-                 config.ignore_outer_array, kwargs.ndjson);
+        eprintln!(
+            "DEBUG: Config: ignore_outer_array={}, ndjson={}",
+            kwargs.ignore_outer_array, kwargs.ndjson
+        );
+        for (i, json_str) in json_strings.iter().take(3).enumerate() {
+            eprintln!("DEBUG: Sample JSON {}: {}", i + 1, json_str);
+        }
     }
 
-    // Infer schema using the core function
-    let result = infer_schema_from_strings(&json_strings, config)
-        .map_err(|e| PolarsError::ComputeError(format!("Schema inference failed: {}", e).into()))?;
+    if kwargs.merge_schemas {
+        // Original behavior: merge all schemas into one
+        // Wrap EVERYTHING in panic catching, including config creation
+        let result = panic::catch_unwind(|| -> Result<String, String> {
+            let config = SchemaInferenceConfig {
+                ignore_outer_array: kwargs.ignore_outer_array,
+                delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
+                schema_uri: kwargs.schema_uri.clone(),
+            };
 
-    if kwargs.debug {
-        eprintln!("DEBUG: Processed {} objects", result.processed_count);
+            let schema_result = infer_json_schema_from_strings(&json_strings, config)
+                .map_err(|e| format!("Genson error: {}", e))?;
+
+            serde_json::to_string_pretty(&schema_result.schema)
+                .map_err(|e| format!("JSON serialization error: {}", e))
+        });
+
+        match result {
+            Ok(Ok(schema_json)) => {
+                if kwargs.debug {
+                    eprintln!("DEBUG: Successfully generated merged schema");
+                }
+                Ok(Series::new(
+                    "schema".into(),
+                    vec![schema_json; series.len()],
+                ))
+            }
+            Ok(Err(e)) => Err(PolarsError::ComputeError(
+                format!("Merged schema processing failed: {}", e).into(),
+            )),
+            Err(_panic) => Err(PolarsError::ComputeError(
+                "Panic occurred during merged schema JSON processing".into(),
+            )),
+        }
+    } else {
+        // New behavior: infer schema for each row individually
+        let result = panic::catch_unwind(|| -> Result<Vec<serde_json::Value>, String> {
+            let mut individual_schemas = Vec::new();
+            for json_str in &json_strings {
+                let config = SchemaInferenceConfig {
+                    ignore_outer_array: kwargs.ignore_outer_array,
+                    delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
+                    schema_uri: kwargs.schema_uri.clone(),
+                };
+
+                let single_result = infer_json_schema_from_strings(&[json_str.clone()], config)
+                    .map_err(|e| format!("Individual genson error: {}", e))?;
+                individual_schemas.push(single_result.schema);
+            }
+            Ok(individual_schemas)
+        });
+
+        match result {
+            Ok(Ok(individual_schemas)) => {
+                if kwargs.debug {
+                    eprintln!(
+                        "DEBUG: Generated {} individual schemas",
+                        individual_schemas.len()
+                    );
+                }
+
+                // Return array of schemas as JSON
+                let schemas_json =
+                    serde_json::to_string_pretty(&individual_schemas).map_err(|e| {
+                        PolarsError::ComputeError(
+                            format!("Failed to serialize individual schemas: {}", e).into(),
+                        )
+                    })?;
+
+                Ok(Series::new(
+                    "schema".into(),
+                    vec![schemas_json; series.len()],
+                ))
+            }
+            Ok(Err(e)) => Err(PolarsError::ComputeError(
+                format!("Individual schema inference failed: {}", e).into(),
+            )),
+            Err(_panic) => Err(PolarsError::ComputeError(
+                "Panic occurred during individual schema inference".into(),
+            )),
+        }
+    }
+}
+
+/// Polars expression that infers Polars schema from string column
+#[allow(unused_variables)]
+#[polars_expr(output_type_func=infer_polars_schema_output_type)]
+pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<Series> {
+    if inputs.is_empty() {
+        return Err(PolarsError::ComputeError("No input series provided".into()));
     }
 
-    // Convert schema to JSON string
-    let schema_json = serde_json::to_string(&result.schema)
-        .map_err(|e| PolarsError::ComputeError(format!("Failed to serialize schema: {}", e).into()))?;
+    let series = &inputs[0];
 
-    // Return as single-value series
-    Ok(Series::new("schema".into(), &[schema_json]))
+    // Create dummy schema data
+    let names = Series::new("name".into(), vec!["id", "name", "age"]);
+    let dtypes = Series::new("dtype".into(), vec!["Int64", "String", "Int32"]);
+
+    // Create struct series
+    let struct_series = StructChunked::from_series(
+        "schema_field".into(),
+        names.len(),
+        [&names, &dtypes].iter().cloned(),
+    )?
+    .into_series();
+
+    // Now we need to wrap this struct series in a list for each row
+    // Let's try a different approach - create the list directly
+    let list_values: Vec<Series> = (0..series.len()).map(|_| struct_series.clone()).collect();
+
+    let list_series = Series::new("schema".into(), list_values);
+    Ok(list_series)
 }

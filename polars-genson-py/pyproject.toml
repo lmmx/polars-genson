@@ -1,46 +1,35 @@
 [build-system]
-requires = ["maturin>=1.0,<2.0", "patchelf>=0.14", "polars>=0.20.6"]
 build-backend = "maturin"
+requires = ["maturin>=1.0,<2.0", "patchelf>=0.14", "polars>=0.20.6"]
 
 [project]
-name = "polars-genson"
-version = "0.1.0"
-description = "A Polars plugin for JSON schema inference using genson-rs."
-readme = "README.md"
-authors = [
-  {name = "Louis Maddox", email = "louismmx@gmail.com"}
-]
-requires-python = ">=3.9"
-dependencies = []
+authors = [{ email = "louismmx@gmail.com", name = "Louis Maddox" }]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
-  "Natural Language :: English",
   "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
   "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13"
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python",
 ]
+dependencies = ["orjson>=3.11.2"]
+description = "A Polars plugin for JSON schema inference using genson-rs."
+name = "polars-genson"
+readme = "README.md"
+requires-python = ">=3.9"
+version = "0.1.0"
 
 [project.optional-dependencies]
-polars = [
-  "polars>=1.32.0"
-]
-polars-lts-cpu = [
-  "polars-lts-cpu>=1.32.0"
-]
-dev = [
-  "pdm-bump>=0.9.10",
-  "pdm>=2.22.3",
-  "pre-commit>=4.1.0",
-  "pytest>=8.3.4"
-]
+dev = ["pdm-bump>=0.9.10", "pdm>=2.22.3", "pre-commit>=4.1.0", "pytest>=8.3.4"]
+polars = ["polars>=1.32.0"]
+polars-lts-cpu = ["polars-lts-cpu>=1.32.0"]
 
 [project.urls]
 Homepage = "https://github.com/lmmx/polars-genson"
@@ -53,18 +42,17 @@ release = true
 strip = true
 
 [tool.pytest.ini_options]
-markers = [
-  "failing: Tests that don't work"
-]
+markers = ["failing: Tests that don't work"]
 
 [tool.uv]
 # Build Rust code in development mode (faster builds)
-config-settings = {build-args = "--profile=dev"}
-default-groups = ["dev", "debug", "test"]
+config-settings = { build-args = "--profile=dev" }
+default-groups = ["build", "debug", "dev", "test"]
 
 [dependency-groups]
-dev = ["polars>=1.32.3"]
+build = ["maturin>=1.9.3", "patchelf>=0.17.2.4"]
 debug = ["pysnooper>=1.2.3"]
+dev = ["polars>=1.32.3"]
 test = ["pytest>=8.4.1"]
 
 [tool.ruff.lint]
