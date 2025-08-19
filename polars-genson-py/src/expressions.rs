@@ -20,6 +20,9 @@ pub struct GensonKwargs {
 
     #[serde(default = "default_merge_schemas")]
     pub merge_schemas: bool,
+
+    #[serde(default)]
+    pub convert_to_polars: bool,
 }
 
 fn default_ignore_outer_array() -> bool {
@@ -30,9 +33,18 @@ fn default_merge_schemas() -> bool {
     true
 }
 
-/// Computes output type for the expression
+/// JSON Schema is a String
 fn infer_json_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Field> {
     Ok(Field::new("schema".into(), DataType::String))
+}
+
+/// Polars schema is serialised to String
+fn infer_polars_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Field> {
+    let schema_field_struct = DataType::Struct(vec![
+        Field::new("name".into(), DataType::String),
+        Field::new("dtype".into(), DataType::String),
+    ]);
+    Ok(Field::new("schema".into(), DataType::List(Box::new(schema_field_struct))))
 }
 
 /// Polars expression that infers JSON schema from string column
@@ -156,4 +168,34 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
             )),
         }
     }
+}
+
+/// Polars expression that infers Polars schema from string column
+#[polars_expr(output_type_func=infer_polars_schema_output_type)]
+pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<Series> {
+    if inputs.is_empty() {
+        return Err(PolarsError::ComputeError("No input series provided".into()));
+    }
+
+    let series = &inputs[0];
+
+    // Create dummy schema data
+    let names = Series::new("name".into(), vec!["id", "name", "age"]);
+    let dtypes = Series::new("dtype".into(), vec!["Int64", "String", "Int32"]);
+
+    // Create struct series
+    let struct_series = StructChunked::from_series(
+        "schema_field".into(),
+        names.len(),
+        [&names, &dtypes].iter().cloned(),
+    )?.into_series();
+
+    // Now we need to wrap this struct series in a list for each row
+    // Let's try a different approach - create the list directly
+    let list_values: Vec<Series> = (0..series.len())
+        .map(|_| struct_series.clone())
+        .collect();
+
+    let list_series = Series::new("schema".into(), list_values);
+    Ok(list_series)
 }
