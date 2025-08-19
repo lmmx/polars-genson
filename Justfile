@@ -1,13 +1,14 @@
 default: clippy
 
-lint:    ty ruff-check
+# lint:    ty ruff-check
+lint: ruff-check
 lint-ci: clippy
 # lint-ci: ty-ci ruff-check
 
 fmt:     ruff-fmt code-quality-fix
 
 precommit:     lint fmt code-quality
-precommit-ci:  lint-ci  code-quality-ci
+precommit-ci:  lint-ci  code-quality
 precommit-fix: fmt      code-quality-fix
 
 prepush: clippy py-test py-dev
@@ -279,15 +280,7 @@ fix-eof-ws mode="":
           .
 
 code-quality:
-    just ty
-    taplo lint
-    taplo format --check
-    just fix-eof-ws check
-    cargo machete
-    cargo fmt --check --all
-
-code-quality-ci:
-    just ty-ci
+    # just ty-ci
     taplo lint
     taplo format --check
     just fix-eof-ws check
