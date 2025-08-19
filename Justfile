@@ -67,6 +67,7 @@ vendor-ci:
 ### #!/usr/bin/env echo-comment
 
 clippy-ci:
+    #!/usr/bin/bash
     echo "Hello Pre-Commit?"
     set -e
     # Start: $(date)
