@@ -16,7 +16,7 @@ prepush: clippy py-test py-dev
 ci: precommit prepush docs
 
 # Full development workflow
-dev-test: check test py-dev py-test
+dev-test: check build test py-dev py-test
 
 # CI workflow
 ci-full: precommit-ci prepush py-dev py-test docs
@@ -26,6 +26,24 @@ e:
 
 # -------------------------------------
 
+build:
+    cargo build --workspace
+
+# Check all projects
+check:
+    cargo check --workspace
+
+# Fast individual package checks
+check-core:
+    cargo check -p genson-core
+
+check-cli:
+    cargo check -p genson-cli
+
+check-py:
+    cargo check -p polars-genson-py
+
+# -------------------------------------
 
 clippy-all:
     cargo clippy --workspace --all-targets --all-features --target-dir target/clippy-all-features -- -D warnings
@@ -46,14 +64,14 @@ clippy-py:
 # -------------------------------------
 
 test *args:
-    cargo test {{args}}
+    cargo nextest run {{args}}
 
 test-ci *args:
-    #!/usr/bin/env -S bash -euo pipefail
-    echo -e "\033[1;33m🏃 Running Rust tests...\033[0m"
+    #!/usr/bin/env -S echo-comment --color bright-green
+    # 🏃 Running Rust tests...
     cargo test {{args}}
     
-    echo -e "\033[1;36m📚 Running documentation tests...\033[0m"
+    # 📚 Running documentation tests...
     cargo test --doc {{args}}
 
 # -------------------------------------
@@ -81,81 +99,79 @@ t:
 
 [working-directory: 'polars-genson-py']
 ty-ci:
-    #!/usr/bin/env bash
-    set -e  # Exit on any error
+    #!/usr/bin/env -S echo-comment --shell-flags="-e" --color blue
+    # 🔍 CI Environment Debug Information
+    # Current directory: $(pwd)
+    # Python available: $(which python3 || echo 'none')
+    # UV available: $(which uv || echo 'none')
     
-    echo "🔍 CI Environment Debug Information"
-    echo "Current directory: $(pwd)"
-    echo "Python available: $(which python3 || echo 'none')"
-    echo "UV available: $(which uv || echo 'none')"
-    
-    # Check if .venv exists, if not extract from compressed CI venv
+    ## Check if .venv exists, if not extract from compressed CI venv
     if [ ! -d ".venv" ]; then
-        echo "📦 Extracting compressed stubs for CI..."
+        # 📦 Extracting compressed stubs for CI...
         if [ -f ".stubs/venv.tar.gz" ]; then
-            echo "Found compressed stubs, extracting..."
+            # Found compressed stubs, extracting...
             tar -xzf .stubs/venv.tar.gz
             mv venv .venv
             
-            # Fix pyvenv.cfg with current absolute path
+            ## Fix pyvenv.cfg with current absolute path
             if [ -f ".venv/pyvenv.cfg" ]; then
                 CURRENT_DIR=$(pwd)
                 sed -i "s|PLACEHOLDER_DIR|${CURRENT_DIR}/.venv|g" ".venv/pyvenv.cfg"
-                echo "✓ pyvenv.cfg updated with current directory: $CURRENT_DIR"
-                echo "Updated pyvenv.cfg contents:"
+                # ✓ pyvenv.cfg updated with current directory: $CURRENT_DIR
+                # Updated pyvenv.cfg contents:
                 cat ".venv/pyvenv.cfg"
             fi
             
-            echo "✅ Extraction complete, running diagnostics..."
+            # ✅ Extraction complete, running diagnostics...
             
-            # Diagnostic checks
-            echo "🔍 Venv structure check:"
+            ## Diagnostic checks
+            # 🔍 Venv structure check:
             ls -la .venv/ | head -5
-            echo ""
+            #
             
-            echo "🔍 Python interpreter check:"
+            # 🔍 Python interpreter check:
             if [ -f ".venv/bin/python" ]; then
-                echo "Python executable exists"
+                # Python executable exists
                 .venv/bin/python --version || echo "❌ Python version check failed"
             else
-                echo "❌ No Python executable found"
+                # ❌ No Python executable found
                 ls -la .venv/bin/ | head -5
             fi
             
-            echo "🔍 Site-packages check:"
+            # 🔍 Site-packages check:
             SITE_PACKAGES=".venv/lib/python*/site-packages"
             if ls $SITE_PACKAGES >/dev/null 2>&1; then
-                echo "Site-packages directory exists:"
+                # Site-packages directory exists:
                 ls $SITE_PACKAGES | grep -E "(polars|polars_genson)" || echo "❌ Key packages not found"
             else
-                echo "❌ No site-packages directory found"
+                # ❌ No site-packages directory found
             fi
             
-            echo "🔍 Environment activation test:"
+            # 🔍 Environment activation test:
             export PATH="$(pwd)/.venv/bin:$PATH"
             export VIRTUAL_ENV="$(pwd)/.venv"
             export PYTHONPATH=""  # Clear any existing PYTHONPATH
             
-            echo "Active Python: $(which python)"
+            # Active Python: $(which python)
             python --version || echo "❌ Python activation failed"
             
-            echo "🔍 Critical imports test:"
+            # 🔍 Critical imports test:
             python -c 'import sys; print("✓ Python sys module working"); print("Python executable:", sys.executable)' || echo "❌ Basic Python test failed"
             python -c 'import polars as pl; print("✓ Polars import successful, version:", pl.__version__)' || echo "❌ Polars import failed"
             python -c 'import polars_genson; print("✓ Polars Genson import successful")' || echo "❌ Polars Genson import failed"
             python -c 'import pytest; print("✓ Pytest import successful")' || echo "❌ Pytest import failed"
             
         else
-            echo "❌ No stubs found, running regular setup..."
+            # ❌ No stubs found, running regular setup...
             just setup
         fi
     else
-        echo "✅ .venv already exists, activating..."
+        # ✅ .venv already exists, activating...
         export PATH="$(pwd)/.venv/bin:$PATH"
         export VIRTUAL_ENV="$(pwd)/.venv"
     fi
     
-    echo "🚀 Running ty check..."
+    # 🚀 Running ty check...
     just t
 
 # -------------------------------------
@@ -163,22 +179,6 @@ ty-ci:
 [working-directory: 'polars-genson-py']
 pf:
     pyrefly check . --output-format=min-text
-
-# -------------------------------------
-
-# Check all projects
-check:
-    cargo check --workspace
-
-# Fast individual package checks
-check-core:
-    cargo check -p genson-core
-
-check-cli:
-    cargo check -p genson-cli
-
-check-py:
-    cargo check -p polars-genson-py
 
 # -------------------------------------
 
@@ -321,17 +321,17 @@ example-complex:
 
 [working-directory: 'polars-genson-py']
 refresh-stubs *args="":
-    #!/usr/bin/env bash
+    #!/usr/bin/env -S echo-comment --shell-flags="-e" --color bright-green
     rm -rf .stubs
     set -e  # Exit on any error
     
-    # Check if --debug flag is passed and export DEBUG_PYSNOOPER
+    ## Check if --debug flag is passed and export DEBUG_PYSNOOPER
     debug_flag=false
     uv_args="--no-group debug"
-    echo "Args received: {{args}}"
+    # Args received: {{args}}
     if [[ "{{args}}" == *"--debug"* ]]; then
         export DEBUG_PYSNOOPER=true
-        echo "DEBUG MODE: ON"
+        # DEBUG MODE: ON
         debug_flag=true
         uv_args=""  # Remove --no-group debug when in debug mode
     fi
@@ -344,7 +344,7 @@ refresh-stubs *args="":
     rm -rf .venv
     mv offvenv .venv
     
-    # Unset DEBUG_PYSNOOPER if it was set
+    ## Unset DEBUG_PYSNOOPER if it was set
     if [[ "$debug_flag" == "true" ]]; then
         unset DEBUG_PYSNOOPER
     fi
@@ -353,10 +353,9 @@ refresh-stubs *args="":
 # Release a new version, pass --help for options to `uv version --bump`
 [working-directory: 'polars-genson-py']
 release bump_level="patch":
-    #!/usr/bin/env bash
-    set -e  # Exit on any error
-    
-    # Exit early if help was requested
+    #!/usr/bin/env -S echo-comment --shell-flags="-e" --color blue
+
+    ## Exit early if help was requested
     if [[ "{{bump_level}}" == "--help" ]]; then
         uv version --help
         exit 0
