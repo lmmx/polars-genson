@@ -45,7 +45,10 @@ fn infer_polars_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Fiel
         Field::new("name".into(), DataType::String),
         Field::new("dtype".into(), DataType::String),
     ]);
-    Ok(Field::new("schema".into(), DataType::List(Box::new(schema_field_struct))))
+    Ok(Field::new(
+        "schema".into(),
+        DataType::List(Box::new(schema_field_struct)),
+    ))
 }
 
 /// Polars expression that infers JSON schema from string column
@@ -190,13 +193,12 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
         "schema_field".into(),
         names.len(),
         [&names, &dtypes].iter().cloned(),
-    )?.into_series();
+    )?
+    .into_series();
 
     // Now we need to wrap this struct series in a list for each row
     // Let's try a different approach - create the list directly
-    let list_values: Vec<Series> = (0..series.len())
-        .map(|_| struct_series.clone())
-        .collect();
+    let list_values: Vec<Series> = (0..series.len()).map(|_| struct_series.clone()).collect();
 
     let list_series = Series::new("schema".into(), list_values);
     Ok(list_series)
