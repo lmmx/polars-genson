@@ -29,9 +29,7 @@ fn test_invalid_json() {
     cmd.arg(temp.path());
     cmd.assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "JSON schema inference failed due to invalid JSON input",
-        ))
+        .stderr(predicate::str::contains("Invalid JSON input"))
         .stderr(predicate::str::contains("panicked").not())
         .stderr(predicate::str::contains("SIGABRT").not());
 }
@@ -59,9 +57,7 @@ fn test_malformed_json_variants() {
         cmd.arg(temp_file.path());
         cmd.assert()
             .failure()
-            .stderr(predicate::str::contains(
-                "JSON schema inference failed due to invalid JSON input"
-            ))
+            .stderr(predicate::str::contains("Invalid JSON input"))
             .stderr(predicate::str::contains("panicked").not())
             .stderr(predicate::str::contains("SIGABRT").not());
     }

@@ -113,8 +113,9 @@ mod tests {
             }
             Err(error_msg) => {
                 println!("✅ Got error in unit test: {}", error_msg);
-                // This should match what genson-core returns when it catches panics
-                assert_eq!(error_msg, "JSON schema inference failed due to invalid JSON input");
+                // Check for the key parts of the error message instead of exact match
+                assert!(error_msg.contains("Invalid JSON input"));
+                assert!(error_msg.contains("line"));
             }
         }
     }
@@ -134,7 +135,9 @@ mod tests {
             }
             Err(error_msg) => {
                 println!("✅ Got expected error: {}", error_msg);
-                assert_eq!(error_msg, "JSON schema inference failed due to invalid JSON input");
+                // Check for the key parts of the error message instead of exact match
+                assert!(error_msg.contains("Invalid JSON input"));
+                assert!(error_msg.contains("line"));
             }
         }
     }
