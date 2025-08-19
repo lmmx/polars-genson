@@ -167,7 +167,9 @@ class GensonNamespace:
 
         # Extract the schema from the first column, which is the struct
         schema_info = result.to_series().item()
-        schema = pl.Schema({field["name"]: field["dtype"] for field in schema_info})
+        schema = pl.Schema(
+            {field["name"]: getattr(pl, field["dtype"]) for field in schema_info}
+        )
         return schema
 
     def infer_json_schema(
