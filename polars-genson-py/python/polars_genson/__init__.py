@@ -78,12 +78,97 @@ def infer_json_schema(
     return plug(expr, **kwargs)
 
 
+def infer_polars_schema(
+    expr: pl.Expr,
+    *,
+    ignore_outer_array: bool = True,
+    ndjson: bool = False,
+    merge_schemas: bool = True,
+    debug: bool = False,
+) -> pl.Expr:
+    """Infer Polars schema from a string column containing JSON data.
+
+    Parameters
+    ----------
+    expr : pl.Expr
+        Expression representing a string column containing JSON data
+    ignore_outer_array : bool, default True
+        Whether to treat top-level arrays as streams of objects
+    ndjson : bool, default False
+        Whether to treat input as newline-delimited JSON
+    merge_schemas : bool, default True
+        Whether to merge schemas from all rows (True) or return individual schemas (False)
+    debug : bool, default False
+        Whether to print debug information
+
+    Returns:
+    -------
+    pl.Expr
+        Expression representing the inferred JSON schema
+    """
+    kwargs = {
+        "ignore_outer_array": ignore_outer_array,
+        "ndjson": ndjson,
+        "merge_schemas": merge_schemas,
+        "debug": debug,
+    }
+
+    return plug(expr, **kwargs)
+
+
 @register_dataframe_namespace("genson")
 class GensonNamespace:
     """Namespace for JSON schema inference operations."""
 
     def __init__(self, df: pl.DataFrame):
         self._df = df
+
+    def infer_polars_schema(
+        self,
+        column: str,
+        *,
+        ignore_outer_array: bool = True,
+        ndjson: bool = False,
+        merge_schemas: bool = True,
+        debug: bool = False,
+    ) -> pl.Schema:
+        # ) -> pl.Schema | list[pl.Schema]:
+        """Infer Polars schema from a string column containing JSON data.
+
+        Parameters
+        ----------
+        column : str
+            Name of the column containing JSON strings
+        ignore_outer_array : bool, default True
+            Whether to treat top-level arrays as streams of objects
+        ndjson : bool, default False
+            Whether to treat input as newline-delimited JSON
+        merge_schemas : bool, default True
+            Whether to merge schemas from all rows (True) or return individual schemas (False)
+        debug : bool, default False
+            Whether to print debug information
+
+        Returns:
+        -------
+        pl.Schema | list[pl.Schema]
+            The inferred schema (if merge_schemas=True) or list of schemas (if merge_schemas=False)
+        """
+        if not merge_schemas:
+            raise NotImplementedError("Only merge schemas is implemented")
+        result = self._df.select(
+            infer_polars_schema(
+                pl.col(column),
+                ignore_outer_array=ignore_outer_array,
+                ndjson=ndjson,
+                merge_schemas=merge_schemas,
+                debug=debug,
+            ).first()
+        )
+
+        # Extract the schema from the first column, which is the struct
+        schema_info = result.to_series().item()
+        schema = pl.Schema({field["name"]: field["dtype"] for field in schema_info})
+        return schema
 
     def infer_json_schema(
         self,
