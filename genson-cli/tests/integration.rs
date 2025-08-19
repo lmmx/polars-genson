@@ -49,9 +49,9 @@ fn test_malformed_json_variants() {
         
         // Create a temporary file with invalid JSON
         let mut temp_file = NamedTempFile::new()
-            .expect(&format!("Failed to create temp file for {}", description));
+            .unwrap_or_else(|_| panic!("Failed to create temp file for {}", description));
         temp_file.write_all(invalid_json.as_bytes())
-            .expect(&format!("Failed to write to temp file for {}", description));
+            .unwrap_or_else(|_| panic!("Failed to write to temp file for {}", description));
         
         let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
         cmd.arg(temp_file.path());

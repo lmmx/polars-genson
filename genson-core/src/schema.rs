@@ -236,7 +236,7 @@ mod tests {
                 .eval(&error_msg);
             
             println!("   ❌ Correctly failed with: {}", error_msg);
-            println!("");
+            println!();
         }
     }
 
@@ -423,7 +423,7 @@ mod tests {
         let schema_str = result.schema.to_string();
 
         // The schema should include properties from all lines
-        assert!(schema_str.contains("Alice") == false); // values are not in schema
+        assert!(!schema_str.contains("Alice")); // values are not in schema
         assert!(schema_str.contains("\"name\""));
         assert!(schema_str.contains("\"age\""));
         assert!(schema_str.contains("\"city\""));
