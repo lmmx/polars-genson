@@ -63,30 +63,6 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
         ));
     }
 
-    // Debug the strings we're about to process
-    eprintln!("DEBUG: About to process {} strings", json_strings.len());
-    for (i, s) in json_strings.iter().enumerate() {
-        eprintln!("DEBUG: String {}: '{}'", i, s);
-        if s.contains("invalid") || s.contains("json}") {
-            eprintln!("DEBUG: Found potentially problematic string: {}", s);
-            // Try to catch panic even from genson-rs directly on this single string
-            let test_result = panic::catch_unwind(|| {
-                genson_core::infer_schema_from_strings(&[s.clone()], genson_core::SchemaInferenceConfig::default())
-            });
-            match test_result {
-                Ok(Ok(_)) => eprintln!("DEBUG: String passed genson test"),
-                Ok(Err(e)) => {
-                    eprintln!("DEBUG: String caused genson error: {}", e);
-                    return Err(PolarsError::ComputeError(format!("Invalid JSON detected: {}", e).into()));
-                }
-                Err(_) => {
-                    eprintln!("DEBUG: String caused panic in genson");
-                    return Err(PolarsError::ComputeError("Invalid JSON caused panic".into()));
-                }
-            }
-        }
-    }
-
     if kwargs.debug {
         eprintln!("DEBUG: Processing {} JSON strings", json_strings.len());
         eprintln!(

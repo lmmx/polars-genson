@@ -1,3 +1,4 @@
+use serde::de::Error as DeError;
 use std::panic::{self, AssertUnwindSafe};
 use genson_rs::{build_json_schema, get_builder, BuildConfig};
 use serde::{Deserialize, Serialize};
@@ -38,6 +39,18 @@ fn validate_json(s: &str) -> Result<(), serde_json::Error> {
     de.end()
 }
 
+fn validate_ndjson(s: &str) -> Result<(), serde_json::Error> {
+    for line in s.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        validate_json(trimmed)?; // propagate serde_json::Error
+    }
+    Ok(())
+}
+
+
 /// Infer JSON schema from a collection of JSON strings
 pub fn infer_schema_from_strings(
     json_strings: &[String],
@@ -66,8 +79,18 @@ pub fn infer_schema_from_strings(
                 continue;
             }
 
-            // ✅ Validate JSON before sending it to genson-rs
-            if let Err(parse_error) = validate_json(json_str) {
+            // Choose validation strategy based on delimiter
+            let validation_result = if let Some(delim) = config.delimiter {
+                if delim == b'\n' {
+                    validate_ndjson(json_str)
+                } else {
+                    Err(serde_json::Error::custom(format!("Unsupported delimiter: {:?}", delim)))
+                }
+            } else {
+                validate_json(json_str)
+            };
+
+            if let Err(parse_error) = validation_result {
                 let truncated_json = if json_str.len() > MAX_JSON_ERROR_LENGTH {
                     format!(
                         "{}... [truncated {} chars]",
@@ -81,7 +104,7 @@ pub fn infer_schema_from_strings(
                 return Err(format!(
                     "Invalid JSON input at index {}: {} - JSON: {}",
                     i + 1,
-                    parse_error,   // contains line/col
+                    parse_error,
                     truncated_json
                 ));
             }
@@ -371,5 +394,66 @@ mod tests {
 
         println!("✅ Complex nested schema generated successfully");
         println!("Schema: {}", serde_json::to_string_pretty(&result.schema).unwrap());
+    }
+
+    #[test]
+    fn test_ndjson_parsing() {
+        // Two valid JSON objects separated by newlines (NDJSON format)
+        let ndjson_input = r#"
+{"name": "Alice", "age": 30}
+{"name": "Bob", "age": 25, "city": "NYC"}
+{"name": "Charlie"}
+"#;
+
+        let json_strings = vec![ndjson_input.to_string()];
+
+        let config = SchemaInferenceConfig {
+            delimiter: Some(b'\n'),
+            ..Default::default()
+        };
+
+        let result = infer_schema_from_strings(&json_strings, config)
+            .expect("NDJSON schema inference should succeed");
+
+        // All 3 objects should be processed
+        assert_eq!(result.processed_count, 1,
+            "NDJSON should be counted as a single input string but parsed into multiple rows internally"
+        );
+
+        let schema_str = result.schema.to_string();
+
+        // The schema should include properties from all lines
+        assert!(schema_str.contains("Alice") == false); // values are not in schema
+        assert!(schema_str.contains("\"name\""));
+        assert!(schema_str.contains("\"age\""));
+        assert!(schema_str.contains("\"city\""));
+
+        println!("✅ NDJSON schema generated: {}", serde_json::to_string_pretty(&result.schema).unwrap());
+    }
+
+    #[test]
+    fn test_invalid_ndjson_line() {
+        // Second line is malformed
+        let ndjson_input = r#"
+{"valid": true}
+{"invalid": json}
+{"also_valid": 123}
+"#;
+
+        let json_strings = vec![ndjson_input.to_string()];
+
+        let config = SchemaInferenceConfig {
+            delimiter: Some(b'\n'),
+            ..Default::default()
+        };
+
+        let result = infer_schema_from_strings(&json_strings, config);
+
+        assert!(result.is_err(), "Expected error for malformed NDJSON line");
+
+        let err_msg = result.unwrap_err();
+        eprintln!("Got error: {}", err_msg);
+        assert!(err_msg.contains("Invalid JSON input at index 1: expected value at line 1 column 13"), "Error message should report the failing line");
+        println!("✅ Correctly rejected malformed NDJSON: {}", err_msg);
     }
 }
