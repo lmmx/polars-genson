@@ -175,7 +175,6 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
 }
 
 /// Polars expression that infers Polars schema from string column
-#[allow(unused_variables)]
 #[polars_expr(output_type_func=infer_polars_schema_output_type)]
 pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<Series> {
     if inputs.is_empty() {
@@ -183,23 +182,139 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
     }
 
     let series = &inputs[0];
+    let string_chunked = series.str().map_err(|_| {
+        PolarsError::ComputeError("Expected a string column for Polars schema inference".into())
+    })?;
 
-    // Create dummy schema data
-    let names = Series::new("name".into(), vec!["id", "name", "age"]);
-    let dtypes = Series::new("dtype".into(), vec!["Int64", "String", "Int32"]);
+    // Collect all non-null string values from ALL rows
+    let mut json_strings = Vec::new();
+    for s in string_chunked.iter().flatten() {
+        if !s.trim().is_empty() {
+            json_strings.push(s.to_string());
+        }
+    }
 
-    // Create struct series
-    let struct_series = StructChunked::from_series(
-        "schema_field".into(),
-        names.len(),
-        [&names, &dtypes].iter().cloned(),
-    )?
-    .into_series();
+    if json_strings.is_empty() {
+        return Err(PolarsError::ComputeError(
+            "No valid JSON strings found in column".into(),
+        ));
+    }
 
-    // Now we need to wrap this struct series in a list for each row
-    // Let's try a different approach - create the list directly
-    let list_values: Vec<Series> = (0..series.len()).map(|_| struct_series.clone()).collect();
+    // Use genson to infer JSON schema, then convert to Polars schema fields
+    let result = panic::catch_unwind(|| -> Result<Vec<(String, String)>, String> {
+        let config = SchemaInferenceConfig {
+            ignore_outer_array: kwargs.ignore_outer_array,
+            delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
+            schema_uri: kwargs.schema_uri.clone(),
+        };
 
-    let list_series = Series::new("schema".into(), list_values);
-    Ok(list_series)
+        let schema_result = infer_json_schema_from_strings(&json_strings, config)
+            .map_err(|e| format!("Genson error: {}", e))?;
+
+        // Convert JSON schema to Polars field mappings
+        let polars_fields = json_schema_to_polars_fields(&schema_result.schema, kwargs.debug)?;
+        Ok(polars_fields)
+    });
+
+    match result {
+        Ok(Ok(polars_fields)) => {
+            // Convert field mappings to name/dtype series
+            let field_names: Vec<String> =
+                polars_fields.iter().map(|(name, _)| name.clone()).collect();
+            let field_dtypes: Vec<String> = polars_fields
+                .iter()
+                .map(|(_, dtype)| dtype.clone())
+                .collect();
+
+            let names = Series::new("name".into(), field_names);
+            let dtypes = Series::new("dtype".into(), field_dtypes);
+
+            // Create struct series
+            let struct_series = StructChunked::from_series(
+                "schema_field".into(),
+                names.len(),
+                [&names, &dtypes].iter().cloned(),
+            )?
+            .into_series();
+
+            // Create list for each input row
+            let list_values: Vec<Series> =
+                (0..series.len()).map(|_| struct_series.clone()).collect();
+
+            let list_series = Series::new("schema".into(), list_values);
+            Ok(list_series)
+        }
+        Ok(Err(e)) => Err(PolarsError::ComputeError(
+            format!("Schema conversion failed: {}", e).into(),
+        )),
+        Err(_panic) => Err(PolarsError::ComputeError(
+            "Panic occurred during schema inference".into(),
+        )),
+    }
+}
+
+// Helper function to convert JSON schema to Polars field types
+fn json_schema_to_polars_fields(
+    json_schema: &serde_json::Value,
+    debug: bool,
+) -> Result<Vec<(String, String)>, String> {
+    let mut fields = Vec::new();
+
+    // Debug: print the full JSON schema
+    if debug {
+        eprintln!("=== Generated JSON Schema ===");
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(json_schema)
+                .unwrap_or_else(|_| "Failed to serialize".to_string())
+        );
+        eprintln!("=============================");
+    }
+
+    if let Some(properties) = json_schema.get("properties").and_then(|p| p.as_object()) {
+        for (field_name, field_schema) in properties {
+            let polars_type = json_type_to_polars_type(field_schema)?;
+            fields.push((field_name.clone(), polars_type));
+        }
+    }
+
+    Ok(fields)
+}
+
+fn json_type_to_polars_type(json_schema: &serde_json::Value) -> Result<String, String> {
+    if let Some(type_value) = json_schema.get("type") {
+        match type_value.as_str() {
+            Some("string") => Ok("String".to_string()),
+            Some("integer") => Ok("Int64".to_string()),
+            Some("number") => Ok("Float64".to_string()),
+            Some("boolean") => Ok("Boolean".to_string()),
+            Some("null") => Ok("Null".to_string()),
+            Some("array") => {
+                // Handle arrays with item types
+                if let Some(items) = json_schema.get("items") {
+                    let item_type = json_type_to_polars_type(items)?;
+                    Ok(format!("List[{}]", item_type))
+                } else {
+                    Ok("List".to_string()) // Fallback for arrays without item info
+                }
+            }
+            Some("object") => {
+                // Handle nested objects/structs
+                if let Some(properties) = json_schema.get("properties").and_then(|p| p.as_object())
+                {
+                    let mut struct_fields = Vec::new();
+                    for (field_name, field_schema) in properties {
+                        let field_type = json_type_to_polars_type(field_schema)?;
+                        struct_fields.push(format!("{}:{}", field_name, field_type));
+                    }
+                    Ok(format!("Struct[{}]", struct_fields.join(",")))
+                } else {
+                    Ok("Struct".to_string()) // Fallback for objects without properties
+                }
+            }
+            _ => Ok("String".to_string()), // Default fallback
+        }
+    } else {
+        Ok("String".to_string()) // Default fallback
+    }
 }

@@ -10,6 +10,7 @@ import polars as pl
 from polars.api import register_dataframe_namespace
 from polars.plugins import register_plugin_function
 
+from .dtypes import _parse_polars_dtype
 from .utils import parse_into_expr, parse_version  # noqa: F401
 
 # Determine the correct plugin path
@@ -166,9 +167,13 @@ class GensonNamespace:
         )
 
         # Extract the schema from the first column, which is the struct
-        schema_info = result.to_series().item()
-        schema = pl.Schema({field["name"]: field["dtype"] for field in schema_info})
-        return schema
+        schema_fields = result.to_series().item()
+        return pl.Schema(
+            {
+                field["name"]: _parse_polars_dtype(field["dtype"])
+                for field in schema_fields
+            }
+        )
 
     def infer_json_schema(
         self,
