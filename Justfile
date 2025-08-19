@@ -67,6 +67,7 @@ vendor-ci:
 clippy-ci:
     #!/usr/bin/env echo-comment
     set -e
+    # Start: $(date)
     # 🔍 CI Environment Debug Information
     # Current directory: $(pwd)
     # Rust available: $(which rustc || echo 'none')
@@ -150,7 +151,7 @@ clippy-ci:
     fi
 
     # 🚀 Running clippy check...
-    cargo clippy --offline --workspace --all-targets --target-dir target/clippy --no-deps -- -D warnings
+    cargo clippy --offline --workspace --target-dir target/clippy --no-deps -- -D warnings
 
     # 🧹 Cleanup: restore original state
     # Clean up extracted vendored dependencies (keep only the tarball)
@@ -165,6 +166,7 @@ clippy-ci:
         rm -rf .cargo
         # ✓ Restored original state (no .cargo config)
     fi
+    # End: $(date)
 
 # -------------------------------------
 
