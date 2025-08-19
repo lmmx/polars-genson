@@ -48,9 +48,6 @@ check-py:
 clippy-all:
     cargo clippy --workspace --all-targets --all-features --target-dir target/clippy-all-features -- -D warnings
 
-clippy:
-    cargo clippy --workspace --all-targets --target-dir target/clippy -- -D warnings
-
 clippy-ci:
     cargo clippy --offline --workspace --all-targets --target-dir target/clippy -- -D warnings
 
@@ -63,6 +60,79 @@ clippy-cli:
 
 clippy-py:
     cargo clippy -p polars-genson-py -- -D warnings
+
+clippy-ci:
+    #!/usr/bin/env -S echo-comment --shell-flags="-e" --color blue
+    # 🔍 CI Environment Debug Information
+    # Current directory: $(pwd)
+    # Rust available: $(which rustc || echo 'none')
+    # Cargo available: $(which cargo || echo 'none')
+    
+    ## Check if vendor directory exists, if not extract from compressed vendored dependencies
+    if [ ! -d "vendor" ]; then
+        # 📦 Extracting compressed vendored dependencies for CI...
+        if [ -f ".vendored.tar.gz" ]; then
+            # Found compressed vendored dependencies, extracting...
+            tar -xzf .vendored.tar.gz
+            
+            ## Fix .cargo/config.toml with current absolute path
+            if [ -f ".cargo/config.toml" ]; then
+                CURRENT_DIR=$(pwd)
+                sed -i "s|PLACEHOLDER_DIR|${CURRENT_DIR}/vendor|g" ".cargo/config.toml"
+                # ✓ .cargo/config.toml updated with current directory: $CURRENT_DIR
+                # Updated .cargo/config.toml contents:
+                cat ".cargo/config.toml"
+            fi
+    
+            # ✅ Extraction complete, running diagnostics...
+    
+            ## Diagnostic checks
+            # 🔍 Vendor structure check:
+            ls -la vendor/ | head -5
+            #
+    
+            # 🔍 Cargo config check:
+            if [ -f ".cargo/config.toml" ]; then
+                # Cargo config exists
+                grep -E "(source|directory)" .cargo/config.toml || echo "❌ Cargo config check failed"
+            else
+                # ❌ No .cargo/config.toml found
+                ls -la .cargo/ | head -5 2>/dev/null || echo "❌ No .cargo directory found"
+            fi
+    
+            # 🔍 Vendored crates check:
+            VENDOR_CRATES="vendor"
+            if ls $VENDOR_CRATES >/dev/null 2>&1; then
+                # Vendor directory exists:
+                find $VENDOR_CRATES -maxdepth 1 -type d | wc -l | xargs -I {} echo "Found {} vendored crate directories"
+            else
+                # ❌ No vendor directory found
+            fi
+    
+            # 🔍 Offline build test:
+            export CARGO_NET_OFFLINE=true
+            export CARGO_HOME="$(pwd)/.cargo"
+    
+            # Active Cargo: $(which cargo)
+            cargo --version || echo "❌ Cargo activation failed"
+    
+            # 🔍 Critical dependency test:
+            cargo metadata --format-version 1 --offline --no-deps >/dev/null 2>&1 && echo "✓ Cargo metadata successful" || echo "❌ Cargo metadata failed"
+            cargo check --offline --quiet >/dev/null 2>&1 && echo "✓ Offline dependency resolution successful" || echo "❌ Offline dependency resolution failed"
+    
+        else
+            # No vendored dependencies found, cannot proceed offline
+            # ❌ .vendored.tar.gz not found - run cargo vendor-filterer first
+            exit 1
+        fi
+    else
+        # ✅ vendor directory already exists, activating...
+        export CARGO_NET_OFFLINE=true
+        export CARGO_HOME="$(pwd)/.cargo"
+    fi
+
+# 🚀 Running clippy check...
+cargo clippy --offline --workspace --all-targets --target-dir target/clippy -- -D warnings
 
 # -------------------------------------
 
