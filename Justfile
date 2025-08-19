@@ -65,7 +65,8 @@ vendor-ci:
     cargo vendor-filterer --versioned-dirs --platform=x86_64-unknown-linux-gnu .vendored/vendored.tar.gz --format=tar.gz
 
 clippy-ci:
-    #!/usr/bin/env -S echo-comment --shell-flags="-e" --color blue
+    #!/usr/bin/env echo-comment
+    set -e
     # 🔍 CI Environment Debug Information
     # Current directory: $(pwd)
     # Rust available: $(which rustc || echo 'none')
