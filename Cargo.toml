@@ -3,7 +3,7 @@ codegen-units = 256
 debug = false
 lto = false
 opt-level = 0
-panic = "abort"
+panic = "unwind"
 strip = "debuginfo"
 
 [profile.release]
@@ -11,7 +11,7 @@ codegen-units = 1
 debug = false
 lto = "thin"
 opt-level = 2
-panic = "abort"
+panic = "unwind"
 strip = "symbols"
 
 [workspace]
@@ -45,3 +45,4 @@ authors = ["Louis Maddox <louismmx@gmail.com>"]
 edition = "2021"
 license = "MIT"
 version = "0.1.0"
+
