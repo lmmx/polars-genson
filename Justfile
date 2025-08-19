@@ -1,4 +1,4 @@
-default: lint
+default: clippy
 
 lint:    ty ruff-check
 lint-ci: ty-ci ruff-check
