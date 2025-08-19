@@ -4,7 +4,7 @@ polars.workspace = true
 polars-arrow.workspace = true
 pyo3.workspace = true
 pyo3-polars.workspace = true
-serde = { workspace = true, features = ["derive"] }
+serde = { features = ["derive"], workspace = true }
 serde_json = { workspace = true }
 
 [lib]

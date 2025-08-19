@@ -1,7 +1,6 @@
 """Tests for JSON array handling."""
 
 import polars as pl
-
 import polars_genson  # noqa: F401
 
 
@@ -56,7 +55,7 @@ def test_ndjson_format():
         }
     )
 
-    schema = df.genson.infer_schema("json_data", ndjson=True)
+    schema = df.genson.infer_schema("json_data", debug=True, ndjson=True)
 
     assert isinstance(schema, dict)
     assert "properties" in schema
