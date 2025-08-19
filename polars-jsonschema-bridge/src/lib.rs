@@ -44,7 +44,7 @@ pub fn json_schema_to_polars_schema(json_schema: &Value) -> Result<Schema> {
         .and_then(|p| p.as_object())
         .ok_or_else(|| ConversionError::InvalidJsonSchema("Missing 'properties' field".to_string()))?;
 
-    let required_fields: Vec<&str> = json_schema
+    let _required_fields: Vec<&str> = json_schema
         .get("required")
         .and_then(|r| r.as_array())
         .map(|arr| {
