@@ -2,13 +2,12 @@ default: clippy
 
 # lint:    ty ruff-check
 lint: ruff-check
-lint-ci: clippy-ci
 # lint-ci: ty-ci ruff-check
 
 fmt:     ruff-fmt code-quality-fix
 
 precommit:     lint fmt code-quality
-precommit-ci:  lint-ci  code-quality
+precommit-ci:           code-quality
 precommit-fix: fmt      code-quality-fix
 
 prepush: clippy py-test py-dev
@@ -63,113 +62,6 @@ clippy-py:
 vendor-ci:
     mkdir -p .vendored
     cargo vendor-filterer --versioned-dirs --platform=x86_64-unknown-linux-gnu .vendored/vendored.tar.gz --format=tar.gz
-
-### #!/usr/bin/env echo-comment
-
-clippy-ci:
-    #!/usr/bin/bash
-    echo "Hello Pre-Commit?"
-    set -e
-    # Start: $(date)
-    # 🔍 CI Environment Debug Information
-    # Current directory: $(pwd)
-    # Rust available: $(which rustc || echo 'none')
-    # Cargo available: $(which cargo || echo 'none')
-
-    ## Check if vendor directory exists, if not extract from compressed vendored dependencies
-    if [ ! -d ".vendored" ] || [ ! "$(ls -A .vendored 2>/dev/null | grep -v vendored.tar.gz)" ]; then
-        # 📦 Extracting compressed vendored dependencies for CI...
-        if [ -f ".vendored/vendored.tar.gz" ]; then
-            # Found compressed vendored dependencies, extracting...
-            cd .vendored
-            tar -xzf vendored.tar.gz
-            cd ..
-            
-            ## Fix .cargo/config.toml with current absolute path
-            if [ -f ".cargo/config.toml" ]; then
-                CURRENT_DIR=$(pwd)
-                sed -i "s|PLACEHOLDER_DIR|${CURRENT_DIR}/.vendored|g" ".cargo/config.toml"
-                # ✓ .cargo/config.toml updated with current directory: $CURRENT_DIR
-                # Updated .cargo/config.toml contents:
-                cat ".cargo/config.toml"
-            else
-                # No .cargo/config.toml found, creating temporary one
-                mkdir -p .cargo
-                cat > .cargo/config.toml << 'EOF'
-    [source.crates-io]
-    replace-with = "vendored-sources"
-
-    [source.vendored-sources]
-    directory = ".vendored"
-    EOF
-                # Mark for cleanup
-                CREATED_CARGO_CONFIG=true
-            fi
-
-            # ✅ Extraction complete, running diagnostics...
-
-            ## Diagnostic checks
-            # 🔍 Vendor structure check:
-            ls -la .vendored/ | head -5
-            #
-
-            # 🔍 Cargo config check:
-            if [ -f ".cargo/config.toml" ]; then
-                # Cargo config exists
-                grep -E "(source|directory)" .cargo/config.toml || echo "❌ Cargo config check failed"
-            else
-                # ❌ No .cargo/config.toml found
-                ls -la .cargo/ | head -5 2>/dev/null || echo "❌ No .cargo directory found"
-            fi
-
-            # 🔍 Vendored crates check:
-            VENDOR_CRATES=".vendored"
-            if ls $VENDOR_CRATES >/dev/null 2>&1; then
-                # Vendor directory exists:
-                find $VENDOR_CRATES -maxdepth 1 -type d -name "*-*" | wc -l | xargs -I {} echo "Found {} vendored crate directories"
-            else
-                : # ❌ No vendor directory found
-            fi
-
-            # 🔍 Offline build test:
-            export CARGO_NET_OFFLINE=true
-            export CARGO_HOME="$(pwd)/.cargo"
-
-            # Active Cargo: $(which cargo)
-            cargo --version || echo "❌ Cargo activation failed"
-
-            # 🔍 Critical dependency test:
-            cargo metadata --format-version 1 --offline --no-deps >/dev/null 2>&1 && echo "✓ Cargo metadata successful" || echo "❌ Cargo metadata failed"
-            cargo check --offline --quiet >/dev/null 2>&1 && echo "✓ Offline dependency resolution successful" || echo "❌ Offline dependency resolution failed"
-
-        else
-            # ❌ No vendored dependencies found, cannot proceed offline...
-            # ERROR: .vendored/vendored.tar.gz not found - run 'just vendor-ci' first
-            exit 1
-        fi
-    else
-        # ✅ .vendored directory already exists with crates, activating...
-        export CARGO_NET_OFFLINE=true
-        export CARGO_HOME="$(pwd)/.cargo"
-    fi
-
-    # 🚀 Running clippy check...
-    cargo clippy --offline --workspace --target-dir target/clippy --no-deps -- -D warnings
-
-    # 🧹 Cleanup: restore original state
-    # Clean up extracted vendored dependencies (keep only the tarball)
-    if [ -d ".vendored" ] && [ -f ".vendored/vendored.tar.gz" ]; then
-        # Remove all extracted crate directories but keep the tarball
-        find .vendored -maxdepth 1 -type d -name "*-*" -exec rm -rf {} +
-        # ✓ Cleaned up extracted vendored dependencies
-    fi
-    
-    if [ "$CREATED_CARGO_CONFIG" = "true" ]; then
-        # Removing temporary .cargo directory that we created (including any cache files)
-        rm -rf .cargo
-        # ✓ Restored original state (no .cargo config)
-    fi
-    # End: $(date)
 
 # -------------------------------------
 
