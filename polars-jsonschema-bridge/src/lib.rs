@@ -223,15 +223,6 @@ pub fn json_schema_to_polars_dtype(json_schema: &Value) -> Result<DataType> {
             let inner_dtype = json_schema_to_polars_dtype(items_schema)?;
 
             // Check if it's a fixed-size array
-            if let (Some(min_items), Some(max_items)) = (
-                json_schema.get("minItems").and_then(|m| m.as_u64()),
-                json_schema.get("maxItems").and_then(|m| m.as_u64()),
-            ) {
-                if min_items == max_items {
-                    return Ok(DataType::Array(Box::new(inner_dtype), min_items as usize));
-                }
-            }
-
             Ok(DataType::List(Box::new(inner_dtype)))
         }
 

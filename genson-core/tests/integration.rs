@@ -1,4 +1,4 @@
-use genson_core::{infer_schema_from_strings, SchemaInferenceConfig};
+use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 
 #[test]
 fn test_invalid_json_integration() {
@@ -20,7 +20,7 @@ fn test_invalid_json_integration() {
         let json_strings = vec![invalid_json.to_string()];
 
         // This should NOT panic - it should return a proper error
-        let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+        let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
         match result {
             Ok(schema_result) => {
@@ -56,7 +56,7 @@ fn test_mixed_valid_and_invalid_json() {
     ];
 
     // This should handle the invalid JSON gracefully
-    let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+    let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
     // Should either:
     // 1. Return an error (preferred)
@@ -91,7 +91,7 @@ fn test_only_invalid_json() {
         r#"{"also": invalid}"#.to_string(),
     ];
 
-    let result = infer_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
+    let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
     // Should definitely return an error
     assert!(result.is_err(), "Should return error for all invalid JSON");

@@ -66,7 +66,7 @@ shape: (3, 1)
 
 ```python
 # Infer schema from the JSON column using the genson namespace
-schema = df.genson.infer_schema("json_data")
+schema = df.genson.infer_json_schema("json_data")
 
 print("Inferred schema:")
 print(json.dumps(schema, indent=2))
@@ -115,7 +115,7 @@ result = df.select(
 )
 
 # Or use with different options
-schema = df.genson.infer_schema(
+schema = df.genson.infer_json_schema(
     "json_data",
     ignore_outer_array=False,  # Treat top-level arrays as arrays
     ndjson=True,              # Handle newline-delimited JSON

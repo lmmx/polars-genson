@@ -85,7 +85,7 @@ class GensonNamespace:
     def __init__(self, df: pl.DataFrame):
         self._df = df
 
-    def infer_schema(
+    def infer_json_schema(
         self,
         column: str,
         *,
