@@ -32,6 +32,12 @@ pub struct SchemaInferenceResult {
     pub processed_count: usize,
 }
 
+fn validate_json(s: &str) -> Result<(), serde_json::Error> {
+    let mut de = serde_json::Deserializer::from_str(s);
+    serde::de::IgnoredAny::deserialize(&mut de)?; // lightweight: ignores the parsed value
+    de.end()
+}
+
 /// Infer JSON schema from a collection of JSON strings
 pub fn infer_schema_from_strings(
     json_strings: &[String],
@@ -55,30 +61,32 @@ pub fn infer_schema_from_strings(
         let mut processed_count = 0;
 
         // Process each JSON string
-        for json_str in json_strings {
+        for (i, json_str) in json_strings.iter().enumerate() {
             if json_str.trim().is_empty() {
                 continue;
             }
 
             // ✅ Validate JSON before sending it to genson-rs
-            if let Err(parse_error) = serde_json::from_str::<Value>(json_str) {
-                // Truncate very long JSON strings to keep error messages readable
+            if let Err(parse_error) = validate_json(json_str) {
                 let truncated_json = if json_str.len() > MAX_JSON_ERROR_LENGTH {
-                    format!("{}... [truncated {} chars]", 
-                           &json_str[..MAX_JSON_ERROR_LENGTH], 
-                           json_str.len() - MAX_JSON_ERROR_LENGTH)
+                    format!(
+                        "{}... [truncated {} chars]",
+                        &json_str[..MAX_JSON_ERROR_LENGTH],
+                        json_str.len() - MAX_JSON_ERROR_LENGTH
+                    )
                 } else {
-                    json_str.to_string()
+                    json_str.clone()
                 };
-                
+
                 return Err(format!(
-                    "Invalid JSON input at position {}: {} - JSON: {}", 
-                    processed_count + 1,
-                    parse_error,
+                    "Invalid JSON input at index {}: {} - JSON: {}",
+                    i + 1,
+                    parse_error,   // contains line/col
                     truncated_json
                 ));
             }
 
+            // Safe: JSON is valid, now hand off to genson-rs
             let mut bytes = json_str.as_bytes().to_vec();
 
             // Build schema incrementally - this is where panics happen
