@@ -289,6 +289,8 @@ To build the project:
    maturin develop
    ```
 
+See DEVELOPMENT.md for specifics.
+
 ## License
 
 MIT License
