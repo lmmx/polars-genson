@@ -8,7 +8,7 @@ description = "Command-line interface for JSON schema inference"
 edition.workspace = true
 license.workspace = true
 name = "genson-cli"
-version = "0.1.0"
+version = "0.1.1"
 
 [dev-dependencies]
 assert_cmd = { features = ["color", "color-auto"], version = "2.0.17" }

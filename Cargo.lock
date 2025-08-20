@@ -803,7 +803,7 @@ dependencies = [
 
 [[package]]
 name = "genson-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "assert_cmd",
  "genson-core",
@@ -1927,7 +1927,7 @@ dependencies = [
 
 [[package]]
 name = "polars-jsonschema-bridge"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "polars",
  "serde_json",
