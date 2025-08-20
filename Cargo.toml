@@ -58,6 +58,11 @@ simd-json = "0.13.10"
 
 [workspace.package]
 authors = ["Louis Maddox <louismmx@gmail.com>"]
+description = "JSON schema inference and Polars integration"
 edition = "2021"
+homepage = "https://github.com/lmmx/polars-genson"
+keywords = ["dataframe", "inference", "json", "polars", "schema"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/lmmx/polars-genson"
 version = "0.1.0"

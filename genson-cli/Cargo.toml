@@ -4,10 +4,16 @@ serde_json = { workspace = true }
 
 [package]
 authors.workspace = true
+categories = ["command-line-utilities", "data-structures", "parsing"]
 description = "Command-line interface for JSON schema inference"
+documentation = "https://docs.rs/genson-cli/"
 edition.workspace = true
+homepage.workspace = true
+keywords = ["cli", "command-line", "inference", "json", "schema"]
 license.workspace = true
 name = "genson-cli"
+readme = "README.md"
+repository.workspace = true
 version = "0.1.1"
 
 [dev-dependencies]

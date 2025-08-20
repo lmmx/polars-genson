@@ -1,9 +1,15 @@
 [package]
 authors.workspace = true
-description = "Conversion between JSON Schema and Polars Schema"
+categories = ["data-structures", "encoding", "parsing"]
+description = "Bidirectional conversion between JSON Schema and Polars DataTypes"
+documentation = "https://docs.rs/polars-jsonschema-bridge/"
 edition.workspace = true
+homepage.workspace = true
+keywords = ["conversion", "dataframe", "json", "polars", "schema"]
 license.workspace = true
 name = "polars-jsonschema-bridge"
+readme = "README.md"
+repository.workspace = true
 version = "0.1.1"
 
 [dependencies]
