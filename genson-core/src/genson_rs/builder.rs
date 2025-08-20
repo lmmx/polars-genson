@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::node::{DataType, SchemaNode};
+use crate::genson_rs::node::{DataType, SchemaNode};
 
 const DEFAULT_SCHEMA_URI: &str = "http://json-schema.org/schema#";
 const NULL_SCHEMA_URI: &str = "NULL";

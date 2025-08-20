@@ -4,8 +4,8 @@ use simd_json;
 use simd_json::prelude::TypedContainerValue;
 use std::slice::{Iter, IterMut};
 
-use crate::node::{DataType, SchemaNode};
-use crate::strategy::base::SchemaStrategy;
+use crate::genson_rs::node::{DataType, SchemaNode};
+use crate::genson_rs::strategy::base::SchemaStrategy;
 
 // The number of objects overwhich parallel processing is more efficient
 // than serial processing. This is a heuristic value and may not always work

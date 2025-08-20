@@ -6,8 +6,8 @@ use serde_json::{json, Map, Value};
 use simd_json;
 use simd_json::prelude::TypedContainerValue;
 
-use crate::node::{DataType, SchemaNode};
-use crate::strategy::base::SchemaStrategy;
+use crate::genson_rs::node::{DataType, SchemaNode};
+use crate::genson_rs::strategy::base::SchemaStrategy;
 
 #[derive(Debug)]
 pub struct ObjectStrategy {
