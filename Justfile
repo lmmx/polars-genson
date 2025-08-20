@@ -11,6 +11,16 @@ pc-ci:      code-quality
 
 prepush: check clippy docs py
 
+prepush-rs:
+    #!/usr/bin/env -S bash -euo pipefail
+    just check-core
+    just check-cli
+    just clippy-core
+    just clippy-cli
+    just docs-core
+    just docs-cli
+    
+
 # (Not running ty in lint recipe)
 lint: ruff-check lint-action
 
@@ -315,6 +325,12 @@ code-quality-fix:
 docs:
     cargo doc --workspace --all-features --no-deps --document-private-items --keep-going
 
+docs-core:
+    cargo doc -p genson-core --all-features --no-deps --document-private-items --keep-going
+
+docs-cli:
+    cargo doc -p genson-cli --all-features --no-deps --document-private-items --keep-going
+
 # -------------------------------------
 
 clean:
@@ -471,8 +487,10 @@ ship-rust:
     git commit -m "chore(release): 🦀 Upgrades"
     # Note: if already pushed you would just need to revert the additions (delete changelogs)
 
+    # 🦀 Run prepush only for the Rust crates we are releasing
+    just prepush-rs
     # 🚀 Push the version bump commit
-    git push
+    git push --no-verify
 
     # 📦 Create releases and tags
     just publish-rust
