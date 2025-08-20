@@ -865,7 +865,6 @@ dependencies = [
 [[package]]
 name = "genson-rs"
 version = "0.2.0"
-source = "git+https://github.com/lmmx/genson-rs?branch=indexmap#1320997977041b9d997910639100ee94da1ae12a"
 dependencies = [
  "clap",
  "indexmap",
