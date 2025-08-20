@@ -462,6 +462,8 @@ ship-rust:
     # 🦀 Update Cargo.toml versions and changelogs
     release-plz update
     git add .
+    # Run a pre-precommit lint pass to avoid the linter halting our release!
+    just precommit || true
     git commit -m "chore(release): 🦀 Upgrades"
     # Note: if already pushed you would just need to revert the additions (delete changelogs)
 
