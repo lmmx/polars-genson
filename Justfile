@@ -390,17 +390,23 @@ release bump_level="patch":
     # 🔄 Create a temporary commit to capture the new version
     git commit -m "chore(temp): version check"
      
-    # 🏷️ Extract the new version number that was just set, undo the commit
+    # ✂️  Extract the new version number that was just set, undo the commit
     new_version=$(uv version --short)
     git reset --soft HEAD~1
      
     # ✅ Stage everything again and create the real release commit
     git add --all
-    git commit -m  "chore(release): bump -> v$new_version"
+    git commit -m  "chore(release): bump 🐍 -> v$new_version"
+     
+    # 🏷️ Create the git tag for this release
+    git tag -a "py-$new_version" -m "Python Release $new_version"
     
     branch_name=$(git rev-parse --abbrev-ref HEAD);
     # 🚀 Push the release commit to $branch_name
     git push origin $branch_name
+    
+    # 🚀 Push the commit tag to the remote
+    git push origin "py-$new_version"
     
     # ⏳ Wait for CI to build wheels, then download and publish them
     test -z "$(compgen -G 'wheel*/')" || {
