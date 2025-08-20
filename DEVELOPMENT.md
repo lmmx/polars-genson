@@ -26,6 +26,8 @@ To install precommit hooks run `just install-hooks` and to run them use `just ru
 
 ## Release
 
+### Python
+
 The release is not fully automated because the wheels are failing and I haven't removed the exit
 status. To fully automate, either fix the wheel building (TODO) or pass the argument `"#"` (in
 quotes!) to the `ship-wheels` recipe which will effectively comment out the `--exit-status` flag to
@@ -43,3 +45,18 @@ just ship-wheels "#"
 - You must not push anything that will trigger CI in the meantime or else the watch (which looks at
   the 0'th job) will look at that instead and potentially upload no wheels/wrong wheels!
     - (This means you cannot push to master as a regular commit will skip CI and get no wheels)
+
+### Rust
+
+The Rust release process is two more commands (if it works the first time it could be one)
+
+```sh
+just ship-rust
+```
+
+If the dry run fails, you can revert and re-run the last step when it succeeds (but if all is OK you
+won't need to):
+
+```sh
+just publish-rust
+```
