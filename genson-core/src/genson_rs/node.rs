@@ -1,9 +1,9 @@
 use core::panic;
 use std::collections::HashSet;
 
-use crate::strategy::base::SchemaStrategy;
-use crate::strategy::scalar::TypelessStrategy;
-use crate::strategy::BasicSchemaStrategy;
+use crate::genson_rs::strategy::base::SchemaStrategy;
+use crate::genson_rs::strategy::scalar::TypelessStrategy;
+use crate::genson_rs::strategy::BasicSchemaStrategy;
 use serde_json::{json, Value};
 
 /// Basic schema generator class. SchemaNode objects can be loaded

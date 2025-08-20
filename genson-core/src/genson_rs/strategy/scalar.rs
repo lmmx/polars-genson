@@ -2,7 +2,7 @@ use serde_json::{json, Value};
 use simd_json;
 use simd_json::prelude::TypedScalarValue;
 
-use crate::strategy::base::{ScalarSchemaStrategy, SchemaStrategy};
+use crate::genson_rs::strategy::base::{ScalarSchemaStrategy, SchemaStrategy};
 
 #[derive(Debug)]
 pub struct NullStrategy {

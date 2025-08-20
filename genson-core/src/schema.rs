@@ -1,4 +1,4 @@
-use genson_rs::{build_json_schema, get_builder, BuildConfig};
+use crate::genson_rs::{build_json_schema, get_builder, BuildConfig};
 use serde::de::Error as DeError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

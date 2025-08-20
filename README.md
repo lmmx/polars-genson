@@ -294,3 +294,5 @@ See DEVELOPMENT.md for specifics.
 ## License
 
 MIT License
+
+- Contains vendored and slightly adapted copy of the Apache 2.0 licensed fork of `genson-rs` crate
