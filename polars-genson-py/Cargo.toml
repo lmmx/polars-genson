@@ -2,6 +2,7 @@
 genson-core = { path = "../genson-core" }
 polars.workspace = true
 polars-arrow.workspace = true
+polars-jsonschema-bridge = { path = "../polars-jsonschema-bridge" }
 pyo3.workspace = true
 pyo3-polars.workspace = true
 serde = { features = ["derive"], workspace = true }
