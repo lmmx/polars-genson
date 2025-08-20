@@ -80,14 +80,23 @@ print(json.dumps(schema, indent=2))
 {
   "$schema": "http://json-schema.org/schema#",
   "properties": {
-    "active": {
-      "type": "boolean"
+    "name": {
+      "type": "string"
     },
     "age": {
       "type": "integer"
     },
+    "scores": {
+      "items": {
+        "type": "integer"
+      },
+      "type": "array"
+    }
     "city": {
       "type": "string"
+    },
+    "active": {
+      "type": "boolean"
     },
     "metadata": {
       "properties": {
@@ -100,15 +109,6 @@ print(json.dumps(schema, indent=2))
       ],
       "type": "object"
     },
-    "name": {
-      "type": "string"
-    },
-    "scores": {
-      "items": {
-        "type": "integer"
-      },
-      "type": "array"
-    }
   },
   "required": [
     "age",
@@ -118,11 +118,9 @@ print(json.dumps(schema, indent=2))
 }
 ```
 
-Note that the fields you get back in both the properties and required subkeys are alphabetised.
-
 ### Polars Schema Inference
 
-**New!** Directly infer Polars data types and schemas:
+Directly infer Polars data types and schemas:
 
 ```python
 # Infer Polars schema from the JSON column
@@ -134,12 +132,12 @@ print(polars_schema)
 
 ```python
 Schema({
-    'active': Boolean,
-    'age': Int64,
-    'city': String,
-    'metadata': Struct({'role': String}),
     'name': String,
+    'age': Int64,
     'scores': List(Int64),
+    'city': String,
+    'active': Boolean,
+    'metadata': Struct({'role': String}),
 })
 ```
 
@@ -231,13 +229,13 @@ print(schema)
 
 ```python
 Schema({
-    'posts': List(Struct({'likes': Int64, 'title': String})),
     'user': Struct({
         'profile': Struct({
             'name': String, 
             'preferences': Struct({'theme': String})
         })
     }),
+    'posts': List(Struct({'likes': Int64, 'title': String})),
 })
 ```
 
