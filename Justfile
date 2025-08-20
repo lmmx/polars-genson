@@ -438,7 +438,7 @@ ship-wheels mode="":
 
 # Rust release workflow using release-plz
 ship-rust:
-    #!/usr/bin/env -S echo-comment --shell-flags="-euo pipefail" --color orange
+    #!/usr/bin/env -S echo-comment --shell-flags="-euo pipefail" --color="\\033[38;5;202m"
 
     # 🔍 Refuse to run if not on master branch or not up to date with origin/master
     branch="$(git rev-parse --abbrev-ref HEAD)"
@@ -463,6 +463,7 @@ ship-rust:
     release-plz update
     git add .
     git commit -m "chore(release): 🦀 Upgrades"
+    # Note: if already pushed you would just need to revert the additions (delete changelogs)
 
     # 🚀 Push the version bump commit
     git push
