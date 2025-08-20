@@ -1,9 +1,10 @@
+"""Dtype parsing from concise string format used to serialise across Rust to Python."""
+
 import polars as pl
 
 
 def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
     """Parse a dtype string like 'Struct[id:Int64,name:String]' into actual Polars DataType."""
-
     # Simple types first
     simple_types = {
         "String": pl.Utf8,

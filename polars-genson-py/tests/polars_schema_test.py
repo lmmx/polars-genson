@@ -1,10 +1,12 @@
+"""Test the production of Polars schemas via schema inference."""
+
 import polars as pl
 import pytest
 from polars_genson import infer_polars_schema
 
 
 def test_basic_schema_inference():
-    """Test basic JSON schema inference with simple types"""
+    """Test basic JSON schema inference with simple types."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -27,7 +29,7 @@ def test_basic_schema_inference():
 
 
 def test_mixed_types():
-    """Test with mixed JSON types including floats and booleans"""
+    """Test with mixed JSON types including floats and booleans."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -51,7 +53,7 @@ def test_mixed_types():
 
 
 def test_nested_objects():
-    """Test with nested objects/structs"""
+    """Test with nested objects/structs."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -72,7 +74,7 @@ def test_nested_objects():
 
 
 def test_arrays():
-    """Test with arrays of different types"""
+    """Test with arrays of different types."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -94,7 +96,7 @@ def test_arrays():
 
 
 def test_complex_nested_structure():
-    """Test with deeply nested structures"""
+    """Test with deeply nested structures."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -121,7 +123,7 @@ def test_complex_nested_structure():
 
 
 def test_optional_fields():
-    """Test with optional fields (some objects missing certain keys)"""
+    """Test with optional fields (some objects missing certain keys)."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -145,7 +147,7 @@ def test_optional_fields():
 
 
 def test_mixed_array_types():
-    """Test with arrays containing different types"""
+    """Test with arrays containing different types."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -166,7 +168,7 @@ def test_mixed_array_types():
 
 
 def test_empty_objects_and_arrays():
-    """Test with empty objects and arrays"""
+    """Test with empty objects and arrays."""
     df = pl.DataFrame(
         {
             "json_col": [
@@ -188,7 +190,7 @@ def test_empty_objects_and_arrays():
 
 
 def test_schema_consistency():
-    """Test that the same schema is returned for identical structure"""
+    """Test that the same schema is returned for identical structure."""
     df1 = pl.DataFrame({"json_col": ['{"a": 1, "b": "test"}']})
 
     df2 = pl.DataFrame({"json_col": ['{"a": 2, "b": "different"}']})
@@ -206,7 +208,7 @@ def test_schema_consistency():
 
 
 def test_single_row():
-    """Test schema inference with just one row"""
+    """Test schema inference with just one row."""
     df = pl.DataFrame({"json_col": ['{"single": {"nested": {"value": [1, 2, 3]}}}']})
 
     schema = df.genson.infer_polars_schema("json_col")

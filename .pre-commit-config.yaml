@@ -1,7 +1,7 @@
 ci:
   autofix_commit_msg: "chore(pre-commit): autofix run"
   autoupdate_commit_msg: "chore(pre-commit): autoupdate hooks"
-  skip: [run-just-rust-prepush]
+  skip: [run-just-prepush]
 
 default_install_hook_types:
   - pre-commit
@@ -13,11 +13,12 @@ repos:
     rev: v0.6.2
     hooks:
       - id: run-just-rust
+        alias: run-just-precommit
         name: just (lints)
-        args: ['precommit-ci']
+        args: ['precommit']
         stages: [pre-commit]
       - id: run-just-rust
-        alias: run-just-rust-prepush
+        alias: run-just-prepush
         name: just (tests)
         args: ['prepush']
         stages: [pre-push]

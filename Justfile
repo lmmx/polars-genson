@@ -1,38 +1,38 @@
 default: clippy
 
-# lint:    ty ruff-check
-lint: ruff-check
-# lint-ci: ty-ci ruff-check
+ci_opt := if env("PRE_COMMIT_HOME", "") != "" { "-ci" } else { "" }
+
+precommit:
+    just pc{{ci_opt}}
+
+pc:     fmt code-quality lint 
+pc-fix: fmt code-quality-fix
+pc-ci:      code-quality
+
+prepush: check clippy docs py
+
+# (Not running ty in lint recipe)
+lint: ruff-check lint-action
 
 fmt:     ruff-fmt code-quality-fix
 
-precommit:     lint fmt code-quality
-precommit-ci:           code-quality
-precommit-fix: fmt      code-quality-fix
-
-prepush: clippy py-test py-dev
-
-ci: precommit prepush docs
-
-# Full development workflow
-full: code-quality check clippy-all build test py-dev py-test
-
-# CI workflow
-ci-full: precommit-ci prepush py-dev py-test docs
+full:    pc prepush build test py
+full-ci: pc-ci prepush         py
 
 e:
     $EDITOR Justfile
+
+lint-action:
+    actionlint .github/workflows/CI.yml
 
 # -------------------------------------
 
 build:
     cargo build --workspace
 
-# Check all projects
 check:
     cargo check --workspace
 
-# Fast individual package checks
 check-core:
     cargo check -p genson-core
 
@@ -49,7 +49,6 @@ clippy: clippy-all
 clippy-all:
     cargo clippy --workspace --all-targets --all-features --target-dir target/clippy-all-features -- -D warnings
 
-# Fast clippy for individual packages
 clippy-core:
     cargo clippy -p genson-core -- -D warnings
 
@@ -59,16 +58,20 @@ clippy-cli:
 clippy-py:
     cargo clippy -p polars-genson-py -- -D warnings
 
-vendor-ci:
-    mkdir -p .vendored
-    cargo vendor-filterer --versioned-dirs --platform=x86_64-unknown-linux-gnu .vendored/vendored.tar.gz --format=tar.gz
-
 # -------------------------------------
 
 test *args:
     just test-core {{args}}
     just test-cli {{args}}
     just test-js {{args}}
+
+test-ci *args:
+    #!/usr/bin/env -S echo-comment --color bright-green
+    # 🏃 Running Rust tests...
+    cargo test {{args}}
+    
+    # 📚 Running documentation tests...
+    cargo test --doc {{args}}
 
 [working-directory: 'genson-core']
 test-core *args:
@@ -84,15 +87,6 @@ test-pl *args:
 [working-directory: 'polars-jsonschema-bridge']
 test-js *args:
     cargo nextest run {{args}}
-
-
-test-ci *args:
-    #!/usr/bin/env -S echo-comment --color bright-green
-    # 🏃 Running Rust tests...
-    cargo test {{args}}
-    
-    # 📚 Running documentation tests...
-    cargo test --doc {{args}}
 
 # -------------------------------------
 
@@ -211,6 +205,8 @@ run-cli-on *args:
     cargo run -p genson-cli -- {{args}}
 
 # -------------------------------------
+
+py: py-dev py-test
 
 # Develop Python plugin (debug mode)
 [working-directory: 'polars-genson-py']
@@ -438,3 +434,44 @@ ship-wheels mode="":
     # 🎊 Publish the CI-built wheels to PyPI
     uv publish -u __token__ -p $(keyring get PYPIRC_TOKEN "")
 
+# --------------------------------------------------------------------------------------------------
+
+# Rust release workflow using release-plz
+ship-rust:
+    #!/usr/bin/env -S echo-comment --shell-flags="-euo pipefail" --color red
+
+    ## Refuse to run if not on master branch or not up to date with origin/master
+    branch="$(git rev-parse --abbrev-ref HEAD)"
+    if [[ "$branch" != "master" ]]; then
+        # ❌ Refusing to run: not on 'master' branch (current: $branch)
+        exit 1
+    fi
+    git fetch origin master
+    local_rev="$(git rev-parse HEAD)"
+    remote_rev="$(git rev-parse origin/master)"
+    if [[ "$local_rev" != "$remote_rev" ]]; then
+        # ❌ Refusing to run: local master branch is not up to date with origin/master
+        # Local HEAD:  $local_rev
+        # Origin HEAD: $remote_rev
+        # Please pull/rebase to update.
+        exit 1
+    fi
+
+    # 🦀 Update Cargo.toml versions and changelogs
+    release-plz update
+    git add .
+    git commit -m "chore(release): 🦀 Upgrades"
+
+    # 🚀 Push the version bump commit
+    git push
+
+    # 📦 Create releases and tags
+    just publish-rust
+
+publish-rust:
+    #!/usr/bin/env -S bash -euo pipefail
+    git_token=$(gh auth token 2>/dev/null) || git_token=$PUBLISH_GITHUB_TOKEN
+    
+    ## 🦀 Let release-plz handle workspace crate tagging
+    ## It will create tags like: genson-core-v0.2.1, genson-cli-v0.1.5, etc.
+    release-plz release --backend github --git-token $git_token
