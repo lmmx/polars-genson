@@ -476,7 +476,7 @@ publish-rust:
     git_token=$(gh auth token 2>/dev/null) || git_token=$PUBLISH_GITHUB_TOKEN
 
     # 🔍 Running dry-run release...
-    release-plz release --dry-run
+    release-plz release --backend github --git-token $git_token --dry-run
     # ✅ Dry-run checks passed! Proceeding with actual release...
     
     ## 🦀 Let release-plz handle workspace crate tagging
