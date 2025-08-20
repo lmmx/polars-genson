@@ -31,7 +31,9 @@ polars-genson-py = { path = "polars-genson-py", version = "0.1.0" }
 polars-jsonschema-bridge = { path = "polars-jsonschema-bridge", version = "0.1.0" }
 
 # Core dependencies
-genson-rs = "0.2"
+genson-rs = { branch = "indexmap", features = [
+  "preserve_order",
+], git = "https://github.com/lmmx/genson-rs" }
 serde = { features = ["derive"], version = "1.0" }
 serde_json = "1.0"
 # Polars integration dependencies  
