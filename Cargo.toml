@@ -35,7 +35,7 @@ genson-rs = { branch = "indexmap", features = [
   "preserve_order",
 ], git = "https://github.com/lmmx/genson-rs" }
 serde = { features = ["derive"], version = "1.0" }
-serde_json = "1.0"
+serde_json = { features = ["preserve_order"], version = "1.0" }
 # Polars integration dependencies  
 polars = { default-features = false, features = [
   "dtype-array",

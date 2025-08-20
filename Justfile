@@ -220,9 +220,9 @@ py-release:
 
 # Test Python plugin with pytest
 [working-directory: 'polars-genson-py']
-py-test:
+py-test *args:
     #!/usr/bin/env bash
-    $(uv python find) -m pytest tests/
+    $(uv python find) -m pytest tests/ {{args}}
 
 # Quick test to verify basic functionality  
 [working-directory: 'polars-genson-py']
