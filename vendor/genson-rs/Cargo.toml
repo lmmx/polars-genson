@@ -7,6 +7,7 @@ homepage = "https://github.com/junyu-w/genson-rs"
 keywords = ["genson", "inference", "json", "schema"]
 license-file = "LICENSE"
 name = "genson-rs"
+publish = false                                                           # Do not publish the vendored crate!
 readme = "README.md"
 repository = "https://github.com/junyu-w/genson-rs"
 version = "0.2.0"
