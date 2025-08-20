@@ -15,7 +15,7 @@ prepush: clippy py-test py-dev
 ci: precommit prepush docs
 
 # Full development workflow
-full: check clippy-all build test py-dev py-test
+full: code-quality check clippy-all build test py-dev py-test
 
 # CI workflow
 ci-full: precommit-ci prepush py-dev py-test docs
@@ -410,9 +410,15 @@ release bump_level="patch":
       false
     }
     
+    # 🎊 Wait for the current wheel build to finish then fetch and publish
+    just ship-wheels
+    
+# Ship a new version as the final step of the release process (idempotent)
+[working-directory: 'polars-genson-py']
+ship-wheels mode="":
     # 📥 Download wheel artifacts from the completed CI run
     ## -p wheel* downloads only artifacts matching the "wheel*" pattern
-    gh run watch "$(gh run list -L 1 --json databaseId --jq .[0].databaseId)" --exit-status
+    gh run watch "$(gh run list -L 1 --json databaseId --jq .[0].databaseId)" {{mode}} --exit-status
     gh run download "$(gh run list -L 1 --json databaseId --jq .[0].databaseId)" -p wheel*
     
     # 🧹 Clean up any existing dist directory and create a fresh one
@@ -425,3 +431,4 @@ release bump_level="patch":
     
     # 🎊 Publish the CI-built wheels to PyPI
     uv publish -u __token__ -p $(keyring get PYPIRC_TOKEN "")
+

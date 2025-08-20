@@ -7,6 +7,4 @@ version.workspace = true
 
 [dependencies]
 polars.workspace = true
-# serde = { features = ["derive"], workspace = true }
 serde_json.workspace = true
-thiserror = "2.0.15"
