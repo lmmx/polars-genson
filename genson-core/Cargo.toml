@@ -9,7 +9,7 @@ description = "Core library for JSON schema inference using genson-rs"
 edition.workspace = true
 license.workspace = true
 name = "genson-core"
-version = "0.1.0"
+version = "0.1.1"
 
 [dev-dependencies]
 predicates = "3.1.3"
