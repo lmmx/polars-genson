@@ -1,0 +1,27 @@
+[package]
+authors = ["Junyu Wang <wjyu95@gmail.com>"]
+categories = ["command-line-utilities", "parser-implementations"]
+description = "Extremely fast JSON Schema inference engine built in Rust"
+edition = "2021"
+homepage = "https://github.com/junyu-w/genson-rs"
+keywords = ["genson", "inference", "json", "schema"]
+license-file = "LICENSE"
+name = "genson-rs"
+readme = "README.md"
+repository = "https://github.com/junyu-w/genson-rs"
+version = "0.2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+preserve_order = ["serde_json/preserve_order"]
+
+[dependencies]
+clap = { features = ["derive"], version = "4.5.4" }
+indexmap = "2.10.0"
+mimalloc = "0.1.41"
+rayon = "1.10.0"
+regex = "1.10.4"
+serde_json = "1.0.116"
+simd-json = "0.13.10"
