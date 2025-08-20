@@ -13,7 +13,7 @@ pub struct SchemaBuilder {
 impl SchemaBuilder {
     /// Create a new SchemaBuilder object. The schema_uri parameter is optional, a value
     /// of "AUTO" will automatically detect the schema URI based on the input schema, if no
-    /// schema URI was detected, a default URI of "http://json-schema.org/schema#" will be used.
+    /// schema URI was detected, a default URI of "<http://json-schema.org/schema#>" will be used.
     /// A value of None will leave out the "$schema" keyword in the output schema.
     pub fn new(schema_uri: Option<&str>) -> Self {
         // TODO: the functionality to allow non-default node class with extended
