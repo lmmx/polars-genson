@@ -21,9 +21,9 @@ def test_basic_schema_inference():
 
     assert schema == pl.Schema(
         {
-            "age": pl.Int64,
             "id": pl.Int64,
             "name": pl.String,
+            "age": pl.Int64,
         }
     )
 
@@ -44,10 +44,10 @@ def test_mixed_types():
 
     assert schema == pl.Schema(
         {
-            "active": pl.Boolean,
             "id": pl.Int64,
             "name": pl.String,
             "score": pl.Float64,
+            "active": pl.Boolean,
         }
     )
 
@@ -67,8 +67,8 @@ def test_nested_objects():
 
     assert schema == pl.Schema(
         {
-            "metadata": pl.Struct({"created": pl.String}),
             "user": pl.Struct({"id": pl.Int64, "name": pl.String}),
+            "metadata": pl.Struct({"created": pl.String}),
         }
     )
 
@@ -89,8 +89,8 @@ def test_arrays():
     assert schema == pl.Schema(
         {
             "id": pl.Int64,
-            "scores": pl.List(pl.Int64),
             "tags": pl.List(pl.String),
+            "scores": pl.List(pl.Int64),
         }
     )
 
@@ -110,7 +110,6 @@ def test_complex_nested_structure():
 
     assert schema == pl.Schema(
         {
-            "posts": pl.List(pl.Struct({"likes": pl.Int64, "title": pl.String})),
             "user": pl.Struct(
                 {
                     "profile": pl.Struct(
@@ -118,6 +117,7 @@ def test_complex_nested_structure():
                     )
                 }
             ),
+            "posts": pl.List(pl.Struct({"title": pl.String, "likes": pl.Int64})),
         }
     )
 
@@ -138,10 +138,10 @@ def test_optional_fields():
 
     assert schema == pl.Schema(
         {
-            "age": pl.Int64,
-            "email": pl.String,
             "id": pl.Int64,
             "name": pl.String,
+            "email": pl.String,
+            "age": pl.Int64,
         }
     )
 
@@ -182,9 +182,9 @@ def test_empty_objects_and_arrays():
 
     assert schema == pl.Schema(
         {
-            "data": pl.Struct({"value": pl.Int64}),
-            "empty_array": pl.List(pl.String),
             "empty_obj": pl.String,
+            "empty_array": pl.List(pl.String),
+            "data": pl.Struct({"value": pl.Int64}),
         }
     )
 

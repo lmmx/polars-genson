@@ -865,10 +865,10 @@ dependencies = [
 [[package]]
 name = "genson-rs"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7e2404c654bd4ba0fbd629baaa5746d57526a657ba58a68bc869f2e1c35a561"
+source = "git+https://github.com/lmmx/genson-rs?branch=indexmap#1320997977041b9d997910639100ee94da1ae12a"
 dependencies = [
  "clap",
+ "indexmap",
  "mimalloc",
  "rayon",
  "regex",
@@ -2917,6 +2917,7 @@ version = "1.0.142"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "030fedb782600dcbd6f02d479bf0d817ac3bb40d644745b769d6a96bc3afc5a7"
 dependencies = [
+ "indexmap",
  "itoa",
  "memchr",
  "ryu",
