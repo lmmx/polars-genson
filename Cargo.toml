@@ -20,6 +20,7 @@ members = [
   "genson-core",
   "polars-genson-py",
   "polars-jsonschema-bridge",
+  "vendor/genson-rs",
 ]
 resolver = "2"
 
@@ -29,12 +30,12 @@ genson-cli = { path = "genson-cli", version = "0.1.0" }
 genson-core = { path = "genson-core", version = "0.1.1" }
 polars-genson-py = { path = "polars-genson-py", version = "0.1.0" }
 polars-jsonschema-bridge = { path = "polars-jsonschema-bridge", version = "0.1.0" }
-
-# Core dependencies
 # Vendored from "indexmap" branch of https://github.com/lmmx/genson-rs
 genson-rs = { features = [
   "preserve_order",
 ], path = "vendor/genson-rs", version = "0.2.0" }
+
+# Core dependencies
 serde = { features = ["derive"], version = "1.0" }
 serde_json = { features = ["preserve_order"], version = "1.0" }
 # Polars integration dependencies  
