@@ -40,9 +40,7 @@ impl SchemaStrategy for NullStrategy {
         object.is_null()
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {
-        ()
-    }
+    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
 }
 
 #[derive(Debug)]
@@ -81,9 +79,7 @@ impl SchemaStrategy for BooleanStrategy {
         object.is_bool()
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {
-        ()
-    }
+    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
 }
 
 #[derive(Debug)]
@@ -116,9 +112,7 @@ impl SchemaStrategy for StringStrategy {
         object.is_str()
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {
-        ()
-    }
+    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
 }
 
 impl ScalarSchemaStrategy for StringStrategy {
@@ -215,14 +209,12 @@ impl SchemaStrategy for TypelessStrategy {
         if let Value::Object(obj) = schema {
             return !obj.contains_key("type");
         }
-        return true;
+        true
     }
 
     fn match_object(_: &simd_json::BorrowedValue) -> bool {
         false
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {
-        ()
-    }
+    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
 }

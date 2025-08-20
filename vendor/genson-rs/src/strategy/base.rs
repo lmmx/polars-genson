@@ -20,16 +20,12 @@ pub trait SchemaStrategy {
         if let Value::Object(schema) = schema {
             schema.iter().for_each(|(key, value)| {
                 let keywords = self.get_extra_keywords_mut();
-                match keywords {
-                    Value::Object(keywords) => {
-                        if key == "type" {
-                            return;
-                        } else if !keywords.contains_key(key) {
-                            // add the property from the input schema if it doesn't already exist
-                            keywords.insert(key.to_string(), value.clone());
-                        }
+                if let Value::Object(keywords) = keywords {
+                    if key == "type" {
+                    } else if !keywords.contains_key(key) {
+                        // add the property from the input schema if it doesn't already exist
+                        keywords.insert(key.to_string(), value.clone());
                     }
-                    _ => (),
                 }
             });
         }

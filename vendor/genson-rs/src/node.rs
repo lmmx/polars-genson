@@ -5,7 +5,6 @@ use crate::strategy::base::SchemaStrategy;
 use crate::strategy::scalar::TypelessStrategy;
 use crate::strategy::BasicSchemaStrategy;
 use serde_json::{json, Value};
-use simd_json;
 
 /// Basic schema generator class. SchemaNode objects can be loaded
 /// up with existing schemas and objects before being serialized.
@@ -25,6 +24,12 @@ pub enum DataType<'a> {
     Object(&'a simd_json::BorrowedValue<'a>),
     /// SchemaNode reference
     SchemaNode(&'a SchemaNode),
+}
+
+impl Default for SchemaNode {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SchemaNode {
@@ -54,25 +59,21 @@ impl SchemaNode {
     fn get_subschemas(schema: &Value) -> Vec<Value> {
         if let Value::Object(schema) = schema {
             if let Some(Value::Array(anyof)) = schema.get("anyOf") {
-                return anyof
-                    .iter()
-                    .map(|t| SchemaNode::get_subschemas(t))
-                    .flatten()
-                    .collect();
+                return anyof.iter().flat_map(SchemaNode::get_subschemas).collect();
             } else if let Some(Value::Array(types)) = schema.get("type") {
                 return types
                     .iter()
                     .map(|t| {
                         let mut new_schema = schema.clone();
                         new_schema["type"] = t.clone();
-                        return Value::Object(new_schema);
+                        Value::Object(new_schema)
                     })
                     .collect();
             } else {
                 return vec![Value::Object(schema.clone())];
             }
         }
-        return vec![schema.clone()];
+        vec![schema.clone()]
     }
 
     /// Modify the schema to accomodate the object.
@@ -82,7 +83,7 @@ impl SchemaNode {
             _ => panic!("Invalid object type"),
         };
 
-        let active_strategy = self.get_or_create_strategy_for_object(&object);
+        let active_strategy = self.get_or_create_strategy_for_object(object);
         SchemaNode::add_schema_or_object_to_strategy(active_strategy, DataType::Object(object));
         self
     }
@@ -106,7 +107,7 @@ impl SchemaNode {
             }
         });
 
-        if scalar_types.len() > 0 {
+        if !scalar_types.is_empty() {
             if scalar_types.len() == 1 {
                 let scalar_type = scalar_types.iter().next().unwrap();
                 generated_schemas.push(json!({"type": scalar_type}));
@@ -121,8 +122,8 @@ impl SchemaNode {
         }
 
         if generated_schemas.len() == 1 {
-            return generated_schemas[0].clone();
-        } else if generated_schemas.len() > 0 {
+            generated_schemas[0].clone()
+        } else if !generated_schemas.is_empty() {
             return json!({"anyOf": generated_schemas});
         } else {
             return json!({});
@@ -168,15 +169,13 @@ impl SchemaNode {
         if let Some(mut strategy) =
             SchemaNode::create_strategy_for_schema_or_object(&schema_or_object)
         {
-            if let Some(last_strategy) = self.active_strategies.last() {
+            if let Some(BasicSchemaStrategy::Typeless(typeless)) = self.active_strategies.last() {
                 // if the last strategy is a typeless strategy, incorporate it into the newly created strategy
-                if let BasicSchemaStrategy::Typeless(typeless) = last_strategy {
-                    SchemaNode::add_schema_or_object_to_strategy(
-                        &mut strategy,
-                        DataType::Schema(&typeless.to_schema()),
-                    );
-                    self.active_strategies.pop();
-                }
+                SchemaNode::add_schema_or_object_to_strategy(
+                    &mut strategy,
+                    DataType::Schema(&typeless.to_schema()),
+                );
+                self.active_strategies.pop();
             }
             self.active_strategies.push(strategy);
             return Some(self.active_strategies.last_mut().unwrap());
@@ -194,7 +193,7 @@ impl SchemaNode {
                 return Some(first_strategy);
             }
         }
-        return None;
+        None
     }
 
     fn strategy_does_match_schema_or_object(

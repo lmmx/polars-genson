@@ -55,13 +55,14 @@ impl SchemaStrategy for ObjectStrategy {
                 let mut pattern: Option<&str> = None;
                 if !self.properties.contains_key(prop.as_ref()) {
                     let pattern_matcher = |p: &str| Regex::new(p).unwrap().is_match(prop);
-                    self.pattern_properties
+                    if let Some((p, node)) = self
+                        .pattern_properties
                         .iter_mut()
                         .find(|(p, _)| pattern_matcher(p))
-                        .map(|(p, node)| {
-                            pattern = Some(p);
-                            node.add_object(DataType::Object(subobj));
-                        });
+                    {
+                        pattern = Some(p);
+                        node.add_object(DataType::Object(subobj));
+                    }
                 }
 
                 if pattern.is_none() {
@@ -99,9 +100,7 @@ impl SchemaStrategy for ObjectStrategy {
                                       prop_key: &str| {
                 if let Some(schema_properties) = schema_object[prop_key].as_object() {
                     schema_properties.iter().for_each(|(prop, sub_schema)| {
-                        let sub_node = properties
-                            .entry(prop.to_string())
-                            .or_insert(SchemaNode::new());
+                        let sub_node = properties.entry(prop.to_string()).or_default();
                         sub_node.add_schema(DataType::Schema(sub_schema));
                     });
                 }
@@ -119,7 +118,7 @@ impl SchemaStrategy for ObjectStrategy {
             }
             if schema_object.contains_key("required") {
                 if let Value::Array(required_fields) = &schema_object["required"] {
-                    if required_fields.len() == 0 {
+                    if required_fields.is_empty() {
                         // if the input schema object has required fields being empty, that means
                         // including empty required fields in the schema is the desired behavior
                         // and should be followed
@@ -148,10 +147,10 @@ impl SchemaStrategy for ObjectStrategy {
     fn to_schema(&self) -> Value {
         let mut schema = self.extra_keywords.clone();
         schema["type"] = "object".into();
-        if self.properties.len() > 0 {
+        if !self.properties.is_empty() {
             schema["properties"] = self.properties_to_schema(&self.properties);
         }
-        if self.pattern_properties.len() > 0 {
+        if !self.pattern_properties.is_empty() {
             schema["patternProperties"] = self.properties_to_schema(&self.pattern_properties);
         }
         if self.required_properties.is_some() || self.include_empty_required {
@@ -163,7 +162,7 @@ impl SchemaStrategy for ObjectStrategy {
             }
             required_props.sort();
 
-            if required_props.len() > 0 || self.include_empty_required {
+            if !required_props.is_empty() || self.include_empty_required {
                 schema["required"] = required_props.into();
             } else {
                 // this is done in case there's a conflict with the required properties

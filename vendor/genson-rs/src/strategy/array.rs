@@ -68,41 +68,35 @@ impl SchemaStrategy for ListStrategy {
     }
 
     fn add_object(&mut self, object: &simd_json::BorrowedValue) {
-        match object {
-            simd_json::BorrowedValue::Array(objects) => {
-                let items = self.get_items_mut();
-                items.for_each(|node| {
-                    // if the number of objects is less than 10, it is more efficient to
-                    // add them to the schema node directly without incurring the overhead
-                    // of parallel processing
-                    if objects.len() < PARALLEL_PROCESSING_BOUNDARY {
-                        objects.iter().for_each(|obj| {
-                            node.add_object(DataType::Object(obj));
-                        });
-                    } else {
-                        // when the number of objects are large, it is more efficient to
-                        // parallelize process of objects by splitting them into partitions
-                        // and processing each partition in parallel with their own schema node
-                        // and then merging the results
-                        let combined_node = objects
-                            .par_iter()
-                            .fold(
-                                || SchemaNode::new(),
-                                |mut temp_node, obj| {
-                                    temp_node.add_object(DataType::Object(obj));
-                                    temp_node
-                                },
-                            )
-                            .reduce_with(|mut first_node, next_node| {
-                                first_node.add_schema(DataType::SchemaNode(&next_node));
-                                first_node
-                            })
-                            .unwrap_or(SchemaNode::new());
-                        node.add_schema(DataType::SchemaNode(&combined_node));
-                    }
-                });
-            }
-            _ => (),
+        if let simd_json::BorrowedValue::Array(objects) = object {
+            let items = self.get_items_mut();
+            items.for_each(|node| {
+                // if the number of objects is less than 10, it is more efficient to
+                // add them to the schema node directly without incurring the overhead
+                // of parallel processing
+                if objects.len() < PARALLEL_PROCESSING_BOUNDARY {
+                    objects.iter().for_each(|obj| {
+                        node.add_object(DataType::Object(obj));
+                    });
+                } else {
+                    // when the number of objects are large, it is more efficient to
+                    // parallelize process of objects by splitting them into partitions
+                    // and processing each partition in parallel with their own schema node
+                    // and then merging the results
+                    let combined_node = objects
+                        .par_iter()
+                        .fold(SchemaNode::new, |mut temp_node, obj| {
+                            temp_node.add_object(DataType::Object(obj));
+                            temp_node
+                        })
+                        .reduce_with(|mut first_node, next_node| {
+                            first_node.add_schema(DataType::SchemaNode(&next_node));
+                            first_node
+                        })
+                        .unwrap_or(SchemaNode::new());
+                    node.add_schema(DataType::SchemaNode(&combined_node));
+                }
+            });
         }
     }
 
@@ -181,7 +175,7 @@ impl SchemaStrategy for TupleStrategy {
 
     fn add_object(&mut self, object: &simd_json::BorrowedValue) {
         if let simd_json::BorrowedValue::Array(objects) = object {
-            let items: Vec<DataType> = objects.iter().map(|obj| DataType::Object(obj)).collect();
+            let items: Vec<DataType> = objects.iter().map(DataType::Object).collect();
             self.add_items(items, |node, obj| {
                 node.add_object(obj);
             });
@@ -195,7 +189,7 @@ impl SchemaStrategy for TupleStrategy {
                 .as_array()
                 .unwrap()
                 .iter()
-                .map(|s| DataType::Schema(s))
+                .map(DataType::Schema)
                 .collect();
             self.add_items(items, |node, sch| {
                 node.add_schema(sch);

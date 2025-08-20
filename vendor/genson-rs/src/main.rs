@@ -77,19 +77,19 @@ fn main() {
                             ignore_outer_array: cli.ignore_outer_array,
                         },
                     );
-                    return builder;
+                    builder
                 },
             )
             .reduce(
                 || get_builder(Some("AUTO")),
                 |mut builder, other_builder| {
                     builder.add_schema(other_builder.to_schema());
-                    return builder;
+                    builder
                 },
             );
 
         let schema = aggregated_builder.to_schema();
-        println!("{}", schema.to_string());
+        println!("{}", schema);
 
         // NOTE: early exit here to avoid dropping of the `object` variable
         //  which takes about 15~35% of the total runtime (depending on the size of the object)

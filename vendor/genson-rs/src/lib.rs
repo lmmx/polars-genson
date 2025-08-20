@@ -42,7 +42,7 @@ pub fn build_single_json_object_schema(builder: &mut SchemaBuilder, object_slice
 /// * `config` - the build configuration
 pub fn build_json_schema(
     builder: &mut SchemaBuilder,
-    json_slice: &mut Vec<u8>,
+    json_slice: &mut [u8],
     config: &BuildConfig,
 ) -> Schema {
     let json_slice = trim_to_object(json_slice);
@@ -51,19 +51,19 @@ pub fn build_json_schema(
         build_multi_json_objects_schema(builder, array_elements, None);
 
         if config.ignore_outer_array {
-            return builder.to_schema();
+            builder.to_schema()
         } else {
             let mut inner_schema = builder.to_schema();
             let schema_uri = inner_schema.as_object_mut().unwrap().remove("$schema");
             if let Some(schema_uri) = schema_uri {
-                return json!({"$schema": schema_uri, "type": "array", "items": inner_schema});
+                json!({"$schema": schema_uri, "type": "array", "items": inner_schema})
             } else {
-                return json!({"type": "array", "items": inner_schema});
+                json!({"type": "array", "items": inner_schema})
             }
         }
     } else {
         build_multi_json_objects_schema(builder, json_slice, config.delimiter);
-        return builder.to_schema();
+        builder.to_schema()
     }
 }
 
@@ -84,11 +84,7 @@ fn build_multi_json_objects_schema(
             } else if *byte == b'}' {
                 structure_count -= 1;
             }
-            if structure_count == 0 && *byte == b'}' {
-                return true;
-            } else {
-                return false;
-            }
+            structure_count == 0 && *byte == b'}'
         };
         // an vector of pointers to each of the individual JSON object bytes in the data
         let mut object_slices: Vec<&mut [u8]> = vec![];
@@ -146,7 +142,7 @@ fn trim_to_object(data: &mut [u8]) -> &mut [u8] {
 /// Check if the data is a JSON object array, this function assumes that the data is trimmed
 /// with `trim_to_object` before calling it
 fn is_json_object_array(data: &[u8]) -> bool {
-    return data[0] == b'[' && data[data.len() - 1] == b']';
+    data[0] == b'[' && data[data.len() - 1] == b']'
 }
 
 /// Get only the JSON array elements from the JSON array data slice, excluding the square brackets.
@@ -196,7 +192,7 @@ mod tests {
     #[test]
     fn test_is_json_object_array() {
         let data = br#"[{"name": "John", "age": 30}]"#.to_vec();
-        assert_eq!(is_json_object_array(&data), true);
+        assert!(is_json_object_array(&data));
     }
 
     #[test]

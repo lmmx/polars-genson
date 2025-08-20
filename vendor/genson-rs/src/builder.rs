@@ -1,5 +1,4 @@
 use serde_json::{json, Value};
-use simd_json;
 
 use crate::node::{DataType, SchemaNode};
 
@@ -75,24 +74,24 @@ impl SchemaBuilder {
         for (key, value) in node_schema_map.iter() {
             base_schema_map.insert(key.to_string(), value.clone());
         }
-        return base_schema;
+        base_schema
     }
 
     fn get_base_schema(&self) -> Value {
         if let Some(uri) = &self.schema_uri {
             if uri == NULL_SCHEMA_URI {
-                return json!({});
+                json!({})
             } else {
-                return json!({"$schema": uri});
+                json!({"$schema": uri})
             }
         } else {
-            return json!({"$schema": DEFAULT_SCHEMA_URI});
+            json!({"$schema": DEFAULT_SCHEMA_URI})
         }
     }
 
     /// Serialize the currently constructed schema to a JSON string
     pub fn to_json(&self) -> String {
         let schema = self.to_schema();
-        return schema.to_string();
+        schema.to_string()
     }
 }
