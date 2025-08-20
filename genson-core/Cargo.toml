@@ -12,10 +12,15 @@ simd-json.workspace = true
 
 [package]
 authors.workspace = true
+categories = ["data-structures", "encoding", "parsing"]
 description = "Core library for JSON schema inference using genson-rs"
 edition.workspace = true
+homepage.workspace = true
+keywords = ["core", "genson", "inference", "json", "schema"]
 license.workspace = true
 name = "genson-core"
+readme = "README.md"
+repository.workspace = true
 version = "0.1.2"
 
 [dev-dependencies]
