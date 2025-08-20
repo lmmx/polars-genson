@@ -1,22 +1,22 @@
 [dependencies]
-genson-core = { path = "../genson-core" }
+genson-core.workspace = true
 polars.workspace = true
 polars-arrow.workspace = true
-polars-jsonschema-bridge = { path = "../polars-jsonschema-bridge" }
+polars-jsonschema-bridge.workspace = true
 pyo3.workspace = true
 pyo3-polars.workspace = true
 serde = { features = ["derive"], workspace = true }
-serde_json = { workspace = true }
+serde_json.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
 name = "_polars_genson"
 
 [package]
-authors = ["Louis Maddox <louismmx@gmail.com>"]
+authors.workspace = true
 description = "Polars plugin for JSON schema inference using genson-rs"
-edition = "2021"
-license = "MIT"
+edition.workspace = true
+license.workspace = true
 name = "polars-genson-py"
 version = "0.1.0"
 

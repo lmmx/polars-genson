@@ -4,10 +4,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [package]
-authors = ["Louis Maddox <louismmx@gmail.com>"]
+authors.workspace = true
 description = "Core library for JSON schema inference using genson-rs"
-edition = "2021"
-license = "MIT"
+edition.workspace = true
+license.workspace = true
 name = "genson-core"
 version = "0.1.0"
 

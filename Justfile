@@ -456,7 +456,7 @@ ship-rust:
         # Please pull/rebase to update.
         exit 1
     fi
-
+    
     # 🦀 Update Cargo.toml versions and changelogs
     release-plz update
     git add .
@@ -471,6 +471,10 @@ ship-rust:
 publish-rust:
     #!/usr/bin/env -S bash -euo pipefail
     git_token=$(gh auth token 2>/dev/null) || git_token=$PUBLISH_GITHUB_TOKEN
+
+    # 🔍 Running dry-run release...
+    release-plz release --dry-run
+    # ✅ Dry-run checks passed! Proceeding with actual release...
     
     ## 🦀 Let release-plz handle workspace crate tagging
     ## It will create tags like: genson-core-v0.2.1, genson-cli-v0.1.5, etc.

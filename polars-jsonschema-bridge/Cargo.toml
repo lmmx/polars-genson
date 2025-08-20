@@ -1,9 +1,10 @@
 [package]
 authors.workspace = true
+description = "Conversion between JSON Schema and Polars Schema"
 edition.workspace = true
 license.workspace = true
 name = "polars-jsonschema-bridge"
-version.workspace = true
+version = "0.1.0"
 
 [dependencies]
 polars.workspace = true
