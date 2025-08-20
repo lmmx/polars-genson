@@ -18,6 +18,7 @@ description = "Polars plugin for JSON schema inference using genson-rs"
 edition.workspace = true
 license.workspace = true
 name = "polars-genson-py"
+publish = false
 version = "0.1.0"
 
 [package.metadata.cargo-machete]
