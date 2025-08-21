@@ -1,0 +1,22 @@
+---
+source: polars-jsonschema-bridge/tests/readme_example.rs
+expression: json_schema_custom
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: User Schema
+description: A simple user record
+type: object
+properties:
+  name:
+    type: string
+  age:
+    type: integer
+  scores:
+    type: array
+    items:
+      type: number
+required:
+  - age
+  - name
+  - scores
+additionalProperties: true

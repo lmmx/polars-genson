@@ -1,0 +1,28 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_decimal.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  decimal_full:
+    type: number
+    description: Decimal number with precision 10 and scale 2
+    multipleOf: 0.01
+  decimal_no_scale:
+    type: number
+  decimal_no_precision:
+    type: number
+  decimal_none:
+    type: number
+  decimal_high_precision:
+    type: number
+    description: Decimal number with precision 18 and scale 6
+    multipleOf: 0.000001
+required:
+  - decimal_full
+  - decimal_high_precision
+  - decimal_no_precision
+  - decimal_no_scale
+  - decimal_none
+additionalProperties: false

@@ -1,0 +1,21 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_time_date.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  datetime_ns:
+    type: string
+    format: date-time
+  datetime_us:
+    type: string
+    format: date-time
+  datetime_ms:
+    type: string
+    format: date-time
+required:
+  - datetime_ms
+  - datetime_ns
+  - datetime_us
+additionalProperties: false

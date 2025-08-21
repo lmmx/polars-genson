@@ -1,0 +1,93 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_all_datatypes.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: All Types Example
+type: object
+properties:
+  bool_col:
+    type: boolean
+  int_col:
+    type: integer
+  uint_col:
+    type: integer
+    minimum: 0
+  float_col:
+    type: number
+  string_col:
+    type: string
+  date_col:
+    type: string
+    format: date
+  datetime_col:
+    type: string
+    format: date-time
+  datetime_tz_col:
+    type: string
+    format: date-time
+    description: Date-time with timezone information
+  time_col:
+    type: string
+    format: time
+  duration_col:
+    type: string
+    format: duration
+    description: ISO 8601 duration string
+  list_col:
+    type: array
+    items:
+      type: integer
+  array_col:
+    type: array
+    items:
+      type: number
+    minItems: 3
+    maxItems: 3
+  struct_col:
+    type: object
+    properties:
+      inner_str:
+        type: string
+      inner_int:
+        type: integer
+    required:
+      - inner_str
+      - inner_int
+    additionalProperties: false
+  binary_col:
+    type: string
+    contentEncoding: base64
+    description: Binary data encoded as base64
+  decimal_col:
+    type: number
+    description: Decimal number with precision 10 and scale 2
+    multipleOf: 0.01
+  null_col:
+    type: "null"
+  categorical_col:
+    type: string
+    description: Categorical data
+  enum_col:
+    type: string
+    description: Enumerated string values
+required:
+  - array_col
+  - binary_col
+  - bool_col
+  - categorical_col
+  - date_col
+  - datetime_col
+  - datetime_tz_col
+  - decimal_col
+  - duration_col
+  - enum_col
+  - float_col
+  - int_col
+  - list_col
+  - null_col
+  - string_col
+  - struct_col
+  - time_col
+  - uint_col
+additionalProperties: false

@@ -1,0 +1,20 @@
+---
+source: polars-jsonschema-bridge/tests/readme_example.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  name:
+    type: string
+  age:
+    type: integer
+  scores:
+    type: array
+    items:
+      type: number
+required:
+  - age
+  - name
+  - scores
+additionalProperties: false

@@ -63,7 +63,7 @@ let fields = json_schema_to_polars_fields(&json_schema, false)?;
 ### Polars Schema to JSON Schema
 
 ```rust
-use polars_jsonschema_bridge::polars_schema_to_json_schema;
+use polars_jsonschema_bridge::{polars_schema_to_json_schema, JsonSchemaOptions};
 use polars::prelude::*;
 
 let mut schema = Schema::default();
@@ -71,14 +71,25 @@ schema.with_column("name".into(), DataType::String);
 schema.with_column("age".into(), DataType::Int64);
 schema.with_column("scores".into(), DataType::List(Box::new(DataType::Float64)));
 
-let json_schema = polars_schema_to_json_schema(&schema)?;
-// Generates a complete JSON Schema document
-```
+// Use default options
+let json_schema = polars_schema_to_json_schema(&schema, &JsonSchemaOptions::new())?;
+
+// Or customize the output with options
+let options = JsonSchemaOptions::new()
+    .with_title(Some("User Schema"))
+    .with_description(Some("A simple user record"))
+    .with_optional_fields(vec!["email"])
+    .with_additional_properties(true);
+
+let json_schema_custom = polars_schema_to_json_schema(&schema, &options)?;
+````
+
+This generates a JSON Schema document with the desired metadata and field requirements.
 
 ### Individual Type Conversions
 
 ```rust
-use polars_jsonschema_bridge::{json_type_to_polars_type, polars_dtype_to_json_schema};
+use polars_jsonschema_bridge::{json_type_to_polars_type, polars_dtype_to_json_schema, JsonSchemaOptions};
 use polars::prelude::DataType;
 use serde_json::json;
 
@@ -87,7 +98,10 @@ let polars_type = json_type_to_polars_type(&json!({"type": "string"}))?;
 assert_eq!(polars_type, "String");
 
 // Polars DataType → JSON Schema
-let json_schema = polars_dtype_to_json_schema(&DataType::List(Box::new(DataType::Int64)))?;
+let json_schema = polars_dtype_to_json_schema(
+    &DataType::List(Box::new(DataType::Int64)),
+    &JsonSchemaOptions::default()
+)?;
 assert_eq!(json_schema, json!({
     "type": "array",
     "items": {"type": "integer"}
@@ -138,20 +152,39 @@ let result = json_type_to_polars_type(&json!({"type": "unsupported"}));
 assert!(result.is_err());
 ```
 
+## JSON Schema Generation Options
+
+The `JsonSchemaOptions` struct lets you control aspects of the generated schema:
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `schema_uri` | `Some("https://json-schema.org/draft/2020-12/schema")` | Controls the `$schema` field (or omit entirely with `None`) |
+| `title` | `None` | Adds a `title` to the schema |
+| `description` | `None` | Adds a `description` to the schema |
+| `optional_fields` | empty set | By default all fields are required; use this to mark some as optional |
+| `additional_properties` | `false` | Controls the `additionalProperties` flag |
+
+Example:
+
+```rust
+use polars_jsonschema_bridge::JsonSchemaOptions;
+
+let options = JsonSchemaOptions::new()
+    .with_title(Some("Example"))
+    .with_optional_fields(vec!["email"])
+    .with_additional_properties(false);
+````
+
 ## Debug Mode
 
 Enable debug output to see the intermediate JSON Schema during conversion:
 
 ```rust
+use polars_jsonschema_bridge::json_schema_to_polars_fields;
+
 let fields = json_schema_to_polars_fields(&json_schema, true)?; // debug = true
 // Prints the generated JSON Schema to stderr
 ```
-
-## Limitations
-
-- **String DataType Parsing**: Full Polars Schema creation from field strings requires implementing DataType parsing (planned for future release)
-- **Column Order**: Order is not preserved when iterating over Polars Schema (use IndexMap if order matters)
-- **Complex Types**: Some advanced Polars types (Object, Unknown) are not supported
 
 ## Integration
 

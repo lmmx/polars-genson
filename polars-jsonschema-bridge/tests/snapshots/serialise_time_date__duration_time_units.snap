@@ -1,0 +1,24 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_time_date.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  duration_ns:
+    type: string
+    format: duration
+    description: ISO 8601 duration string
+  duration_us:
+    type: string
+    format: duration
+    description: ISO 8601 duration string
+  duration_ms:
+    type: string
+    format: duration
+    description: ISO 8601 duration string
+required:
+  - duration_ms
+  - duration_ns
+  - duration_us
+additionalProperties: false

@@ -7,7 +7,7 @@
 //! # Examples
 //!
 //! ```rust
-//! use polars_jsonschema_bridge::{json_schema_to_polars_fields, polars_schema_to_json_schema};
+//! use polars_jsonschema_bridge::{json_schema_to_polars_fields, polars_schema_to_json_schema, JsonSchemaOptions};
 //! use polars::prelude::*;
 //! use serde_json::json;
 //!
@@ -24,7 +24,7 @@
 //! // Polars → JSON Schema  
 //! let mut schema = Schema::default();
 //! schema.with_column("name".into(), DataType::String);
-//! let json_schema = polars_schema_to_json_schema(&schema).unwrap();
+//! let json_schema = polars_schema_to_json_schema(&schema, &JsonSchemaOptions::new()).unwrap();
 //! ```
 
 pub mod deserialise;
@@ -35,5 +35,5 @@ pub mod types;
 pub use deserialise::{
     json_schema_to_polars_fields, json_schema_to_polars_schema, json_type_to_polars_type,
 };
-pub use serialise::{polars_dtype_to_json_schema, polars_schema_to_json_schema};
+pub use serialise::{polars_dtype_to_json_schema, polars_schema_to_json_schema, JsonSchemaOptions};
 pub use types::conversion_error;

@@ -1,0 +1,21 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_cat.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  cat_u8:
+    type: string
+    description: Categorical data
+  cat_u16:
+    type: string
+    description: Categorical data
+  cat_u32:
+    type: string
+    description: Categorical data
+required:
+  - cat_u16
+  - cat_u32
+  - cat_u8
+additionalProperties: false
