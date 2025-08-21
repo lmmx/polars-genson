@@ -31,24 +31,24 @@ def test_basic_schema_serialization():
 
     # Verify the structure
     assert isinstance(json_schema, dict), f"Expected dict, got {type(json_schema)}"
-    assert json_schema["type"] == "object", (
-        f"Expected type 'object', got {json_schema.get('type')}"
-    )
-    assert "properties" in json_schema, (
-        f"Missing 'properties' key. Keys: {list(json_schema.keys())}"
-    )
-    assert "$schema" in json_schema, (
-        f"Missing '$schema' key. Keys: {list(json_schema.keys())}"
-    )
+    assert (
+        json_schema["type"] == "object"
+    ), f"Expected type 'object', got {json_schema.get('type')}"
+    assert (
+        "properties" in json_schema
+    ), f"Missing 'properties' key. Keys: {list(json_schema.keys())}"
+    assert (
+        "$schema" in json_schema
+    ), f"Missing '$schema' key. Keys: {list(json_schema.keys())}"
 
     # Check properties
     props = json_schema["properties"]
     print(f"\nProperties found: {list(props.keys())}")
 
     for field in ["name", "age", "active", "score"]:
-        assert field in props, (
-            f"Missing field '{field}' in properties. Available: {list(props.keys())}"
-        )
+        assert (
+            field in props
+        ), f"Missing field '{field}' in properties. Available: {list(props.keys())}"
 
     # Check types with detailed output
     expected_types = {
@@ -61,18 +61,18 @@ def test_basic_schema_serialization():
     for field, expected_type in expected_types.items():
         actual_type = props[field].get("type")
         print(f"{field}: expected={expected_type}, actual={actual_type}")
-        assert actual_type == expected_type, (
-            f"Field '{field}': expected type '{expected_type}', got '{actual_type}'"
-        )
+        assert (
+            actual_type == expected_type
+        ), f"Field '{field}': expected type '{expected_type}', got '{actual_type}'"
 
     # Check required fields
     required = json_schema.get("required", [])
     print(f"Required fields: {required}")
 
     for field in ["name", "age", "active", "score"]:
-        assert field in required, (
-            f"Field '{field}' should be required. Required fields: {required}"
-        )
+        assert (
+            field in required
+        ), f"Field '{field}' should be required. Required fields: {required}"
 
 
 @mark.xfail
@@ -99,28 +99,28 @@ def test_schema_serialization_with_options():
 
     # Verify custom options with detailed output
     print(f"Title: {json_schema.get('title')}")
-    assert json_schema["title"] == "User Schema", (
-        f"Expected title 'User Schema', got '{json_schema.get('title')}'"
-    )
+    assert (
+        json_schema["title"] == "User Schema"
+    ), f"Expected title 'User Schema', got '{json_schema.get('title')}'"
 
     print(f"Description: {json_schema.get('description')}")
-    assert json_schema["description"] == "A schema for user data", (
-        f"Expected description 'A schema for user data', got '{json_schema.get('description')}'"
-    )
+    assert (
+        json_schema["description"] == "A schema for user data"
+    ), f"Expected description 'A schema for user data', got '{json_schema.get('description')}'"
 
     print(f"Additional properties: {json_schema.get('additionalProperties')}")
-    assert json_schema["additionalProperties"] is True, (
-        f"Expected additionalProperties=True, got {json_schema.get('additionalProperties')}"
-    )
+    assert (
+        json_schema["additionalProperties"] is True
+    ), f"Expected additionalProperties=True, got {json_schema.get('additionalProperties')}"
 
     print(f"Schema URI present: {'$schema' in json_schema}")
     print(f"All keys: {list(json_schema.keys())}")
     if "$schema" in json_schema:
         print(f"Schema URI value: {json_schema['$schema']}")
 
-    assert "$schema" not in json_schema, (
-        f"Expected no '$schema' key, but found: {json_schema.get('$schema')}"
-    )
+    assert (
+        "$schema" not in json_schema
+    ), f"Expected no '$schema' key, but found: {json_schema.get('$schema')}"
 
     # Check required fields
     required = json_schema.get("required", [])
@@ -129,12 +129,12 @@ def test_schema_serialization_with_options():
 
     assert "id" in required, f"Field 'id' should be required. Required: {required}"
     assert "name" in required, f"Field 'name' should be required. Required: {required}"
-    assert "email" not in required, (
-        f"Field 'email' should be optional. Required: {required}"
-    )
-    assert "phone" not in required, (
-        f"Field 'phone' should be optional. Required: {required}"
-    )
+    assert (
+        "email" not in required
+    ), f"Field 'email' should be optional. Required: {required}"
+    assert (
+        "phone" not in required
+    ), f"Field 'phone' should be optional. Required: {required}"
 
 
 @mark.xfail
@@ -169,53 +169,53 @@ def test_complex_types_serialization():
 
     tags_items_type = props["tags"].get("items", {}).get("type")
     print(f"Tags items type: expected=string, actual={tags_items_type}")
-    assert tags_items_type == "string", (
-        f"Tags items: expected type 'string', got '{tags_items_type}'"
-    )
+    assert (
+        tags_items_type == "string"
+    ), f"Tags items: expected type 'string', got '{tags_items_type}'"
 
     print(f"\nScores field: {props.get('scores', 'MISSING')}")
     scores_type = props["scores"].get("type")
     print(f"Scores type: expected=array, actual={scores_type}")
-    assert scores_type == "array", (
-        f"Scores field: expected type 'array', got '{scores_type}'"
-    )
+    assert (
+        scores_type == "array"
+    ), f"Scores field: expected type 'array', got '{scores_type}'"
 
     scores_items_type = props["scores"].get("items", {}).get("type")
     print(f"Scores items type: expected=integer, actual={scores_items_type}")
-    assert scores_items_type == "integer", (
-        f"Scores items: expected type 'integer', got '{scores_items_type}'"
-    )
+    assert (
+        scores_items_type == "integer"
+    ), f"Scores items: expected type 'integer', got '{scores_items_type}'"
 
     # Check struct type with detailed output
     print(f"\nMetadata field: {props.get('metadata', 'MISSING')}")
     metadata_type = props["metadata"].get("type")
     print(f"Metadata type: expected=object, actual={metadata_type}")
-    assert metadata_type == "object", (
-        f"Metadata field: expected type 'object', got '{metadata_type}'"
-    )
+    assert (
+        metadata_type == "object"
+    ), f"Metadata field: expected type 'object', got '{metadata_type}'"
 
     if metadata_type == "object":
         metadata_props = props["metadata"].get("properties", {})
         print(f"Metadata properties: {list(metadata_props.keys())}")
 
-        assert "role" in metadata_props, (
-            f"Missing 'role' in metadata properties: {list(metadata_props.keys())}"
-        )
-        assert "active" in metadata_props, (
-            f"Missing 'active' in metadata properties: {list(metadata_props.keys())}"
-        )
+        assert (
+            "role" in metadata_props
+        ), f"Missing 'role' in metadata properties: {list(metadata_props.keys())}"
+        assert (
+            "active" in metadata_props
+        ), f"Missing 'active' in metadata properties: {list(metadata_props.keys())}"
 
         role_type = metadata_props["role"].get("type")
         active_type = metadata_props["active"].get("type")
         print(f"Role type: expected=string, actual={role_type}")
         print(f"Active type: expected=boolean, actual={active_type}")
 
-        assert role_type == "string", (
-            f"Role field: expected type 'string', got '{role_type}'"
-        )
-        assert active_type == "boolean", (
-            f"Active field: expected type 'boolean', got '{active_type}'"
-        )
+        assert (
+            role_type == "string"
+        ), f"Role field: expected type 'string', got '{role_type}'"
+        assert (
+            active_type == "boolean"
+        ), f"Active field: expected type 'boolean', got '{active_type}'"
 
 
 @mark.xfail
@@ -247,12 +247,12 @@ def test_datetime_types_serialization():
     print(f"Date type: expected=string, actual={date_type}")
     print(f"Date format: expected=date, actual={date_format}")
 
-    assert date_type == "string", (
-        f"Date column: expected type 'string', got '{date_type}'"
-    )
-    assert date_format == "date", (
-        f"Date column: expected format 'date', got '{date_format}'"
-    )
+    assert (
+        date_type == "string"
+    ), f"Date column: expected type 'string', got '{date_type}'"
+    assert (
+        date_format == "date"
+    ), f"Date column: expected format 'date', got '{date_format}'"
 
     # Check datetime format with detailed output
     print(f"\nDateTime column field: {props.get('datetime_col', 'MISSING')}")
@@ -261,12 +261,12 @@ def test_datetime_types_serialization():
     print(f"DateTime type: expected=string, actual={datetime_type}")
     print(f"DateTime format: expected=date-time, actual={datetime_format}")
 
-    assert datetime_type == "string", (
-        f"DateTime column: expected type 'string', got '{datetime_type}'"
-    )
-    assert datetime_format == "date-time", (
-        f"DateTime column: expected format 'date-time', got '{datetime_format}'"
-    )
+    assert (
+        datetime_type == "string"
+    ), f"DateTime column: expected type 'string', got '{datetime_type}'"
+    assert (
+        datetime_format == "date-time"
+    ), f"DateTime column: expected format 'date-time', got '{datetime_format}'"
 
 
 def test_expression_usage():
@@ -294,9 +294,9 @@ def test_expression_usage():
     print(f"JSON schema string: {json_schema_str}")
     print(f"String type: {type(json_schema_str)}")
 
-    assert isinstance(json_schema_str, str), (
-        f"Expected string, got {type(json_schema_str)}"
-    )
+    assert isinstance(
+        json_schema_str, str
+    ), f"Expected string, got {type(json_schema_str)}"
 
     # Parse and verify
     import orjson
@@ -305,22 +305,22 @@ def test_expression_usage():
     print_schema(json_schema, "Expression Usage Schema")
 
     print(f"Title: expected='API User Schema', actual='{json_schema.get('title')}'")
-    assert json_schema["title"] == "API User Schema", (
-        f"Expected title 'API User Schema', got '{json_schema.get('title')}'"
-    )
+    assert (
+        json_schema["title"] == "API User Schema"
+    ), f"Expected title 'API User Schema', got '{json_schema.get('title')}'"
 
     print(f"Type: expected='object', actual='{json_schema.get('type')}'")
-    assert json_schema["type"] == "object", (
-        f"Expected type 'object', got '{json_schema.get('type')}'"
-    )
+    assert (
+        json_schema["type"] == "object"
+    ), f"Expected type 'object', got '{json_schema.get('type')}'"
 
     props = json_schema.get("properties", {})
     print(f"Properties: {list(props.keys())}")
 
     for field in ["id", "username", "email"]:
-        assert field in props, (
-            f"Missing field '{field}' in properties: {list(props.keys())}"
-        )
+        assert (
+            field in props
+        ), f"Missing field '{field}' in properties: {list(props.keys())}"
 
 
 @mark.xfail
@@ -335,9 +335,9 @@ def test_empty_dataframe():
         print_schema(json_schema, "Empty DataFrame Schema")
 
         print(f"Type: expected='object', actual='{json_schema.get('type')}'")
-        assert json_schema["type"] == "object", (
-            f"Expected type 'object', got '{json_schema.get('type')}'"
-        )
+        assert (
+            json_schema["type"] == "object"
+        ), f"Expected type 'object', got '{json_schema.get('type')}'"
 
         props = json_schema.get("properties", {})
         print(f"Properties: {props}")
@@ -382,61 +382,61 @@ def test_nested_structures():
     print(f"\nUser field: {props.get('user', 'MISSING')}")
     user_type = props["user"].get("type")
     print(f"User type: expected=object, actual={user_type}")
-    assert user_type == "object", (
-        f"User field: expected type 'object', got '{user_type}'"
-    )
+    assert (
+        user_type == "object"
+    ), f"User field: expected type 'object', got '{user_type}'"
 
     if user_type == "object":
         user_props = props["user"].get("properties", {})
         print(f"User properties: {list(user_props.keys())}")
 
-        assert "profile" in user_props, (
-            f"Missing 'profile' in user properties: {list(user_props.keys())}"
-        )
+        assert (
+            "profile" in user_props
+        ), f"Missing 'profile' in user properties: {list(user_props.keys())}"
 
         profile_type = user_props["profile"].get("type")
         print(f"Profile type: expected=object, actual={profile_type}")
-        assert profile_type == "object", (
-            f"Profile field: expected type 'object', got '{profile_type}'"
-        )
+        assert (
+            profile_type == "object"
+        ), f"Profile field: expected type 'object', got '{profile_type}'"
 
     # Check array of structs with detailed output
     print(f"\nPosts field: {props.get('posts', 'MISSING')}")
     posts_type = props["posts"].get("type")
     print(f"Posts type: expected=array, actual={posts_type}")
-    assert posts_type == "array", (
-        f"Posts field: expected type 'array', got '{posts_type}'"
-    )
+    assert (
+        posts_type == "array"
+    ), f"Posts field: expected type 'array', got '{posts_type}'"
 
     posts_items = props["posts"].get("items", {})
     posts_items_type = posts_items.get("type")
     print(f"Posts items type: expected=object, actual={posts_items_type}")
-    assert posts_items_type == "object", (
-        f"Posts items: expected type 'object', got '{posts_items_type}'"
-    )
+    assert (
+        posts_items_type == "object"
+    ), f"Posts items: expected type 'object', got '{posts_items_type}'"
 
     if posts_items_type == "object":
         post_props = posts_items.get("properties", {})
         print(f"Post properties: {list(post_props.keys())}")
 
-        assert "title" in post_props, (
-            f"Missing 'title' in post properties: {list(post_props.keys())}"
-        )
-        assert "likes" in post_props, (
-            f"Missing 'likes' in post properties: {list(post_props.keys())}"
-        )
+        assert (
+            "title" in post_props
+        ), f"Missing 'title' in post properties: {list(post_props.keys())}"
+        assert (
+            "likes" in post_props
+        ), f"Missing 'likes' in post properties: {list(post_props.keys())}"
 
         title_type = post_props["title"].get("type")
         likes_type = post_props["likes"].get("type")
         print(f"Title type: expected=string, actual={title_type}")
         print(f"Likes type: expected=integer, actual={likes_type}")
 
-        assert title_type == "string", (
-            f"Title field: expected type 'string', got '{title_type}'"
-        )
-        assert likes_type == "integer", (
-            f"Likes field: expected type 'integer', got '{likes_type}'"
-        )
+        assert (
+            title_type == "string"
+        ), f"Title field: expected type 'string', got '{title_type}'"
+        assert (
+            likes_type == "integer"
+        ), f"Likes field: expected type 'integer', got '{likes_type}'"
 
 
 def test_debug_output(capsys):
@@ -467,9 +467,9 @@ def test_debug_output(capsys):
     print(f"Has 'DEBUG:' in stdout: {has_debug_in_out}")
     print(f"Has any stdout: {has_any_out}")
 
-    assert has_debug_in_err or has_any_err or has_debug_in_out or has_any_out, (
-        f"Expected some debug output. stdout='{captured.out}', stderr='{captured.err}'"
-    )
+    assert (
+        has_debug_in_err or has_any_err or has_debug_in_out or has_any_out
+    ), f"Expected some debug output. stdout='{captured.out}', stderr='{captured.err}'"
 
 
 def test_schema_consistency():
@@ -514,6 +514,6 @@ def test_schema_consistency():
             if normalized1.get(key) != normalized2.get(key):
                 print(f"  {key}: {normalized1.get(key)} != {normalized2.get(key)}")
 
-    assert normalized1 == normalized2, (
-        f"Schemas should be identical but differ. Schema1: {normalized1}, Schema2: {normalized2}"
-    )
+    assert (
+        normalized1 == normalized2
+    ), f"Schemas should be identical but differ. Schema1: {normalized1}, Schema2: {normalized2}"

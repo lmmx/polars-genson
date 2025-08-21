@@ -282,128 +282,112 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
     }
 }
 
-/// Polars expression that serializes schema fields to JSON Schema
-/// Takes a series of struct columns representing schema fields
-#[polars_expr(output_type_func=serialize_schema_output_type)]
-pub fn serialize_polars_schema(
-    inputs: &[Series],
-    kwargs: SerializeSchemaKwargs,
-) -> PolarsResult<Series> {
-    if inputs.is_empty() {
-        return Err(PolarsError::ComputeError("No input series provided".into()));
-    }
-
-    let series = &inputs[0];
-
-    // Expect a struct series with "name" and "dtype" fields representing the schema
-    let struct_chunked = series.struct_().map_err(|_| {
-        PolarsError::ComputeError("Expected a struct column with schema field information".into())
-    })?;
-
-    // Extract the schema fields from the struct
-    let fields = struct_chunked.fields_as_series();
-
-    if fields.len() != 2 {
-        return Err(PolarsError::ComputeError(
-            "Expected struct with exactly 2 fields: 'name' and 'dtype'".into(),
-        ));
-    }
-
-    // Get the name and dtype columns
-    let name_series = &fields[0];
-    let dtype_series = &fields[1];
-
-    let name_chunked = name_series
-        .str()
-        .map_err(|_| PolarsError::ComputeError("Expected 'name' field to be string type".into()))?;
-
-    let dtype_chunked = dtype_series.str().map_err(|_| {
-        PolarsError::ComputeError("Expected 'dtype' field to be string type".into())
-    })?;
-
-    // Build a Polars Schema from the field information
-    let mut polars_schema = Schema::default();
-
-    for (name_opt, dtype_opt) in name_chunked.iter().zip(dtype_chunked.iter()) {
-        if let (Some(name), Some(dtype_str)) = (name_opt, dtype_opt) {
-            // Parse the dtype string back to a DataType
-            // This is a simplified version - you might want to implement a more complete parser
-            let polars_dtype = match dtype_str {
-                "String" => DataType::String,
-                "Int64" => DataType::Int64,
-                "Int32" => DataType::Int32,
-                "Float64" => DataType::Float64,
-                "Float32" => DataType::Float32,
-                "Boolean" => DataType::Boolean,
-                "Date" => DataType::Date,
-                "Time" => DataType::Time,
-                s if s.starts_with("List[") && s.ends_with("]") => {
-                    let inner_type = &s[5..s.len() - 1];
-                    match inner_type {
-                        "String" => DataType::List(Box::new(DataType::String)),
-                        "Int64" => DataType::List(Box::new(DataType::Int64)),
-                        "Float64" => DataType::List(Box::new(DataType::Float64)),
-                        "Boolean" => DataType::List(Box::new(DataType::Boolean)),
-                        _ => DataType::String, // Fallback
+/// Parse dtype string back to DataType for more accurate schema conversion
+fn parse_dtype_string(dtype_str: &str) -> DataType {
+    match dtype_str {
+        "String" => DataType::String,
+        "Int64" => DataType::Int64,
+        "Int32" => DataType::Int32,
+        "Int16" => DataType::Int16,
+        "Int8" => DataType::Int8,
+        "UInt64" => DataType::UInt64,
+        "UInt32" => DataType::UInt32,
+        "UInt16" => DataType::UInt16,
+        "UInt8" => DataType::UInt8,
+        "Float64" => DataType::Float64,
+        "Float32" => DataType::Float32,
+        "Boolean" => DataType::Boolean,
+        "Date" => DataType::Date,
+        "Time" => DataType::Time,
+        "Datetime" => DataType::Datetime(TimeUnit::Milliseconds, None),
+        "Duration" => DataType::Duration(TimeUnit::Milliseconds),
+        "Null" => DataType::Null,
+        "Binary" => DataType::Binary,
+        "Categorical" => {
+            // Create a default categorical type
+            let categories = polars::datatypes::Categories::new(
+                polars::datatypes::PlSmallStr::from_static("default"),
+                polars::datatypes::PlSmallStr::from_static("default"),
+                polars::datatypes::CategoricalPhysical::U32,
+            );
+            DataType::Categorical(
+                categories,
+                std::sync::Arc::new(polars::datatypes::CategoricalMapping::new(1000)),
+            )
+        }
+        "Decimal" => DataType::Decimal(None, None),
+        s if s.starts_with("List[") && s.ends_with("]") => {
+            let inner_type = &s[5..s.len() - 1];
+            DataType::List(Box::new(parse_dtype_string(inner_type)))
+        }
+        s if s.starts_with("Array[") && s.ends_with("]") => {
+            // Parse Array[Type,Size]
+            let inner = &s[6..s.len() - 1];
+            if let Some(comma_pos) = inner.rfind(',') {
+                let inner_type = &inner[..comma_pos];
+                let size_str = &inner[comma_pos + 1..];
+                if let Ok(size) = size_str.parse::<usize>() {
+                    DataType::Array(Box::new(parse_dtype_string(inner_type)), size)
+                } else {
+                    DataType::String // Fallback
+                }
+            } else {
+                DataType::String // Fallback
+            }
+        }
+        s if s.starts_with("Struct[") && s.ends_with("]") => {
+            let fields_str = &s[7..s.len() - 1];
+            if fields_str.is_empty() {
+                DataType::Struct(vec![])
+            } else {
+                let field_parts = parse_struct_fields(fields_str);
+                let mut fields = Vec::new();
+                for field_part in field_parts {
+                    if let Some(colon_pos) = field_part.find(':') {
+                        let field_name = &field_part[..colon_pos];
+                        let field_type_str = &field_part[colon_pos + 1..];
+                        let field_type = parse_dtype_string(field_type_str);
+                        fields.push(Field::new(field_name.into(), field_type));
                     }
                 }
-                _ => DataType::String, // Fallback for unknown types
-            };
-
-            polars_schema.with_column(name.into(), polars_dtype);
-        }
-    }
-
-    if kwargs.debug {
-        eprintln!("DEBUG: Polars schema to serialize: {:?}", polars_schema);
-    }
-
-    // Create JsonSchemaOptions from kwargs
-    let mut options = JsonSchemaOptions::new();
-
-    if let Some(uri) = kwargs.schema_uri {
-        options = options.with_schema_uri(Some(uri));
-    }
-
-    if let Some(title) = kwargs.title {
-        options = options.with_title(Some(title));
-    }
-
-    if let Some(description) = kwargs.description {
-        options = options.with_description(Some(description));
-    }
-
-    if !kwargs.optional_fields.is_empty() {
-        options = options.with_optional_fields(kwargs.optional_fields);
-    }
-
-    options = options.with_additional_properties(kwargs.additional_properties);
-
-    // Convert to JSON Schema using the bridge
-    let result = panic::catch_unwind(|| -> Result<String, String> {
-        let json_schema = polars_schema_to_json_schema(&polars_schema, &options)
-            .map_err(|e| format!("Schema serialization error: {}", e))?;
-
-        serde_json::to_string_pretty(&json_schema)
-            .map_err(|e| format!("JSON serialization error: {}", e))
-    });
-
-    match result {
-        Ok(Ok(json_schema_str)) => {
-            if kwargs.debug {
-                eprintln!("DEBUG: Generated JSON Schema:");
-                eprintln!("{}", json_schema_str);
+                DataType::Struct(fields)
             }
-            Ok(Series::new(
-                "json_schema".into(),
-                vec![json_schema_str; series.len()],
-            ))
         }
-        Ok(Err(e)) => Err(PolarsError::ComputeError(
-            format!("Schema serialization failed: {}", e).into(),
-        )),
-        Err(_panic) => Err(PolarsError::ComputeError(
-            "Panic occurred during schema serialization".into(),
-        )),
+        _ => DataType::String, // Fallback for unknown types
     }
+}
+
+/// Parse struct field definitions, handling nested brackets
+fn parse_struct_fields(fields_str: &str) -> Vec<String> {
+    let mut fields = Vec::new();
+    let mut current_field = String::new();
+    let mut bracket_depth = 0;
+
+    for ch in fields_str.chars() {
+        match ch {
+            '[' => {
+                bracket_depth += 1;
+                current_field.push(ch);
+            }
+            ']' => {
+                bracket_depth -= 1;
+                current_field.push(ch);
+            }
+            ',' if bracket_depth == 0 => {
+                if !current_field.trim().is_empty() {
+                    fields.push(current_field.trim().to_string());
+                }
+                current_field.clear();
+            }
+            _ => {
+                current_field.push(ch);
+            }
+        }
+    }
+
+    if !current_field.trim().is_empty() {
+        fields.push(current_field.trim().to_string());
+    }
+
+    fields
 }

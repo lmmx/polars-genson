@@ -312,6 +312,24 @@ class GensonNamespace:
         dict
             The JSON Schema as a dictionary
         """
+        # Handle empty DataFrame case
+        if self._df.is_empty() or len(self._df.schema) == 0:
+            base_schema = {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": additional_properties,
+            }
+
+            if schema_uri is not None:
+                base_schema["$schema"] = schema_uri
+            if title is not None:
+                base_schema["title"] = title
+            if description is not None:
+                base_schema["description"] = description
+
+            return base_schema
+
         # Convert the DataFrame schema to the struct format expected by serialize_polars_schema
         schema_data = []
         for name, dtype in self._df.schema.items():
