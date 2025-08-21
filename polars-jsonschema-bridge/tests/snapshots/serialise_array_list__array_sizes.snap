@@ -1,0 +1,37 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_array_list.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  small_array:
+    type: array
+    items:
+      type: integer
+    minItems: 2
+    maxItems: 2
+  medium_array:
+    type: array
+    items:
+      type: number
+    minItems: 5
+    maxItems: 5
+  large_array:
+    type: array
+    items:
+      type: string
+    minItems: 10
+    maxItems: 10
+  string_array:
+    type: array
+    items:
+      type: string
+    minItems: 3
+    maxItems: 3
+required:
+  - large_array
+  - medium_array
+  - small_array
+  - string_array
+additionalProperties: false

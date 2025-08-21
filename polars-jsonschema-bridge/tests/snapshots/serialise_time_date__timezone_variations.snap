@@ -1,0 +1,24 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_time_date.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  utc:
+    type: string
+    format: date-time
+    description: Date-time with timezone information
+  ny_tz:
+    type: string
+    format: date-time
+    description: Date-time with timezone information
+  london_tz:
+    type: string
+    format: date-time
+    description: Date-time with timezone information
+required:
+  - london_tz
+  - ny_tz
+  - utc
+additionalProperties: false

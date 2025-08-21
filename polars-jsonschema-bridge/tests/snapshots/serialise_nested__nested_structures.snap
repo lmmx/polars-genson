@@ -1,0 +1,70 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_nested.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  list_of_structs:
+    type: array
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+      required:
+        - name
+        - age
+      additionalProperties: false
+  struct_with_list:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+      id:
+        type: integer
+    required:
+      - tags
+      - id
+    additionalProperties: false
+  array_of_structs:
+    type: array
+    items:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+      required:
+        - x
+        - y
+      additionalProperties: false
+    minItems: 4
+    maxItems: 4
+  deep_nest:
+    type: object
+    properties:
+      level1:
+        type: object
+        properties:
+          level2:
+            type: array
+            items:
+              type: string
+        required:
+          - level2
+        additionalProperties: false
+    required:
+      - level1
+    additionalProperties: false
+required:
+  - array_of_structs
+  - deep_nest
+  - list_of_structs
+  - struct_with_list
+additionalProperties: false

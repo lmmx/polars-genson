@@ -1,5 +1,5 @@
 ---
-source: polars-jsonschema-bridge/tests/serialise.rs
+source: polars-jsonschema-bridge/tests/serialise_all_datatypes.rs
 expression: json_schema
 ---
 $schema: "https://json-schema.org/draft/2020-12/schema"

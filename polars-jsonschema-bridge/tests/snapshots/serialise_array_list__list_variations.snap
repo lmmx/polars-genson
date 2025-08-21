@@ -1,0 +1,42 @@
+---
+source: polars-jsonschema-bridge/tests/serialise_array_list.rs
+expression: json_schema
+---
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  list_int:
+    type: array
+    items:
+      type: integer
+  list_float:
+    type: array
+    items:
+      type: number
+  list_string:
+    type: array
+    items:
+      type: string
+  list_bool:
+    type: array
+    items:
+      type: boolean
+  list_date:
+    type: array
+    items:
+      type: string
+      format: date
+  list_of_lists:
+    type: array
+    items:
+      type: array
+      items:
+        type: integer
+required:
+  - list_bool
+  - list_date
+  - list_float
+  - list_int
+  - list_of_lists
+  - list_string
+additionalProperties: false
