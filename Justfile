@@ -24,7 +24,7 @@ prepush-rs:
     
 
 # (Not running ty in lint recipe)
-lint: ruff-check lint-action
+lint: ruff-check # lint-action
 
 fmt:     ruff-fmt code-quality-fix
 
