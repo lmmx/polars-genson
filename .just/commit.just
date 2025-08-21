@@ -4,6 +4,12 @@ NO_STASH := "Justfile"
 # FIXER must be the name of a Justfile task
 FIXER := "pc-fix"
 
+check-fixer:
+    #!/usr/bin/env echo-comment
+
+    just -s {{FIXER}} >/dev/null 2>&1
+    test $? -eq 0 || echo "# just: No such task '{{FIXER}}'" | echo-comment /dev/stdin --color=bold-red
+
 no-fix-stash msg="pre-commit-temp":
     git stash push --keep-index --include-untracked -m "{{msg}}" -- \
         ':/*' \
@@ -15,13 +21,12 @@ stash-restore *changes:
     # Restoring {{changes}}
     git stash pop --quiet
 
-
 # Special commit flag that will run a given command
 commit *args:
     #!/usr/bin/env -S echo-comment --color bold-yellow
 
     # Confirm fixer {{FIXER}} is a valid Justfile task
-    just -s {{FIXER}} >/dev/null 2>&1 || echo "Invalid fixer {{FIXER}}" >&2 && exit 1
+    check-fixer
 
     # Halt at non-zero return codes from now on
     set -e
