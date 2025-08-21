@@ -1,3 +1,5 @@
+import ".just/commit.just"
+
 default: clippy
 
 ci_opt := if env("PRE_COMMIT_HOME", "") != "" { "-ci" } else { "" }
@@ -5,9 +7,9 @@ ci_opt := if env("PRE_COMMIT_HOME", "") != "" { "-ci" } else { "" }
 precommit:
     just pc{{ci_opt}}
 
-pc:     fmt code-quality lint 
-pc-fix: fmt code-quality-fix
-pc-ci:      code-quality
+pc:     code-quality lint 
+pc-fix: code-quality-fix
+pc-ci:  code-quality
 
 prepush: check clippy docs py
 
