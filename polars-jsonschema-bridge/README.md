@@ -167,6 +167,8 @@ The `JsonSchemaOptions` struct lets you control aspects of the generated schema:
 Example:
 
 ```rust
+use polars_jsonschema_bridge::JsonSchemaOptions;
+
 let options = JsonSchemaOptions::new()
     .with_title(Some("Example"))
     .with_optional_fields(vec!["email"])
@@ -178,6 +180,8 @@ let options = JsonSchemaOptions::new()
 Enable debug output to see the intermediate JSON Schema during conversion:
 
 ```rust
+use polars_jsonschema_bridge::json_schema_to_polars_fields;
+
 let fields = json_schema_to_polars_fields(&json_schema, true)?; // debug = true
 // Prints the generated JSON Schema to stderr
 ```

@@ -406,7 +406,7 @@ mod tests {
             Field::new("middle".into(), DataType::Boolean),
         ]);
 
-        let json_schema = polars_schema_to_json_schema(&schema, &options).unwrap();
+        let json_schema = polars_schema_to_json_schema(&schema, options).unwrap();
 
         let required: Vec<String> =
             serde_json::from_value(json_schema["required"].clone()).unwrap();

@@ -1,0 +1,12 @@
+---
+source: polars-jsonschema-bridge/tests/readme_example.rs
+expression: fields_vec
+---
+- - name
+  - String
+- - age
+  - Int64
+- - scores
+  - "List[Float64]"
+- - profile
+  - "Struct[active:Boolean]"
