@@ -89,7 +89,7 @@ This generates a JSON Schema document with the desired metadata and field requir
 ### Individual Type Conversions
 
 ```rust
-use polars_jsonschema_bridge::{json_type_to_polars_type, polars_dtype_to_json_schema};
+use polars_jsonschema_bridge::{json_type_to_polars_type, polars_dtype_to_json_schema, JsonSchemaOptions};
 use polars::prelude::DataType;
 use serde_json::json;
 
@@ -98,7 +98,10 @@ let polars_type = json_type_to_polars_type(&json!({"type": "string"}))?;
 assert_eq!(polars_type, "String");
 
 // Polars DataType → JSON Schema
-let json_schema = polars_dtype_to_json_schema(&DataType::List(Box::new(DataType::Int64)))?;
+let json_schema = polars_dtype_to_json_schema(
+    &DataType::List(Box::new(DataType::Int64)),
+    &JsonSchemaOptions::default()
+)?;
 assert_eq!(json_schema, json!({
     "type": "array",
     "items": {"type": "integer"}

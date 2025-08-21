@@ -71,7 +71,7 @@ pub fn polars_schema_to_json_schema(
     let mut required = Vec::new();
 
     for (field_name, dtype) in schema.iter() {
-        let field_schema = polars_dtype_to_json_schema(dtype)?;
+        let field_schema = polars_dtype_to_json_schema(dtype, options)?;
         properties.insert(field_name.to_string(), field_schema);
 
         // Only add to required if not explicitly marked as optional
@@ -112,7 +112,10 @@ pub fn polars_schema_to_json_schema(
 }
 
 /// Convert a Polars DataType to JSON Schema type definition.
-pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsError> {
+pub fn polars_dtype_to_json_schema(
+    dtype: &DataType,
+    options: &JsonSchemaOptions,
+) -> Result<Value, PolarsError> {
     match dtype {
         DataType::Boolean => Ok(json!({"type": "boolean"})),
 
@@ -162,7 +165,7 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
         })),
 
         DataType::List(inner) => {
-            let items_schema = polars_dtype_to_json_schema(inner)?;
+            let items_schema = polars_dtype_to_json_schema(inner, options)?;
             Ok(json!({
                 "type": "array",
                 "items": items_schema
@@ -170,7 +173,7 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
         }
 
         DataType::Array(inner, size) => {
-            let items_schema = polars_dtype_to_json_schema(inner)?;
+            let items_schema = polars_dtype_to_json_schema(inner, options)?;
             Ok(json!({
                 "type": "array",
                 "items": items_schema,
@@ -184,7 +187,7 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
             let mut required = Vec::new();
 
             for field in fields {
-                let field_schema = polars_dtype_to_json_schema(field.dtype())?;
+                let field_schema = polars_dtype_to_json_schema(field.dtype(), options)?;
                 properties.insert(field.name().to_string(), field_schema);
                 required.push(field.name().to_string());
             }
@@ -193,7 +196,7 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
                 "type": "object",
                 "properties": properties,
                 "required": required,
-                "additionalProperties": false
+                "additionalProperties": options.additional_properties
             }))
         }
 
@@ -278,26 +281,30 @@ mod tests {
 
     #[test]
     fn test_basic_types() {
+        let options = &JsonSchemaOptions::default();
+
         assert_eq!(
-            polars_dtype_to_json_schema(&DataType::Boolean).unwrap(),
+            polars_dtype_to_json_schema(&DataType::Boolean, options).unwrap(),
             json!({"type": "boolean"})
         );
 
         assert_eq!(
-            polars_dtype_to_json_schema(&DataType::String).unwrap(),
+            polars_dtype_to_json_schema(&DataType::String, options).unwrap(),
             json!({"type": "string"})
         );
 
         assert_eq!(
-            polars_dtype_to_json_schema(&DataType::Int64).unwrap(),
+            polars_dtype_to_json_schema(&DataType::Int64, options).unwrap(),
             json!({"type": "integer"})
         );
     }
 
     #[test]
     fn test_list_type() {
+        let options = &JsonSchemaOptions::default();
+
         let list_dtype = DataType::List(Box::new(DataType::String));
-        let result = polars_dtype_to_json_schema(&list_dtype).unwrap();
+        let result = polars_dtype_to_json_schema(&list_dtype, options).unwrap();
 
         let expected = json!({
             "type": "array",
@@ -309,13 +316,15 @@ mod tests {
 
     #[test]
     fn test_struct_type() {
+        let options = &JsonSchemaOptions::default();
+
         let fields = vec![
             Field::new("name".into(), DataType::String),
             Field::new("age".into(), DataType::Int64),
         ];
         let struct_dtype = DataType::Struct(fields);
 
-        let result = polars_dtype_to_json_schema(&struct_dtype).unwrap();
+        let result = polars_dtype_to_json_schema(&struct_dtype, options).unwrap();
 
         assert_eq!(result["type"], "object");
         assert!(result["properties"]["name"]["type"] == "string");
@@ -349,8 +358,10 @@ mod tests {
 
     #[test]
     fn test_decimal_type() {
+        let options = &JsonSchemaOptions::default();
+
         let decimal_dtype = DataType::Decimal(Some(10), Some(2));
-        let result = polars_dtype_to_json_schema(&decimal_dtype).unwrap();
+        let result = polars_dtype_to_json_schema(&decimal_dtype, options).unwrap();
 
         assert_eq!(result["type"], "number");
         assert_eq!(result["multipleOf"], 0.01);
@@ -362,6 +373,8 @@ mod tests {
 
     #[test]
     fn test_categorical_type() {
+        let options = &JsonSchemaOptions::default();
+
         // Test categorical type handling
         use polars::prelude::*;
         use std::sync::Arc;
@@ -376,7 +389,7 @@ mod tests {
         let categorical_dtype =
             DataType::Categorical(categories, Arc::new(CategoricalMapping::new(255)));
 
-        let result = polars_dtype_to_json_schema(&categorical_dtype).unwrap();
+        let result = polars_dtype_to_json_schema(&categorical_dtype, options).unwrap();
 
         assert_eq!(result["type"], "string");
         assert_eq!(result["description"], "Categorical data");
@@ -384,6 +397,8 @@ mod tests {
 
     #[test]
     fn test_required_fields_are_sorted() {
+        let options = &JsonSchemaOptions::default();
+
         // Insert fields in an intentionally shuffled order
         let schema = Schema::from_iter(vec![
             Field::new("zeta".into(), DataType::Int64),
@@ -391,7 +406,6 @@ mod tests {
             Field::new("middle".into(), DataType::Boolean),
         ]);
 
-        let options = JsonSchemaOptions::new(); // all required by default
         let json_schema = polars_schema_to_json_schema(&schema, &options).unwrap();
 
         let required: Vec<String> =
