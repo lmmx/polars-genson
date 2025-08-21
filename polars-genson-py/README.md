@@ -6,7 +6,7 @@
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/polars-genson.svg)](https://pypi.org/project/polars-genson)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/lmmx/polars-genson/master.svg)](https://results.pre-commit.ci/latest/github/lmmx/polars-genson/master)
 
-A Polars plugin for JSON schema inference from string columns using genson-rs. Infer both JSON schemas and Polars schemas directly from JSON data.
+A Polars plugin for working with JSON schemas. Infer schemas from JSON data and convert between JSON Schema and Polars schema formats.
 
 ## Installation
 
@@ -22,18 +22,22 @@ pip install polars-genson[polars-lts-cpu]
 
 ## Features
 
+### Schema Inference
 - **JSON Schema Inference**: Generate JSON schemas from JSON strings in Polars columns
 - **Polars Schema Inference**: Directly infer Polars data types and schemas from JSON data
 - **Multiple JSON Objects**: Handle columns with varying JSON schemas across rows
 - **Complex Types**: Support for nested objects, arrays, and mixed types
 - **Flexible Input**: Support for both single JSON objects and arrays of objects
-- **Polars Integration**: Native Polars plugin with familiar API
+
+### Schema Conversion
+- **Polars → JSON Schema**: Convert existing DataFrame schemas to JSON Schema format
+- **JSON Schema → Polars**: Convert JSON schemas to equivalent Polars schemas  
+- **Round-trip Support**: Full bidirectional conversion with validation
+- **Schema Manipulation**: Validate, transform, and standardize schemas
 
 ## Usage
 
-The plugin adds a `genson` namespace to Polars DataFrames for schema inference.
-
-## Quick Start
+The plugin adds a `genson` namespace to Polars DataFrames for schema inference and conversion.
 
 ```python
 import polars as pl

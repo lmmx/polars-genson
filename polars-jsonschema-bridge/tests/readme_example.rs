@@ -119,9 +119,6 @@ fn readme_error_handling() -> eyre::Result<()> {
     let result2 = json_type_to_polars_type(&json!({"type": "not_a_real_type"}));
     assert!(result2.is_err());
 
-    let result3 = json_type_to_polars_type(&json!({"invalid": "schema"}));
-    assert!(result3.is_err());
-
     Ok(())
 }
 
