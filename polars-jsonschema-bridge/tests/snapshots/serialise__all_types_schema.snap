@@ -23,6 +23,10 @@ properties:
   datetime_col:
     type: string
     format: date-time
+  datetime_tz_col:
+    type: string
+    format: date-time
+    description: Date-time with timezone information
   time_col:
     type: string
     format: time
@@ -64,6 +68,9 @@ properties:
   categorical_col:
     type: string
     description: Categorical data
+  enum_col:
+    type: string
+    description: Enumerated string values
 required:
   - array_col
   - binary_col
@@ -71,8 +78,10 @@ required:
   - categorical_col
   - date_col
   - datetime_col
+  - datetime_tz_col
   - decimal_col
   - duration_col
+  - enum_col
   - float_col
   - int_col
   - list_col

@@ -11,6 +11,9 @@ fn snapshot_all_supported_types() {
         CategoricalPhysical::U32, // or whatever the default physical type is
     );
 
+    // Create FrozenCategories for enum data
+    let frozen_categories = categories.freeze();
+
     // Construct a schema with one column of each type we support
     let schema = Schema::from_iter(vec![
         Field::new("bool_col".into(), DataType::Boolean),
@@ -23,7 +26,10 @@ fn snapshot_all_supported_types() {
             "datetime_col".into(),
             DataType::Datetime(TimeUnit::Milliseconds, None),
         ),
-        // Field::new("datetime_tz_col".into(), DataType::Datetime(TimeUnit::Milliseconds, ?)), // No timezone for testing
+        Field::new(
+            "datetime_tz_col".into(),
+            DataType::Datetime(TimeUnit::Milliseconds, Some(TimeZone::UTC)),
+        ),
         Field::new("time_col".into(), DataType::Time),
         Field::new(
             "duration_col".into(),
@@ -48,7 +54,13 @@ fn snapshot_all_supported_types() {
             "categorical_col".into(),
             DataType::Categorical(categories.clone(), Arc::new(CategoricalMapping::new(1000))),
         ),
-        // Field::new("enum_col".into(), DataType::Enum(None, None)), // No enum for testing
+        Field::new(
+            "enum_col".into(),
+            DataType::Enum(
+                frozen_categories.clone(),
+                Arc::new(CategoricalMapping::new(1000)),
+            ),
+        ),
     ]);
 
     let options = JsonSchemaOptions::new()
