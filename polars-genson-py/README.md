@@ -154,6 +154,37 @@ The Polars schema inference automatically handles:
 
 ## Advanced Usage
 
+### Per-Row Schema Processing
+
+- Only available with JSON schema currently (per-row/unmerged Polars schemas TODO)
+
+```python
+# Get individual schemas and process them
+df = pl.DataFrame({
+    "ABCs": [
+        '{"a": 1, "b": 2}',
+        '{"a": 1, "c": true}',
+    ]
+})
+
+# Analyze schema variations
+individual_schemas = df.genson.infer_json_schema("ABCs", merge_schemas=False)
+```
+
+The result is a list of one schema per row. With `merge_schemas=True` you would
+get all 3 keys (a, b, c) in a single schema.
+
+```
+[{'$schema': 'http://json-schema.org/schema#',
+  'properties': {'a': {'type': 'integer'}, 'b': {'type': 'integer'}},
+  'required': ['a', 'b'],
+  'type': 'object'},
+ {'$schema': 'http://json-schema.org/schema#',
+  'properties': {'a': {'type': 'integer'}, 'c': {'type': 'boolean'}},
+  'required': ['a', 'c'],
+  'type': 'object'}]
+```
+
 ### JSON Schema Options
 
 ```python
