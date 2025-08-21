@@ -11,7 +11,7 @@ def infer_json_schema(
     *,
     ignore_outer_array: bool = True,
     ndjson: bool = False,
-    schema_uri: str | None = "AUTO",
+    schema_uri: str | None = "http://json-schema.org/schema#",
     merge_schemas: bool = True,
     debug: bool = False,
 ) -> pl.Expr: ...
@@ -24,7 +24,7 @@ class GensonNamespace:
         *,
         ignore_outer_array: bool = True,
         ndjson: bool = False,
-        schema_uri: str | None = "AUTO",
+        schema_uri: str | None = "http://json-schema.org/schema#",
         merge_schemas: bool = True,
         debug: bool = False,
     ) -> dict[str, Any] | list[dict[str, Any]]: ...
