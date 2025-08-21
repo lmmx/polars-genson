@@ -20,17 +20,18 @@ stash-restore *changes:
 commit *args:
     #!/usr/bin/env -S echo-comment --color bold-yellow
 
-    ## Confirm fixer is a valid Justfile task
+    # Confirm fixer is a valid Justfile task
     just -s {{FIXER}} >/dev/null 2>&1 || echo "Invalid fixer {{FIXER}}" >&2 && exit 1
 
-    ## Halt at non-zero return codes from now on
+    # Halt at non-zero return codes from now on
     set -e
 
-    ## Count unstaged/untracked files
+    # Count unstaged/untracked files
     unstaged_count=$(git diff --name-only -- . ':(exclude){{NO_STASH}}' | wc -l)
     untracked_count=$(git ls-files --others --exclude-standard -- ':/*' ':(exclude){{NO_STASH}}' | wc -l)
     stash_count=$((unstaged_count + untracked_count))
     
+    # Checking stash count $stash_count
     if [ $stash_count -ne 0 ]; then
       case "$unstaged_count-$untracked_count" in
         0-*) kinds="untracked" ;;
