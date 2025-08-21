@@ -1,6 +1,6 @@
-use polars_jsonschema_bridge::{polars_schema_to_json_schema, JsonSchemaOptions};
-use polars::prelude::*;
 use insta::assert_yaml_snapshot;
+use polars::prelude::*;
+use polars_jsonschema_bridge::{polars_schema_to_json_schema, JsonSchemaOptions};
 
 #[test]
 fn readme_polars_schema_to_json_schema() {

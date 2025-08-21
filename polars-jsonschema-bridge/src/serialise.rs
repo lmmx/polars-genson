@@ -389,5 +389,4 @@ mod tests {
         // Ensure the required list is alphabetically sorted
         assert_eq!(required, vec!["alpha", "middle", "zeta"]);
     }
-
 }
