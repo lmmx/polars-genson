@@ -12,7 +12,6 @@ pub struct JsonSchemaOptions {
     pub description: Option<String>,
     pub optional_fields: std::collections::HashSet<String>,
     pub additional_properties: bool,
-    pub preserve_field_order: bool,
 }
 
 impl Default for JsonSchemaOptions {
@@ -23,7 +22,6 @@ impl Default for JsonSchemaOptions {
             description: None,
             optional_fields: std::collections::HashSet::new(),
             additional_properties: false,
-            preserve_field_order: true,
         }
     }
 }
@@ -72,7 +70,6 @@ pub fn polars_schema_to_json_schema(
     let mut properties = Map::new();
     let mut required = Vec::new();
 
-    // Schema.iter() now preserves insertion order in modern Polars
     for (field_name, dtype) in schema.iter() {
         let field_schema = polars_dtype_to_json_schema(dtype)?;
         properties.insert(field_name.to_string(), field_schema);
@@ -366,9 +363,23 @@ mod tests {
     #[test]
     fn test_categorical_type() {
         // Test categorical type handling
-        let result = polars_dtype_to_json_schema(&DataType::String).unwrap();
+        use polars::prelude::*;
+        use std::sync::Arc;
+
+        // Create a categorical type similar to your snapshot test
+        let categories = Categories::new(
+            PlSmallStr::from_static("test_cat"),
+            PlSmallStr::from_static("test_namespace"),
+            CategoricalPhysical::U8,
+        );
+
+        let categorical_dtype =
+            DataType::Categorical(categories, Arc::new(CategoricalMapping::new(255)));
+
+        let result = polars_dtype_to_json_schema(&categorical_dtype).unwrap();
 
         assert_eq!(result["type"], "string");
+        assert_eq!(result["description"], "Categorical data");
     }
 
     #[test]

@@ -160,7 +160,6 @@ The `JsonSchemaOptions` struct lets you control aspects of the generated schema:
 | `description` | `None` | Adds a `description` to the schema |
 | `optional_fields` | empty set | By default all fields are required; use this to mark some as optional |
 | `additional_properties` | `false` | Controls the `additionalProperties` flag |
-| `preserve_field_order` | `true` | Placeholder for ordering control (currently preserved by default) |
 
 Example:
 
@@ -179,12 +178,6 @@ Enable debug output to see the intermediate JSON Schema during conversion:
 let fields = json_schema_to_polars_fields(&json_schema, true)?; // debug = true
 // Prints the generated JSON Schema to stderr
 ```
-
-## Limitations
-
-- **String DataType Parsing**: Full Polars Schema creation from field strings requires implementing DataType parsing (planned for future release)
-- **Column Order**: Order is not preserved when iterating over Polars Schema (use IndexMap if order matters)
-- **Complex Types**: Some advanced Polars types (Object, Unknown) are not supported
 
 ## Integration
 
