@@ -102,6 +102,7 @@ pub fn polars_schema_to_json_schema(
     schema_obj.insert("properties".to_string(), json!(properties));
 
     if !required.is_empty() {
+        required.sort();
         schema_obj.insert("required".to_string(), json!(required));
     }
 
@@ -369,4 +370,24 @@ mod tests {
 
         assert_eq!(result["type"], "string");
     }
+
+    #[test]
+    fn test_required_fields_are_sorted() {
+        // Insert fields in an intentionally shuffled order
+        let schema = Schema::from_iter(vec![
+            Field::new("zeta".into(), DataType::Int64),
+            Field::new("alpha".into(), DataType::String),
+            Field::new("middle".into(), DataType::Boolean),
+        ]);
+
+        let options = JsonSchemaOptions::new(); // all required by default
+        let json_schema = polars_schema_to_json_schema(&schema, &options).unwrap();
+
+        let required: Vec<String> =
+            serde_json::from_value(json_schema["required"].clone()).unwrap();
+
+        // Ensure the required list is alphabetically sorted
+        assert_eq!(required, vec!["alpha", "middle", "zeta"]);
+    }
+
 }

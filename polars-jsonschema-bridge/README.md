@@ -63,7 +63,7 @@ let fields = json_schema_to_polars_fields(&json_schema, false)?;
 ### Polars Schema to JSON Schema
 
 ```rust
-use polars_jsonschema_bridge::polars_schema_to_json_schema;
+use polars_jsonschema_bridge::{polars_schema_to_json_schema, JsonSchemaOptions};
 use polars::prelude::*;
 
 let mut schema = Schema::default();
@@ -71,9 +71,20 @@ schema.with_column("name".into(), DataType::String);
 schema.with_column("age".into(), DataType::Int64);
 schema.with_column("scores".into(), DataType::List(Box::new(DataType::Float64)));
 
-let json_schema = polars_schema_to_json_schema(&schema)?;
-// Generates a complete JSON Schema document
-```
+// Use default options
+let json_schema = polars_schema_to_json_schema(&schema, &JsonSchemaOptions::new())?;
+
+// Or customize the output with options
+let options = JsonSchemaOptions::new()
+    .with_title(Some("User Schema"))
+    .with_description(Some("A simple user record"))
+    .with_optional_fields(vec!["email"])
+    .with_additional_properties(true);
+
+let json_schema_custom = polars_schema_to_json_schema(&schema, &options)?;
+````
+
+This generates a JSON Schema document with the desired metadata and field requirements.
 
 ### Individual Type Conversions
 
@@ -137,6 +148,28 @@ use serde_json::json;
 let result = json_type_to_polars_type(&json!({"type": "unsupported"}));
 assert!(result.is_err());
 ```
+
+## JSON Schema Generation Options
+
+The `JsonSchemaOptions` struct lets you control aspects of the generated schema:
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `schema_uri` | `Some("https://json-schema.org/draft/2020-12/schema")` | Controls the `$schema` field (or omit entirely with `None`) |
+| `title` | `None` | Adds a `title` to the schema |
+| `description` | `None` | Adds a `description` to the schema |
+| `optional_fields` | empty set | By default all fields are required; use this to mark some as optional |
+| `additional_properties` | `false` | Controls the `additionalProperties` flag |
+| `preserve_field_order` | `true` | Placeholder for ordering control (currently preserved by default) |
+
+Example:
+
+```rust
+let options = JsonSchemaOptions::new()
+    .with_title(Some("Example"))
+    .with_optional_fields(vec!["email"])
+    .with_additional_properties(false);
+````
 
 ## Debug Mode
 
