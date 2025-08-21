@@ -20,7 +20,7 @@ stash-restore *changes:
 commit *args:
     #!/usr/bin/env -S echo-comment --color bold-yellow
 
-    # Confirm fixer is a valid Justfile task
+    # Confirm fixer {{FIXER}} is a valid Justfile task
     just -s {{FIXER}} >/dev/null 2>&1 || echo "Invalid fixer {{FIXER}}" >&2 && exit 1
 
     # Halt at non-zero return codes from now on
