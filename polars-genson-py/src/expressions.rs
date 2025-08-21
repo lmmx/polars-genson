@@ -93,6 +93,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
 
     if kwargs.merge_schemas {
         // Original behavior: merge all schemas into one
+        // We only need a single row, and we are allowed to change the length
         // Wrap EVERYTHING in panic catching, including config creation
         let result = panic::catch_unwind(|| -> Result<String, String> {
             let config = SchemaInferenceConfig {
@@ -113,10 +114,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 if kwargs.debug {
                     eprintln!("DEBUG: Successfully generated merged schema");
                 }
-                Ok(Series::new(
-                    "schema".into(),
-                    vec![schema_json; series.len()],
-                ))
+                Ok(Series::new("schema".into(), vec![schema_json; 1]))
             }
             Ok(Err(e)) => Err(PolarsError::ComputeError(
                 format!("Merged schema processing failed: {}", e).into(),
