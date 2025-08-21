@@ -36,7 +36,7 @@ commit *args:
     untracked_count=$(git ls-files --others --exclude-standard -- ':/*' ':(exclude){{NO_STASH}}' | wc -l)
     stash_count=$((unstaged_count + untracked_count))
     
-    # Checking stash count $stash_count
+    # Files to stash: $stash_count
     if [ $stash_count -ne 0 ]; then
       case "$unstaged_count-$untracked_count" in
         0-*) kinds="untracked" ;;
