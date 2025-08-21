@@ -48,8 +48,8 @@ impl JsonSchemaOptions {
         self
     }
 
-    pub fn with_optional_fields<I, S>(mut self, fields: I) -> Self 
-    where 
+    pub fn with_optional_fields<I, S>(mut self, fields: I) -> Self
+    where
         I: IntoIterator<Item = S>,
         S: Into<String>,
     {
@@ -65,8 +65,8 @@ impl JsonSchemaOptions {
 
 /// Convert a Polars Schema to JSON Schema with preserved insertion order.
 pub fn polars_schema_to_json_schema(
-    schema: &Schema, 
-    options: &JsonSchemaOptions
+    schema: &Schema,
+    options: &JsonSchemaOptions,
 ) -> Result<Value, PolarsError> {
     // Use serde_json::Map to preserve insertion order
     let mut properties = Map::new();
@@ -105,7 +105,10 @@ pub fn polars_schema_to_json_schema(
         schema_obj.insert("required".to_string(), json!(required));
     }
 
-    schema_obj.insert("additionalProperties".to_string(), json!(options.additional_properties));
+    schema_obj.insert(
+        "additionalProperties".to_string(),
+        json!(options.additional_properties),
+    );
 
     Ok(Value::Object(schema_obj))
 }
@@ -119,12 +122,10 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
             Ok(json!({"type": "integer"}))
         }
 
-        DataType::UInt8 | DataType::UInt16 | DataType::UInt32 | DataType::UInt64 => {
-            Ok(json!({
-                "type": "integer",
-                "minimum": 0
-            }))
-        }
+        DataType::UInt8 | DataType::UInt16 | DataType::UInt32 | DataType::UInt64 => Ok(json!({
+            "type": "integer",
+            "minimum": 0
+        })),
 
         DataType::Float32 | DataType::Float64 => Ok(json!({"type": "number"})),
 
@@ -135,7 +136,7 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
             "format": "date"
         })),
 
-        DataType::Datetime(time_unit, time_zone) => {
+        DataType::Datetime(_time_unit, time_zone) => {
             let mut schema = json!({
                 "type": "string",
                 "format": "date-time"
@@ -144,7 +145,7 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
             if time_zone.is_some() {
                 schema.as_object_mut().unwrap().insert(
                     "description".to_string(),
-                    json!("Date-time with timezone information")
+                    json!("Date-time with timezone information"),
                 );
             }
 
@@ -209,8 +210,13 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
 
             if let (Some(p), Some(s)) = (precision, scale) {
                 let obj = schema.as_object_mut().unwrap();
-                obj.insert("description".to_string(), 
-                    json!(format!("Decimal number with precision {} and scale {}", p, s)));
+                obj.insert(
+                    "description".to_string(),
+                    json!(format!(
+                        "Decimal number with precision {} and scale {}",
+                        p, s
+                    )),
+                );
 
                 // Add multipleOf for scale constraint
                 if *s > 0 {
@@ -224,8 +230,8 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
 
         DataType::Null => Ok(json!({"type": "null"})),
 
-        DataType::Categorical(_, ordering) => {
-            let mut schema = json!({
+        DataType::Categorical(_, _ordering) => {
+            let schema = json!({
                 "type": "string",
                 "description": "Categorical data"
             });
@@ -245,11 +251,11 @@ pub fn polars_dtype_to_json_schema(dtype: &DataType) -> Result<Value, PolarsErro
 
         // Handle newer Polars types
         DataType::Object(_) => Err(conversion_error(
-            "Object types cannot be converted to JSON Schema".to_string()
+            "Object types cannot be converted to JSON Schema".to_string(),
         )),
 
         DataType::Unknown(_) => Err(conversion_error(
-            "Unknown types cannot be converted to JSON Schema".to_string()
+            "Unknown types cannot be converted to JSON Schema".to_string(),
         )),
 
         // Fallback for any other types
@@ -265,7 +271,7 @@ pub fn dataframe_to_json_schema(
     df: &DataFrame,
     options: &JsonSchemaOptions,
 ) -> Result<Value, PolarsError> {
-    polars_schema_to_json_schema(&df.schema(), options)
+    polars_schema_to_json_schema(df.schema(), options)
 }
 
 #[cfg(test)]
@@ -335,9 +341,8 @@ mod tests {
         assert_eq!(json_schema["title"], "User Schema");
         assert_eq!(json_schema["type"], "object");
 
-        let required: Vec<String> = serde_json::from_value(
-            json_schema["required"].clone()
-        ).unwrap();
+        let required: Vec<String> =
+            serde_json::from_value(json_schema["required"].clone()).unwrap();
 
         assert!(required.contains(&"id".to_string()));
         assert!(required.contains(&"name".to_string()));
@@ -351,12 +356,15 @@ mod tests {
 
         assert_eq!(result["type"], "number");
         assert_eq!(result["multipleOf"], 0.01);
-        assert!(result["description"].as_str().unwrap().contains("precision 10"));
+        assert!(result["description"]
+            .as_str()
+            .unwrap()
+            .contains("precision 10"));
     }
 
     #[test]
     fn test_categorical_type() {
-        // Test categorical type handling 
+        // Test categorical type handling
         let result = polars_dtype_to_json_schema(&DataType::String).unwrap();
 
         assert_eq!(result["type"], "string");
