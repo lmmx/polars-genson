@@ -75,6 +75,7 @@ def test_basic_schema_serialization():
         )
 
 
+@mark.xfail
 def test_schema_serialization_with_options():
     """Test schema serialization with custom options."""
     df = pl.DataFrame(
@@ -92,8 +93,7 @@ def test_schema_serialization_with_options():
         description="A schema for user data",
         optional_fields=["email", "phone"],
         additional_properties=True,
-        # Don't really care about this
-        # schema_uri=None,  # Omit schema URI
+        schema_uri=None,  # Omit schema URI
     )
     print_schema(json_schema, "Schema with Options")
 
@@ -118,9 +118,9 @@ def test_schema_serialization_with_options():
     if "$schema" in json_schema:
         print(f"Schema URI value: {json_schema['$schema']}")
 
-    # assert "$schema" not in json_schema, (
-    #     f"Expected no '$schema' key, but found: {json_schema.get('$schema')}"
-    # )
+    assert "$schema" not in json_schema, (
+        f"Expected no '$schema' key, but found: {json_schema.get('$schema')}"
+    )
 
     # Check required fields
     required = json_schema.get("required", [])
@@ -137,7 +137,7 @@ def test_schema_serialization_with_options():
     )
 
 
-@mark.skip
+@mark.xfail
 def test_complex_types_serialization():
     """Test serialization of complex Polars types."""
     df = pl.DataFrame(
@@ -218,7 +218,7 @@ def test_complex_types_serialization():
         )
 
 
-@mark.skip
+@mark.xfail
 def test_datetime_types_serialization():
     """Test serialization of date/time types."""
     df = pl.DataFrame(
@@ -323,7 +323,7 @@ def test_expression_usage():
         )
 
 
-@mark.skip
+@mark.xfail
 def test_empty_dataframe():
     """Test serialization of empty DataFrame."""
     df = pl.DataFrame()
@@ -353,7 +353,7 @@ def test_empty_dataframe():
         raise
 
 
-@mark.skip
+@mark.xfail
 def test_nested_structures():
     """Test serialization of deeply nested structures."""
     df = pl.DataFrame(
