@@ -41,7 +41,7 @@ def infer_json_schema(
     *,
     ignore_outer_array: bool = True,
     ndjson: bool = False,
-    schema_uri: str | None = "AUTO",
+    schema_uri: str | None = "http://json-schema.org/schema#",
     merge_schemas: bool = True,
     debug: bool = False,
 ) -> pl.Expr:
@@ -55,8 +55,8 @@ def infer_json_schema(
         Whether to treat top-level arrays as streams of objects
     ndjson : bool, default False
         Whether to treat input as newline-delimited JSON
-    schema_uri : str or None, default "AUTO"
-        Schema URI to use for the generated schema ("AUTO" for auto-detection)
+    schema_uri : str or None, default "http://json-schema.org/schema#"
+        Schema URI to use for the generated schema
     merge_schemas : bool, default True
         Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
@@ -181,7 +181,7 @@ class GensonNamespace:
         *,
         ignore_outer_array: bool = True,
         ndjson: bool = False,
-        schema_uri: str | None = "AUTO",
+        schema_uri: str | None = "http://json-schema.org/schema#",
         merge_schemas: bool = True,
         debug: bool = False,
     ) -> dict | list[dict]:
@@ -195,8 +195,8 @@ class GensonNamespace:
             Whether to treat top-level arrays as streams of objects
         ndjson : bool, default False
             Whether to treat input as newline-delimited JSON
-        schema_uri : str or None, default "AUTO"
-            Schema URI to use for the generated schema ("AUTO" for auto-detection)
+        schema_uri : str or None, default "http://json-schema.org/schema#"
+            Schema URI to use for the generated schema
         merge_schemas : bool, default True
             Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False

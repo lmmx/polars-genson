@@ -169,9 +169,9 @@ result = df.select(
 schema = df.genson.infer_json_schema(
     "json_data",
     ignore_outer_array=False,  # Treat top-level arrays as arrays
-    ndjson=True,              # Handle newline-delimited JSON
-    schema_uri="AUTO",        # Specify a schema URI
-    merge_schemas=True        # Merge all schemas (default)
+    ndjson=True,               # Handle newline-delimited JSON
+    schema_uri="https://json-schema.org/draft/2020-12/schema",  # Specify a schema URI
+    merge_schemas=True         # Merge all schemas (default)
 )
 ```
 
