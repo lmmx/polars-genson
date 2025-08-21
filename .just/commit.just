@@ -21,8 +21,9 @@ stash-restore *changes:
     # Restoring {{changes}}
     git stash pop --quiet
 
+
 # Special commit flag that will run a given command
-commit *args:
+commit msg *args:
     #!/usr/bin/env -S echo-comment --color bold-yellow
 
     # Confirm fixer {{FIXER}} is a valid Justfile task
@@ -64,4 +65,4 @@ commit *args:
     fi
     
     # Commit the changes
-    git commit -m *args
+    git commit -m "{{msg}}" {{args}}
