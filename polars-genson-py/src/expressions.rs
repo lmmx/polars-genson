@@ -1,6 +1,7 @@
 use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use polars_jsonschema_bridge::deserialise::json_schema_to_polars_fields;
+use polars_jsonschema_bridge::serialise::{polars_schema_to_json_schema, JsonSchemaOptions};
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
 use std::panic;
@@ -27,6 +28,27 @@ pub struct GensonKwargs {
     pub convert_to_polars: bool,
 }
 
+#[derive(Deserialize)]
+pub struct SerializeSchemaKwargs {
+    #[serde(default)]
+    pub schema_uri: Option<String>,
+
+    #[serde(default)]
+    pub title: Option<String>,
+
+    #[serde(default)]
+    pub description: Option<String>,
+
+    #[serde(default)]
+    pub optional_fields: Vec<String>,
+
+    #[serde(default)]
+    pub additional_properties: bool,
+
+    #[serde(default)]
+    pub debug: bool,
+}
+
 fn default_ignore_outer_array() -> bool {
     true
 }
@@ -50,6 +72,11 @@ fn infer_polars_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Fiel
         "schema".into(),
         DataType::List(Box::new(schema_field_struct)),
     ))
+}
+
+/// Serialized schema is a String (JSON)
+fn serialize_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Field> {
+    Ok(Field::new("json_schema".into(), DataType::String))
 }
 
 /// Polars expression that infers JSON schema from string column
@@ -251,6 +278,132 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
         )),
         Err(_panic) => Err(PolarsError::ComputeError(
             "Panic occurred during schema inference".into(),
+        )),
+    }
+}
+
+/// Polars expression that serializes schema fields to JSON Schema
+/// Takes a series of struct columns representing schema fields
+#[polars_expr(output_type_func=serialize_schema_output_type)]
+pub fn serialize_polars_schema(
+    inputs: &[Series],
+    kwargs: SerializeSchemaKwargs,
+) -> PolarsResult<Series> {
+    if inputs.is_empty() {
+        return Err(PolarsError::ComputeError("No input series provided".into()));
+    }
+
+    let series = &inputs[0];
+
+    // Expect a struct series with "name" and "dtype" fields representing the schema
+    let struct_chunked = series.struct_().map_err(|_| {
+        PolarsError::ComputeError("Expected a struct column with schema field information".into())
+    })?;
+
+    // Extract the schema fields from the struct
+    let fields = struct_chunked.fields_as_series();
+
+    if fields.len() != 2 {
+        return Err(PolarsError::ComputeError(
+            "Expected struct with exactly 2 fields: 'name' and 'dtype'".into(),
+        ));
+    }
+
+    // Get the name and dtype columns
+    let name_series = &fields[0];
+    let dtype_series = &fields[1];
+
+    let name_chunked = name_series
+        .str()
+        .map_err(|_| PolarsError::ComputeError("Expected 'name' field to be string type".into()))?;
+
+    let dtype_chunked = dtype_series.str().map_err(|_| {
+        PolarsError::ComputeError("Expected 'dtype' field to be string type".into())
+    })?;
+
+    // Build a Polars Schema from the field information
+    let mut polars_schema = Schema::default();
+
+    for (name_opt, dtype_opt) in name_chunked.iter().zip(dtype_chunked.iter()) {
+        if let (Some(name), Some(dtype_str)) = (name_opt, dtype_opt) {
+            // Parse the dtype string back to a DataType
+            // This is a simplified version - you might want to implement a more complete parser
+            let polars_dtype = match dtype_str {
+                "String" => DataType::String,
+                "Int64" => DataType::Int64,
+                "Int32" => DataType::Int32,
+                "Float64" => DataType::Float64,
+                "Float32" => DataType::Float32,
+                "Boolean" => DataType::Boolean,
+                "Date" => DataType::Date,
+                "Time" => DataType::Time,
+                s if s.starts_with("List[") && s.ends_with("]") => {
+                    let inner_type = &s[5..s.len() - 1];
+                    match inner_type {
+                        "String" => DataType::List(Box::new(DataType::String)),
+                        "Int64" => DataType::List(Box::new(DataType::Int64)),
+                        "Float64" => DataType::List(Box::new(DataType::Float64)),
+                        "Boolean" => DataType::List(Box::new(DataType::Boolean)),
+                        _ => DataType::String, // Fallback
+                    }
+                }
+                _ => DataType::String, // Fallback for unknown types
+            };
+
+            polars_schema.with_column(name.into(), polars_dtype);
+        }
+    }
+
+    if kwargs.debug {
+        eprintln!("DEBUG: Polars schema to serialize: {:?}", polars_schema);
+    }
+
+    // Create JsonSchemaOptions from kwargs
+    let mut options = JsonSchemaOptions::new();
+
+    if let Some(uri) = kwargs.schema_uri {
+        options = options.with_schema_uri(Some(uri));
+    }
+
+    if let Some(title) = kwargs.title {
+        options = options.with_title(Some(title));
+    }
+
+    if let Some(description) = kwargs.description {
+        options = options.with_description(Some(description));
+    }
+
+    if !kwargs.optional_fields.is_empty() {
+        options = options.with_optional_fields(kwargs.optional_fields);
+    }
+
+    options = options.with_additional_properties(kwargs.additional_properties);
+
+    // Convert to JSON Schema using the bridge
+    let result = panic::catch_unwind(|| -> Result<String, String> {
+        let json_schema = polars_schema_to_json_schema(&polars_schema, &options)
+            .map_err(|e| format!("Schema serialization error: {}", e))?;
+
+        serde_json::to_string_pretty(&json_schema)
+            .map_err(|e| format!("JSON serialization error: {}", e))
+    });
+
+    match result {
+        Ok(Ok(json_schema_str)) => {
+            if kwargs.debug {
+                eprintln!("DEBUG: Generated JSON Schema:");
+                eprintln!("{}", json_schema_str);
+            }
+            Ok(Series::new(
+                "json_schema".into(),
+                vec![json_schema_str; series.len()],
+            ))
+        }
+        Ok(Err(e)) => Err(PolarsError::ComputeError(
+            format!("Schema serialization failed: {}", e).into(),
+        )),
+        Err(_panic) => Err(PolarsError::ComputeError(
+            "Panic occurred during schema serialization".into(),
         )),
     }
 }
