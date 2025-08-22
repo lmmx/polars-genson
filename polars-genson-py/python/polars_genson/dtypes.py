@@ -1,10 +1,28 @@
 """Dtype parsing from concise string format used to serialise across Rust to Python."""
 
+import re
+
 import polars as pl
 
 
 def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
     """Parse a dtype string like 'Struct[id:Int64,name:String]' into actual Polars DataType."""
+    dtype_str = dtype_str.strip()
+
+    # Handle Decimal(precision, scale)
+    if dtype_str.startswith("Decimal"):
+        # Match Decimal(p, s) pattern
+        m = re.match(r"Decimal\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)", dtype_str)
+        if m:
+            precision, scale = int(m.group(1)), int(m.group(2))
+            return pl.Decimal(precision, scale)
+        elif dtype_str == "Decimal":
+            # Just "Decimal" without parameters
+            return pl.Decimal(None, None)
+        else:
+            # Fallback for malformed Decimal
+            return pl.Decimal(None, None)
+
     # Simple types first
     simple_types = {
         "String": pl.Utf8,
@@ -26,7 +44,6 @@ def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
         "Null": pl.Null,
         "Binary": pl.Binary,
         "Categorical": pl.Categorical,
-        "Decimal": pl.Decimal,
     }
 
     if dtype_str in simple_types:
@@ -88,13 +105,18 @@ def _split_struct_fields(fields_str: str) -> list[str]:
     fields = []
     current_field = ""
     bracket_depth = 0
+    paren_depth = 0
 
     for char in fields_str:
         if char == "[":
             bracket_depth += 1
         elif char == "]":
             bracket_depth -= 1
-        elif char == "," and bracket_depth == 0:
+        elif char == "(":
+            paren_depth += 1
+        elif char == ")":
+            paren_depth -= 1
+        elif char == "," and bracket_depth == 0 and paren_depth == 0:
             if current_field.strip():
                 fields.append(current_field.strip())
             current_field = ""
