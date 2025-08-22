@@ -24,14 +24,19 @@ else:
 __all__ = ["infer_json_schema"]
 
 
-def plug(expr: pl.Expr, **kwargs) -> pl.Expr:
-    """Wrap Polars' `register_plugin_function` helper to always pass the same `lib`."""
+def plug(expr: pl.Expr, changes_length: bool, **kwargs) -> pl.Expr:
+    """Wrap Polars' `register_plugin_function` helper to always pass the same `lib`.
+
+    Pass `changes_length` when using the `merge_schemas` (per-row) inference, as we only
+    build a single schema in that case (so it'd be a waste to make more than one row).
+    """
     func_name = inspect.stack()[1].function
     return register_plugin_function(
         plugin_path=lib,
         function_name=func_name,
         args=expr,
         is_elementwise=False,  # This is an aggregation across rows
+        changes_length=changes_length,
         kwargs=kwargs,
     )
 
@@ -76,7 +81,7 @@ def infer_json_schema(
     if schema_uri is not None:
         kwargs["schema_uri"] = schema_uri
 
-    return plug(expr, **kwargs)
+    return plug(expr, changes_length=merge_schemas, **kwargs)
 
 
 def infer_polars_schema(
@@ -113,8 +118,11 @@ def infer_polars_schema(
         "merge_schemas": merge_schemas,
         "debug": debug,
     }
+    if not merge_schemas:
+        url = "https://github.com/lmmx/polars-genson/issues/37"
+        raise NotImplementedError("Merge schemas for Polars schemas is TODO: see {url}")
 
-    return plug(expr, **kwargs)
+    return plug(expr, changes_length=merge_schemas, **kwargs)
 
 
 @register_dataframe_namespace("genson")
