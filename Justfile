@@ -256,6 +256,10 @@ py-test *args:
     #!/usr/bin/env bash
     $(uv python find) -m pytest tests/ {{args}}
 
+[working-directory: 'polars-genson-py']
+py-schema:
+    $(uv python find) schema_demo.py
+
 # Quick test to verify basic functionality  
 [working-directory: 'polars-genson-py']
 py-quick:

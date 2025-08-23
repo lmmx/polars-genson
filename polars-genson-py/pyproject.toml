@@ -60,3 +60,6 @@ select = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google" # or "numpy" if you prefer
+
+# [tool.uv.sources]
+# polars = { git = "https://github.com/orlp/polars.git", rev = "fix-compat-level", subdirectory = "py-polars" }

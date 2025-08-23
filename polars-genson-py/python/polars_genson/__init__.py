@@ -10,6 +10,8 @@ import polars as pl
 from polars.api import register_dataframe_namespace
 from polars.plugins import register_plugin_function
 
+from ._polars_genson import json_to_schema as _rust_json_to_schema
+from ._polars_genson import schema_to_json as _rust_schema_to_json
 from .dtypes import _parse_polars_dtype
 from .utils import parse_into_expr, parse_version  # noqa: F401
 
@@ -21,7 +23,45 @@ if parse_version(pl.__version__) < parse_version("0.20.16"):
 else:
     lib = Path(__file__).parent
 
-__all__ = ["infer_json_schema"]
+__all__ = ["infer_json_schema", "json_to_schema", "schema_to_json"]
+
+
+def json_to_schema(json_str: str) -> pl.Schema:
+    """Convert a Polars schema to JSON string representation.
+
+    Parameters
+    ----------
+    str
+        JSON string to convert to Polars schema
+
+    Returns:
+    -------
+    schema : pl.Schema
+        The Polars schema representation of the JSON
+    """
+    df = _rust_json_to_schema(json_str)
+    schema = df.schema
+    return schema
+
+
+def schema_to_json(schema: pl.Schema) -> str:
+    """Convert a Polars schema to JSON string representation.
+
+    Parameters
+    ----------
+    schema : pl.Schema
+        The Polars schema to convert to JSON
+
+    Returns:
+    -------
+    str
+        JSON string representation of the schema
+    """
+    assert isinstance(schema, pl.Schema), (
+        f"Expected Schema, got {type(schema)}: {schema}"
+    )
+    empty_df = schema.to_frame()
+    return _rust_schema_to_json(empty_df)
 
 
 def plug(expr: pl.Expr, changes_length: bool, **kwargs) -> pl.Expr:
@@ -131,6 +171,16 @@ class GensonNamespace:
 
     def __init__(self, df: pl.DataFrame):
         self._df = df
+
+    def schema_to_json(self) -> str:
+        """Convert the DataFrame's schema to JSON string representation.
+
+        Returns:
+        -------
+        str
+            JSON string representation of the DataFrame's schema
+        """
+        return _rust_schema_to_json(self._df)
 
     def infer_polars_schema(
         self,
