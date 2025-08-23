@@ -164,7 +164,7 @@ The library accurately infers:
 
 ### Field Order Preservation
 
-This library uses [IndexMap](https://github.com/indexmap-rs/indexmap) to preserve the original field ordering from JSON input:
+This library uses [OrderMap](https://github.com/indexmap-rs/ordermap) to preserve the original field ordering from JSON input:
 
 ```rust
 // Input: {"z": 1, "b": 2, "a": 3}

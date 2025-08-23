@@ -1,4 +1,4 @@
-use indexmap::IndexMap;
+use ordermap::OrderMap;
 use regex::Regex;
 use std::collections::hash_set::HashSet;
 
@@ -9,12 +9,12 @@ use simd_json::prelude::TypedContainerValue;
 use crate::genson_rs::node::{DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ObjectStrategy {
     // TODO: this is redeclared everywhere, how to avoid this?
     extra_keywords: Value,
-    properties: IndexMap<String, SchemaNode>,
-    pattern_properties: IndexMap<String, SchemaNode>,
+    properties: OrderMap<String, SchemaNode>,
+    pattern_properties: OrderMap<String, SchemaNode>,
     required_properties: Option<HashSet<String>>,
     include_empty_required: bool,
 }
@@ -23,8 +23,8 @@ impl ObjectStrategy {
     pub fn new() -> Self {
         ObjectStrategy {
             extra_keywords: json!({}),
-            properties: IndexMap::new(),
-            pattern_properties: IndexMap::new(),
+            properties: OrderMap::new(),
+            pattern_properties: OrderMap::new(),
             required_properties: None,
             include_empty_required: false,
         }
@@ -95,7 +95,7 @@ impl SchemaStrategy for ObjectStrategy {
 
             // properties updater updates the internal properties and pattern_properties with the schema_object,
             // creating schema node as needed for each property
-            let properties_updater = |properties: &mut IndexMap<String, SchemaNode>,
+            let properties_updater = |properties: &mut OrderMap<String, SchemaNode>,
                                       schema_object: &Map<String, Value>,
                                       prop_key: &str| {
                 if let Some(schema_properties) = schema_object[prop_key].as_object() {
@@ -177,11 +177,41 @@ impl SchemaStrategy for ObjectStrategy {
 }
 
 impl ObjectStrategy {
-    fn properties_to_schema(&self, properties: &IndexMap<String, SchemaNode>) -> Value {
+    fn properties_to_schema(&self, properties: &OrderMap<String, SchemaNode>) -> Value {
         let mut schema_properties = json!({});
         properties.iter().for_each(|(prop, node)| {
             schema_properties[prop] = node.to_schema();
         });
         schema_properties
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ordermap_equality_differs_from_indexmap() {
+        // Two ObjectStrategies with same keys/values in different order
+        let mut strat1 = ObjectStrategy::new();
+        strat1.properties.insert("a".to_string(), SchemaNode::new());
+        strat1.properties.insert("b".to_string(), SchemaNode::new());
+
+        let mut strat2 = ObjectStrategy::new();
+        strat2.properties.insert("b".to_string(), SchemaNode::new());
+        strat2.properties.insert("a".to_string(), SchemaNode::new());
+
+        let keys1: Vec<_> = strat1.properties.keys().collect();
+        let keys2: Vec<_> = strat2.properties.keys().collect();
+        println!("keys1 = {:?}", keys1);
+        println!("keys2 = {:?}", keys2);
+
+        // The keys are the same set, but in different order.
+        // With OrderMap, properties != properties because order matters.
+        // With IndexMap, they would compare equal.
+        assert_ne!(
+            strat1.properties, strat2.properties,
+            "OrderMap should treat maps with different insertion order as unequal"
+        );
     }
 }

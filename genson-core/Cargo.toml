@@ -4,8 +4,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Vendored from genson-rs
-indexmap.workspace = true
 mimalloc.workspace = true
+ordermap.workspace = true
 rayon.workspace = true
 regex.workspace = true
 simd-json.workspace = true

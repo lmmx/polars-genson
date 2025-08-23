@@ -34,7 +34,7 @@ pub trait ListSchemaStrategy: SchemaStrategy {
 /// strategy for list-style array schemas. This is the default
 /// strategy for arrays. List-style arrays are arrays where all
 /// items are of the same type.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ListStrategy {
     extra_keywords: Value,
     items: [SchemaNode; 1],
@@ -129,7 +129,7 @@ impl ListSchemaStrategy for ListStrategy {
 /// strategy for tuple-style array schemas. Tuple-style arrays are arrays
 /// where each item can have a different schema. The "items" keyword is an
 /// array of schemas, one for each item in the tuple.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct TupleStrategy {
     extra_keywords: Value,
     items: Vec<SchemaNode>,
