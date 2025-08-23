@@ -57,9 +57,9 @@ def schema_to_json(schema: pl.Schema) -> str:
     str
         JSON string representation of the schema
     """
-    assert isinstance(schema, pl.Schema), (
-        f"Expected Schema, got {type(schema)}: {schema}"
-    )
+    assert isinstance(
+        schema, pl.Schema
+    ), f"Expected Schema, got {type(schema)}: {schema}"
     empty_df = schema.to_frame()
     return _rust_schema_to_json(empty_df)
 

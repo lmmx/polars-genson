@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "maturin"
-requires = ["maturin>=1.0,<2.0", "patchelf>=0.14", "polars>=0.20.6"]
+requires = ["maturin>=1.0,<2.0", "patchelf>=0.14"]
 
 [project]
 authors = [{ email = "louismmx@gmail.com", name = "Louis Maddox" }]
