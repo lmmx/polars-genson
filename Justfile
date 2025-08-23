@@ -359,6 +359,11 @@ docs-cli:
 
 # -------------------------------------
 
+mkdocs command="build":
+    $(uv python find --directory polars-genson-py) -m mkdocs {{command}}
+
+# -------------------------------------
+
 clean:
     cargo clean
     rm -rf polars-genson-py/target

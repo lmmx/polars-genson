@@ -1,7 +1,7 @@
 # Genson CLI
 
 [![crates.io](https://img.shields.io/crates/v/genson-cli.svg)](https://crates.io/crates/genson-cli)
-[![MIT/Apache-2.0 licensed](https://img.shields.io/crates/l/genson-cli.svg)](../LICENSE)
+[![MIT/Apache-2.0 licensed](https://img.shields.io/crates/l/genson-cli.svg)](https://github.com/lmmx/polars-genson/blob/master/LICENSE)
 [![Documentation](https://docs.rs/genson-cli/badge.svg)](https://docs.rs/genson-cli)
 
 A command-line tool for JSON schema inference with support for both regular and NDJSON.
