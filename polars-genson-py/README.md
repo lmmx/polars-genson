@@ -286,20 +286,6 @@ for name, dtype in inferred_schema.items():
     print(f"  {name}: {dtype}")
 ```
 
-## Standalone CLI Tool
-
-The project also includes a standalone command-line tool for JSON schema inference:
-
-```bash
-cd genson-cli
-cargo run -- input.json
-```
-
-Or from stdin:
-```bash
-echo '{"name": "test", "value": 42}' | cargo run
-```
-
 ## Contributing
 
 This crate is part of the [polars-genson](https://github.com/lmmx/polars-genson) project. See the main repository for
