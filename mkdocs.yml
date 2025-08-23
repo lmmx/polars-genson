@@ -1,0 +1,113 @@
+site_name: Polars Genson
+site_author: Louis Maddox
+site_description: >-
+  Utilities for generating JSON Schema and bridging Polars <-> JSON Schema
+site_url: https://polars-genson.vercel.app
+repo_name: lmmx/polars-genson
+repo_url: https://github.com/lmmx/polars-genson
+strict: true
+
+# Rebuild when your Python sources change
+watch:
+  - polars-genson-py/python
+
+theme:
+  name: material
+  custom_dir: docs/theme
+  palette:
+    - scheme: default
+      primary: white
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - search
+    - search.suggest
+  font:
+    text: Inter
+    code: Source Code Pro
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/lmmx
+  generator: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+      noclasses: true
+      pygments_style: lovelace
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink:
+      repo_url_shortener: true
+      normalize_issue_symbols: true
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - sane_lists
+  - mdx_truly_sane_lists:
+      nested_indent: 2
+      truly_sane: true
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - docs/theme/js/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+
+extra_css:
+  - docs/theme/stylesheets/extra.css
+  - https://unpkg.com/katex@0/dist/katex.min.css
+
+plugins:
+  - autorefs
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          # Point mkdocstrings at your import roots so it can import the package
+          paths:
+            - polars-genson-py/python
+          options:
+            members_order: source
+            separate_signature: true
+            filters: ["!^_"]
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            line_length: 88
+            show_root_full_path: false
+            show_root_toc_entry: false
+            show_source: true
+            show_submodules: true
+            show_signature_annotations: true
+  - search
+  - section-index
+  # - extra-sass   # enable if you actually add scss
+
+nav:
+  - Home: index.md
+  - Getting Started: get_started.md
+  - API Reference:
+      - api/index.md
+      - polars_genson: api/polars_genson.md
