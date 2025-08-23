@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 
 /// Basic schema generator class. SchemaNode objects can be loaded
 /// up with existing schemas and objects before being serialized.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SchemaNode {
     active_strategies: Vec<BasicSchemaStrategy>,
 }

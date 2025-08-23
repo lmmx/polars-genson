@@ -12,7 +12,7 @@ use scalar::{BooleanStrategy, NullStrategy, NumberStrategy, StringStrategy, Type
 
 use self::array::ListSchemaStrategy;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BasicSchemaStrategy {
     Object(ObjectStrategy),
     List(ListStrategy),
