@@ -417,9 +417,12 @@ check-no-fmt-feat:
     #!/usr/bin/env echo-comment
     NO_RELEASE='"fmt"'
     HINT="# ✋🛑 Remove the $NO_RELEASE feature flag before release!"
-    tq -r -f Cargo.toml workspace.dependencies.polars.features \
-      | grep -vq $NO_RELEASE \
-      || echo $HINT | echo-comment /dev/stdin --color=bold-red
+    features=$(tq -r -f Cargo.toml workspace.dependencies.polars.features | grep -q $NO_RELEASE; echo $?)
+    [ "$features" -eq 1 ] && true || { echo "$HINT" | echo-comment /dev/stdin --color=bold-red; false; }
+
+demo-release:
+     just check-no-fmt-feat
+     echo "RELEASE IS GO"
 
 # Release a new version, pass --help for options to `uv version --bump`
 [working-directory: 'polars-genson-py']
