@@ -198,7 +198,6 @@ class TestRoundTripSerialization:
 
         assert original_schema == reconstructed_schema
 
-    @mark.xfail
     def test_round_trip_numeric_types_misbehaving(self):
         """Test round-trip with various numeric types."""
         original_schema = pl.Schema(

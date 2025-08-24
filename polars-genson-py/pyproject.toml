@@ -64,7 +64,7 @@ doc = [
   "ruff>=0.12.10",
   "urllib3<2",
 ]
-test = ["pytest>=8.4.1"]
+test = ["pyarrow>=21.0.0", "pytest>=8.4.1"]
 
 [tool.ruff.lint]
 select = ["D"]

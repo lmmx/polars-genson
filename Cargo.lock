@@ -1770,6 +1770,7 @@ dependencies = [
  "polars-ops",
  "polars-plan",
  "polars-sql",
+ "polars-time",
  "polars-utils",
  "version_check",
 ]
@@ -1949,6 +1950,7 @@ dependencies = [
  "atoi_simd",
  "blake3",
  "bytes",
+ "chrono",
  "fast-float2",
  "fs4",
  "futures",
@@ -1967,6 +1969,7 @@ dependencies = [
  "polars-json",
  "polars-parquet",
  "polars-schema",
+ "polars-time",
  "polars-utils",
  "rayon",
  "regex",
