@@ -35,11 +35,8 @@ serde = { features = ["derive"], version = "1.0" }
 serde_json = { features = ["preserve_order"], version = "1.0" }
 # Polars integration dependencies  
 polars = { default-features = false, features = [
-  "dtype-array",
-  "dtype-categorical",
-  "dtype-decimal",
-  "dtype-struct",
-  "fmt",               # show nice printouts (for debugging only)
+  "dtype-full",
+  "fmt",        # show nice printouts (for debugging only)
   "object",
 ], version = "0.50.0" }
 polars-arrow = { default-features = false, version = "0.50.0" }

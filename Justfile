@@ -412,6 +412,14 @@ refresh-stubs *args="":
         unset DEBUG_PYSNOOPER
     fi
 
+# The fmt flag is just for debugging
+check-no-fmt-feat:
+    #!/usr/bin/env echo-comment
+    NO_RELEASE='"fmt"'
+    HINT="# ✋🛑 Remove the $NO_RELEASE feature flag before release!"
+    tq -r -f Cargo.toml workspace.dependencies.polars.features \
+      | grep -vq $NO_RELEASE \
+      || echo $HINT | echo-comment /dev/stdin --color=bold-red
 
 # Release a new version, pass --help for options to `uv version --bump`
 [working-directory: 'polars-genson-py']
@@ -423,6 +431,8 @@ release bump_level="patch":
         uv version --help
         exit 0
     fi
+
+    just check-no-fmt-feat
     
     # 📈 Bump the version in pyproject.toml (patch/minor/major: {{bump_level}})
     uv version --bump {{bump_level}}
@@ -465,6 +475,8 @@ release bump_level="patch":
 # Ship a new version as the final step of the release process (idempotent)
 [working-directory: 'polars-genson-py']
 ship-wheels mode="":
+    just check-no-fmt-feat
+
     # 📥 Download wheel artifacts from the completed CI run
     ## -p wheel* downloads only artifacts matching the "wheel*" pattern
     gh run watch "$(gh run list -L 1 --json databaseId --jq .[0].databaseId)" {{mode}} --exit-status
@@ -486,6 +498,8 @@ ship-wheels mode="":
 # Rust release workflow using release-plz
 ship-rust:
     #!/usr/bin/env -S echo-comment --shell-flags="-euo pipefail" --color="\\033[38;5;202m"
+
+    just check-no-fmt-feat
 
     # 🔍 Refuse to run if not on master branch or not up to date with origin/master
     branch="$(git rev-parse --abbrev-ref HEAD)"
