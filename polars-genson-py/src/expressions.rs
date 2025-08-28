@@ -4,6 +4,7 @@ use polars_jsonschema_bridge::deserialise::json_schema_to_polars_fields;
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
 use std::panic;
+use std::slice::from_ref;
 
 #[derive(Deserialize)]
 pub struct GensonKwargs {
@@ -134,7 +135,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     schema_uri: kwargs.schema_uri.clone(),
                 };
 
-                let single_result = infer_json_schema_from_strings(&[json_str.clone()], config)
+                let single_result = infer_json_schema_from_strings(from_ref(json_str), config)
                     .map_err(|e| format!("Individual genson error: {}", e))?;
                 individual_schemas.push(single_result.schema);
             }
