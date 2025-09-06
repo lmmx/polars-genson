@@ -3,12 +3,22 @@
 serde = { workspace = true }
 serde_json = { workspace = true }
 
+# Optional dependencies
+crustrace = { features = ["debug"], optional = true, version = "0.1.9" }
+crustrace-mermaid = { optional = true, version = "0.1.6" }
+tracing = { optional = true, version = "0.1.41" }
+tracing-subscriber = { optional = true, version = "0.3.20" }
+
 # Vendored from genson-rs
 mimalloc.workspace = true
 ordermap.workspace = true
 rayon.workspace = true
 regex.workspace = true
 simd-json.workspace = true
+
+[features]
+default = []
+trace = ["crustrace", "crustrace-mermaid", "tracing", "tracing-subscriber"]
 
 [package]
 authors.workspace = true
@@ -25,3 +35,6 @@ version = "0.1.3"
 
 [dev-dependencies]
 predicates = "3.1.3"
+
+[package.metadata.cargo-machete]
+ignored = ["tracing"]
