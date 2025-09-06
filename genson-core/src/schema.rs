@@ -15,6 +15,10 @@ pub struct SchemaInferenceConfig {
     pub delimiter: Option<u8>,
     /// Schema URI to use ("AUTO" for auto-detection)
     pub schema_uri: Option<String>,
+    /// Threshold above which non-fixed keys are treated as a map
+    pub map_threshold: usize,
+    /// Force override of field treatment, e.g. {"labels": "map"}
+    pub force_field_types: std::collections::HashMap<String, String>,
 }
 
 impl Default for SchemaInferenceConfig {
@@ -23,6 +27,8 @@ impl Default for SchemaInferenceConfig {
             ignore_outer_array: true,
             delimiter: None,
             schema_uri: Some("AUTO".to_string()),
+            map_threshold: 20,
+            force_field_types: std::collections::HashMap::new(),
         }
     }
 }
@@ -48,6 +54,79 @@ fn validate_ndjson(s: &str) -> Result<(), serde_json::Error> {
         validate_json(trimmed)?; // propagate serde_json::Error
     }
     Ok(())
+}
+
+/// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
+///
+/// This mutates the schema in place, applying user overrides and heuristics.
+///
+/// # Rules
+/// - If the current field name matches a `force_field_types` override, that wins
+///   (`"map"` rewrites to `additionalProperties`, `"record"` leaves as-is).
+/// - Otherwise, if the number of keys in `properties` is at least
+///   `config.map_threshold` *and* all values are homogeneous strings,
+///   the object is rewritten as a map.
+/// - Recurses into nested objects/arrays, carrying field names down so overrides apply.
+fn rewrite_objects(schema: &mut Value, field_name: Option<&str>, config: &SchemaInferenceConfig) {
+    if let Value::Object(obj) = schema {
+        // --- Forced overrides by field name ---
+        if let Some(name) = field_name {
+            if let Some(forced) = config.force_field_types.get(name) {
+                match forced.as_str() {
+                    "map" => {
+                        obj.remove("properties");
+                        obj.remove("required");
+                        obj.insert(
+                            "additionalProperties".to_string(),
+                            serde_json::json!({ "type": "string" }),
+                        );
+                        return; // no need to apply heuristics
+                    }
+                    "record" => {
+                        // leave as-is, but still recurse
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        // --- Heuristic rewrite ---
+        if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
+            let key_count = props.len();
+
+            // check homogeneity
+            let homogeneous = props
+                .values()
+                .all(|v| v.get("type") == Some(&Value::String("string".into())));
+
+            if key_count >= config.map_threshold && homogeneous {
+                obj.remove("properties");
+                obj.remove("required");
+                obj.insert(
+                    "additionalProperties".to_string(),
+                    serde_json::json!({ "type": "string" }),
+                );
+                return;
+            }
+        }
+
+        // --- Recurse into nested values ---
+        if let Some(props) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
+            for (k, v) in props {
+                rewrite_objects(v, Some(k), config);
+            }
+        }
+        if let Some(items) = obj.get_mut("items") {
+            rewrite_objects(items, None, config);
+        }
+        for v in obj.values_mut() {
+            rewrite_objects(v, None, config);
+        }
+    } else if let Value::Array(arr) = schema {
+        for v in arr {
+            rewrite_objects(v, None, config);
+        }
+    }
 }
 
 /// Infer JSON schema from a collection of JSON strings
@@ -121,7 +200,8 @@ pub fn infer_json_schema_from_strings(
             }
 
             // Get final schema
-            let final_schema = builder.to_schema();
+            let mut final_schema = builder.to_schema();
+            rewrite_objects(&mut final_schema, None, &config);
 
             Ok(SchemaInferenceResult {
                 schema: final_schema,
@@ -499,5 +579,42 @@ mod tests {
             "Error message should report the failing line"
         );
         println!("✅ Correctly rejected malformed NDJSON: {}", err_msg);
+    }
+
+    /// Two objects with varying keys and homogeneous string values (low map threshold)
+    #[test]
+    fn test_map_threshold_rewrite() {
+        let json_strings = vec![
+            r#"{"labels": {"en": "Hello", "fr": "Bonjour"}}"#.to_string(),
+            r#"{"labels": {"de": "Hallo", "es": "Hola"}}"#.to_string(),
+        ];
+
+        let config = SchemaInferenceConfig {
+            map_threshold: 2,
+            ..Default::default()
+        };
+        let result = infer_json_schema_from_strings(&json_strings, config).unwrap();
+
+        let labels = &result.schema["properties"]["labels"];
+        assert_eq!(labels["type"], "object");
+        assert!(labels.get("additionalProperties").is_some());
+        assert!(labels.get("properties").is_none());
+    }
+
+    /// Two objects with varying keys and homogeneous string values (default map threshold)
+    #[test]
+    fn test_map_threshold_as_record() {
+        let json_strings = vec![
+            r#"{"labels": {"en": "Hello", "fr": "Bonjour"}}"#.to_string(),
+            r#"{"labels": {"de": "Hallo", "es": "Hola"}}"#.to_string(),
+        ];
+
+        let result =
+            infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default())
+                .unwrap();
+
+        let labels = &result.schema["properties"]["labels"];
+        assert!(labels.get("properties").is_some());
+        assert!(labels.get("additionalProperties").is_none());
     }
 }
