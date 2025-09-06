@@ -18,7 +18,7 @@ fn test_map_threshold_flag_rewrites_to_map() {
     let temp = write_temp(json);
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(&["--map-threshold", "2", temp.path().to_str().unwrap()]);
+    cmd.args(["--map-threshold", "2", temp.path().to_str().unwrap()]);
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("\"labels\""))
@@ -48,7 +48,7 @@ fn test_force_type_map() {
     let temp = write_temp(json);
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(&["--force-type", "labels:map", temp.path().to_str().unwrap()]);
+    cmd.args(["--force-type", "labels:map", temp.path().to_str().unwrap()]);
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("\"labels\""))
@@ -63,7 +63,7 @@ fn test_force_type_record() {
     let temp = write_temp(json);
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(&[
+    cmd.args([
         "--map-threshold",
         "2",
         "--force-type",
@@ -86,7 +86,7 @@ fn test_force_type_multiple_fields() {
     let temp = write_temp(json);
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(&[
+    cmd.args([
         "--map-threshold",
         "2",
         "--force-type",
