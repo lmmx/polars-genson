@@ -124,9 +124,9 @@ impl SchemaNode {
         if generated_schemas.len() == 1 {
             generated_schemas[0].clone()
         } else if !generated_schemas.is_empty() {
-            return json!({"anyOf": generated_schemas});
+            json!({"anyOf": generated_schemas})
         } else {
-            return json!({});
+            json!({})
         }
     }
 
