@@ -2,6 +2,8 @@
 
 If we read JSON into Polars, it might have the wrong schema.
 
+## Columnar dtype does not permit union data types
+
 For example, if we have a union dtype (a concept Polars doesn't support), then we will either
 silently lose data or fail to parse completely (usually the latter).
 
