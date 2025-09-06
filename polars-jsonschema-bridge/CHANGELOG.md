@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.1.2...polars-jsonschema-bridge-v0.1.3) - 2025-09-06
+
+### <!-- 1 -->Features
+
+- *(serialisation)* working extension MVP ([#17](https://github.com/lmmx/polars-genson/pull/17))
+- *(serialise)* implement Polars schema to JSON ([#16](https://github.com/lmmx/polars-genson/pull/16))
+
 ## [0.1.2](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.1.1...polars-jsonschema-bridge-v0.1.2) - 2025-08-20
 
 ### <!-- 4 -->Documentation
