@@ -118,6 +118,35 @@ echo '{"name": "Alice", "age": 30, "active": true}' | genson-cli
 }
 ```
 
+### Avro Schema
+
+```bash
+echo '{"name": "Alice", "age": 30, "active": true}' | genson-cli --avro
+```
+
+**Output:**
+```
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "age",
+      "type": "int"
+    },
+    {
+      "name": "active",
+      "type": "boolean"
+    }
+  ]
+}
+```
+
 ### Multiple Objects Schema
 
 **Input file (`users.json`):**
