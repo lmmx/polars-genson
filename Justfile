@@ -93,7 +93,7 @@ clippy-py:
 # -------------------------------------
 
 test *args:
-    just test-core {{args}}
+    just test-core {{args}} -F avro
     just test-cli {{args}}
     just test-js {{args}}
 

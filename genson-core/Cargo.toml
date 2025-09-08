@@ -4,6 +4,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Optional dependencies
+avrotize = { optional = true, version = "0.1.0" }
 crustrace = { features = ["debug"], optional = true, version = "0.1.9" }
 crustrace-mermaid = { optional = true, version = "0.1.6" }
 tracing = { optional = true, version = "0.1.41" }
@@ -17,6 +18,7 @@ regex.workspace = true
 simd-json.workspace = true
 
 [features]
+avro = ["avrotize"]
 default = []
 trace = ["crustrace", "crustrace-mermaid", "tracing", "tracing-subscriber"]
 

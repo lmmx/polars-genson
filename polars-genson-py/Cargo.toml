@@ -1,5 +1,5 @@
 [dependencies]
-genson-core.workspace = true
+genson-core = { features = ["avro"], workspace = true }
 polars.workspace = true
 polars-arrow.workspace = true
 polars-jsonschema-bridge.workspace = true
