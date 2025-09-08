@@ -70,6 +70,8 @@ OPTIONS:
     --no-ignore-array     Don't treat top-level arrays as object streams
     --ndjson              Treat input as newline-delimited JSON
     --avro                Output Avro schema instead of JSON Schema
+    --normalise           Normalise the input data against the inferred schema
+    --keep-empty          Keep empty arrays/maps instead of turning them into nulls
     --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)
     --force-type k:v,...  Force field(s) to 'map' or 'record'
                           Example: --force-type labels:map,claims:record
@@ -79,6 +81,44 @@ EXAMPLES:
     echo '{"name": "test"}' | genson-cli
     genson-cli --ndjson multi-line.jsonl
 ```
+
+Got it — for the CLI docs we’ll need to add a **Normalisation** section (like we did in `genson-core` but CLI-focused). That means:
+
+1. Add `--normalise`, `--keep-empty`, and `--coerce-strings` to the **Command Line Options**.
+2. Add a **Normalisation Examples** section showing how data gets rewritten.
+3. Keep it concise but concrete: CLI users want to see before/after behaviour.
+
+Here’s how I’d extend your README:
+
+---
+
+### Command Line Options
+
+```
+OPTIONS:
+    -h, --help            Print this help message
+    --no-ignore-array     Don't treat top-level arrays as object streams
+    --ndjson              Treat input as newline-delimited JSON
+    --avro                Output Avro schema instead of JSON Schema
+    --normalise           Normalise the input data against the inferred schema
+    --keep-empty          Keep empty arrays/maps instead of turning them into nulls
+    --coerce-strings      Coerce numeric/boolean strings into their native types
+    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)
+    --force-type k:v,...  Force field(s) to 'map' or 'record'
+                          Example: --force-type labels:map,claims:record
+```
+
+## Normalisation
+
+Normalisation rewrites raw JSON data so that every record conforms to a single **inferred Avro schema**.
+This is especially useful when input data is jagged, inconsistent, or comes from semi-structured sources.
+
+Features:
+
+* Converts empty arrays/maps to `null` (default), or preserves them with `--keep-empty`.
+* Ensures missing keys are present with `null` values.
+* Handles unions (e.g. `["null", "string"]` where values may be either).
+* Optionally coerces numeric/boolean strings into real types (`--coerce-strings`).
 
 ## Examples
 
@@ -300,6 +340,63 @@ genson-cli --no-ignore-array array.json
     "required": ["id", "name"]
   }
 }
+```
+
+### Empty Values
+
+**Input (`empty.json`):**
+
+```json
+{"id": "Q1", "labels": {}}
+{"id": "Q2", "labels": {"en": "Hello"}}
+```
+
+**Command:**
+
+```bash
+genson-cli --ndjson --normalise empty.json
+```
+
+**Output:**
+
+```json
+{"id": "Q1", "labels": null}
+{"id": "Q2", "labels": {"en": "Hello"}}
+```
+
+### String Coercion
+
+**Input (`stringy.json`):**
+
+```json
+{"id": "42", "active": "true"}
+{"id": 7, "active": false}
+```
+
+**Command (default):**
+
+```bash
+genson-cli --ndjson --normalise stringy.json
+```
+
+**Output (no coercion, strings remain strings):**
+
+```json
+{"id": null, "active": null}
+{"id": 7, "active": false}
+```
+
+**Command (with coercion):**
+
+```bash
+genson-cli --ndjson --normalise --coerce-strings data.json
+```
+
+**Output:**
+
+```json
+{"id": 42, "active": true}
+{"id": 7, "active": false}
 ```
 
 ## Error Handling
