@@ -57,15 +57,27 @@ genson-cli --no-ignore-array array-data.json
 ## Command Line Options
 
 ```
-genson-cli [OPTIONS] [FILE]
+genson-cli - JSON schema inference tool
+
+USAGE:
+    genson-cli [OPTIONS] [FILE]
 
 ARGS:
     <FILE>    Input JSON file (reads from stdin if not provided)
 
 OPTIONS:
-    -h, --help           Print help message
-    --no-ignore-array    Don't treat top-level arrays as object streams
-    --ndjson            Treat input as newline-delimited JSON
+    -h, --help            Print this help message
+    --no-ignore-array     Don't treat top-level arrays as object streams
+    --ndjson              Treat input as newline-delimited JSON
+    --avro                Output Avro schema instead of JSON Schema
+    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)
+    --force-type k:v,...  Force field(s) to 'map' or 'record'
+                          Example: --force-type labels:map,claims:record
+
+EXAMPLES:
+    genson-cli data.json
+    echo '{"name": "test"}' | genson-cli
+    genson-cli --ndjson multi-line.jsonl
 ```
 
 ## Examples
