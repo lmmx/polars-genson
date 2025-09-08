@@ -2,6 +2,8 @@
 compile_error!("genson-core requires panic=unwind to catch genson-rs panics. Set [profile.*].panic = \"unwind\" in Cargo.toml.");
 
 pub mod genson_rs;
+#[cfg(feature = "avro")]
+pub mod normalise;
 pub mod schema;
 
 // Re-export commonly used items
