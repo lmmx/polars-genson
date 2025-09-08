@@ -1,0 +1,4 @@
+{"id": "Q1", "aliases": [], "labels": {}, "description": "Example entity"}
+{"id": "Q2", "aliases": ["Sample"], "labels": {"en": "Hello"}, "description": null}
+{"id": "Q3", "aliases": null, "labels": {"fr": "Bonjour"}, "description": "Third one"}
+{"id": "Q4", "aliases": ["X", "Y"], "labels": {}, "description": ""}

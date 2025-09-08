@@ -1,0 +1,8 @@
+---
+source: genson-cli/tests/normalise.rs
+expression: stdout_str
+---
+{"id":"Q1","aliases":null,"labels":{"en":null,"fr":null},"description":"Example entity"}
+{"id":"Q2","aliases":["Sample"],"labels":{"en":"Hello","fr":null},"description":null}
+{"id":"Q3","aliases":null,"labels":{"en":null,"fr":"Bonjour"},"description":"Third one"}
+{"id":"Q4","aliases":["X","Y"],"labels":{"en":null,"fr":null},"description":""}

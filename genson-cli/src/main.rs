@@ -43,6 +43,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             }
             "--normalise" => {
                 do_normalise = true;
+                config.avro = true;
             }
             "--keep-empty" => {
                 empty_as_null = false; // override default
@@ -90,7 +91,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // For CLI, we treat the entire input as one JSON string
-    let json_strings = vec![input];
+    let json_strings = vec![input.clone()];
 
     // Infer schema - genson-core should handle any panics and return proper errors
     let result = infer_json_schema(&json_strings, Some(config.clone()))
@@ -98,15 +99,29 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
 
     if do_normalise {
         let schema = &result.schema;
-        let values: Vec<Value> = json_strings
-            .iter()
-            .map(|s| serde_json::from_str::<Value>(s).unwrap_or(Value::Null))
-            .collect();
+
+        // Parse input again for actual values
+        let values: Vec<Value> = if config.delimiter == Some(b'\n') {
+            input
+                .lines()
+                .filter(|l| !l.trim().is_empty())
+                .map(|l| serde_json::from_str::<Value>(l).unwrap_or(Value::Null))
+                .collect()
+        } else {
+            vec![serde_json::from_str::<Value>(&input).unwrap_or(Value::Null)]
+        };
 
         let cfg = NormaliseConfig { empty_as_null };
         let normalised = normalise_values(values, schema, &cfg);
 
-        println!("{}", serde_json::to_string_pretty(&normalised)?);
+        if config.delimiter == Some(b'\n') {
+            // print one line per row
+            for v in normalised {
+                println!("{}", serde_json::to_string(&v)?);
+            }
+        } else {
+            println!("{}", serde_json::to_string_pretty(&normalised)?);
+        }
     } else {
         // Pretty-print the schema
         println!("{}", serde_json::to_string_pretty(&result.schema)?);
