@@ -13,6 +13,7 @@ This is the core library that powers both the [genson-cli](https://crates.io/cra
 ## Features
 
 - **Robust JSON Schema Inference**: Generate JSON schemas from JSON data with comprehensive type detection
+* **Normalisation Against Schema**: Enforce a consistent Avro schema across heterogeneous JSON inputs (handles empty arrays/maps, unions, type coercion, etc.)
 - **Parallel Processing**: Efficient processing of large JSON datasets using Rayon
 - **Enhanced Error Handling**: Proper error propagation instead of panics for invalid JSON
 - **Multiple Input Formats**: Support for regular JSON, NDJSON, and arrays of JSON objects
@@ -109,6 +110,82 @@ let schema = build_json_schema(&mut builder, &mut json_bytes, &build_config);
 let final_schema = builder.to_schema();
 ```
 
+Perfect — the `genson-core` README should stay **crate-focused**, and just document the new normalisation feature. Here’s a section you can drop in after *Schema Features* but before *Integration*:
+
+---
+
+## Normalisation
+
+In addition to inferring schemas, `genson-core` can **normalise arbitrary JSON values against an Avro schema**.
+This is useful when working with jagged or heterogeneous data where rows may encode the same field in different ways.
+
+### What it does
+
+* Ensures every row conforms to the same inferred schema.
+* Converts empty arrays/maps to `null` by default (configurable).
+* Normalises scalars into arrays when the schema requires it.
+* Handles optional fields, missing values, and type mismatches gracefully.
+* Supports unions: the first non-null type branch takes precedence.
+* Optional coercion of strings to numbers/booleans (`"42"` → `42`, `"true"` → `true`).
+
+### API
+
+```rust
+use genson_core::normalise::{normalise_value, normalise_values, NormaliseConfig};
+use serde_json::json;
+
+let schema = json!({
+    "type": "record",
+    "name": "doc",
+    "fields": [
+        {"name": "id", "type": "int"},
+        {"name": "labels", "type": {"type": "map", "values": "string"}}
+    ]
+});
+
+let cfg = NormaliseConfig::default();
+
+let input = json!({"id": 42, "labels": {}});
+let normalised = normalise_value(input, &schema, &cfg);
+
+assert_eq!(normalised, json!({"id": 42, "labels": null}));
+```
+
+### Configuration
+
+`NormaliseConfig` lets you control behaviour:
+
+```rust
+let cfg = NormaliseConfig {
+    empty_as_null: true,   // [] and {} become null (default)
+    coerce_string: false,  // "42" becomes null not coerced from string (default)
+};
+```
+
+### Example
+
+Input values:
+
+```json
+{"id": 7,    "labels": {"en": "Hello"}}
+{"id": "42", "labels": {}}
+```
+
+Normalised (default):
+
+```json
+{"id": 7,    "labels": {"en": "Hello"}}
+{"id": null, "labels": null}
+```
+
+Normalised (with `coerce_string = true`):
+
+```json
+{"id": 7,  "labels": {"en": "Hello"}}
+{"id": 42, "labels": null}
+```
+
+
 ## Performance Features
 
 **Parallel Processing**
@@ -188,7 +265,6 @@ This crate is designed as the foundation for:
 - **[polars-genson](https://pypi.org/project/polars-genson/)**: Python plugin for Polars DataFrames
 - **[genson-cli](https://crates.io/crates/genson-cli)**: Command-line JSON schema inference tool
   (mainly for testing)
-- **Your code!**: Any Rust application needing fast and reliable JSON schema inference can use this crate!
 
 ## Safety & Reliability
 
