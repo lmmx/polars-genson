@@ -191,6 +191,81 @@ def infer_polars_schema(
     return plug(expr, changes_length=merge_schemas, **kwargs)
 
 
+def normalise_json(
+    expr: pl.Expr,
+    *,
+    ignore_outer_array: bool = True,
+    ndjson: bool = False,
+    empty_as_null: bool = True,
+    coerce_strings: bool = False,
+    map_threshold: int = 20,
+    force_field_types: dict[str, str] | None = None,
+) -> pl.Expr:
+    """Normalise a JSON string column against an inferred Avro schema.
+
+    This performs schema inference once across all rows, then rewrites each row
+    to conform to that schema. The output is a new column of JSON strings with
+    consistent structure and datatypes.
+
+    Parameters
+    ----------
+    expr : pl.Expr
+        Expression representing a string column of JSON data.
+    ignore_outer_array : bool, default True
+        Treat a top-level JSON array as a stream of objects (like NDJSON).
+    ndjson : bool, default False
+        Treat input as newline-delimited JSON rather than a single JSON document.
+    empty_as_null : bool, default True
+        Convert empty arrays/maps into `null` to preserve row count when exploding.
+        Disable with ``False`` to keep empty collections.
+    coerce_strings : bool, default False
+        If True, attempt to coerce string values into numeric/boolean types
+        where the schema expects them. If False, unmatched strings become null.
+    map_threshold : int, default 20
+        Maximum number of keys before an object is treated as a map
+        (unless overridden).
+    force_field_types : dict[str, str], optional
+        Override the inferred type for specific fields. Keys are field names,
+        values must be either ``"map"`` or ``"record"``.
+
+    Returns:
+    -------
+    pl.Expr
+        An expression producing a new string column, where each row is a
+        normalised JSON object matching the inferred Avro schema.
+
+    Examples:
+    --------
+    >>> df = pl.DataFrame({
+    ...     "json_data": [
+    ...         '{"id": "1", "labels": {}}',
+    ...         '{"id": 2, "labels": {"en": "Hello"}}',
+    ...     ]
+    ... })
+    >>> df.select(normalise_json(pl.col("json_data")))
+    shape: (2, 1)
+    ┌──────────────────────────────────────┐
+    │ normalised                           │
+    │ ---                                  │
+    │ str                                  │
+    ╞══════════════════════════════════════╡
+    │ {"id": "1", "labels": null}          │
+    │ {"id": "2", "labels": {"en":"Hello"}}│
+    └──────────────────────────────────────┘
+    """
+    kwargs = {
+        "ignore_outer_array": ignore_outer_array,
+        "ndjson": ndjson,
+        "empty_as_null": empty_as_null,
+        "coerce_string": coerce_strings,
+        "map_threshold": map_threshold,
+    }
+    if force_field_types is not None:
+        kwargs["force_field_types"] = force_field_types
+
+    return plug(expr, changes_length=True, **kwargs)
+
+
 @register_dataframe_namespace("genson")
 class GensonNamespace:
     """Namespace for JSON schema inference operations."""
@@ -330,3 +405,44 @@ class GensonNamespace:
             return orjson.loads(schema_json)
         except orjson.JSONDecodeError as e:
             raise ValueError(f"Failed to parse schema JSON: {e}") from e
+
+    def normalise_json(
+        self,
+        column: str,
+        *,
+        ignore_outer_array: bool = True,
+        ndjson: bool = False,
+        empty_as_null: bool = True,
+        coerce_strings: bool = False,
+        map_threshold: int = 20,
+        force_field_types: dict[str, str] | None = None,
+    ) -> pl.Series:
+        """Normalise a JSON string column to conform to an inferred Avro schema.
+
+        This is a higher-level wrapper around `normalise_json`, returning the
+        results as a Polars Series instead of an expression.
+
+        Parameters
+        ----------
+        column : str
+            Name of the column containing JSON strings.
+        ignore_outer_array, ndjson, empty_as_null, coerce_strings, map_threshold, force_field_types
+            See :func:`normalise_json`.
+
+        Returns:
+        -------
+        pl.Series
+            A series of JSON strings, each row rewritten to match the same Avro schema.
+        """
+        result = self._df.select(
+            normalise_json(
+                pl.col(column),
+                ignore_outer_array=ignore_outer_array,
+                ndjson=ndjson,
+                empty_as_null=empty_as_null,
+                coerce_strings=coerce_strings,
+                map_threshold=map_threshold,
+                force_field_types=force_field_types,
+            )
+        )
+        return result.to_series()
