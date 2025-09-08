@@ -2,7 +2,12 @@ use std::env;
 use std::fs;
 use std::io::{self, Read};
 
-use genson_core::{infer_json_schema, SchemaInferenceConfig};
+use genson_core::{
+    infer_json_schema,
+    normalise::{normalise_values, NormaliseConfig},
+    SchemaInferenceConfig,
+};
+use serde_json::Value;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_cli()
@@ -15,6 +20,11 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     // Handle command line options
     let mut config = SchemaInferenceConfig::default();
     let mut input_file = None;
+
+    // Normalisation config
+    let mut do_normalise = false;
+    let mut empty_as_null = true; // default ON
+    let mut coerce_string = false; // default OFF
 
     let mut i = 1;
     while i < args.len() {
@@ -31,6 +41,16 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             }
             "--avro" => {
                 config.avro = true;
+            }
+            "--normalise" => {
+                do_normalise = true;
+                config.avro = true;
+            }
+            "--coerce-strings" => {
+                coerce_string = true;
+            }
+            "--keep-empty" => {
+                empty_as_null = false; // override default
             }
             "--map-threshold" => {
                 if i + 1 < args.len() {
@@ -75,17 +95,46 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // For CLI, we treat the entire input as one JSON string
-    let json_strings = vec![input];
+    let json_strings = vec![input.clone()];
 
     // Infer schema - genson-core should handle any panics and return proper errors
-    let result = infer_json_schema(&json_strings, Some(config))
+    let result = infer_json_schema(&json_strings, Some(config.clone()))
         .map_err(|e| format!("Schema inference failed: {}", e))?;
 
-    // Pretty-print the schema
-    println!("{}", serde_json::to_string_pretty(&result.schema)?);
+    if do_normalise {
+        let schema = &result.schema;
+
+        // Parse input again for actual values
+        let values: Vec<Value> = if config.delimiter == Some(b'\n') {
+            input
+                .lines()
+                .filter(|l| !l.trim().is_empty())
+                .map(|l| serde_json::from_str::<Value>(l).unwrap_or(Value::Null))
+                .collect()
+        } else {
+            vec![serde_json::from_str::<Value>(&input).unwrap_or(Value::Null)]
+        };
+
+        let cfg = NormaliseConfig {
+            empty_as_null,
+            coerce_string,
+        };
+        let normalised = normalise_values(values, schema, &cfg);
+
+        if config.delimiter == Some(b'\n') {
+            // print one line per row
+            for v in normalised {
+                println!("{}", serde_json::to_string(&v)?);
+            }
+        } else {
+            println!("{}", serde_json::to_string_pretty(&normalised)?);
+        }
+    } else {
+        // Pretty-print the schema
+        println!("{}", serde_json::to_string_pretty(&result.schema)?);
+    }
 
     eprintln!("Processed {} JSON object(s)", result.processed_count);
-
     Ok(())
 }
 
@@ -103,6 +152,9 @@ fn print_help() {
     println!("    --no-ignore-array     Don't treat top-level arrays as object streams");
     println!("    --ndjson              Treat input as newline-delimited JSON");
     println!("    --avro                Output Avro schema instead of JSON Schema");
+    println!("    --normalise           Normalise the input data against the inferred schema");
+    println!("    --coerce-strings      Coerce numeric/boolean strings to schema type during normalisation");
+    println!("    --keep-empty          Keep empty arrays/maps instead of turning them into nulls");
     println!("    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     println!("                          Example: --force-type labels:map,claims:record");
@@ -176,5 +228,69 @@ mod tests {
                 assert!(error_msg.contains("line"));
             }
         }
+    }
+
+    #[test]
+    fn test_cli_normalise_with_empty_as_null() {
+        // Empty array should become null when --normalise is used (default behaviour)
+        let input = r#"{"labels": []}"#;
+        let json_strings = vec![input.to_string()];
+
+        let config = SchemaInferenceConfig {
+            avro: true,
+            ..SchemaInferenceConfig::default()
+        };
+
+        let result = infer_json_schema(&json_strings, Some(config))
+            .expect("Schema inference should succeed");
+
+        let values: Vec<serde_json::Value> = json_strings
+            .iter()
+            .map(|s| serde_json::from_str(s).unwrap())
+            .collect();
+
+        let norm_cfg = NormaliseConfig {
+            empty_as_null: true,
+            ..NormaliseConfig::default()
+        };
+        let normalised = normalise_values(values, &result.schema, &norm_cfg);
+
+        println!(
+            "Normalised with empty_as_null: {}",
+            serde_json::to_string(&normalised).unwrap()
+        );
+        assert_eq!(normalised[0]["labels"], serde_json::Value::Null);
+    }
+
+    #[test]
+    fn test_cli_normalise_with_keep_empty() {
+        // Empty array should be kept when --keep-empty is used
+        let input = r#"{"labels": []}"#;
+        let json_strings = vec![input.to_string()];
+
+        let config = SchemaInferenceConfig {
+            avro: true,
+            ..SchemaInferenceConfig::default()
+        };
+
+        let result = infer_json_schema(&json_strings, Some(config))
+            .expect("Schema inference should succeed");
+
+        let values: Vec<serde_json::Value> = json_strings
+            .iter()
+            .map(|s| serde_json::from_str(s).unwrap())
+            .collect();
+
+        let norm_cfg = NormaliseConfig {
+            empty_as_null: false,
+            ..NormaliseConfig::default()
+        };
+        let normalised = normalise_values(values, &result.schema, &norm_cfg);
+
+        println!(
+            "Normalised with keep_empty: {}",
+            serde_json::to_string(&normalised).unwrap()
+        );
+        assert_eq!(normalised[0]["labels"], serde_json::json!([]));
     }
 }

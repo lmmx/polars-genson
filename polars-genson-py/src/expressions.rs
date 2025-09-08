@@ -1,3 +1,4 @@
+use genson_core::normalise::{normalise_values, NormaliseConfig};
 use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use polars_jsonschema_bridge::deserialise::json_schema_to_polars_fields;
@@ -36,6 +37,12 @@ pub struct GensonKwargs {
     /// Whether to emit Avro schema instead of JSON Schema
     #[serde(default)]
     pub avro: bool,
+
+    #[serde(default = "default_empty_as_null")]
+    pub empty_as_null: bool,
+
+    #[serde(default)]
+    pub coerce_string: bool,
 }
 
 fn default_map_threshold() -> usize {
@@ -47,6 +54,10 @@ fn default_ignore_outer_array() -> bool {
 }
 
 fn default_merge_schemas() -> bool {
+    true
+}
+
+fn default_empty_as_null() -> bool {
     true
 }
 
@@ -65,6 +76,11 @@ fn infer_polars_schema_output_type(_input_fields: &[Field]) -> PolarsResult<Fiel
         "schema".into(),
         DataType::List(Box::new(schema_field_struct)),
     ))
+}
+
+/// Normalised JSON is still a JSON string
+fn normalise_json_output_type(_input_fields: &[Field]) -> PolarsResult<Field> {
+    Ok(Field::new("normalised".into(), DataType::String))
 }
 
 /// Polars expression that infers JSON schema from string column
@@ -275,4 +291,105 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             "Panic occurred during schema inference".into(),
         )),
     }
+}
+
+/// Normalise a JSON string column against an inferred Avro schema.
+///
+/// This function performs a two-step process:
+///
+/// 1. **Schema inference (global):**
+///    All rows in the input series are parsed as JSON and passed to
+///    `genson_core::infer_json_schema_from_strings` with `avro = true`.
+///    This produces a single Avro schema that captures the shape and types
+///    across the entire column.
+///
+/// 2. **Row-wise normalisation:**
+///    Each individual row is parsed again as JSON and transformed to conform
+///    to the inferred schema using `normalise_values`. This ensures that
+///    jagged, heterogeneous inputs (empty arrays, optional fields, differing
+///    scalar/array encodings, type mismatches, etc.) are coerced into a
+///    consistent representation.
+///
+/// The result is a new Polars Series of JSON strings, one per input row,
+/// with every row guaranteed to match the same Avro schema.
+///
+/// # Arguments
+/// * `inputs` – A slice of input Polars Series. The first must be a
+///   `Utf8` (string) column containing JSON objects or arrays.
+/// * `kwargs` – `GensonKwargs` struct carrying options such as:
+///   - `ignore_outer_array`: Treat top-level arrays as NDJSON streams
+///   - `ndjson`: Input is newline-delimited JSON
+///   - `empty_as_null`: Convert empty arrays/maps to `null` (default)
+///   - `coerce_string`: Allow strings to be coerced into numeric/boolean types
+///   - `map_threshold`, `force_field_types`: Influence schema inference
+///
+/// # Returns
+/// * A Polars Series of strings, length equal to the input, where each row
+///   contains a JSON document normalised to the inferred Avro schema.
+///
+/// # Errors
+/// Returns a `PolarsError::ComputeError` if the input is not a string column,
+/// if schema inference fails, or if serialisation fails.
+///
+/// # Example
+/// ```text
+/// Input:
+///   {"id": "1", "labels": {}}
+///   {"id": 2, "labels": {"en": "Hello"}}
+///
+/// Normalised:
+///   {"id": "1", "labels": null}
+///   {"id": "2", "labels": {"en": "Hello"}}
+/// ```
+#[polars_expr(output_type_func=normalise_json_output_type)]
+pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<Series> {
+    if inputs.is_empty() {
+        return Err(PolarsError::ComputeError("No input series provided".into()));
+    }
+
+    let series = &inputs[0];
+    let string_chunked = series.str().map_err(|_| {
+        PolarsError::ComputeError("Expected string column for JSON normalisation".into())
+    })?;
+
+    // Collect all JSON strings
+    let mut json_strings = Vec::new();
+    for s in string_chunked.iter().flatten() {
+        if !s.trim().is_empty() {
+            json_strings.push(s.to_string());
+        }
+    }
+
+    // Infer schema ONCE
+    let config = SchemaInferenceConfig {
+        ignore_outer_array: kwargs.ignore_outer_array,
+        delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
+        schema_uri: kwargs.schema_uri.clone(),
+        map_threshold: kwargs.map_threshold,
+        force_field_types: kwargs.force_field_types.clone(),
+        avro: true, // normalisation implies Avro
+    };
+
+    let schema_result = infer_json_schema_from_strings(&json_strings, config)
+        .map_err(|e| PolarsError::ComputeError(format!("Schema inference failed: {e}").into()))?;
+
+    let schema = &schema_result.schema;
+
+    // Parse each row and normalise
+    let cfg = NormaliseConfig {
+        empty_as_null: kwargs.empty_as_null,
+        coerce_string: kwargs.coerce_string,
+    };
+
+    let mut out = Vec::with_capacity(string_chunked.len());
+    for s in string_chunked {
+        let val = s
+            .and_then(|st| serde_json::from_str::<serde_json::Value>(st).ok())
+            .unwrap_or(serde_json::Value::Null);
+
+        let normed = normalise_values(vec![val], schema, &cfg).pop().unwrap();
+        out.push(serde_json::to_string(&normed).unwrap());
+    }
+
+    Ok(Series::new("normalised".into(), out))
 }

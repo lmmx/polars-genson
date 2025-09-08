@@ -152,6 +152,79 @@ The Polars schema inference automatically handles:
 - ✅ **Optional fields** present in some but not all objects
 - ✅ **Deep nesting** with multiple levels of structure
 
+## Normalisation
+
+In addition to schema inference, `polars-genson` can **normalise JSON columns** so that every row conforms to a single, consistent Avro schema.
+
+This is especially useful for semi-structured data where fields may be missing, empty arrays/maps may need to collapse to `null`, or numeric/boolean values may sometimes be encoded as strings.
+
+### Features
+
+* Converts empty arrays/maps to `null` (default)
+* Preserves empties with `empty_as_null=False`
+* Ensures missing fields are inserted with `null`
+* Supports per-field coercion of numeric/boolean strings via `coerce_string=True`
+
+### Example: Empty Arrays
+
+```python
+df = pl.DataFrame({"json_data": ['{"labels": []}', '{"labels": {"en": "Hello"}}']})
+
+out = df.genson.normalise_json("json_data")
+print(out)
+```
+
+Output:
+
+```text
+shape: (2, 1)
+┌─────────────────────────────┐
+│ normalised                  │
+│ ---                         │
+│ str                         │
+╞═════════════════════════════╡
+│ {"labels": null}            │
+│ {"labels": {"en": "Hello"}} │
+└─────────────────────────────┘
+```
+
+### Example: Preserving Empty Arrays
+
+```python
+out = df.genson.normalise_json("json_data", empty_as_null=False)
+print(out)
+```
+
+Output:
+
+```text
+┌─────────────────────────────┐
+│ normalised                  │
+╞═════════════════════════════╡
+│ {"labels": []}              │
+│ {"labels": {"en": "Hello"}} │
+└─────────────────────────────┘
+```
+
+### Example: String Coercion
+
+```python
+df = pl.DataFrame({
+    "json_data": [
+        '{"id": "42", "active": "true"}',
+        '{"id": 7, "active": false}'
+    ]
+})
+
+# Default: no coercion
+print(df.genson.normalise_json("json_data").to_list())
+# ['{"id": null, "active": null}', '{"id": 7, "active": false}']
+
+# With coercion
+print(df.genson.normalise_json("json_data", coerce_string=True).to_list())
+# ['{"id": 42, "active": true}', '{"id": 7, "active": false}']
+```
+
 ## Advanced Usage
 
 ### Per-Row Schema Processing
@@ -222,28 +295,66 @@ polars_schema = df.genson.infer_polars_schema(
 
 ## Method Reference
 
-The `genson` namespace provides two main methods:
+The `genson` namespace provides three main methods:
 
 ### `infer_json_schema(column, **kwargs) -> dict`
-Returns a JSON schema (as a Python dict) following the JSON Schema specification.
+
+Returns a JSON Schema (as a Python `dict`) following the JSON Schema specification.
 
 **Parameters:**
-- `column`: Name of the column containing JSON strings
-- `ignore_outer_array`: Whether to treat top-level arrays as streams of objects (default: `True`)
-- `ndjson`: Whether to treat input as newline-delimited JSON (default: `False`)
-- `merge_schemas`: Whether to merge schemas from all rows (default: `True`)
-- `debug`: Whether to print debug information (default: `False`)
+
+* `column`: Name of the column containing JSON strings
+* `ignore_outer_array`: Treat top-level arrays as streams of objects (default: `True`)
+* `ndjson`: Treat input as newline-delimited JSON (default: `False`)
+* `schema_uri`: Schema URI to embed in the output (default: `"http://json-schema.org/schema#"`)
+* `merge_schemas`: Merge schemas from all rows (default: `True`)
+* `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `force_field_types`: Explicitly force fields to `"map"` or `"record"`
+* `avro`: Output Avro schema instead of JSON Schema (default: `False`)
+* `debug`: Print debug information (default: `False`)
 
 ### `infer_polars_schema(column, **kwargs) -> pl.Schema`
-Returns a Polars schema with native data types for direct use with Polars operations.
+
+Returns a Polars schema with native data types for direct use in Polars.
 
 **Parameters:**
-- `column`: Name of the column containing JSON strings  
-- `ignore_outer_array`: Whether to treat top-level arrays as streams of objects (default: `True`)
-- `ndjson`: Whether to treat input as newline-delimited JSON (default: `False`)
-- `debug`: Whether to print debug information (default: `False`)
+
+* `column`: Name of the column containing JSON strings
+* `ignore_outer_array`: Treat top-level arrays as streams of objects (default: `True`)
+* `ndjson`: Treat input as newline-delimited JSON (default: `False`)
+* `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `force_field_types`: Explicitly force fields to `"map"` or `"record"`
+* `debug`: Print debug information (default: `False`)
 
 **Note:** `merge_schemas=False` is not yet supported for Polars schema inference.
+
+### `normalise_json(column, **kwargs) -> pl.Series`
+
+Normalises each JSON string in the column against a globally inferred Avro schema.
+Every row is transformed to match the same schema, with consistent handling of missing fields, empty values, and type coercion.
+
+**Parameters:**
+
+* `column`: Name of the column containing JSON strings
+* `ignore_outer_array`: Treat top-level arrays as streams of objects (default: `True`)
+* `ndjson`: Treat input as newline-delimited JSON (default: `False`)
+* `empty_as_null`: Convert empty arrays/maps to `null` (default: `True`)
+* `coerce_string`: Coerce numeric/boolean strings to numbers/booleans (default: `False`)
+* `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `force_field_types`: Explicitly force fields to `"map"` or `"record"`
+* `debug`: Print debug information (default: `False`)
+
+**Returns:**
+A new `pl.Series` of strings, one per input row, with each row normalised to the same Avro schema.
+
+**Example:**
+
+```python
+df = pl.DataFrame({"json_data": ['{"labels": []}', '{"labels": {"en": "Hello"}}']})
+out = df.genson.normalise_json("json_data")
+print(out.to_list())
+# ['{"labels": null}', '{"labels": {"en": "Hello"}}']
+```
 
 ## Examples
 
