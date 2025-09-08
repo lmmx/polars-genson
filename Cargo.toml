@@ -41,7 +41,7 @@ polars = { default-features = false, features = [
 ], version = "0.50.0" }
 polars-arrow = { default-features = false, version = "0.50.0" }
 pyo3 = { features = ["abi3-py39", "extension-module"], version = "0.25" }
-pyo3-polars = { features = ["derive"], version = "0.23" }
+pyo3-polars = { features = ["derive"], version = "0.23.1" }
 
 # Vendored from "indexmap" branch of https://github.com/lmmx/genson-rs into genson_core
 # genson-rs = { features = [

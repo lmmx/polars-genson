@@ -22,23 +22,21 @@ permissions:
 jobs:
   check-commit:
     runs-on: ubuntu-latest
-    # Temporarily disable the CI wheel building
-    if: false
     # This job only runs if the commit message meets the condition
-    # if: >
-    #   (
-    #     (
-    #       (github.event_name == 'push')
-    #       || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'lmmx')
-    #     )
-    #     &&
-    #     (
-    #       (startsWith(github.event.head_commit.message, 'chore(release)') && !contains(github.event.head_commit.message, '🦀')) ||
-    #       contains(github.event.head_commit.message, 'cibuildwheel')
-    #     )
-    #   )
-    #   || (github.event_name == 'workflow_dispatch')
-    #   || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'lmmx')
+    if: >
+      (
+        (
+          (github.event_name == 'push')
+          || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'lmmx')
+        )
+        &&
+        (
+          (startsWith(github.event.head_commit.message, 'chore(release)') && !contains(github.event.head_commit.message, '🦀')) ||
+          contains(github.event.head_commit.message, 'cibuildwheel')
+        )
+      )
+      || (github.event_name == 'workflow_dispatch')
+      || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'lmmx')
     steps:
       - name: Confirm commit message matched
         run: echo "Commit message matched the condition."
