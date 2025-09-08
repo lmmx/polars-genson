@@ -4,6 +4,7 @@ use polars_jsonschema_bridge::deserialise::json_schema_to_polars_fields;
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
 use std::panic;
+use std::slice::from_ref;
 
 #[derive(Deserialize)]
 pub struct GensonKwargs {
@@ -25,6 +26,16 @@ pub struct GensonKwargs {
     #[allow(dead_code)]
     #[serde(default)]
     pub convert_to_polars: bool,
+
+    #[serde(default = "default_map_threshold")]
+    pub map_threshold: usize,
+
+    #[serde(default)]
+    pub force_field_types: std::collections::HashMap<String, String>,
+}
+
+fn default_map_threshold() -> usize {
+    20
 }
 
 fn default_ignore_outer_array() -> bool {
@@ -100,6 +111,8 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 ignore_outer_array: kwargs.ignore_outer_array,
                 delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
                 schema_uri: kwargs.schema_uri.clone(),
+                map_threshold: kwargs.map_threshold,
+                force_field_types: kwargs.force_field_types.clone(),
             };
 
             let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -132,9 +145,11 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     ignore_outer_array: kwargs.ignore_outer_array,
                     delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
                     schema_uri: kwargs.schema_uri.clone(),
+                    map_threshold: kwargs.map_threshold,
+                    force_field_types: kwargs.force_field_types.clone(),
                 };
 
-                let single_result = infer_json_schema_from_strings(&[json_str.clone()], config)
+                let single_result = infer_json_schema_from_strings(from_ref(json_str), config)
                     .map_err(|e| format!("Individual genson error: {}", e))?;
                 individual_schemas.push(single_result.schema);
             }
@@ -205,6 +220,8 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             ignore_outer_array: kwargs.ignore_outer_array,
             delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
             schema_uri: kwargs.schema_uri.clone(),
+            map_threshold: kwargs.map_threshold,
+            force_field_types: kwargs.force_field_types.clone(),
         };
 
         let schema_result = infer_json_schema_from_strings(&json_strings, config)

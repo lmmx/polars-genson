@@ -1,3 +1,4 @@
+#![allow(mismatched_lifetime_syntaxes)]
 mod builder;
 mod node;
 mod strategy;

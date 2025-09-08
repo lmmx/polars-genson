@@ -114,7 +114,7 @@ test-cli *args:
     cargo nextest run {{args}}
     
 test-pl *args:
-    just test-py {{args}}
+    just py-test {{args}}
 
 [working-directory: 'polars-jsonschema-bridge']
 test-js *args:

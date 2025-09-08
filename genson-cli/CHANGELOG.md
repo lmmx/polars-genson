@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.2...genson-cli-v0.1.3) - 2025-09-06
+
+### <!-- 4 -->Documentation
+
+- *(mkdocs)* new config [ported from page-dewarp project] ([#44](https://github.com/lmmx/polars-genson/pull/44))
+
+### <!-- 9 -->Other
+
+- schema map inference ([#49](https://github.com/lmmx/polars-genson/pull/49))
+
 ## [0.1.2](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.1...genson-cli-v0.1.2) - 2025-08-20
 
 ### <!-- 4 -->Documentation

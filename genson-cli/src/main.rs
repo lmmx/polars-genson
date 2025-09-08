@@ -29,6 +29,30 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             "--ndjson" => {
                 config.delimiter = Some(b'\n');
             }
+            "--map-threshold" => {
+                if i + 1 < args.len() {
+                    config.map_threshold = args[i + 1].parse::<usize>().map_err(|_| {
+                        format!("Invalid value for --map-threshold: {}", args[i + 1])
+                    })?;
+                    i += 1;
+                } else {
+                    return Err("Missing value for --map-threshold".into());
+                }
+            }
+            "--force-type" => {
+                if i + 1 < args.len() {
+                    for pair in args[i + 1].split(',') {
+                        if let Some((field, typ)) = pair.split_once(':') {
+                            config
+                                .force_field_types
+                                .insert(field.to_string(), typ.to_string());
+                        }
+                    }
+                    i += 1;
+                } else {
+                    return Err("Missing value for --force-type".into());
+                }
+            }
             _ => {
                 if !args[i].starts_with('-') && input_file.is_none() {
                     input_file = Some(args[i].clone());
@@ -75,6 +99,9 @@ fn print_help() {
     println!("    -h, --help           Print this help message");
     println!("    --no-ignore-array    Don't treat top-level arrays as object streams");
     println!("    --ndjson            Treat input as newline-delimited JSON");
+    println!("    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)");
+    println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
+    println!("                          Example: --force-type labels:map,claims:record");
     println!();
     println!("EXAMPLES:");
     println!("    genson-cli data.json");

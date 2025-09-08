@@ -89,6 +89,8 @@ def infer_json_schema(
     schema_uri: str | None = "http://json-schema.org/schema#",
     merge_schemas: bool = True,
     debug: bool = False,
+    map_threshold: int = 20,
+    force_field_types: dict[str, str] | None = None,
 ) -> pl.Expr:
     """Infer JSON schema from a string column containing JSON data.
 
@@ -106,6 +108,12 @@ def infer_json_schema(
         Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
         Whether to print debug information
+    map_threshold : int, default 20
+        Number of keys above which a heterogeneous object may be rewritten
+        as a map (unless overridden).
+    force_field_types : dict[str, str], optional
+        Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+        Example: ``{"labels": "map", "claims": "record"}``.
 
     Returns:
     -------
@@ -117,9 +125,12 @@ def infer_json_schema(
         "ndjson": ndjson,
         "merge_schemas": merge_schemas,
         "debug": debug,
+        "map_threshold": map_threshold,
     }
     if schema_uri is not None:
         kwargs["schema_uri"] = schema_uri
+    if force_field_types is not None:
+        kwargs["force_field_types"] = force_field_types
 
     return plug(expr, changes_length=merge_schemas, **kwargs)
 
@@ -131,6 +142,8 @@ def infer_polars_schema(
     ndjson: bool = False,
     merge_schemas: bool = True,
     debug: bool = False,
+    map_threshold: int = 20,
+    force_field_types: dict[str, str] | None = None,
 ) -> pl.Expr:
     """Infer Polars schema from a string column containing JSON data.
 
@@ -146,6 +159,12 @@ def infer_polars_schema(
         Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
         Whether to print debug information
+    map_threshold : int, default 20
+        Number of keys above which a heterogeneous object may be rewritten
+        as a map (unless overridden).
+    force_field_types : dict[str, str], optional
+        Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+        Example: ``{"labels": "map", "claims": "record"}``.
 
     Returns:
     -------
@@ -157,10 +176,13 @@ def infer_polars_schema(
         "ndjson": ndjson,
         "merge_schemas": merge_schemas,
         "debug": debug,
+        "map_threshold": map_threshold,
     }
     if not merge_schemas:
         url = "https://github.com/lmmx/polars-genson/issues/37"
         raise NotImplementedError("Merge schemas for Polars schemas is TODO: see {url}")
+    if force_field_types is not None:
+        kwargs["force_field_types"] = force_field_types
 
     return plug(expr, changes_length=merge_schemas, **kwargs)
 
@@ -206,6 +228,12 @@ class GensonNamespace:
             Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False
             Whether to print debug information
+        map_threshold : int, default 20
+            Number of keys above which a heterogeneous object may be rewritten
+            as a map (unless overridden).
+        force_field_types : dict[str, str], optional
+            Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+            Example: ``{"labels": "map", "claims": "record"}``.
 
         Returns:
         -------
@@ -242,6 +270,8 @@ class GensonNamespace:
         schema_uri: str | None = "http://json-schema.org/schema#",
         merge_schemas: bool = True,
         debug: bool = False,
+        map_threshold: int = 20,
+        force_field_types: dict[str, str] | None = None,
     ) -> dict | list[dict]:
         """Infer JSON schema from a string column containing JSON data.
 
@@ -259,6 +289,12 @@ class GensonNamespace:
             Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False
             Whether to print debug information
+        map_threshold : int, default 20
+            Number of keys above which a heterogeneous object may be rewritten
+            as a map (unless overridden).
+        force_field_types : dict[str, str], optional
+            Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+            Example: ``{"labels": "map", "claims": "record"}``.
 
         Returns:
         -------
@@ -274,6 +310,8 @@ class GensonNamespace:
                 schema_uri=schema_uri,
                 merge_schemas=merge_schemas,
                 debug=debug,
+                map_threshold=map_threshold,
+                force_field_types=force_field_types,
             ).first()
         )
 

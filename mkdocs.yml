@@ -108,6 +108,7 @@ plugins:
 nav:
   - Home: index.md
   - Getting Started: get_started.md
+  - Background: background/index.md
   - API Reference:
       - api/index.md
       - polars_genson: api/polars_genson.md
