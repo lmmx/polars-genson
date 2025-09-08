@@ -83,7 +83,7 @@ jobs:
               --env CFLAGS_i686_unknown_linux_gnu=-m32
               --env PKG_CONFIG_ALLOW_CROSS=1
               --env PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/lib64/pkgconfig
-            skip: false
+            skip: true
             manylinux: "2_28"
           - runner: ubuntu-22.04
             target: aarch64
@@ -91,7 +91,7 @@ jobs:
               sudo apt-get update -y && \
               sudo apt-get install pkg-config -y
             dockeropts: ""
-            skip: false
+            skip: true
             manylinux: 2_28
           - runner: ubuntu-22.04
             target: armv7
@@ -111,7 +111,7 @@ jobs:
               --env CXX_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-g++
               --env AR_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-ar
               --env PKG_CONFIG_ALLOW_CROSS=1
-            skip: false
+            skip: true
             manylinux: auto
           - runner: ubuntu-22.04
             target: s390x
@@ -133,7 +133,7 @@ jobs:
               --env AR_s390x_unknown_linux_gnu=s390x-linux-gnu-ar
               --env CFLAGS_s390x_unknown_linux_gnu=-march=z10
               --env PKG_CONFIG_ALLOW_CROSS=1
-            skip: false
+            skip: true
             manylinux: auto
           - runner: ubuntu-22.04
             target: ppc64le
@@ -154,7 +154,7 @@ jobs:
               --env CXX_powerpc64le_unknown_linux_gnu=powerpc64le-linux-gnu-g++
               --env AR_powerpc64le_unknown_linux_gnu=powerpc64le-linux-gnu-ar
               --env PKG_CONFIG_ALLOW_CROSS=1
-            skip: false
+            skip: true
             manylinux: auto
     steps:
       - uses: actions/checkout@v5
@@ -191,7 +191,7 @@ jobs:
             skip: false
           - runner: windows-latest
             target: x86
-            skip: false
+            skip: true
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
