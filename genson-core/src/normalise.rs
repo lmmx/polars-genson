@@ -5,12 +5,15 @@ use serde_json::{json, Value};
 pub struct NormaliseConfig {
     /// Whether empty arrays/maps should be normalised to `null` (default: true).
     pub empty_as_null: bool,
+    /// Whether to try to coerce int/float/bool from string (default: false).
+    pub coerce_string: bool,
 }
 
 impl Default for NormaliseConfig {
     fn default() -> Self {
         Self {
             empty_as_null: true,
+            coerce_string: false,
         }
     }
 }
@@ -26,13 +29,16 @@ impl Default for NormaliseConfig {
 /// in a dataframe) so that downstream processing sees stable, predictable shapes
 /// instead of row-by-row variation.
 ///
+/// By default, string values are *not* coerced into numbers/booleans. Use
+/// `coerce_string = true` to enable parsing `"42"` → `42`, `"true"` → `true`, etc.
+///
 /// ## Behaviour by schema type
 ///
 /// - **Primitive types** (`"string"`, `"int"`, `"long"`, `"double"`, `"float"`,
 ///   `"boolean"`):
 ///   * `null` is always preserved as `null`.
 ///   * String values are parsed into the target type where possible
-///     (`"42"` → `42`, `"true"` → `true`).
+///     (`"42"` → `42`, `"true"` → `true`) if `coerce_string` is true.
 ///   * If parsing fails, the value becomes `null`.
 ///   * Non-matching values are coerced to string via `.to_string()` for the
 ///     `"string"` type, or dropped to `null` for numeric/boolean types.
@@ -92,22 +98,29 @@ pub fn normalise_value(value: Value, schema: &Value, cfg: &NormaliseConfig) -> V
             v @ Value::String(_) => v,
             v => Value::String(v.to_string()),
         },
+
         Value::String(t) if t == "int" || t == "long" => match value {
             Value::Null => Value::Null,
             Value::Number(n) if n.is_i64() => Value::Number(n),
-            Value::String(s) => s.parse::<i64>().map(|i| json!(i)).unwrap_or(Value::Null),
+            Value::String(s) if cfg.coerce_string => {
+                s.parse::<i64>().map(|i| json!(i)).unwrap_or(Value::Null)
+            }
             _ => Value::Null,
         },
+
         Value::String(t) if t == "double" || t == "float" => match value {
             Value::Null => Value::Null,
             Value::Number(n) if n.is_f64() => Value::Number(n),
-            Value::String(s) => s.parse::<f64>().map(|f| json!(f)).unwrap_or(Value::Null),
+            Value::String(s) if cfg.coerce_string => {
+                s.parse::<f64>().map(|f| json!(f)).unwrap_or(Value::Null)
+            }
             _ => Value::Null,
         },
+
         Value::String(t) if t == "boolean" => match value {
             Value::Null => Value::Null,
             Value::Bool(b) => Value::Bool(b),
-            Value::String(s) => match s.as_str() {
+            Value::String(s) if cfg.coerce_string => match s.as_str() {
                 "true" | "1" => Value::Bool(true),
                 "false" | "0" => Value::Bool(false),
                 _ => Value::Null,
@@ -252,11 +265,57 @@ mod tests {
         let schema = json!({"type": "map", "values": "string"});
         let cfg = NormaliseConfig {
             empty_as_null: false,
+            ..NormaliseConfig::default()
         };
 
         let input = json!({});
         let normalised = normalise_value(input, &schema, &cfg);
 
         assert_eq!(normalised, json!({}));
+    }
+
+    #[test]
+    fn test_string_coercion_toggle() {
+        let schema = json!({
+            "type": "record",
+            "name": "doc",
+            "fields": [
+                {"name": "int_field", "type": "int"},
+                {"name": "bool_field", "type": "boolean"},
+            ]
+        });
+
+        let input = json!({
+            "int_field": "42",
+            "bool_field": "true"
+        });
+
+        // Default: coerce_string = false
+        let cfg_no_coerce = NormaliseConfig {
+            empty_as_null: true,
+            coerce_string: false,
+        };
+        let norm_no_coerce = normalise_value(input.clone(), &schema, &cfg_no_coerce);
+        assert_eq!(
+            norm_no_coerce,
+            json!({
+                "int_field": Value::Null,     // stays null because string not coerced
+                "bool_field": Value::Null     // same here
+            })
+        );
+
+        // With coerce_string = true
+        let cfg_coerce = NormaliseConfig {
+            empty_as_null: true,
+            coerce_string: true,
+        };
+        let norm_coerce = normalise_value(input, &schema, &cfg_coerce);
+        assert_eq!(
+            norm_coerce,
+            json!({
+                "int_field": 42,
+                "bool_field": true
+            })
+        );
     }
 }

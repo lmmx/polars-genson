@@ -24,6 +24,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     // Normalisation config
     let mut do_normalise = false;
     let mut empty_as_null = true; // default ON
+    let mut coerce_string = false; // default OFF
 
     let mut i = 1;
     while i < args.len() {
@@ -44,6 +45,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             "--normalise" => {
                 do_normalise = true;
                 config.avro = true;
+            }
+            "--coerce-strings" => {
+                coerce_string = true;
             }
             "--keep-empty" => {
                 empty_as_null = false; // override default
@@ -111,7 +115,10 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             vec![serde_json::from_str::<Value>(&input).unwrap_or(Value::Null)]
         };
 
-        let cfg = NormaliseConfig { empty_as_null };
+        let cfg = NormaliseConfig {
+            empty_as_null,
+            coerce_string,
+        };
         let normalised = normalise_values(values, schema, &cfg);
 
         if config.delimiter == Some(b'\n') {
@@ -146,6 +153,7 @@ fn print_help() {
     println!("    --ndjson              Treat input as newline-delimited JSON");
     println!("    --avro                Output Avro schema instead of JSON Schema");
     println!("    --normalise           Normalise the input data against the inferred schema");
+    println!("    --coerce-strings      Coerce numeric/boolean strings to schema type during normalisation");
     println!("    --keep-empty          Keep empty arrays/maps instead of turning them into nulls");
     println!("    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
@@ -243,6 +251,7 @@ mod tests {
 
         let norm_cfg = NormaliseConfig {
             empty_as_null: true,
+            ..NormaliseConfig::default()
         };
         let normalised = normalise_values(values, &result.schema, &norm_cfg);
 
@@ -274,6 +283,7 @@ mod tests {
 
         let norm_cfg = NormaliseConfig {
             empty_as_null: false,
+            ..NormaliseConfig::default()
         };
         let normalised = normalise_values(values, &result.schema, &norm_cfg);
 

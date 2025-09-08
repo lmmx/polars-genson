@@ -11,12 +11,14 @@ fn test_array_empty_behavior() {
     // empty_as_null = true
     let cfg = NormaliseConfig {
         empty_as_null: true,
+        ..NormaliseConfig::default()
     };
     assert_eq!(normalise_value(json!([]), &schema, &cfg), json!(null));
 
     // empty_as_null = false
     let cfg = NormaliseConfig {
         empty_as_null: false,
+        ..NormaliseConfig::default()
     };
     assert_eq!(normalise_value(json!([]), &schema, &cfg), json!([]));
 
@@ -31,11 +33,13 @@ fn test_map_empty_behavior() {
 
     let cfg = NormaliseConfig {
         empty_as_null: true,
+        ..NormaliseConfig::default()
     };
     assert_eq!(normalise_value(json!({}), &schema, &cfg), json!(null));
 
     let cfg = NormaliseConfig {
         empty_as_null: false,
+        ..NormaliseConfig::default()
     };
     assert_eq!(normalise_value(json!({}), &schema, &cfg), json!({}));
 
@@ -58,6 +62,7 @@ fn test_nested_record_array_field() {
 
     let cfg = NormaliseConfig {
         empty_as_null: true,
+        ..NormaliseConfig::default()
     };
     let input = json!({"id":"1","tags":[]});
     let norm = normalise_value(input, &schema, &cfg);
@@ -65,6 +70,7 @@ fn test_nested_record_array_field() {
 
     let cfg = NormaliseConfig {
         empty_as_null: false,
+        ..NormaliseConfig::default()
     };
     let input = json!({"id":"1","tags":[]});
     let norm = normalise_value(input, &schema, &cfg);
@@ -77,6 +83,7 @@ fn test_union_precedence_array() {
     let schema = json!(["null", {"type":"array","items":"string"}]);
     let cfg = NormaliseConfig {
         empty_as_null: true,
+        ..NormaliseConfig::default()
     };
 
     // null stays null
@@ -93,6 +100,7 @@ fn test_union_precedence_map() {
     let schema = json!(["null", {"type":"map","values":"string"}, "string"]);
     let cfg = NormaliseConfig {
         empty_as_null: true,
+        ..NormaliseConfig::default()
     };
 
     // scalar coerced into map, because map branch is first non-null
@@ -107,6 +115,7 @@ fn test_normalise_values_preserves_length() {
 
     let cfg = NormaliseConfig {
         empty_as_null: true,
+        ..NormaliseConfig::default()
     };
     let inputs = vec![
         json!(["a", "b"]),

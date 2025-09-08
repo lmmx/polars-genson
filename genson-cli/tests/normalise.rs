@@ -54,7 +54,12 @@ fn test_normalise_union_coercion_snapshot() {
     writeln!(temp, r#"{{"int_field": null, "float_field": null}}"#).unwrap();
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
+    cmd.args([
+        "--normalise",
+        "--coerce-strings",
+        "--ndjson",
+        temp.path().to_str().unwrap(),
+    ]);
 
     let output = cmd.assert().success().get_output().stdout.clone();
     let stdout_str = String::from_utf8(output).unwrap();
