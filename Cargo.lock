@@ -910,7 +910,7 @@ dependencies = [
 
 [[package]]
 name = "genson-cli"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "assert_cmd",
  "genson-core",
@@ -922,7 +922,7 @@ dependencies = [
 
 [[package]]
 name = "genson-core"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "avrotize",
  "crustrace",
@@ -2172,7 +2172,7 @@ dependencies = [
 
 [[package]]
 name = "polars-jsonschema-bridge"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "eyre",
  "insta",
