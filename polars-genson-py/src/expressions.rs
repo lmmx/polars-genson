@@ -32,6 +32,10 @@ pub struct GensonKwargs {
 
     #[serde(default)]
     pub force_field_types: std::collections::HashMap<String, String>,
+
+    /// Whether to emit Avro schema instead of JSON Schema
+    #[serde(default)]
+    pub avro: bool,
 }
 
 fn default_map_threshold() -> usize {
@@ -113,6 +117,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 schema_uri: kwargs.schema_uri.clone(),
                 map_threshold: kwargs.map_threshold,
                 force_field_types: kwargs.force_field_types.clone(),
+                avro: kwargs.avro,
             };
 
             let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -147,6 +152,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     schema_uri: kwargs.schema_uri.clone(),
                     map_threshold: kwargs.map_threshold,
                     force_field_types: kwargs.force_field_types.clone(),
+                    avro: kwargs.avro,
                 };
 
                 let single_result = infer_json_schema_from_strings(from_ref(json_str), config)
@@ -222,6 +228,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             schema_uri: kwargs.schema_uri.clone(),
             map_threshold: kwargs.map_threshold,
             force_field_types: kwargs.force_field_types.clone(),
+            avro: kwargs.avro,
         };
 
         let schema_result = infer_json_schema_from_strings(&json_strings, config)

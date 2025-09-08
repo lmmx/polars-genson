@@ -91,6 +91,7 @@ def infer_json_schema(
     debug: bool = False,
     map_threshold: int = 20,
     force_field_types: dict[str, str] | None = None,
+    avro: bool = False,
 ) -> pl.Expr:
     """Infer JSON schema from a string column containing JSON data.
 
@@ -114,6 +115,8 @@ def infer_json_schema(
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
+    avro: bool, default False
+        Whether to output an Avro schema instead of JSON schema.
 
     Returns:
     -------
@@ -126,6 +129,7 @@ def infer_json_schema(
         "merge_schemas": merge_schemas,
         "debug": debug,
         "map_threshold": map_threshold,
+        "avro": avro,
     }
     if schema_uri is not None:
         kwargs["schema_uri"] = schema_uri
@@ -272,6 +276,7 @@ class GensonNamespace:
         debug: bool = False,
         map_threshold: int = 20,
         force_field_types: dict[str, str] | None = None,
+        avro: bool = False,
     ) -> dict | list[dict]:
         """Infer JSON schema from a string column containing JSON data.
 
@@ -312,6 +317,7 @@ class GensonNamespace:
                 debug=debug,
                 map_threshold=map_threshold,
                 force_field_types=force_field_types,
+                avro=avro,
             ).first()
         )
 

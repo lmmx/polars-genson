@@ -29,6 +29,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             "--ndjson" => {
                 config.delimiter = Some(b'\n');
             }
+            "--avro" => {
+                config.avro = true;
+            }
             "--map-threshold" => {
                 if i + 1 < args.len() {
                     config.map_threshold = args[i + 1].parse::<usize>().map_err(|_| {
@@ -96,9 +99,10 @@ fn print_help() {
     println!("    <FILE>    Input JSON file (reads from stdin if not provided)");
     println!();
     println!("OPTIONS:");
-    println!("    -h, --help           Print this help message");
-    println!("    --no-ignore-array    Don't treat top-level arrays as object streams");
-    println!("    --ndjson            Treat input as newline-delimited JSON");
+    println!("    -h, --help            Print this help message");
+    println!("    --no-ignore-array     Don't treat top-level arrays as object streams");
+    println!("    --ndjson              Treat input as newline-delimited JSON");
+    println!("    --avro                Output Avro schema instead of JSON Schema");
     println!("    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     println!("                          Example: --force-type labels:map,claims:record");

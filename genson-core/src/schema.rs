@@ -21,6 +21,9 @@ mod innermod {
         pub map_threshold: usize,
         /// Force override of field treatment, e.g. {"labels": "map"}
         pub force_field_types: std::collections::HashMap<String, String>,
+        /// Whether to output Avro schema rather than regular JSON Schema.
+        #[cfg(feature = "avro")]
+        pub avro: bool,
     }
 
     impl Default for SchemaInferenceConfig {
@@ -31,6 +34,8 @@ mod innermod {
                 schema_uri: Some("AUTO".to_string()),
                 map_threshold: 20,
                 force_field_types: std::collections::HashMap::new(),
+                #[cfg(feature = "avro")]
+                avro: false,
             }
         }
     }
@@ -39,6 +44,25 @@ mod innermod {
     pub struct SchemaInferenceResult {
         pub schema: Value,
         pub processed_count: usize,
+    }
+
+    #[cfg(feature = "avro")]
+    impl SchemaInferenceResult {
+        pub fn to_avro_schema(
+            &self,
+            namespace: &str,
+            utility_namespace: Option<&str>,
+            base_uri: Option<&str>,
+            split_top_level: bool,
+        ) -> serde_json::Value {
+            avrotize::converter::jsons_to_avro(
+                &self.schema,
+                namespace,
+                utility_namespace.unwrap_or(""),
+                base_uri.unwrap_or("genson-core"),
+                split_top_level,
+            )
+        }
     }
 
     fn validate_json(s: &str) -> Result<(), serde_json::Error> {
@@ -218,6 +242,24 @@ mod innermod {
                 // Get final schema
                 let mut final_schema = builder.to_schema();
                 rewrite_objects(&mut final_schema, None, &config);
+
+                #[cfg(feature = "avro")]
+                if config.avro {
+                    let avro_schema = SchemaInferenceResult {
+                        schema: final_schema.clone(),
+                        processed_count,
+                    }
+                    .to_avro_schema(
+                        "genson", // namespace
+                        Some(""),
+                        Some(""), // base_uri
+                        false,    // don't split top-level
+                    );
+                    return Ok(SchemaInferenceResult {
+                        schema: avro_schema,
+                        processed_count,
+                    });
+                }
 
                 Ok(SchemaInferenceResult {
                     schema: final_schema,
