@@ -3,6 +3,18 @@ use insta::assert_snapshot;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
+fn pretty_print_ndjson(raw: &str) -> String {
+    raw.lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            let val: serde_json::Value = serde_json::from_str(line)
+                .unwrap_or_else(|_| panic!("invalid JSON line: {}", line));
+            serde_json::to_string_pretty(&val).unwrap()
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 #[test]
 fn test_normalise_ndjson_snapshot() {
     let mut temp = NamedTempFile::new().unwrap();
@@ -221,4 +233,60 @@ fn test_normalise_scalar_to_map_snapshot() {
 
     // Snapshot should show row 1 coerced into {"labels":{"default":"foo"}}
     assert_snapshot!("normalise_scalar_to_map", stdout_str);
+}
+
+#[test]
+fn test_normalise_labels_map_of_structs_snapshot() {
+    // NDJSON where each row is literally a raw JSON string
+    let mut temp = NamedTempFile::new().unwrap();
+
+    // First row: two languages
+    writeln!(
+        temp,
+        r#"{{"en":{{"language":"en","value":"Jack Bauer"}},"fr":{{"language":"fr","value":"Jack Bauer"}}}}"#
+    )
+    .unwrap();
+
+    // Second row: three languages
+    writeln!(
+        temp,
+        r#"{{"en":{{"language":"en","value":"happiness"}},"fr":{{"language":"fr","value":"bonheur"}},"rn":{{"language":"rn","value":"Umunezero"}}}}"#
+    )
+    .unwrap();
+
+    // Run CLI with normalisation enabled and force map detection
+    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
+    cmd.args([
+        "--normalise",
+        "--ndjson",
+        "--map-encoding",
+        "kv",
+        "--map-threshold",
+        "0", // ensure it's treated as a map
+        temp.path().to_str().unwrap(),
+    ]);
+
+    let output = cmd.assert().success().get_output().stdout.clone();
+    let stdout_str = String::from_utf8(output).unwrap();
+
+    let pretty_output = pretty_print_ndjson(&stdout_str);
+
+    assert_snapshot!("normalise_labels_map_of_structs", pretty_output);
+
+    // ---------- Second call: avro schema ----------
+    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
+    cmd.args([
+        "--avro",
+        "--ndjson",
+        "--map-encoding",
+        "kv",
+        "--map-threshold",
+        "0",
+        temp.path().to_str().unwrap(),
+    ]);
+
+    let avro_output = cmd.assert().success().get_output().stdout.clone();
+    let avro_str = String::from_utf8(avro_output).unwrap();
+
+    assert_snapshot!("avro_labels_map_of_structs", avro_str);
 }
