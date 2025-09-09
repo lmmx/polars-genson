@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.1.5...polars-jsonschema-bridge-v0.1.6) - 2025-09-09
+
+### <!-- 9 -->Other
+
+- avsc polars decode ([#60](https://github.com/lmmx/polars-genson/pull/60))
+
 ## [0.1.3](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.1.2...polars-jsonschema-bridge-v0.1.3) - 2025-09-06
 
 ### <!-- 1 -->Features
