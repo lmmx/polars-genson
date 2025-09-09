@@ -1,6 +1,7 @@
 # tests/normalise_test.py
 """Tests for JSON normalisation via genson-core integration."""
 
+import orjson
 import polars as pl
 import polars_genson
 
@@ -239,7 +240,8 @@ def test_normalise_record_expands_to_struct():
     ]
 
     df = pl.DataFrame({"json_data": rows})
-    out = df.genson.normalise_json("json_data").to_dicts()
+    out_strs = df.genson.normalise_json("json_data", decode=False).to_list()
+    out = [orjson.loads(out_st) for out_st in out_strs]
 
     # Full output snapshot, not partial assertion
     assert out == [

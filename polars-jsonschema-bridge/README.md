@@ -30,7 +30,7 @@ serde_json = "1.0"
 ### JSON Schema to Polars Types
 
 ```rust
-use polars_jsonschema_bridge::json_schema_to_polars_fields;
+use polars_jsonschema_bridge::{schema_to_polars_fields, SchemaFormat};
 use serde_json::json;
 
 let json_schema = json!({
@@ -51,7 +51,7 @@ let json_schema = json!({
     }
 });
 
-let fields = json_schema_to_polars_fields(&json_schema, false)?;
+let fields = schema_to_polars_fields(&json_schema, SchemaFormat::JsonSchema, false)?;
 // Returns: [
 //   ("name", "String"),
 //   ("age", "Int64"), 
@@ -180,9 +180,9 @@ let options = JsonSchemaOptions::new()
 Enable debug output to see the intermediate JSON Schema during conversion:
 
 ```rust
-use polars_jsonschema_bridge::json_schema_to_polars_fields;
+use polars_jsonschema_bridge::{schema_to_polars_fields, JsonSchema};
 
-let fields = json_schema_to_polars_fields(&json_schema, true)?; // debug = true
+let fields = schema_to_polars_fields(&json_schema, SchemaFormat::JsonSchema, true)?; // debug = true
 // Prints the generated JSON Schema to stderr
 ```
 

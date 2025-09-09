@@ -1,7 +1,7 @@
 use genson_core::normalise::{normalise_values, MapEncoding, NormaliseConfig};
 use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
-use polars_jsonschema_bridge::deserialise::json_schema_to_polars_fields;
+use polars_jsonschema_bridge::deserialise::{schema_to_polars_fields, SchemaFormat};
 use pyo3_polars::derive::polars_expr;
 use serde::Deserialize;
 use std::panic;
@@ -258,8 +258,14 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
         let schema_result = infer_json_schema_from_strings(&json_strings, config)
             .map_err(|e| format!("Genson error: {}", e))?;
 
+        let format = if kwargs.avro {
+            SchemaFormat::Avro
+        } else {
+            SchemaFormat::JsonSchema
+        };
+
         // Convert JSON schema to Polars field mappings
-        let polars_fields = json_schema_to_polars_fields(&schema_result.schema, kwargs.debug)
+        let polars_fields = schema_to_polars_fields(&schema_result.schema, format, kwargs.debug)
             .map_err(|e| e.to_string())?;
         Ok(polars_fields)
     });
