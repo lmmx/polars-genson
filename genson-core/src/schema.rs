@@ -169,6 +169,78 @@ mod innermod {
         }
     }
 
+    /// Recursively reorder union type arrays in a JSON Schema by canonical precedence.
+    ///
+    /// Special case: preserves the common `["null", T]` pattern without reordering.
+    pub fn reorder_unions(schema: &mut Value) {
+        match schema {
+            Value::Object(obj) => {
+                if let Some(Value::Array(types)) = obj.get_mut("type") {
+                    // sort by canonical precedence, but keep ["null", T] pattern intact
+                    if !(types.len() == 2 && types.iter().any(|t| t == "null")) {
+                        types.sort_by_key(type_rank);
+                    }
+                }
+                // recurse into properties/items/etc.
+                for v in obj.values_mut() {
+                    reorder_unions(v);
+                }
+            }
+            Value::Array(arr) => {
+                for v in arr {
+                    reorder_unions(v);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Assign a numeric precedence rank to a JSON Schema type.
+    ///
+    /// Used by `reorder_unions` to sort union members deterministically.
+    /// - Null always first
+    /// - Containers before scalars (to enforce widening)
+    /// - Scalars ordered by narrowness
+    /// - Unknown types last
+    pub fn type_rank(val: &Value) -> usize {
+        match val {
+            Value::String(s) => type_string_rank(s),
+            Value::Object(obj) => {
+                if let Some(Value::String(t)) = obj.get("type") {
+                    type_string_rank(t)
+                } else {
+                    100 // object with no "type" field
+                }
+            }
+            _ => 100, // non-string/non-object
+        }
+    }
+
+    /// Internal helper: rank by type string
+    fn type_string_rank(s: &str) -> usize {
+        match s {
+            // Null always first
+            "null" => 0,
+
+            // Containers before scalars: widening takes precedence
+            "map" => 1,
+            "array" => 2,
+            "object" | "record" => 3,
+
+            // Scalars (ordered by 'narrowness')
+            "boolean" => 10,
+            "integer" | "int" | "long" => 11,
+            "number" | "float" | "double" => 12,
+            "enum" => 13,
+            "string" => 14,
+            "fixed" => 15,
+            "bytes" => 16,
+
+            // Fallback
+            _ => 99,
+        }
+    }
+
     /// Infer JSON schema from a collection of JSON strings
     pub fn infer_json_schema_from_strings(
         json_strings: &[String],
@@ -242,6 +314,7 @@ mod innermod {
                 // Get final schema
                 let mut final_schema = builder.to_schema();
                 rewrite_objects(&mut final_schema, None, &config);
+                reorder_unions(&mut final_schema);
 
                 #[cfg(feature = "avro")]
                 if config.avro {
@@ -283,6 +356,24 @@ mod innermod {
         use super::*;
         use predicates::prelude::*;
         use serde_json::json;
+
+        #[test]
+        fn test_reorder_unions_string_float_null() {
+            // Unordered union: string, float, null
+            let mut schema = json!({
+                "type": ["string", "float", "null"]
+            });
+
+            reorder_unions(&mut schema);
+
+            // After reordering, null should come first, then float/number, then string
+            assert_eq!(
+                schema,
+                json!({
+                    "type": ["null", "float", "string"]
+                })
+            );
+        }
 
         #[test]
         fn test_basic_schema_inference() {

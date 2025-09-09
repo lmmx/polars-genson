@@ -162,11 +162,17 @@ fn test_normalise_empty_map_snapshot() {
     // NDJSON where "labels" is always an empty map
     let mut temp = NamedTempFile::new().unwrap();
     writeln!(temp, r#"{{"id": "A", "labels": {{}}}}"#).unwrap();
-    writeln!(temp, r#"{{"id": "B", "labels": {{}}}}"#).unwrap();
+    writeln!(temp, r#"{{"id": "B", "labels": {{"en": "Hello"}}}}"#).unwrap();
 
     // Run CLI with normalisation enabled (default empty_as_null=true)
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
+    cmd.args([
+        "--normalise",
+        "--ndjson",
+        "--map-threshold",
+        "0",
+        temp.path().to_str().unwrap(),
+    ]);
 
     let output = cmd.assert().success().get_output().stdout.clone();
     let stdout_str = String::from_utf8(output).unwrap();
@@ -188,7 +194,7 @@ fn test_normalise_map_threshold_snapshot() {
         "--normalise",
         "--ndjson",
         "--map-threshold",
-        "1",
+        "2",
         temp.path().to_str().unwrap(),
     ]);
 

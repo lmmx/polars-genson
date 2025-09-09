@@ -1,6 +1,5 @@
 ---
 source: genson-cli/tests/normalise.rs
-assertion_line: 199
 expression: stdout_str
 ---
 {"id":"A","labels":{"en":"Hello"}}
