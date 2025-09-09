@@ -550,3 +550,34 @@ publish-rust mode="":
     ## 🦀 Let release-plz handle workspace crate tagging
     ## It will create tags like: genson-core-v0.2.1, genson-cli-v0.1.5, etc.
     release-plz release --backend github --git-token $git_token {{mode}}
+
+# For when release-plz isn't working
+ship-rust-manual:
+    #!/usr/bin/env -S echo-comment --shell-flags="-euo pipefail" --color="\\033[38;5;202m"
+
+    # Bump patch versions
+    cargo set-version -p genson-core --bump patch
+    cargo set-version -p polars-jsonschema-bridge --bump patch
+    cargo set-version -p genson-cli --bump patch
+    
+    # Commit and tag (using the new CLI version as tag)
+    git add .
+    git commit -m "chore(release): 🦀 Upgrades"
+    
+    git tag genson-core-v$(cargo metadata --no-deps --format-version 1 \
+      | jq -r '.packages[] | select(.name=="genson-core") | .version')
+    
+    git tag polars-jsonschema-bridge-v$(cargo metadata --no-deps --format-version 1 \
+      | jq -r '.packages[] | select(.name=="polars-jsonschema-bridge") | .version')
+    
+    git tag genson-cli-v$(cargo metadata --no-deps --format-version 1 \
+      | jq -r '.packages[] | select(.name=="genson-cli") | .version')
+    
+    # Push to remote
+    git push
+    git push --tags
+    
+    # Publish in dependency order
+    cargo publish -p genson-core
+    cargo publish -p polars-jsonschema-bridge
+    cargo publish -p genson-cli
