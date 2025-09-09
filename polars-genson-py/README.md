@@ -165,6 +165,66 @@ This is especially useful for semi-structured data where fields may be missing, 
 * Ensures missing fields are inserted with `null`
 * Supports per-field coercion of numeric/boolean strings via `coerce_string=True`
 
+### Example: Map Encoding in Polars
+
+By default, Polars cannot store a dynamic JSON object (`{"en":"Hello","fr":"Bonjour"}`)
+without exploding it into a struct with fixed fields padded with nulls.  
+`polars-genson` solves this by normalising maps to a **list of key/value structs**:
+
+This representation is schema-stable and preserves all map keys without null-padding.
+It matches how Arrow/Parquet model Avro `map` types internally.
+
+```python
+import polars as pl
+import polars_genson
+
+df = pl.DataFrame({
+    "json_data": [
+        '{"id": 123, "tags": [], "labels": {}, "active": true}',
+        '{"id": 456, "tags": ["x","y"], "labels": {"fr":"Bonjour"}, "active": false}',
+        '{"id": 789, "labels": {"en": "Hi", "es": "Hola"}}'
+    ]
+})
+
+print(df.genson.normalise_json("json_data", map_threshold=0))
+````
+
+Output:
+
+```text
+shape: (3, 4)
+┌─────┬────────────┬──────────────────────────────┬────────┐
+│ id  ┆ tags       ┆ labels                       ┆ active │
+│ --- ┆ ---        ┆ ---                          ┆ ---    │
+│ i64 ┆ list[str]  ┆ list[struct[2]]              ┆ bool   │
+╞═════╪════════════╪══════════════════════════════╪════════╡
+│ 123 ┆ null       ┆ null                         ┆ true   │
+│ 456 ┆ ["x", "y"] ┆ [{"fr","Bonjour"}]           ┆ false  │
+│ 789 ┆ null       ┆ [{"en","Hi"}, {"es","Hola"}] ┆ null   │
+└─────┴────────────┴──────────────────────────────┴────────┘
+```
+
+In the example above, `normalise_json` reshaped jagged JSON into a consistent, schema-aligned form:
+
+* **Row 1**
+
+  * `tags` was present but empty (`[]`) → normalised to `null`
+    *(this prevents row elimination when exploding the column)*
+  * `labels` was present but empty (`{}`) → normalised to `null`
+  * `active` stayed `true`
+
+* **Row 2**
+
+  * `tags` had two values (`["x","y"]`) → preserved as a list of strings
+  * `labels` had one entry (`{"fr":"Bonjour"}`) → normalised to a list of **one key:value struct**
+  * `active` stayed `false`
+
+* **Row 3**
+
+  * `tags` was missing entirely → injected as `null`
+  * `labels` had two entries (`{"en":"Hi","es":"Hola"}`) → normalised to a list of **two key:value structs**
+  * `active` was missing → injected as `null`
+
 ### Example: Empty Arrays
 
 ```python

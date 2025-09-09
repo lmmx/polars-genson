@@ -299,3 +299,37 @@ def test_normalise_map_currently_expands_to_struct():
             "active": None,
         },
     ]
+
+
+def test_normalise_map_readme_demo():
+    """README demo: ids int, tags empty/missing→null, labels as list-of-key/value."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"id": 123, "tags": [], "labels": {}, "active": true}',
+                '{"id": 456, "tags": ["x","y"], "labels": {"fr":"Bonjour"}, "active": false}',
+                '{"id": 789, "labels": {"en": "Hi", "es": "Hola"}}',
+            ]
+        }
+    )
+
+    out = df.genson.normalise_json("json_data", map_threshold=0).to_dicts()
+
+    assert out == [
+        {"id": 123, "tags": None, "labels": None, "active": True},
+        {
+            "id": 456,
+            "tags": ["x", "y"],
+            "labels": [{"key": "fr", "value": "Bonjour"}],
+            "active": False,
+        },
+        {
+            "id": 789,
+            "tags": None,
+            "labels": [
+                {"key": "en", "value": "Hi"},
+                {"key": "es", "value": "Hola"},
+            ],
+            "active": None,
+        },
+    ]
