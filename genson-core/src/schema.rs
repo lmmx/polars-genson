@@ -172,7 +172,7 @@ mod innermod {
     /// Recursively reorder union type arrays in a JSON Schema by canonical precedence.
     ///
     /// Special case: preserves the common `["null", T]` pattern without reordering.
-    fn reorder_unions(schema: &mut Value) {
+    pub fn reorder_unions(schema: &mut Value) {
         match schema {
             Value::Object(obj) => {
                 if let Some(Value::Array(types)) = obj.get_mut("type") {
@@ -195,26 +195,49 @@ mod innermod {
         }
     }
 
-    /// Assign a numeric precedence rank to a JSON Schema type string.
+    /// Assign a numeric precedence rank to a JSON Schema type.
     ///
     /// Used by `reorder_unions` to sort union members deterministically.
-    fn type_rank(val: &Value) -> usize {
+    /// - Null always first
+    /// - Containers before scalars (to enforce widening)
+    /// - Scalars ordered by narrowness
+    /// - Unknown types last
+    pub fn type_rank(val: &Value) -> usize {
         match val {
-            Value::String(s) => match s.as_str() {
-                "null" => 0,
-                "boolean" => 1,
-                "integer" | "int" | "long" => 2,
-                "number" | "float" | "double" => 3,
-                "enum" => 4,
-                "string" => 5,
-                "fixed" => 6,
-                "bytes" => 7,
-                "map" => 8,
-                "array" => 9,
-                "object" | "record" => 10,
-                _ => 99, // unknown string
-            },
-            _ => 100, // structured/non-string
+            Value::String(s) => type_string_rank(s),
+            Value::Object(obj) => {
+                if let Some(Value::String(t)) = obj.get("type") {
+                    type_string_rank(t)
+                } else {
+                    100 // object with no "type" field
+                }
+            }
+            _ => 100, // non-string/non-object
+        }
+    }
+
+    /// Internal helper: rank by type string
+    fn type_string_rank(s: &str) -> usize {
+        match s {
+            // Null always first
+            "null" => 0,
+
+            // Containers before scalars: widening takes precedence
+            "map" => 1,
+            "array" => 2,
+            "object" | "record" => 3,
+
+            // Scalars (ordered by 'narrowness')
+            "boolean" => 10,
+            "integer" | "int" | "long" => 11,
+            "number" | "float" | "double" => 12,
+            "enum" => 13,
+            "string" => 14,
+            "fixed" => 15,
+            "bytes" => 16,
+
+            // Fallback
+            _ => 99,
         }
     }
 
