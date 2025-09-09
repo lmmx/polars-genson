@@ -1,0 +1,6 @@
+---
+source: genson-cli/tests/normalise.rs
+expression: stdout_str
+---
+{"foo":["json"]}
+{"foo":["bar","baz"]}
