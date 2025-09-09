@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.5...genson-cli-v0.1.6) - 2025-09-09
+
+### <!-- 1 -->Features
+
+- *(map-encoding)* map normalisation encodings ([#59](https://github.com/lmmx/polars-genson/pull/59))
+
 ## [0.1.3](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.2...genson-cli-v0.1.3) - 2025-09-06
 
 ### <!-- 4 -->Documentation
