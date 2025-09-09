@@ -1,7 +1,0 @@
----
-source: genson-cli/tests/normalise.rs
-assertion_line: 175
-expression: stdout_str
----
-{"id":"A","labels":{}}
-{"id":"B","labels":{}}
