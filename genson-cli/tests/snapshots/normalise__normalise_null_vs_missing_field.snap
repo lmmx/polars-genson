@@ -1,0 +1,6 @@
+---
+source: genson-cli/tests/normalise.rs
+expression: stdout_str
+---
+{"foo":null,"bar":1}
+{"foo":null,"bar":2}
