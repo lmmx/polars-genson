@@ -4,7 +4,7 @@ use std::io::{self, Read};
 
 use genson_core::{
     infer_json_schema,
-    normalise::{normalise_values, NormaliseConfig},
+    normalise::{normalise_values, MapEncoding, NormaliseConfig},
     SchemaInferenceConfig,
 };
 use serde_json::Value;
@@ -25,6 +25,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     let mut do_normalise = false;
     let mut empty_as_null = true; // default ON
     let mut coerce_string = false; // default OFF
+    let mut map_encoding = genson_core::normalise::MapEncoding::Mapping; // default
 
     let mut i = 1;
     while i < args.len() {
@@ -76,6 +77,25 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --force-type".into());
                 }
             }
+            "--map-encoding" => {
+                if i + 1 < args.len() {
+                    map_encoding = match args[i + 1].as_str() {
+                        "mapping" => MapEncoding::Mapping,
+                        "entries" => MapEncoding::Entries,
+                        "kv" => MapEncoding::KeyValueEntries,
+                        other => {
+                            return Err(format!(
+                            "Invalid value for --map-encoding: {} (expected mapping|entries|kv)",
+                            other
+                        )
+                            .into())
+                        }
+                    };
+                    i += 1;
+                } else {
+                    return Err("Missing value for --map-encoding".into());
+                }
+            }
             _ => {
                 if !args[i].starts_with('-') && input_file.is_none() {
                     input_file = Some(args[i].clone());
@@ -118,6 +138,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         let cfg = NormaliseConfig {
             empty_as_null,
             coerce_string,
+            map_encoding,
         };
         let normalised = normalise_values(values, schema, &cfg);
 
@@ -158,6 +179,10 @@ fn print_help() {
     println!("    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     println!("                          Example: --force-type labels:map,claims:record");
+    println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");
+    println!("                          mapping = Avro/JSON object (shared dict)");
+    println!("                          entries = list of single-entry objects (individual dicts)");
+    println!("                          kv      = list of {{key,value}} objects");
     println!();
     println!("EXAMPLES:");
     println!("    genson-cli data.json");

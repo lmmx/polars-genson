@@ -1,0 +1,13 @@
+---
+source: genson-cli/tests/map_encoding.rs
+expression: parse_ndjson(&stdout_str)
+---
+[
+  {
+    "id": "A",
+    "labels": {
+      "en": "Hello",
+      "fr": "Bonjour"
+    }
+  }
+]

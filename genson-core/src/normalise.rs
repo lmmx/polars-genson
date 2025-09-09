@@ -2,6 +2,18 @@
 mod innermod {
     use serde_json::{json, Value};
 
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+    #[serde(rename_all = "lowercase")]
+    pub enum MapEncoding {
+        /// Avro/JSON-style object: {"en":"Hello","fr":"Bonjour"}
+        Mapping,
+        /// List of single-entry objects: [{"en":"Hello"},{"fr":"Bonjour"}]
+        Entries,
+        #[serde(rename = "kv")]
+        /// List of {key,value} pairs: [{"key":"en","value":"Hello"}, {"key":"fr","value":"Bonjour"}]
+        KeyValueEntries,
+    }
+
     /// Configuration options for normalisation.
     #[derive(Debug, Clone)]
     pub struct NormaliseConfig {
@@ -9,6 +21,8 @@ mod innermod {
         pub empty_as_null: bool,
         /// Whether to try to coerce int/float/bool from string (default: false).
         pub coerce_string: bool,
+        /// Which map encoding to output Map type fields into (default: Mapping).
+        pub map_encoding: MapEncoding,
     }
 
     impl Default for NormaliseConfig {
@@ -16,6 +30,25 @@ mod innermod {
             Self {
                 empty_as_null: true,
                 coerce_string: false,
+                map_encoding: MapEncoding::Mapping,
+            }
+        }
+    }
+
+    /// Apply map encoding strategy to a map of already-normalised values.
+    fn apply_map_encoding(m: serde_json::Map<String, Value>, encoding: MapEncoding) -> Value {
+        match encoding {
+            MapEncoding::Mapping => Value::Object(m),
+            MapEncoding::Entries => {
+                let arr: Vec<Value> = m.into_iter().map(|(k, v)| json!({ k: v })).collect();
+                Value::Array(arr)
+            }
+            MapEncoding::KeyValueEntries => {
+                let arr: Vec<Value> = m
+                    .into_iter()
+                    .map(|(k, v)| json!({ "key": k, "value": v }))
+                    .collect();
+                Value::Array(arr)
             }
         }
     }
@@ -177,12 +210,13 @@ mod innermod {
                         for (k, v) in m {
                             out.insert(k, normalise_value(v, values_schema, cfg));
                         }
-                        Value::Object(out)
+                        apply_map_encoding(out, cfg.map_encoding)
                     }
                     v => {
-                        let mut out = serde_json::Map::new();
-                        out.insert("default".into(), normalise_value(v, values_schema, cfg));
-                        Value::Object(out)
+                        // Scalar fallback: wrap as {"default": v}
+                        let mut synthetic = serde_json::Map::new();
+                        synthetic.insert("default".into(), normalise_value(v, values_schema, cfg));
+                        apply_map_encoding(synthetic, cfg.map_encoding)
                     }
                 }
             }
@@ -300,6 +334,7 @@ mod innermod {
             let cfg_no_coerce = NormaliseConfig {
                 empty_as_null: true,
                 coerce_string: false,
+                ..NormaliseConfig::default()
             };
             let norm_no_coerce = normalise_value(input.clone(), &schema, &cfg_no_coerce);
             assert_eq!(
@@ -314,6 +349,7 @@ mod innermod {
             let cfg_coerce = NormaliseConfig {
                 empty_as_null: true,
                 coerce_string: true,
+                ..NormaliseConfig::default()
             };
             let norm_coerce = normalise_value(input, &schema, &cfg_coerce);
             assert_eq!(

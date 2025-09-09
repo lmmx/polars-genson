@@ -1,6 +1,6 @@
 #![cfg(feature = "avro")]
 
-use genson_core::normalise::{normalise_value, normalise_values, NormaliseConfig};
+use genson_core::normalise::{normalise_value, normalise_values, MapEncoding, NormaliseConfig};
 use serde_json::json;
 
 /// Arrays: empty → null (with flag), empty → [] (without flag).
@@ -128,4 +128,34 @@ fn test_normalise_values_preserves_length() {
     assert_eq!(outputs[0], json!(["a", "b"]));
     assert_eq!(outputs[1], json!(null));
     assert_eq!(outputs[2], json!(null));
+}
+
+/// Maps: scalar fallback respects map encoding.
+#[test]
+fn test_map_scalar_fallback_encodings() {
+    let schema = json!({"type":"map","values":"string"});
+
+    // Default Mapping
+    let cfg = NormaliseConfig {
+        map_encoding: MapEncoding::Mapping,
+        ..NormaliseConfig::default()
+    };
+    let val = normalise_value(json!("foo"), &schema, &cfg);
+    assert_eq!(val, json!({"default": "foo"}));
+
+    // Entries
+    let cfg = NormaliseConfig {
+        map_encoding: MapEncoding::Entries,
+        ..NormaliseConfig::default()
+    };
+    let val = normalise_value(json!("foo"), &schema, &cfg);
+    assert_eq!(val, json!([{"default": "foo"}]));
+
+    // KeyValueEntries
+    let cfg = NormaliseConfig {
+        map_encoding: MapEncoding::KeyValueEntries,
+        ..NormaliseConfig::default()
+    };
+    let val = normalise_value(json!("foo"), &schema, &cfg);
+    assert_eq!(val, json!([{"key": "default", "value": "foo"}]));
 }

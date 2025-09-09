@@ -2,13 +2,14 @@
 """Tests for JSON normalisation via genson-core integration."""
 
 import polars as pl
+import polars_genson
 
 
 def test_empty_array_becomes_null_by_default():
     """Empty arrays should become null unless keep_empty is requested."""
     df = pl.DataFrame({"json_data": ['{"labels": []}']})
 
-    out = df.genson.normalise_json("json_data").to_list()
+    out = df.genson.normalise_json("json_data", decode=False).to_list()
 
     assert out == ['{"labels":null}']
 
@@ -17,7 +18,9 @@ def test_keep_empty_preserves_arrays():
     """With empty_as_null disabled, empty arrays should be preserved."""
     df = pl.DataFrame({"json_data": ['{"labels": []}']})
 
-    out = df.genson.normalise_json("json_data", empty_as_null=False).to_list()
+    out = df.genson.normalise_json(
+        "json_data", empty_as_null=False, decode=False
+    ).to_list()
 
     assert out == ['{"labels":[]}']
 
@@ -33,7 +36,7 @@ def test_string_coercion_disabled_by_default():
         }
     )
 
-    out = df.genson.normalise_json("json_data").to_list()
+    out = df.genson.normalise_json("json_data", decode=False).to_list()
 
     # String "42" is not coerced to int, "true" not coerced to bool
     assert '"id":"42"' not in out[0]
@@ -53,20 +56,31 @@ def test_string_coercion_enabled():
         }
     )
 
-    out = df.genson.normalise_json("json_data", coerce_strings=True).to_list()
+    out = df.genson.normalise_json(
+        "json_data", coerce_strings=True, decode=False
+    ).to_list()
 
     # String "42" is coerced to int, "true" coerced to bool
     assert '"id":42' in out[0]
     assert '"active":true' in out[0]
 
 
-def run_norm(rows, *, empty_as_null=True, coerce_strings=False, map_threshold=None):
+def run_norm(
+    rows,
+    *,
+    empty_as_null=True,
+    coerce_strings=False,
+    map_threshold=None,
+    map_encoding=None,
+):
     """Helper: run normalisation on a list of JSON strings."""
     df = pl.DataFrame({"json_data": rows})
     kwargs = {"empty_as_null": empty_as_null, "coerce_strings": coerce_strings}
     if map_threshold is not None:
         kwargs["map_threshold"] = map_threshold
-    return df.genson.normalise_json("json_data", **kwargs).to_list()
+    if map_encoding is not None:
+        kwargs["map_encoding"] = map_encoding
+    return df.genson.normalise_json("json_data", **kwargs, decode=False).to_list()
 
 
 def test_normalise_ndjson_like():
@@ -167,7 +181,18 @@ def test_normalise_empty_map_default_null():
     assert '"labels":null' in out[1]
 
 
-def test_normalise_map_threshold_forces_map():
+def test_normalise_map_threshold_forces_map_mapping():
+    """Low map_threshold forces heterogeneous objects into map type."""
+    rows = [
+        '{"id":"A","labels":{"en":"Hello"}}',
+        '{"id":"B","labels":{"fr":"Bonjour"}}',
+    ]
+    out = run_norm(rows, map_threshold=1, map_encoding="mapping")
+    # Labels stabilised as a map
+    assert '"labels":{"en":"Hello"}' in out[0] or '"labels":{"fr":"Bonjour"}' in out[1]
+
+
+def test_normalise_map_threshold_forces_map_kv():
     """Low map_threshold forces heterogeneous objects into map type."""
     rows = [
         '{"id":"A","labels":{"en":"Hello"}}',
@@ -175,10 +200,11 @@ def test_normalise_map_threshold_forces_map():
     ]
     out = run_norm(rows, map_threshold=1)
     # Labels stabilised as a map
-    assert '"labels":{"en":"Hello"}' in out[0] or '"labels":{"fr":"Bonjour"}' in out[1]
+    assert '"labels":[{"key":"en","value":"Hello"}]' in out[0]
+    assert '"labels":[{"key":"fr","value":"Bonjour"}]' in out[1]
 
 
-def test_normalise_scalar_to_map():
+def test_normalise_scalar_to_map_kv():
     """Scalar values are widened into maps with a 'default' key."""
     rows = [
         '{"id":"A","labels":"foo"}',
@@ -186,5 +212,124 @@ def test_normalise_scalar_to_map():
     ]
     out = run_norm(rows, map_threshold=0)
     # Scalar widened into {"default": ...}
+    assert out == [
+        '{"id":"A","labels":[{"key":"default","value":"foo"}]}',
+        '{"id":"B","labels":[{"key":"en","value":"Hello"}]}',
+    ]
+
+
+def test_normalise_scalar_to_map_mapping():
+    """Scalar values are widened into maps with a 'default' key."""
+    rows = [
+        '{"id":"A","labels":"foo"}',
+        '{"id":"B","labels":{"en":"Hello"}}',
+    ]
+    out = run_norm(rows, map_threshold=0, map_encoding="mapping")
+    # Scalar widened into {"default": ...}
     assert '"labels":{"default":"foo"}' in out[0]
     assert '"labels":{"en":"Hello"}}' in out[1]
+
+
+def test_normalise_record_expands_to_struct():
+    """Records ('labels' field) with partial/empty keys should always get null keys."""
+    rows = [
+        '{"id": "123", "tags": [], "labels": {}, "active": "true"}',
+        '{"id": 456, "tags": ["x","y"], "labels": {"en":"Hello"}, "active": false}',
+        '{"id": null, "labels": {"es": "Hola", "fr":"Bonjour"}}',
+    ]
+
+    df = pl.DataFrame({"json_data": rows})
+    out = df.genson.normalise_json("json_data").to_dicts()
+
+    # Full output snapshot, not partial assertion
+    assert out == [
+        {
+            "id": None,
+            "tags": None,
+            "labels": {"es": None, "fr": None, "en": None},
+            "active": None,
+        },
+        {
+            "id": 456,
+            "tags": ["x", "y"],
+            "labels": {"es": None, "fr": None, "en": "Hello"},
+            "active": False,
+        },
+        {
+            "id": None,
+            "tags": None,
+            "labels": {"es": "Hola", "fr": "Bonjour", "en": None},
+            "active": None,
+        },
+    ]
+
+
+def test_normalise_map_currently_expands_to_struct():
+    """Maps with different keys should NOT explode to struct with nulls.
+
+    This test locks in current behaviour until the bug is fixed.
+    """
+    rows = [
+        '{"id": "123", "tags": [], "labels": {}, "active": "true"}',
+        '{"id": 456, "tags": ["x","y"], "labels": {"en":"Hello"}, "active": false}',
+        '{"id": null, "labels": {"es": "Hola", "fr":"Bonjour"}}',
+    ]
+
+    df = pl.DataFrame({"json_data": rows})
+    out = df.genson.normalise_json("json_data", map_threshold=1).to_dicts()
+
+    # Full output snapshot, not partial assertion
+    assert out == [
+        {"id": None, "tags": None, "labels": None, "active": None},
+        {
+            "id": 456,
+            "tags": ["x", "y"],
+            "labels": [
+                {"key": "en", "value": "Hello"},
+            ],
+            "active": False,
+        },
+        {
+            "id": None,
+            "tags": None,
+            "labels": [
+                {"key": "es", "value": "Hola"},
+                {"key": "fr", "value": "Bonjour"},
+            ],
+            "active": None,
+        },
+    ]
+
+
+def test_normalise_map_readme_demo():
+    """README demo: ids int, tags empty/missing→null, labels as list-of-key/value."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"id": 123, "tags": [], "labels": {}, "active": true}',
+                '{"id": 456, "tags": ["x","y"], "labels": {"fr":"Bonjour"}, "active": false}',
+                '{"id": 789, "labels": {"en": "Hi", "es": "Hola"}}',
+            ]
+        }
+    )
+
+    out = df.genson.normalise_json("json_data", map_threshold=0).to_dicts()
+
+    assert out == [
+        {"id": 123, "tags": None, "labels": None, "active": True},
+        {
+            "id": 456,
+            "tags": ["x", "y"],
+            "labels": [{"key": "fr", "value": "Bonjour"}],
+            "active": False,
+        },
+        {
+            "id": 789,
+            "tags": None,
+            "labels": [
+                {"key": "en", "value": "Hi"},
+                {"key": "es", "value": "Hola"},
+            ],
+            "active": None,
+        },
+    ]
