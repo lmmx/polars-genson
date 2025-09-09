@@ -65,12 +65,21 @@ def test_string_coercion_enabled():
     assert '"active":true' in out[0]
 
 
-def run_norm(rows, *, empty_as_null=True, coerce_strings=False, map_threshold=None):
+def run_norm(
+    rows,
+    *,
+    empty_as_null=True,
+    coerce_strings=False,
+    map_threshold=None,
+    map_encoding=None,
+):
     """Helper: run normalisation on a list of JSON strings."""
     df = pl.DataFrame({"json_data": rows})
     kwargs = {"empty_as_null": empty_as_null, "coerce_strings": coerce_strings}
     if map_threshold is not None:
         kwargs["map_threshold"] = map_threshold
+    if map_encoding is not None:
+        kwargs["map_encoding"] = map_encoding
     return df.genson.normalise_json("json_data", **kwargs, decode=False).to_list()
 
 
@@ -172,7 +181,18 @@ def test_normalise_empty_map_default_null():
     assert '"labels":null' in out[1]
 
 
-def test_normalise_map_threshold_forces_map():
+def test_normalise_map_threshold_forces_map_mapping():
+    """Low map_threshold forces heterogeneous objects into map type."""
+    rows = [
+        '{"id":"A","labels":{"en":"Hello"}}',
+        '{"id":"B","labels":{"fr":"Bonjour"}}',
+    ]
+    out = run_norm(rows, map_threshold=1, map_encoding="mapping")
+    # Labels stabilised as a map
+    assert '"labels":{"en":"Hello"}' in out[0] or '"labels":{"fr":"Bonjour"}' in out[1]
+
+
+def test_normalise_map_threshold_forces_map_kv():
     """Low map_threshold forces heterogeneous objects into map type."""
     rows = [
         '{"id":"A","labels":{"en":"Hello"}}',
@@ -180,16 +200,31 @@ def test_normalise_map_threshold_forces_map():
     ]
     out = run_norm(rows, map_threshold=1)
     # Labels stabilised as a map
-    assert '"labels":{"en":"Hello"}' in out[0] or '"labels":{"fr":"Bonjour"}' in out[1]
+    assert '"labels":[{"key":"en","value":"Hello"}]' in out[0]
+    assert '"labels":[{"key":"fr","value":"Bonjour"}]' in out[1]
 
 
-def test_normalise_scalar_to_map():
+def test_normalise_scalar_to_map_kv():
     """Scalar values are widened into maps with a 'default' key."""
     rows = [
         '{"id":"A","labels":"foo"}',
         '{"id":"B","labels":{"en":"Hello"}}',
     ]
     out = run_norm(rows, map_threshold=0)
+    # Scalar widened into {"default": ...}
+    assert out == [
+        '{"id":"A","labels":[{"key":"default","value":"foo"}]}',
+        '{"id":"B","labels":[{"key":"en","value":"Hello"}]}',
+    ]
+
+
+def test_normalise_scalar_to_map_mapping():
+    """Scalar values are widened into maps with a 'default' key."""
+    rows = [
+        '{"id":"A","labels":"foo"}',
+        '{"id":"B","labels":{"en":"Hello"}}',
+    ]
+    out = run_norm(rows, map_threshold=0, map_encoding="mapping")
     # Scalar widened into {"default": ...}
     assert '"labels":{"default":"foo"}' in out[0]
     assert '"labels":{"en":"Hello"}}' in out[1]
@@ -249,13 +284,18 @@ def test_normalise_map_currently_expands_to_struct():
         {
             "id": 456,
             "tags": ["x", "y"],
-            "labels": [{"en": "Hello"}],
+            "labels": [
+                {"key": "en", "value": "Hello"},
+            ],
             "active": False,
         },
         {
             "id": None,
             "tags": None,
-            "labels": [{"es": "Hola"}, {"fr": "Bonjour"}],
+            "labels": [
+                {"key": "es", "value": "Hola"},
+                {"key": "fr", "value": "Bonjour"},
+            ],
             "active": None,
         },
     ]

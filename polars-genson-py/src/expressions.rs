@@ -1,4 +1,4 @@
-use genson_core::normalise::{normalise_values, NormaliseConfig};
+use genson_core::normalise::{normalise_values, MapEncoding, NormaliseConfig};
 use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use polars_jsonschema_bridge::deserialise::json_schema_to_polars_fields;
@@ -43,6 +43,10 @@ pub struct GensonKwargs {
 
     #[serde(default)]
     pub coerce_string: bool,
+
+    /// Map encoding strategy (default: KeyValueEntries for Polars friendliness)
+    #[serde(default = "default_map_encoding")]
+    pub map_encoding: MapEncoding,
 }
 
 fn default_map_threshold() -> usize {
@@ -59,6 +63,10 @@ fn default_merge_schemas() -> bool {
 
 fn default_empty_as_null() -> bool {
     true
+}
+
+fn default_map_encoding() -> MapEncoding {
+    MapEncoding::KeyValueEntries
 }
 
 /// JSON Schema is a String
@@ -379,6 +387,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
     let cfg = NormaliseConfig {
         empty_as_null: kwargs.empty_as_null,
         coerce_string: kwargs.coerce_string,
+        map_encoding: kwargs.map_encoding,
     };
 
     let mut out = Vec::with_capacity(string_chunked.len());

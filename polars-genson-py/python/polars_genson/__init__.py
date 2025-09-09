@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
+from typing import Literal
 
 import orjson
 import polars as pl
@@ -198,6 +199,7 @@ def normalise_json(
     ndjson: bool = False,
     empty_as_null: bool = True,
     coerce_strings: bool = False,
+    map_encoding: Literal["entries", "mapping", "kv"] = "kv",
     map_threshold: int = 20,
     force_field_types: dict[str, str] | None = None,
 ) -> pl.Expr:
@@ -221,6 +223,11 @@ def normalise_json(
     coerce_strings : bool, default False
         If True, attempt to coerce string values into numeric/boolean types
         where the schema expects them. If False, unmatched strings become null.
+    map_encoding : {"mapping", "entries", "kv"}, default "kv"
+        Encoding to use for Avro maps:
+        - "mapping": plain JSON object ({"en":"Hello"})
+        - "entries": list of single-entry objects ([{"en":"Hello"}])
+        - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
     map_threshold : int, default 20
         Maximum number of keys before an object is treated as a map
         (unless overridden).
@@ -258,6 +265,7 @@ def normalise_json(
         "ndjson": ndjson,
         "empty_as_null": empty_as_null,
         "coerce_string": coerce_strings,
+        "map_encoding": map_encoding,
         "map_threshold": map_threshold,
     }
     if force_field_types is not None:
@@ -416,6 +424,7 @@ class GensonNamespace:
         ndjson: bool = False,
         empty_as_null: bool = True,
         coerce_strings: bool = False,
+        map_encoding: Literal["entries", "mapping", "kv"] = "kv",
         map_threshold: int = 20,
         force_field_types: dict[str, str] | None = None,
     ) -> pl.Series:
@@ -446,6 +455,11 @@ class GensonNamespace:
         coerce_strings : bool, default False
             If True, attempt to parse numeric/boolean values from strings
             (e.g. ``"42" → 42``, ``"true" → true``). If False, leave them as strings.
+        map_encoding : {"mapping", "entries", "kv"}, default "kv"
+            Encoding to use for Avro maps:
+            - "mapping": plain JSON object ({"en":"Hello"})
+            - "entries": list of single-entry objects ([{"en":"Hello"}])
+            - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
         map_threshold : int, default 20
             Threshold above which objects with many varying keys are normalised
             as Avro maps instead of records.
@@ -466,6 +480,7 @@ class GensonNamespace:
             ndjson=ndjson,
             empty_as_null=empty_as_null,
             coerce_strings=coerce_strings,
+            map_encoding=map_encoding,
             map_threshold=map_threshold,
             force_field_types=force_field_types,
         )
