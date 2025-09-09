@@ -71,41 +71,20 @@ OPTIONS:
     --ndjson              Treat input as newline-delimited JSON
     --avro                Output Avro schema instead of JSON Schema
     --normalise           Normalise the input data against the inferred schema
+    --coerce-strings      Coerce numeric/boolean strings to schema type during normalisation
     --keep-empty          Keep empty arrays/maps instead of turning them into nulls
     --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)
     --force-type k:v,...  Force field(s) to 'map' or 'record'
                           Example: --force-type labels:map,claims:record
+    --map-encoding <mode> Choose map encoding (mapping|entries|kv)
+                          mapping = Avro/JSON object (shared dict)
+                          entries = list of single-entry objects (individual dicts)
+                          kv      = list of {key,value} objects
 
 EXAMPLES:
     genson-cli data.json
     echo '{"name": "test"}' | genson-cli
     genson-cli --ndjson multi-line.jsonl
-```
-
-Got it — for the CLI docs we’ll need to add a **Normalisation** section (like we did in `genson-core` but CLI-focused). That means:
-
-1. Add `--normalise`, `--keep-empty`, and `--coerce-strings` to the **Command Line Options**.
-2. Add a **Normalisation Examples** section showing how data gets rewritten.
-3. Keep it concise but concrete: CLI users want to see before/after behaviour.
-
-Here’s how I’d extend your README:
-
----
-
-### Command Line Options
-
-```
-OPTIONS:
-    -h, --help            Print this help message
-    --no-ignore-array     Don't treat top-level arrays as object streams
-    --ndjson              Treat input as newline-delimited JSON
-    --avro                Output Avro schema instead of JSON Schema
-    --normalise           Normalise the input data against the inferred schema
-    --keep-empty          Keep empty arrays/maps instead of turning them into nulls
-    --coerce-strings      Coerce numeric/boolean strings into their native types
-    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)
-    --force-type k:v,...  Force field(s) to 'map' or 'record'
-                          Example: --force-type labels:map,claims:record
 ```
 
 ## Normalisation

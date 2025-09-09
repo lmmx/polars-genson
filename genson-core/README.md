@@ -110,10 +110,6 @@ let schema = build_json_schema(&mut builder, &mut json_bytes, &build_config);
 let final_schema = builder.to_schema();
 ```
 
-Perfect — the `genson-core` README should stay **crate-focused**, and just document the new normalisation feature. Here’s a section you can drop in after *Schema Features* but before *Integration*:
-
----
-
 ## Normalisation
 
 In addition to inferring schemas, `genson-core` can **normalise arbitrary JSON values against an Avro schema**.
