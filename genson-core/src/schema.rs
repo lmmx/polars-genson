@@ -178,7 +178,7 @@ mod innermod {
                 if let Some(Value::Array(types)) = obj.get_mut("type") {
                     // sort by canonical precedence, but keep ["null", T] pattern intact
                     if !(types.len() == 2 && types.iter().any(|t| t == "null")) {
-                        types.sort_by(|a, b| type_rank(a).cmp(&type_rank(b)));
+                        types.sort_by_key(type_rank);
                     }
                 }
                 // recurse into properties/items/etc.
