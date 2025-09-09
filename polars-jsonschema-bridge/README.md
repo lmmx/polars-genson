@@ -4,13 +4,18 @@
 [![MIT/Apache-2.0 licensed](https://img.shields.io/crates/l/polars-jsonschema-bridge.svg)](https://github.com/lmmx/polars-genson/blob/master/LICENSE)
 [![Documentation](https://docs.rs/polars-jsonschema-bridge/badge.svg)](https://docs.rs/polars-jsonschema-bridge)
 
-A Rust library for bidirectional conversion between [JSON Schema](https://json-schema.org/) and [Polars](https://pola.rs/) data types.
+A Rust library for bidirectional conversion between [JSON Schema](https://json-schema.org/) 
+and [Polars](https://pola.rs/) data types.
 
 This crate provides the core type conversion logic used by the [polars-genson](https://crates.io/crates/polars-genson-py) plugin, but can also be used independently for any application that needs to convert between JSON Schema and Polars types.
+
+In addition, the crate supports **Avro → Polars** conversion, enabling Polars schema
+inference from Avro record schemas (including maps, unions, and nested records).
 
 ## Features
 
 - **JSON Schema → Polars**: Convert JSON Schema type definitions to Polars `DataType`
+- **Avro → Polars**: Convert Avro record schemas to Polars `DataType`
 - **Polars → JSON Schema**: Convert Polars schemas to valid JSON Schema documents
 - **Complex Types**: Support for nested objects, arrays, and structs
 - **Type Safety**: Comprehensive error handling for unsupported conversions
@@ -57,6 +62,32 @@ let fields = schema_to_polars_fields(&json_schema, SchemaFormat::JsonSchema, fal
 //   ("age", "Int64"), 
 //   ("scores", "List[Float64]"),
 //   ("profile", "Struct[active:Boolean]")
+// ]
+```
+
+### Avro Schema to Polars Types
+
+```rust
+use polars_jsonschema_bridge::{schema_to_polars_fields, SchemaFormat};
+use serde_json::json;
+
+let avro_schema = json!({
+    "type": "record",
+    "name": "document",
+    "fields": [
+        {"name": "id", "type": "int"},
+        {"name": "tags", "type": ["null", {"type": "array", "items": "string"}]},
+        {"name": "labels", "type": {"type": "map", "values": "string"}},
+        {"name": "active", "type": ["null", "boolean"]}
+    ]
+});
+
+let fields = schema_to_polars_fields(&avro_schema, SchemaFormat::Avro, false)?;
+// Returns: [
+//   ("id", "Int64"),
+//   ("tags", "List[String]"),
+//   ("labels", "List[Struct[key:String,value:String]]"),
+//   ("active", "Boolean")
 // ]
 ```
 
@@ -123,6 +154,20 @@ assert_eq!(json_schema, json!({
 | `object` | `Struct[...]` | Nested object properties |
 
 - Note that we do not have JSON Schema `array` to Polars `Array` conversion (...yet?)
+
+### Avro → Polars
+
+| Avro Type                             | Polars DataType                    | Notes                                  |
+| ------------------------------------- | ---------------------------------- | -------------------------------------- |
+| `"string"`                            | `String`                           |                                        |
+| `"int"`, `"long"`                     | `Int64`                            | All integers coerced to 64-bit         |
+| `"float"`, `"double"`                 | `Float64`                          |                                        |
+| `"boolean"`                           | `Boolean`                          |                                        |
+| `"null"`                              | `Null`                             |                                        |
+| `{"type": "array", "items": T}`       | `List[T]`                          | T converted recursively                |
+| `{"type": "map", "values": T}`        | `List[Struct[key:String,value:T]]` | Encoded as key/value structs           |
+| `{"type": "record", "fields": [...]}` | `Struct[...]`                      | Each field converted recursively       |
+| `[ "null", T, ... ]`                  | `T`                                | Union: first non-null branch is chosen |
 
 ### Polars → JSON Schema
 
