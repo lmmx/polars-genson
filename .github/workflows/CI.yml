@@ -262,6 +262,7 @@ jobs:
 
   release:
     name: Release
+    environment: pypi
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
     needs: [linux, windows, macos, sdist]
@@ -281,8 +282,6 @@ jobs:
       - name: Publish to PyPI
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           command: upload
           args: --non-interactive --skip-existing wheels-*/*
