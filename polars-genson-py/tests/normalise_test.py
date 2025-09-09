@@ -2,13 +2,14 @@
 """Tests for JSON normalisation via genson-core integration."""
 
 import polars as pl
+import polars_genson
 
 
 def test_empty_array_becomes_null_by_default():
     """Empty arrays should become null unless keep_empty is requested."""
     df = pl.DataFrame({"json_data": ['{"labels": []}']})
 
-    out = df.genson.normalise_json("json_data").to_list()
+    out = df.genson.normalise_json("json_data", decode=False).to_list()
 
     assert out == ['{"labels":null}']
 
@@ -17,7 +18,9 @@ def test_keep_empty_preserves_arrays():
     """With empty_as_null disabled, empty arrays should be preserved."""
     df = pl.DataFrame({"json_data": ['{"labels": []}']})
 
-    out = df.genson.normalise_json("json_data", empty_as_null=False).to_list()
+    out = df.genson.normalise_json(
+        "json_data", empty_as_null=False, decode=False
+    ).to_list()
 
     assert out == ['{"labels":[]}']
 
@@ -33,7 +36,7 @@ def test_string_coercion_disabled_by_default():
         }
     )
 
-    out = df.genson.normalise_json("json_data").to_list()
+    out = df.genson.normalise_json("json_data", decode=False).to_list()
 
     # String "42" is not coerced to int, "true" not coerced to bool
     assert '"id":"42"' not in out[0]
@@ -53,7 +56,9 @@ def test_string_coercion_enabled():
         }
     )
 
-    out = df.genson.normalise_json("json_data", coerce_strings=True).to_list()
+    out = df.genson.normalise_json(
+        "json_data", coerce_strings=True, decode=False
+    ).to_list()
 
     # String "42" is coerced to int, "true" coerced to bool
     assert '"id":42' in out[0]
@@ -66,7 +71,7 @@ def run_norm(rows, *, empty_as_null=True, coerce_strings=False, map_threshold=No
     kwargs = {"empty_as_null": empty_as_null, "coerce_strings": coerce_strings}
     if map_threshold is not None:
         kwargs["map_threshold"] = map_threshold
-    return df.genson.normalise_json("json_data", **kwargs).to_list()
+    return df.genson.normalise_json("json_data", **kwargs, decode=False).to_list()
 
 
 def test_normalise_ndjson_like():
@@ -188,3 +193,69 @@ def test_normalise_scalar_to_map():
     # Scalar widened into {"default": ...}
     assert '"labels":{"default":"foo"}' in out[0]
     assert '"labels":{"en":"Hello"}}' in out[1]
+
+
+def test_normalise_record_expands_to_struct():
+    """Records ('labels' field) with partial/empty keys should always get null keys."""
+    rows = [
+        '{"id": "123", "tags": [], "labels": {}, "active": "true"}',
+        '{"id": 456, "tags": ["x","y"], "labels": {"en":"Hello"}, "active": false}',
+        '{"id": null, "labels": {"es": "Hola", "fr":"Bonjour"}}',
+    ]
+
+    df = pl.DataFrame({"json_data": rows})
+    out = df.genson.normalise_json("json_data").to_dicts()
+
+    # Full output snapshot, not partial assertion
+    assert out == [
+        {
+            "id": None,
+            "tags": None,
+            "labels": {"es": None, "fr": None, "en": None},
+            "active": None,
+        },
+        {
+            "id": 456,
+            "tags": ["x", "y"],
+            "labels": {"es": None, "fr": None, "en": "Hello"},
+            "active": False,
+        },
+        {
+            "id": None,
+            "tags": None,
+            "labels": {"es": "Hola", "fr": "Bonjour", "en": None},
+            "active": None,
+        },
+    ]
+
+
+def test_normalise_map_currently_expands_to_struct():
+    """Maps with different keys should NOT explode to struct with nulls.
+
+    This test locks in current behaviour until the bug is fixed.
+    """
+    rows = [
+        '{"id": "123", "tags": [], "labels": {}, "active": "true"}',
+        '{"id": 456, "tags": ["x","y"], "labels": {"en":"Hello"}, "active": false}',
+        '{"id": null, "labels": {"es": "Hola", "fr":"Bonjour"}}',
+    ]
+
+    df = pl.DataFrame({"json_data": rows})
+    out = df.genson.normalise_json("json_data", map_threshold=1).to_dicts()
+
+    # Full output snapshot, not partial assertion
+    assert out == [
+        {"id": None, "tags": None, "labels": None, "active": None},
+        {
+            "id": 456,
+            "tags": ["x", "y"],
+            "labels": [{"en": "Hello"}],
+            "active": False,
+        },
+        {
+            "id": None,
+            "tags": None,
+            "labels": [{"es": "Hola"}, {"fr": "Bonjour"}],
+            "active": None,
+        },
+    ]

@@ -2,6 +2,16 @@
 mod innermod {
     use serde_json::{json, Value};
 
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum MapEncoding {
+        /// Avro/JSON-style object: {"en":"Hello","fr":"Bonjour"}
+        Mapping,
+        /// List of single-entry objects: [{"en":"Hello"},{"fr":"Bonjour"}]
+        Entries,
+        /// List of {key,value} pairs: [{"key":"en","value":"Hello"}, {"key":"fr","value":"Bonjour"}]
+        KeyValueEntries,
+    }
+
     /// Configuration options for normalisation.
     #[derive(Debug, Clone)]
     pub struct NormaliseConfig {
@@ -9,6 +19,8 @@ mod innermod {
         pub empty_as_null: bool,
         /// Whether to try to coerce int/float/bool from string (default: false).
         pub coerce_string: bool,
+        /// Which map encoding to output Map type fields into (default: Mapping).
+        pub map_encoding: MapEncoding,
     }
 
     impl Default for NormaliseConfig {
@@ -16,6 +28,7 @@ mod innermod {
             Self {
                 empty_as_null: true,
                 coerce_string: false,
+                map_encoding: MapEncoding::Mapping,
             }
         }
     }
@@ -300,6 +313,7 @@ mod innermod {
             let cfg_no_coerce = NormaliseConfig {
                 empty_as_null: true,
                 coerce_string: false,
+                ..NormaliseConfig::default()
             };
             let norm_no_coerce = normalise_value(input.clone(), &schema, &cfg_no_coerce);
             assert_eq!(
@@ -314,6 +328,7 @@ mod innermod {
             let cfg_coerce = NormaliseConfig {
                 empty_as_null: true,
                 coerce_string: true,
+                ..NormaliseConfig::default()
             };
             let norm_coerce = normalise_value(input, &schema, &cfg_coerce);
             assert_eq!(

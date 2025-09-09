@@ -410,6 +410,8 @@ class GensonNamespace:
         self,
         column: str,
         *,
+        decode: bool = True,
+        unnest: bool = True,
         ignore_outer_array: bool = True,
         ndjson: bool = False,
         empty_as_null: bool = True,
@@ -419,30 +421,58 @@ class GensonNamespace:
     ) -> pl.Series:
         """Normalise a JSON string column to conform to an inferred Avro schema.
 
-        This is a higher-level wrapper around `normalise_json`, returning the
+        This is a higher-level wrapper around :func:`normalise_json`, returning the
         results as a Polars Series instead of an expression.
 
         Parameters
         ----------
         column : str
             Name of the column containing JSON strings.
-        ignore_outer_array, ndjson, empty_as_null, coerce_strings, map_threshold, force_field_types
-            See :func:`normalise_json`.
+        decode : bool, default True
+            If True, decode the normalised JSON strings into native Polars
+            datatypes after normalisation. If False, leave as raw JSON strings instead.
+        unnest : bool, default True
+            Only applies if `decode=True`. If True, expand the decoded struct
+            into separate columns for each schema field. If False, keep a
+            single Series of structs.
+        ignore_outer_array : bool, default True
+            Whether to treat a top-level JSON array as a stream of objects instead
+            of a single array value.
+        ndjson : bool, default False
+            Whether the input column contains newline-delimited JSON (NDJSON).
+        empty_as_null : bool, default True
+            If True, normalise empty arrays and empty maps to ``null``.
+            If False, preserve them as empty collections.
+        coerce_strings : bool, default False
+            If True, attempt to parse numeric/boolean values from strings
+            (e.g. ``"42" → 42``, ``"true" → true``). If False, leave them as strings.
+        map_threshold : int, default 20
+            Threshold above which objects with many varying keys are normalised
+            as Avro maps instead of records.
+        force_field_types : dict[str, str], optional
+            Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
 
         Returns:
         -------
         pl.Series
-            A series of JSON strings, each row rewritten to match the same Avro schema.
+            A Series of normalised JSON data. Each row is rewritten to match the
+            same Avro schema, with consistent shape across the column.
+            If ``unnest=True``, the Series is expanded into multiple columns
+            corresponding to schema fields.
         """
-        result = self._df.select(
-            normalise_json(
-                pl.col(column),
-                ignore_outer_array=ignore_outer_array,
-                ndjson=ndjson,
-                empty_as_null=empty_as_null,
-                coerce_strings=coerce_strings,
-                map_threshold=map_threshold,
-                force_field_types=force_field_types,
-            )
+        expr = normalise_json(
+            pl.col(column),
+            ignore_outer_array=ignore_outer_array,
+            ndjson=ndjson,
+            empty_as_null=empty_as_null,
+            coerce_strings=coerce_strings,
+            map_threshold=map_threshold,
+            force_field_types=force_field_types,
         )
-        return result.to_series()
+        if decode:
+            result = self._df.select(expr.str.json_decode())
+            if unnest:
+                result = result.unnest(expr.meta.output_name())
+        else:
+            result = self._df.select(expr).to_series()
+        return result
