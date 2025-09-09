@@ -149,6 +149,7 @@ def infer_polars_schema(
     debug: bool = False,
     map_threshold: int = 20,
     force_field_types: dict[str, str] | None = None,
+    avro: bool = False,
 ) -> pl.Expr:
     """Infer Polars schema from a string column containing JSON data.
 
@@ -170,11 +171,13 @@ def infer_polars_schema(
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
+    avro: bool, default False
+        Whether to read the input as an Avro schema instead of JSON schema.
 
     Returns:
     -------
     pl.Expr
-        Expression representing the inferred JSON schema
+        Expression yielding the inferred Polars schema (as a struct of {name, dtype} fields).
     """
     kwargs = {
         "ignore_outer_array": ignore_outer_array,
@@ -182,6 +185,7 @@ def infer_polars_schema(
         "merge_schemas": merge_schemas,
         "debug": debug,
         "map_threshold": map_threshold,
+        "avro": avro,
     }
     if not merge_schemas:
         url = "https://github.com/lmmx/polars-genson/issues/37"
@@ -299,6 +303,9 @@ class GensonNamespace:
         ndjson: bool = False,
         merge_schemas: bool = True,
         debug: bool = False,
+        map_threshold: int = 20,
+        force_field_types: dict[str, str] | None = None,
+        avro: bool = False,
     ) -> pl.Schema:
         # ) -> pl.Schema | list[pl.Schema]:
         """Infer Polars schema from a string column containing JSON data.
@@ -321,6 +328,9 @@ class GensonNamespace:
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
+        avro : bool, default False
+            Whether to infer using Avro schema semantics (unions, maps, nullability).
+            By default (`False`), JSON Schema mode is used.
 
         Returns:
         -------
@@ -329,6 +339,11 @@ class GensonNamespace:
         """
         if not merge_schemas:
             raise NotImplementedError("Only merge schemas is implemented")
+        fft = (
+            {}
+            if force_field_types is None
+            else {"force_field_types": force_field_types}
+        )
         result = self._df.select(
             infer_polars_schema(
                 pl.col(column),
@@ -336,6 +351,9 @@ class GensonNamespace:
                 ndjson=ndjson,
                 merge_schemas=merge_schemas,
                 debug=debug,
+                map_threshold=map_threshold,
+                **fft,
+                avro=avro,
             ).first()
         )
 
@@ -383,6 +401,8 @@ class GensonNamespace:
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
+        avro: bool, default False
+            Whether to read the input as an Avro schema instead of JSON schema.
 
         Returns:
         -------
@@ -485,7 +505,22 @@ class GensonNamespace:
             force_field_types=force_field_types,
         )
         if decode:
-            result = self._df.select(expr.str.json_decode())
+            if map_encoding != "kv":
+                # Map type fields must be k:v encoded as infer_polars_schema assumes it
+                # This could be done, it would always make record fields, ...but why?
+                raise NotImplementedError("map_encoding must be kv to decode to Polars")
+            # Infer Avro schema and convert it to Polars Schema
+            schema = self.infer_polars_schema(
+                column,
+                ignore_outer_array=ignore_outer_array,
+                ndjson=ndjson,
+                merge_schemas=True,
+                map_threshold=map_threshold,
+                force_field_types=force_field_types,
+                avro=True,
+            )
+            dtype = pl.Struct(schema)
+            result = self._df.select(expr.str.json_decode(dtype=dtype))
             if unnest:
                 result = result.unnest(expr.meta.output_name())
         else:

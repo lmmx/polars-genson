@@ -1,0 +1,12 @@
+---
+source: polars-jsonschema-bridge/tests/avro_to_polars.rs
+expression: fields_vec
+---
+- - id
+  - Int64
+- - tags
+  - "List[String]"
+- - labels
+  - "List[Struct[key:String,value:String]]"
+- - active
+  - Boolean

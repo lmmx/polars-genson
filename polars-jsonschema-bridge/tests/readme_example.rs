@@ -3,7 +3,7 @@
 /// Block 2 - JSON Schema to Polars conversion with complex nested structure
 #[test]
 fn readme_json_schema_to_polars() -> eyre::Result<()> {
-    use polars_jsonschema_bridge::json_schema_to_polars_fields;
+    use polars_jsonschema_bridge::{schema_to_polars_fields, SchemaFormat};
     use serde_json::json;
 
     let json_schema = json!({
@@ -24,7 +24,7 @@ fn readme_json_schema_to_polars() -> eyre::Result<()> {
         }
     });
 
-    let fields = json_schema_to_polars_fields(&json_schema, false)?;
+    let fields = schema_to_polars_fields(&json_schema, SchemaFormat::JsonSchema, false)?;
 
     // Convert to a more snapshot-friendly format
     let fields_vec: Vec<(String, String)> = fields.into_iter().collect();
@@ -147,7 +147,7 @@ fn readme_json_schema_options() -> eyre::Result<()> {
 /// Block 8 - Debug mode functionality test
 #[test]
 fn readme_debug_mode() -> eyre::Result<()> {
-    use polars_jsonschema_bridge::json_schema_to_polars_fields;
+    use polars_jsonschema_bridge::{schema_to_polars_fields, SchemaFormat};
     use serde_json::json;
 
     let json_schema = json!({
@@ -159,10 +159,10 @@ fn readme_debug_mode() -> eyre::Result<()> {
     });
 
     // Test that debug mode works (debug = true)
-    let fields_debug = json_schema_to_polars_fields(&json_schema, true)?;
+    let fields_debug = schema_to_polars_fields(&json_schema, SchemaFormat::JsonSchema, true)?;
 
     // Test that non-debug mode works (debug = false)
-    let fields_normal = json_schema_to_polars_fields(&json_schema, false)?;
+    let fields_normal = schema_to_polars_fields(&json_schema, SchemaFormat::JsonSchema, false)?;
 
     // Both should produce the same result
     assert_eq!(fields_debug, fields_normal);
