@@ -2,5 +2,5 @@
 source: genson-cli/tests/normalise.rs
 expression: stdout_str
 ---
-{"id":"A","labels":{}}
-{"id":"B","labels":{}}
+{"id":"A","labels":null}
+{"id":"B","labels":{"en":"Hello"}}
