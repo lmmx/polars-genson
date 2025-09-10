@@ -3,8 +3,75 @@ source: genson-cli/tests/normalise.rs
 expression: pretty_output
 ---
 {
-  "document": null
+  "labels": [
+    {
+      "key": "en",
+      "value": [
+        {
+          "key": "language",
+          "value": "en"
+        },
+        {
+          "key": "value",
+          "value": "Jack Bauer"
+        }
+      ]
+    },
+    {
+      "key": "fr",
+      "value": [
+        {
+          "key": "language",
+          "value": "fr"
+        },
+        {
+          "key": "value",
+          "value": "Jack Bauer"
+        }
+      ]
+    }
+  ]
 }
 {
-  "document": null
+  "labels": [
+    {
+      "key": "en",
+      "value": [
+        {
+          "key": "language",
+          "value": "en"
+        },
+        {
+          "key": "value",
+          "value": "happiness"
+        }
+      ]
+    },
+    {
+      "key": "fr",
+      "value": [
+        {
+          "key": "language",
+          "value": "fr"
+        },
+        {
+          "key": "value",
+          "value": "bonheur"
+        }
+      ]
+    },
+    {
+      "key": "rn",
+      "value": [
+        {
+          "key": "language",
+          "value": "rn"
+        },
+        {
+          "key": "value",
+          "value": "Umunezero"
+        }
+      ]
+    }
+  ]
 }

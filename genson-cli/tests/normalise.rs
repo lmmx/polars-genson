@@ -318,7 +318,7 @@ fn test_normalise_labels_wrap_map_of_structs_snapshot() {
         "--map-encoding",
         "kv",
         "--map-threshold",
-        "0", // ensure it's treated as a map
+        "2", // ensure it's treated as a map
         "--wrap-root",
         "labels",
         temp.path().to_str().unwrap(),
@@ -339,7 +339,7 @@ fn test_normalise_labels_wrap_map_of_structs_snapshot() {
         "--map-encoding",
         "kv",
         "--map-threshold",
-        "0",
+        "2",
         "--wrap-root",
         "labels",
         temp.path().to_str().unwrap(),
