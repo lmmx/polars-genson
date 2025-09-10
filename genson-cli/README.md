@@ -80,6 +80,7 @@ OPTIONS:
                           mapping = Avro/JSON object (shared dict)
                           entries = list of single-entry objects (individual dicts)
                           kv      = list of {key,value} objects
+    --wrap-root <field>   Wrap top-level schema under this required field
 
 EXAMPLES:
     genson-cli data.json
