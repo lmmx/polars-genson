@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.6...genson-cli-v0.1.7) - 2025-09-10
+
+### <!-- 1 -->Features
+
+- option to wrap JSON root in column name field ([#63](https://github.com/lmmx/polars-genson/pull/63))
+
+### <!-- 6 -->Testing
+
+- identify issue with map of struct ([#61](https://github.com/lmmx/polars-genson/pull/61))
+
 ## [0.1.6](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.5...genson-cli-v0.1.6) - 2025-09-09
 
 ### <!-- 1 -->Features
