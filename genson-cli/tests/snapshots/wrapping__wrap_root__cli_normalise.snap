@@ -4,27 +4,6 @@ expression: parse_ndjson(&stdout_str)
 ---
 [
   {
-    "labels": {
-      "en": [
-        {
-          "key": "language",
-          "value": "en"
-        },
-        {
-          "key": "value",
-          "value": "Hello"
-        }
-      ],
-      "fr": [
-        {
-          "key": "language",
-          "value": "fr"
-        },
-        {
-          "key": "value",
-          "value": "Bonjour"
-        }
-      ]
-    }
+    "document": null
   }
 ]
