@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.7...genson-cli-v0.1.8) - 2025-09-10
+
+### <!-- 1 -->Features
+
+- support NDJSON root wrapping ([#64](https://github.com/lmmx/polars-genson/pull/64))
+
 ## [0.1.7](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.6...genson-cli-v0.1.7) - 2025-09-10
 
 ### <!-- 1 -->Features

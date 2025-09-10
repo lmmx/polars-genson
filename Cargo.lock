@@ -910,7 +910,7 @@ dependencies = [
 
 [[package]]
 name = "genson-cli"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "assert_cmd",
  "genson-core",
@@ -922,7 +922,7 @@ dependencies = [
 
 [[package]]
 name = "genson-core"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "avrotize",
  "crustrace",
