@@ -179,3 +179,31 @@ fn test_multiple_objects_field_order() {
         }
     }
 }
+
+#[test]
+fn test_wrap_root_with_ndjson() {
+    let ndjson_input = r#"
+{"en":{"language":"en","value":"Hello"}}
+{"fr":{"language":"fr","value":"Bonjour"}}
+"#;
+
+    let config = SchemaInferenceConfig {
+        delimiter: Some(b'\n'),
+        wrap_root: Some("labels".to_string()),
+        ..Default::default()
+    };
+
+    let json_strings = vec![ndjson_input.to_string()];
+    let result = infer_json_schema_from_strings(&json_strings, config)
+        .expect("Schema inference with wrap_root on NDJSON should succeed");
+
+    let schema_str = serde_json::to_string_pretty(&result.schema).unwrap();
+    println!("Schema with wrap_root+NDJSON:\n{}", schema_str);
+
+    assert_eq!(result.processed_count, 1); // NDJSON counts as 1 input string
+
+    // Top-level schema should have `labels` as the required field
+    assert_eq!(result.schema["type"], "object");
+    assert_eq!(result.schema["required"], serde_json::json!(["labels"]));
+    assert!(result.schema["properties"]["labels"].is_object());
+}
