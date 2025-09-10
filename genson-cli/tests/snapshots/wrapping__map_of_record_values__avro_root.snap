@@ -1,6 +1,6 @@
 ---
-source: genson-cli/tests/normalise.rs
-expression: avro_str
+source: genson-cli/tests/wrapping.rs
+expression: avro_root_str
 ---
 {
   "type": "record",

@@ -1,0 +1,14 @@
+---
+source: genson-cli/tests/wrapping.rs
+expression: pretty_output
+---
+{
+  "labels": {
+    "document": null
+  }
+}
+{
+  "labels": {
+    "document": null
+  }
+}

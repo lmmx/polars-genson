@@ -1,5 +1,5 @@
 ---
-source: genson-cli/tests/normalise.rs
+source: genson-cli/tests/map_of_records.rs
 expression: avro_str
 ---
 {

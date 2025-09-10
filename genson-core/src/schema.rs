@@ -88,6 +88,11 @@ mod innermod {
         Ok(())
     }
 
+    /// Let us compare the properties to see if objects are equivalent
+    fn extract_props(v: &Value) -> Option<&serde_json::Map<String, Value>> {
+        v.get("properties")?.as_object()
+    }
+
     /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
     ///
     /// This mutates the schema in place, applying user overrides and heuristics.
@@ -141,18 +146,41 @@ mod innermod {
             if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
                 let key_count = props.len();
 
-                let homogeneous = props
-                    .values()
-                    .all(|v| v.get("type") == Some(&Value::String("string".into())));
+                if key_count >= config.map_threshold {
+                    // candidate for map-of-records
+                    let mut props_iter = props.values().filter_map(extract_props);
 
-                if key_count >= config.map_threshold && homogeneous {
-                    obj.remove("properties");
-                    obj.remove("required");
-                    obj.insert(
-                        "additionalProperties".to_string(),
-                        serde_json::json!({ "type": "string" }),
-                    );
-                    return;
+                    if let Some(first_props) = props_iter.next() {
+                        let all_same = props_iter.all(|p| p == first_props);
+                        if all_same && !first_props.is_empty() {
+                            // clone the record shape before mutating obj
+                            let record_shape = serde_json::json!({
+                                "type": "object",
+                                "properties": first_props.clone()
+                            });
+
+                            obj.remove("properties");
+                            obj.remove("required");
+                            obj.insert("type".into(), Value::String("object".into()));
+                            obj.insert("additionalProperties".into(), record_shape);
+                            return;
+                        }
+                    }
+
+                    // fallback to map<string>
+                    let homogeneous_strings = props
+                        .values()
+                        .all(|v| v.get("type") == Some(&Value::String("string".into())));
+                    if homogeneous_strings {
+                        obj.remove("properties");
+                        obj.remove("required");
+                        obj.insert("type".into(), Value::String("object".into()));
+                        obj.insert(
+                            "additionalProperties".into(),
+                            serde_json::json!({"type":"string"}),
+                        );
+                        return;
+                    }
                 }
             }
 
@@ -805,6 +833,43 @@ mod innermod {
             let labels = &result.schema["properties"]["labels"];
             assert!(labels.get("properties").is_some());
             assert!(labels.get("additionalProperties").is_none());
+        }
+
+        /// This test won't work without map of record support
+        #[ignore]
+        #[test]
+        fn test_map_of_records_rewrite_to_additional_properties_record() {
+            // Values are all the same record shape: {language: string, value: string}
+            let json_strings = vec![
+                r#"{"en":{"language":"en","value":"Hello"},"fr":{"language":"fr","value":"Bonjour"}}"#.to_string()
+            ];
+
+            let cfg = SchemaInferenceConfig {
+                map_threshold: 0, // force map detection
+                ..Default::default()
+            };
+
+            let out = infer_json_schema_from_strings(&json_strings, cfg).unwrap();
+            let sch = out.schema;
+
+            // Root must be an object with additionalProperties = record shape
+            assert_eq!(sch["type"], "object");
+            let addl = sch["additionalProperties"].clone();
+            assert!(
+                addl.is_object(),
+                "additionalProperties should be an object schema"
+            );
+            assert!(
+                addl["type"] == "object" || addl["type"] == "record",
+                "values must be an object/record"
+            );
+
+            // Check the record has the expected fields
+            let props = &addl["properties"];
+            assert!(props["language"].is_object());
+            assert!(props["value"].is_object());
+            assert_eq!(props["language"]["type"], "string");
+            assert_eq!(props["value"]["type"], "string");
         }
 
         #[test]

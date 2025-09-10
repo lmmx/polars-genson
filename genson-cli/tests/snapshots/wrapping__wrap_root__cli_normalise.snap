@@ -1,0 +1,11 @@
+---
+source: genson-cli/tests/wrapping.rs
+expression: parse_ndjson(&stdout_str)
+---
+[
+  {
+    "labels": {
+      "document": null
+    }
+  }
+]

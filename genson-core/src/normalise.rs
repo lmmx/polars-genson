@@ -205,21 +205,68 @@ mod innermod {
             Value::Object(obj) if obj.get("type") == Some(&Value::String("map".into())) => {
                 let default_values = Value::String("string".into());
                 let values_schema = obj.get("values").unwrap_or(&default_values);
-                match value {
-                    Value::Null => Value::Null,
-                    Value::Object(m) if m.is_empty() && cfg.empty_as_null => Value::Null,
-                    Value::Object(m) => {
-                        let mut out = serde_json::Map::new();
-                        for (k, v) in m {
-                            out.insert(k, normalise_value(v, values_schema, cfg));
+
+                // Special case: map-of-records
+                if values_schema.get("type") == Some(&Value::String("record".into())) {
+                    match value {
+                        Value::Null => Value::Null,
+                        Value::Object(m) if m.is_empty() && cfg.empty_as_null => Value::Null,
+                        Value::Object(m) => match cfg.map_encoding {
+                            MapEncoding::Mapping => {
+                                let mut out = serde_json::Map::new();
+                                for (k, v) in m {
+                                    let rec = normalise_value(v, values_schema, cfg);
+                                    out.insert(k, rec);
+                                }
+                                Value::Object(out)
+                            }
+                            MapEncoding::Entries => {
+                                let arr: Vec<Value> = m
+                                    .into_iter()
+                                    .map(|(k, v)| {
+                                        let rec = normalise_value(v, values_schema, cfg);
+                                        json!({ k: rec })
+                                    })
+                                    .collect();
+                                Value::Array(arr)
+                            }
+                            MapEncoding::KeyValueEntries => {
+                                let arr: Vec<Value> = m
+                                    .into_iter()
+                                    .map(|(k, v)| {
+                                        let rec = normalise_value(v, values_schema, cfg);
+                                        json!({ "key": k, "value": rec })
+                                    })
+                                    .collect();
+                                Value::Array(arr)
+                            }
+                        },
+                        v => {
+                            // Scalar fallback: wrap under "default"
+                            let mut synthetic = serde_json::Map::new();
+                            synthetic
+                                .insert("default".into(), normalise_value(v, values_schema, cfg));
+                            apply_map_encoding(synthetic, cfg.map_encoding)
                         }
-                        apply_map_encoding(out, cfg.map_encoding)
                     }
-                    v => {
-                        // Scalar fallback: wrap as {"default": v}
-                        let mut synthetic = serde_json::Map::new();
-                        synthetic.insert("default".into(), normalise_value(v, values_schema, cfg));
-                        apply_map_encoding(synthetic, cfg.map_encoding)
+                } else {
+                    // Current path: map-of-scalars
+                    match value {
+                        Value::Null => Value::Null,
+                        Value::Object(m) if m.is_empty() && cfg.empty_as_null => Value::Null,
+                        Value::Object(m) => {
+                            let mut out = serde_json::Map::new();
+                            for (k, v) in m {
+                                out.insert(k, normalise_value(v, values_schema, cfg));
+                            }
+                            apply_map_encoding(out, cfg.map_encoding)
+                        }
+                        v => {
+                            let mut synthetic = serde_json::Map::new();
+                            synthetic
+                                .insert("default".into(), normalise_value(v, values_schema, cfg));
+                            apply_map_encoding(synthetic, cfg.map_encoding)
+                        }
                     }
                 }
             }
@@ -252,18 +299,30 @@ mod innermod {
         schema: &Value,
         cfg: &NormaliseConfig,
     ) -> Vec<Value> {
+        // If wrap_root is set, build a synthetic wrapper schema around the real schema
+        if let Some(ref field) = cfg.wrap_root {
+            let wrap_schema = json!({
+                "type": "record",
+                "name": "wrapper",
+                "fields": [{
+                    "name": field,
+                    "type": schema.clone()
+                }]
+            });
+
+            return values
+                .into_iter()
+                .map(|v| {
+                    let wrapped = json!({ field: v });
+                    normalise_value(wrapped, &wrap_schema, cfg)
+                })
+                .collect();
+        }
+
+        // No wrapping → straight to normalisation
         values
             .into_iter()
-            .map(|mut v| {
-                // Apply wrap_root if requested
-                if let Some(ref field) = cfg.wrap_root {
-                    v = Value::Object(
-                        std::iter::once((field.clone(), v))
-                            .collect::<serde_json::Map<String, Value>>(),
-                    );
-                }
-                normalise_value(v, schema, cfg)
-            })
+            .map(|v| normalise_value(v, schema, cfg))
             .collect()
     }
 

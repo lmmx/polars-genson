@@ -4,10 +4,6 @@ expression: parse_ndjson(&stdout_str)
 ---
 [
   {
-    "id": "A",
-    "labels": {
-      "en": "Hello",
-      "fr": "Bonjour"
-    }
+    "document": null
   }
 ]

@@ -1,0 +1,38 @@
+---
+source: genson-cli/tests/normalise.rs
+expression: avro_root_str
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "en",
+      "type": {
+        "name": "en",
+        "type": "map",
+        "values": "string"
+      }
+    },
+    {
+      "name": "fr",
+      "type": {
+        "name": "fr",
+        "type": "map",
+        "values": "string"
+      }
+    },
+    {
+      "name": "rn",
+      "type": [
+        "null",
+        {
+          "name": "rn",
+          "type": "map",
+          "values": "string"
+        }
+      ]
+    }
+  ]
+}

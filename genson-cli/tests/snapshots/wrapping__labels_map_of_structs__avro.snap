@@ -1,0 +1,88 @@
+---
+source: genson-cli/tests/wrapping.rs
+expression: avro_str
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "document",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "document_extensions",
+          "namespace": "genson",
+          "fields": [
+            {
+              "name": "en",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "en",
+                  "namespace": "genson.document_extensions_types",
+                  "fields": [
+                    {
+                      "name": "language",
+                      "type": "string"
+                    },
+                    {
+                      "name": "value",
+                      "type": "string"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "fr",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "fr",
+                  "namespace": "genson.document_extensions_types",
+                  "fields": [
+                    {
+                      "name": "language",
+                      "type": "string"
+                    },
+                    {
+                      "name": "value",
+                      "type": "string"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "rn",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "rn",
+                  "namespace": "genson.document_extensions_types",
+                  "fields": [
+                    {
+                      "name": "language",
+                      "type": "string"
+                    },
+                    {
+                      "name": "value",
+                      "type": "string"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "name": "document"
+      }
+    }
+  ]
+}

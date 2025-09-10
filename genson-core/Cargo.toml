@@ -4,7 +4,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Optional dependencies
-avrotize = { optional = true, version = "0.1.0" }
+avrotize = { optional = true, version = "0.1.1" }
 crustrace = { features = ["debug"], optional = true, version = "0.1.9" }
 crustrace-mermaid = { optional = true, version = "0.1.6" }
 tracing = { optional = true, version = "0.1.41" }
