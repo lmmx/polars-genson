@@ -152,6 +152,61 @@ The Polars schema inference automatically handles:
 - ✅ **Optional fields** present in some but not all objects
 - ✅ **Deep nesting** with multiple levels of structure
 
+### Root Wrapping (`wrap_root`)
+
+By default, inferred schemas treat each JSON object as the root.  
+Sometimes you may want to **wrap the schema in an extra record layer** — for example, to make Avro schemas compatible with systems that require a named top-level record.
+
+You can control this behavior with the `wrap_root` option:
+
+* `wrap_root="true"` → Wraps using the **column name** as the record name
+* `wrap_root="<string>"` → Wraps using the given string as the record name
+* `wrap_root=None` (default) → No wrapping (root is just `"document"` for Avro)
+
+#### Example: Avro schema with wrap_root
+
+```python
+df = pl.DataFrame({
+    "json_data": [
+        '{"value": "A"}',
+        '{"value": "B"}'
+    ]
+})
+
+schema = df.genson.infer_json_schema("json_data", avro=True, wrap_root="payload")
+
+print(json.dumps(schema, indent=2))
+````
+
+```json
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "payload",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "value",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+This is especially useful when:
+
+* Exporting Avro to systems that require a **named top-level record**
+* Keeping schema names consistent with your **column names** or **domain models**
+
 ## Normalisation
 
 In addition to schema inference, `polars-genson` can **normalise JSON columns** so that every row conforms to a single, consistent Avro schema.
@@ -164,6 +219,7 @@ This is especially useful for semi-structured data where fields may be missing, 
 * Preserves empties with `empty_as_null=False`
 * Ensures missing fields are inserted with `null`
 * Supports per-field coercion of numeric/boolean strings via `coerce_string=True`
+* Supports top-level schema evolution with `wrap_root`
 
 ### Example: Map Encoding in Polars
 
@@ -357,55 +413,87 @@ polars_schema = df.genson.infer_polars_schema(
 
 The `genson` namespace provides three main methods:
 
-### `infer_json_schema(column, **kwargs) -> dict`
+### `infer_json_schema(column, **kwargs) -> dict | list[dict]`
 
-Returns a JSON Schema (as a Python `dict`) following the JSON Schema specification.
+Infers a JSON Schema (or Avro, if requested) from a string column.
 
 **Parameters:**
 
 * `column`: Name of the column containing JSON strings
 * `ignore_outer_array`: Treat top-level arrays as streams of objects (default: `True`)
 * `ndjson`: Treat input as newline-delimited JSON (default: `False`)
-* `schema_uri`: Schema URI to embed in the output (default: `"http://json-schema.org/schema#"`)
-* `merge_schemas`: Merge schemas from all rows (default: `True`)
-* `map_threshold`: Detect maps when object has more than N keys (default: `20`)
-* `force_field_types`: Explicitly force fields to `"map"` or `"record"`
-* `avro`: Output Avro schema instead of JSON Schema (default: `False`)
+* `schema_uri`: Schema URI to embed in the output (default: `"http://json-schema.org/schema#"`). *Ignored by some consumers when `avro=True`.*
+* `merge_schemas`: Merge schemas from all rows (default: `True`). If `False`, returns one schema **per row** as a list.
 * `debug`: Print debug information (default: `False`)
+* `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`. Example: `{"labels": "map", "claims": "record"}`
+* `avro`: Output Avro schema instead of JSON Schema (default: `False`)
+* `wrap_root`: Control root wrapping.
+
+  * `True` → wrap using the **column name**
+  * `str` → wrap using the given name
+  * `None` → no wrapping (default)
+
+**Returns:**
+
+* `dict` when `merge_schemas=True`
+* `list[dict]` when `merge_schemas=False`
 
 ### `infer_polars_schema(column, **kwargs) -> pl.Schema`
 
-Returns a Polars schema with native data types for direct use in Polars.
+Infers a native Polars schema from a string column.
 
 **Parameters:**
 
 * `column`: Name of the column containing JSON strings
 * `ignore_outer_array`: Treat top-level arrays as streams of objects (default: `True`)
 * `ndjson`: Treat input as newline-delimited JSON (default: `False`)
-* `map_threshold`: Detect maps when object has more than N keys (default: `20`)
-* `force_field_types`: Explicitly force fields to `"map"` or `"record"`
+* `merge_schemas`: Merge schemas from all rows (default: `True`). *(Currently the only supported mode.)*
 * `debug`: Print debug information (default: `False`)
+* `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`
+* `avro`: Infer using **Avro semantics** (unions, maps, nullability) instead of pure JSON Schema semantics (default: `False`)
+* `wrap_root`: Control root wrapping.
 
-**Note:** `merge_schemas=False` is not yet supported for Polars schema inference.
+  * `True` → wrap using the **column name**
+  * `str` → wrap using the given name
+  * `None` → no wrapping (default)
 
-### `normalise_json(column, **kwargs) -> pl.Series`
+**Returns:**
 
-Normalises each JSON string in the column against a globally inferred Avro schema.
-Every row is transformed to match the same schema, with consistent handling of missing fields, empty values, and type coercion.
+* `pl.Schema`
+
+**Note:** `merge_schemas=False` is **not** supported for Polars schema inference.
+
+### `normalise_json(column, **kwargs) -> pl.DataFrame | pl.Series`
+
+Normalises each JSON string in the column against a single, inferred **Avro** schema. Ensures every row matches the same structure and datatypes.
 
 **Parameters:**
 
 * `column`: Name of the column containing JSON strings
+* `decode`: If `True`, decode to native Polars types (default: `True`)
+* `unnest`: If `decode=True`, expand the decoded struct into separate columns (default: `True`)
 * `ignore_outer_array`: Treat top-level arrays as streams of objects (default: `True`)
 * `ndjson`: Treat input as newline-delimited JSON (default: `False`)
 * `empty_as_null`: Convert empty arrays/maps to `null` (default: `True`)
-* `coerce_string`: Coerce numeric/boolean strings to numbers/booleans (default: `False`)
+* `coerce_strings`: Coerce numeric/boolean strings (e.g. `"42"`, `"true"`) into numbers/booleans where the schema expects them (default: `False`)
+* `map_encoding`: Encoding for Avro maps: `"kv"` (default), `"mapping"`, or `"entries"`
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
-* `force_field_types`: Explicitly force fields to `"map"` or `"record"`
-* `debug`: Print debug information (default: `False`)
+* `force_field_types`: Dict of per-field overrides (`"map"`/`"record"`)
+* `wrap_root`: Control root wrapping.
+
+  * `True` → wrap using the **column name**
+  * `str` → wrap using the given name
+  * `None` → no wrapping (default)
 
 **Returns:**
-A new `pl.Series` of strings, one per input row, with each row normalised to the same Avro schema.
+
+* If `decode=True`:
+
+  * `unnest=True` → **`pl.DataFrame`** with one column per schema field
+  * `unnest=False` → **`pl.DataFrame`** with a single **struct** column
+* If `decode=False` → **`pl.Series`** of normalised JSON strings
 
 **Example:**
 
