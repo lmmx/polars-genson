@@ -311,10 +311,32 @@ mod innermod {
 
                     // Safe: JSON is valid, now hand off to genson-rs
                     let prepared_json: Cow<str> = if let Some(ref field) = config.wrap_root {
-                        // Parse the JSON string to Value, wrap it, and re-encode
-                        let inner_val: Value = serde_json::from_str(json_str)
-                            .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
-                        Cow::Owned(serde_json::json!({ field: inner_val }).to_string())
+                        if config.delimiter == Some(b'\n') {
+                            // NDJSON: wrap each line separately
+                            let mut wrapped_lines = Vec::new();
+                            for line in json_str.lines() {
+                                let trimmed = line.trim();
+                                if trimmed.is_empty() {
+                                    continue;
+                                }
+                                let inner_val: Value =
+                                    serde_json::from_str(trimmed).map_err(|e| {
+                                        format!(
+                                            "Failed to parse NDJSON line before wrap_root: {}",
+                                            e
+                                        )
+                                    })?;
+                                wrapped_lines
+                                    .push(serde_json::json!({ field: inner_val }).to_string());
+                            }
+                            Cow::Owned(wrapped_lines.join("\n"))
+                        } else {
+                            // Single JSON doc
+                            let inner_val: Value = serde_json::from_str(json_str).map_err(|e| {
+                                format!("Failed to parse JSON before wrap_root: {}", e)
+                            })?;
+                            Cow::Owned(serde_json::json!({ field: inner_val }).to_string())
+                        }
                     } else {
                         Cow::Borrowed(json_str)
                     };
