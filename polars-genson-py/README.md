@@ -218,7 +218,7 @@ This is especially useful for semi-structured data where fields may be missing, 
 * Converts empty arrays/maps to `null` (default)
 * Preserves empties with `empty_as_null=False`
 * Ensures missing fields are inserted with `null`
-* Supports per-field coercion of numeric/boolean strings via `coerce_string=True`
+* Supports per-field coercion of numeric/boolean strings via `coerce_strings=True`
 * Supports top-level schema evolution with `wrap_root`
 
 ### Example: Map Encoding in Polars
@@ -337,7 +337,7 @@ print(df.genson.normalise_json("json_data").to_list())
 # ['{"id": null, "active": null}', '{"id": 7, "active": false}']
 
 # With coercion
-print(df.genson.normalise_json("json_data", coerce_string=True).to_list())
+print(df.genson.normalise_json("json_data", coerce_strings=True).to_list())
 # ['{"id": 42, "active": true}', '{"id": 7, "active": false}']
 ```
 
