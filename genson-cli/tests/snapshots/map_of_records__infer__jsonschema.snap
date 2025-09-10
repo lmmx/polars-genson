@@ -4,29 +4,20 @@ expression: stdout_str
 ---
 {
   "$schema": "http://json-schema.org/schema#",
-  "properties": {
-    "en": {
-      "type": "object",
-      "additionalProperties": {
+  "type": "object",
+  "additionalProperties": {
+    "properties": {
+      "language": {
+        "type": "string"
+      },
+      "value": {
         "type": "string"
       }
     },
-    "fr": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
-    },
-    "rn": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
-    }
-  },
-  "required": [
-    "en",
-    "fr"
-  ],
-  "type": "object"
+    "required": [
+      "language",
+      "value"
+    ],
+    "type": "object"
+  }
 }

@@ -4,37 +4,59 @@ expression: stdout_str
 ---
 {
   "$schema": "http://json-schema.org/schema#",
-  "properties": {
-    "labels": {
-      "properties": {
-        "en": {
-          "type": "object",
-          "additionalProperties": {
+  "type": "object",
+  "additionalProperties": {
+    "properties": {
+      "en": {
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "value": {
             "type": "string"
           }
         },
-        "fr": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "rn": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
+        "required": [
+          "language",
+          "value"
+        ],
+        "type": "object"
       },
-      "required": [
-        "en",
-        "fr"
-      ],
-      "type": "object"
-    }
-  },
-  "required": [
-    "labels"
-  ],
-  "type": "object"
+      "fr": {
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "value"
+        ],
+        "type": "object"
+      },
+      "rn": {
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "value"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "en",
+      "fr"
+    ],
+    "type": "object"
+  }
 }

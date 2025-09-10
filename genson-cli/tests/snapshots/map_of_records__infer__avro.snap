@@ -8,31 +8,26 @@ expression: avro_str
   "namespace": "genson",
   "fields": [
     {
-      "name": "en",
+      "name": "document",
       "type": {
-        "name": "en",
         "type": "map",
-        "values": "string"
+        "values": {
+          "type": "record",
+          "name": "document_extensions",
+          "namespace": "genson",
+          "fields": [
+            {
+              "name": "language",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "type": "string"
+            }
+          ]
+        },
+        "name": "document"
       }
-    },
-    {
-      "name": "fr",
-      "type": {
-        "name": "fr",
-        "type": "map",
-        "values": "string"
-      }
-    },
-    {
-      "name": "rn",
-      "type": [
-        "null",
-        {
-          "name": "rn",
-          "type": "map",
-          "values": "string"
-        }
-      ]
     }
   ]
 }

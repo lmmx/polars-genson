@@ -119,7 +119,6 @@ mod innermod {
                             return; // no need to apply heuristics or recurse
                         }
                         "record" => {
-                            // leave as-is, but still recurse into children
                             if let Some(props) =
                                 obj.get_mut("properties").and_then(|p| p.as_object_mut())
                             {
@@ -130,7 +129,7 @@ mod innermod {
                             if let Some(items) = obj.get_mut("items") {
                                 rewrite_objects(items, None, config);
                             }
-                            return; // skip heuristics
+                            return;
                         }
                         _ => {}
                     }
@@ -138,21 +137,46 @@ mod innermod {
             }
 
             // --- Heuristic rewrite ---
-            if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
-                let key_count = props.len();
+            if let Some(props_val) = obj.get("properties") {
+                if let Some(props) = props_val.as_object() {
+                    let key_count = props.len();
 
-                let homogeneous = props
-                    .values()
-                    .all(|v| v.get("type") == Some(&Value::String("string".into())));
+                    // Copy out child schema shapes
+                    let child_schemas: Vec<Value> = props.values().cloned().collect();
 
-                if key_count >= config.map_threshold && homogeneous {
-                    obj.remove("properties");
-                    obj.remove("required");
-                    obj.insert(
-                        "additionalProperties".to_string(),
-                        serde_json::json!({ "type": "string" }),
-                    );
-                    return;
+                    // Detect map-of-records
+                    if key_count >= config.map_threshold {
+                        if let Some(first) = child_schemas.first() {
+                            // Grab the "properties" of the first child
+                            if let Some(first_props) = first.get("properties") {
+                                let all_records = child_schemas.iter().all(|child| {
+                                    child.get("type") == Some(&Value::String("object".into()))
+                                        && child.get("properties") == Some(first_props)
+                                });
+
+                                if all_records {
+                                    obj.remove("properties");
+                                    obj.remove("required");
+                                    obj.insert("additionalProperties".to_string(), first.clone());
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    // Existing map-of-strings heuristic
+                    let homogeneous = props
+                        .values()
+                        .all(|v| v.get("type") == Some(&Value::String("string".into())));
+                    if key_count >= config.map_threshold && homogeneous {
+                        obj.remove("properties");
+                        obj.remove("required");
+                        obj.insert(
+                            "additionalProperties".to_string(),
+                            serde_json::json!({ "type": "string" }),
+                        );
+                        return;
+                    }
                 }
             }
 
@@ -824,6 +848,56 @@ mod innermod {
             assert_eq!(sch["type"], "object");
             assert_eq!(sch["required"], serde_json::json!(["labels"]));
             assert!(sch["properties"]["labels"].is_object());
+        }
+
+        #[test]
+        fn test_rewrite_objects_map_of_records() {
+            use serde_json::json;
+
+            // Schema that genson-rs would roughly emit for {"en": {...}, "fr": {...}}
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "en": {
+                        "type": "object",
+                        "properties": {
+                            "language": { "type": "string" },
+                            "value": { "type": "string" }
+                        },
+                        "required": ["language", "value"]
+                    },
+                    "fr": {
+                        "type": "object",
+                        "properties": {
+                            "language": { "type": "string" },
+                            "value": { "type": "string" }
+                        },
+                        "required": ["language", "value"]
+                    }
+                },
+                "required": ["en","fr"]
+            });
+
+            let cfg = SchemaInferenceConfig {
+                map_threshold: 2, // force detection at 2 keys
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &cfg);
+
+            // After rewrite, we should have additionalProperties instead of fixed properties
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("properties").is_none());
+            assert!(schema.get("required").is_none());
+
+            // additionalProperties should carry the inner record shape
+            let ap = schema
+                .get("additionalProperties")
+                .expect("should insert additionalProperties");
+
+            assert_eq!(ap["type"], "object");
+            assert_eq!(ap["properties"]["language"], json!({ "type": "string" }));
+            assert_eq!(ap["properties"]["value"], json!({ "type": "string" }));
         }
     }
 }
