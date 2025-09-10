@@ -144,17 +144,16 @@ mod innermod {
                     // Copy out child schema shapes
                     let child_schemas: Vec<Value> = props.values().cloned().collect();
 
-                    // Detect map-of-records
+                    // Detect map-of-records only if:
+                    // - all children are identical
+                    // - and that child is itself an object with "properties" (i.e. a proper record)
                     if key_count >= config.map_threshold {
                         if let Some(first) = child_schemas.first() {
-                            // Grab the "properties" of the first child
-                            if let Some(first_props) = first.get("properties") {
-                                let all_records = child_schemas.iter().all(|child| {
-                                    child.get("type") == Some(&Value::String("object".into()))
-                                        && child.get("properties") == Some(first_props)
-                                });
-
-                                if all_records {
+                            if first.get("type") == Some(&Value::String("object".into()))
+                                && first.get("properties").is_some()
+                            {
+                                let all_same = child_schemas.iter().all(|other| other == first);
+                                if all_same {
                                     obj.remove("properties");
                                     obj.remove("required");
                                     obj.insert("additionalProperties".to_string(), first.clone());
@@ -898,6 +897,36 @@ mod innermod {
             assert_eq!(ap["type"], "object");
             assert_eq!(ap["properties"]["language"], json!({ "type": "string" }));
             assert_eq!(ap["properties"]["value"], json!({ "type": "string" }));
+        }
+
+        #[test]
+        fn test_map_of_strings_not_promoted_to_records() {
+            let schema = json!({
+                "type": "object",
+                "properties": {
+                    "labels": {
+                        "type": "object",
+                        "properties": {
+                            "en": { "type": "string" },
+                            "fr": { "type": "string" }
+                        },
+                        "required": ["en", "fr"]
+                    }
+                },
+                "required": ["labels"]
+            });
+
+            let mut sch = schema.clone();
+            let cfg = SchemaInferenceConfig {
+                map_threshold: 0,
+                ..Default::default()
+            };
+            rewrite_objects(&mut sch, None, &cfg);
+
+            assert_eq!(
+                sch["properties"]["labels"]["additionalProperties"]["type"],
+                "string"
+            );
         }
     }
 }
