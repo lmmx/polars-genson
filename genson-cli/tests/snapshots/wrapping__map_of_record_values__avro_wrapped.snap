@@ -8,74 +8,15 @@ expression: avro_wrapped_str
   "namespace": "genson",
   "fields": [
     {
-      "name": "document",
+      "name": "labels",
       "type": {
+        "name": "labels",
         "type": "map",
         "values": {
-          "type": "record",
-          "name": "document_extensions",
-          "namespace": "genson",
-          "fields": [
-            {
-              "name": "en",
-              "type": {
-                "type": "record",
-                "name": "en",
-                "namespace": "genson.document_extensions_types",
-                "fields": [
-                  {
-                    "name": "language",
-                    "type": "string"
-                  },
-                  {
-                    "name": "value",
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            {
-              "name": "fr",
-              "type": {
-                "type": "record",
-                "name": "fr",
-                "namespace": "genson.document_extensions_types",
-                "fields": [
-                  {
-                    "name": "language",
-                    "type": "string"
-                  },
-                  {
-                    "name": "value",
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            {
-              "name": "rn",
-              "type": [
-                "null",
-                {
-                  "type": "record",
-                  "name": "rn",
-                  "namespace": "genson.document_extensions_types",
-                  "fields": [
-                    {
-                      "name": "language",
-                      "type": "string"
-                    },
-                    {
-                      "name": "value",
-                      "type": "string"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        "name": "document"
+          "name": "labels_values",
+          "type": "map",
+          "values": "string"
+        }
       }
     }
   ]

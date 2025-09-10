@@ -138,7 +138,7 @@ fn test_avro_map_of_record_values_snapshot() {
         "--avro",
         "--ndjson",
         "--map-threshold",
-        "0", // force map detection
+        "2", // force map detection
         temp.path().to_str().unwrap(),
     ]);
 
@@ -152,7 +152,7 @@ fn test_avro_map_of_record_values_snapshot() {
         "--avro",
         "--ndjson",
         "--map-threshold",
-        "0",
+        "2",
         "--wrap-root",
         "labels",
         temp.path().to_str().unwrap(),
