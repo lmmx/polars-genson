@@ -78,7 +78,7 @@ fn test_normalise_labels_wrap_map_of_structs_snapshot() {
         "--normalise",
         "--ndjson",
         "--map-threshold",
-        "0", // ensure it's treated as a map
+        "2", // ensure it's treated as a map
         "--map-encoding",
         "kv",
         "--wrap-root",
@@ -101,7 +101,7 @@ fn test_normalise_labels_wrap_map_of_structs_snapshot() {
         "--map-encoding",
         "kv",
         "--map-threshold",
-        "0",
+        "2",
         "--wrap-root",
         "labels",
         temp.path().to_str().unwrap(),
