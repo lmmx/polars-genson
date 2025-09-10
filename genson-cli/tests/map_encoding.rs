@@ -109,7 +109,7 @@ fn test_wrap_root_snapshot() {
         "--normalise",
         "--ndjson",
         "--map-threshold",
-        "0",
+        "2",
         "--map-encoding",
         "kv",
         "--wrap-root",
