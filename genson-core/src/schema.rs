@@ -918,7 +918,7 @@ mod innermod {
 
             let mut sch = schema.clone();
             let cfg = SchemaInferenceConfig {
-                map_threshold: 0,
+                map_threshold: 2,
                 ..Default::default()
             };
             rewrite_objects(&mut sch, None, &cfg);

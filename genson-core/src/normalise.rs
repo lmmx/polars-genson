@@ -411,7 +411,7 @@ mod innermod {
 
             let cfg = NormaliseConfig::default();
 
-            let normalised = normalise_value(&input, &schema, &cfg);
+            let normalised = normalise_value(input, &schema, &cfg);
 
             // Expect same shape back (since it's already valid against schema)
             let expected = json!({
@@ -445,7 +445,7 @@ mod innermod {
 
             let cfg = NormaliseConfig::default();
 
-            let normalised = normalise_value(&input, &schema, &cfg);
+            let normalised = normalise_value(input, &schema, &cfg);
 
             let expected = json!({
                 "en": { "language": "en", "value": "Hello" },
