@@ -316,7 +316,7 @@ mod innermod {
                             .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
                         Cow::Owned(serde_json::json!({ field: inner_val }).to_string())
                     } else {
-                        Cow::Borrowed(&json_str)
+                        Cow::Borrowed(json_str)
                     };
 
                     let mut bytes = prepared_json.as_bytes().to_vec();
