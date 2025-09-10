@@ -1,0 +1,32 @@
+---
+source: genson-cli/tests/map_of_records.rs
+expression: stdout_str
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "en": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "fr": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "rn": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "en",
+    "fr"
+  ],
+  "type": "object"
+}
