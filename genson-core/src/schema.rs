@@ -4,6 +4,7 @@ mod innermod {
     use serde::de::Error as DeError;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
+    use std::borrow::Cow;
     use std::panic::{self, AssertUnwindSafe};
 
     /// Maximum length of JSON string to include in error messages before truncating
@@ -21,6 +22,10 @@ mod innermod {
         pub map_threshold: usize,
         /// Force override of field treatment, e.g. {"labels": "map"}
         pub force_field_types: std::collections::HashMap<String, String>,
+        /// Wrap the inferred top-level schema under a single required field with this name.
+        /// Example: wrap_root = Some("labels") turns `{...}` into
+        /// `{"type":"object","properties":{"labels":{...}},"required":["labels"]}`.
+        pub wrap_root: Option<String>,
         /// Whether to output Avro schema rather than regular JSON Schema.
         #[cfg(feature = "avro")]
         pub avro: bool,
@@ -34,6 +39,7 @@ mod innermod {
                 schema_uri: Some("AUTO".to_string()),
                 map_threshold: 20,
                 force_field_types: std::collections::HashMap::new(),
+                wrap_root: None,
                 #[cfg(feature = "avro")]
                 avro: false,
             }
@@ -54,7 +60,7 @@ mod innermod {
             utility_namespace: Option<&str>,
             base_uri: Option<&str>,
             split_top_level: bool,
-        ) -> serde_json::Value {
+        ) -> Value {
             avrotize::converter::jsons_to_avro(
                 &self.schema,
                 namespace,
@@ -304,7 +310,16 @@ mod innermod {
                     }
 
                     // Safe: JSON is valid, now hand off to genson-rs
-                    let mut bytes = json_str.as_bytes().to_vec();
+                    let prepared_json: Cow<str> = if let Some(ref field) = config.wrap_root {
+                        // Parse the JSON string to Value, wrap it, and re-encode
+                        let inner_val: Value = serde_json::from_str(json_str)
+                            .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
+                        Cow::Owned(serde_json::json!({ field: inner_val }).to_string())
+                    } else {
+                        Cow::Borrowed(&json_str)
+                    };
+
+                    let mut bytes = prepared_json.as_bytes().to_vec();
 
                     // Build schema incrementally - this is where panics happen
                     let _schema = build_json_schema(&mut builder, &mut bytes, &build_config);
@@ -768,6 +783,25 @@ mod innermod {
             let labels = &result.schema["properties"]["labels"];
             assert!(labels.get("properties").is_some());
             assert!(labels.get("additionalProperties").is_none());
+        }
+
+        #[test]
+        fn test_wrap_root_inserts_single_required_field() {
+            let json_strings = vec![
+                r#"{"en":{"language":"en","value":"Hello"},"fr":{"language":"fr","value":"Bonjour"}}"#.to_string(),
+            ];
+
+            let cfg = SchemaInferenceConfig {
+                wrap_root: Some("labels".to_string()),
+                ..Default::default()
+            };
+
+            let out = infer_json_schema_from_strings(&json_strings, cfg).unwrap();
+            let sch = out.schema;
+
+            assert_eq!(sch["type"], "object");
+            assert_eq!(sch["required"], serde_json::json!(["labels"]));
+            assert!(sch["properties"]["labels"].is_object());
         }
     }
 }

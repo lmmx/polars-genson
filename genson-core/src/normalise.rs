@@ -23,6 +23,8 @@ mod innermod {
         pub coerce_string: bool,
         /// Which map encoding to output Map type fields into (default: Mapping).
         pub map_encoding: MapEncoding,
+        /// Optional: wrap input values inside an object with this field name
+        pub wrap_root: Option<String>,
     }
 
     impl Default for NormaliseConfig {
@@ -31,6 +33,7 @@ mod innermod {
                 empty_as_null: true,
                 coerce_string: false,
                 map_encoding: MapEncoding::Mapping,
+                wrap_root: None,
             }
         }
     }
@@ -251,7 +254,16 @@ mod innermod {
     ) -> Vec<Value> {
         values
             .into_iter()
-            .map(|v| normalise_value(v, schema, cfg))
+            .map(|mut v| {
+                // Apply wrap_root if requested
+                if let Some(ref field) = cfg.wrap_root {
+                    v = Value::Object(
+                        std::iter::once((field.clone(), v))
+                            .collect::<serde_json::Map<String, Value>>(),
+                    );
+                }
+                normalise_value(v, schema, cfg)
+            })
             .collect()
     }
 

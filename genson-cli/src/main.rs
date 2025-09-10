@@ -96,6 +96,14 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --map-encoding".into());
                 }
             }
+            "--wrap-root" => {
+                if i + 1 < args.len() {
+                    config.wrap_root = Some(args[i + 1].clone());
+                    i += 1;
+                } else {
+                    return Err("Missing value for --wrap-root".into());
+                }
+            }
             _ => {
                 if !args[i].starts_with('-') && input_file.is_none() {
                     input_file = Some(args[i].clone());
@@ -139,6 +147,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             empty_as_null,
             coerce_string,
             map_encoding,
+            wrap_root: config.wrap_root,
         };
         let normalised = normalise_values(values, schema, &cfg);
 
@@ -183,6 +192,7 @@ fn print_help() {
     println!("                          mapping = Avro/JSON object (shared dict)");
     println!("                          entries = list of single-entry objects (individual dicts)");
     println!("                          kv      = list of {{key,value}} objects");
+    println!("    --wrap-root <field>   Wrap top-level schema under this required field");
     println!();
     println!("EXAMPLES:");
     println!("    genson-cli data.json");
