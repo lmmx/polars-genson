@@ -335,3 +335,21 @@ def test_normalise_map_readme_demo():
             "active": None,
         },
     ]
+
+
+def test_normalise_with_wrap_root_string():
+    """Normalisation should respect wrap_root='<field>' by nesting input."""
+    df = pl.DataFrame({"json_data": ['{"foo": "bar"}']})
+    out = df.genson.normalise_json(
+        "json_data", decode=False, wrap_root="root"
+    ).to_list()
+
+    assert out == ['{"root":{"foo":"bar"}}']
+
+
+def test_normalise_with_wrap_root_true_uses_column_name():
+    """Normalisation with wrap_root=True uses the column name."""
+    df = pl.DataFrame({"json_data": ['{"foo": "bar"}']})
+    out = df.genson.normalise_json("json_data", decode=False, wrap_root=True).to_list()
+
+    assert out == ['{"json_data":{"foo":"bar"}}']

@@ -47,6 +47,13 @@ pub struct GensonKwargs {
     /// Map encoding strategy (default: KeyValueEntries for Polars friendliness)
     #[serde(default = "default_map_encoding")]
     pub map_encoding: MapEncoding,
+
+    /// Wrap the root object under a single field.
+    ///
+    /// - If set to `Some("field")`, all input JSON objects are wrapped inside
+    ///   an object with key `"field"`.
+    #[serde(default)]
+    pub wrap_root: Option<String>,
 }
 
 fn default_map_threshold() -> usize {
@@ -130,6 +137,8 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
         }
     }
 
+    let wrap_root_field = kwargs.wrap_root.clone();
+
     if kwargs.merge_schemas {
         // Original behavior: merge all schemas into one
         // We only need a single row, and we are allowed to change the length
@@ -142,6 +151,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 map_threshold: kwargs.map_threshold,
                 force_field_types: kwargs.force_field_types.clone(),
                 avro: kwargs.avro,
+                wrap_root: wrap_root_field.clone(),
             };
 
             let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -177,6 +187,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     map_threshold: kwargs.map_threshold,
                     force_field_types: kwargs.force_field_types.clone(),
                     avro: kwargs.avro,
+                    wrap_root: wrap_root_field.clone(),
                 };
 
                 let single_result = infer_json_schema_from_strings(from_ref(json_str), config)
@@ -244,6 +255,8 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
         ));
     }
 
+    let wrap_root_field = kwargs.wrap_root.clone();
+
     // Use genson to infer JSON schema, then convert to Polars schema fields
     let result = panic::catch_unwind(|| -> Result<Vec<(String, String)>, String> {
         let config = SchemaInferenceConfig {
@@ -253,6 +266,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             map_threshold: kwargs.map_threshold,
             force_field_types: kwargs.force_field_types.clone(),
             avro: kwargs.avro,
+            wrap_root: wrap_root_field,
         };
 
         let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -374,6 +388,8 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         }
     }
 
+    let wrap_root_field = kwargs.wrap_root.clone();
+
     // Infer schema ONCE
     let config = SchemaInferenceConfig {
         ignore_outer_array: kwargs.ignore_outer_array,
@@ -382,6 +398,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         map_threshold: kwargs.map_threshold,
         force_field_types: kwargs.force_field_types.clone(),
         avro: true, // normalisation implies Avro
+        wrap_root: wrap_root_field.clone(),
     };
 
     let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -394,6 +411,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         empty_as_null: kwargs.empty_as_null,
         coerce_string: kwargs.coerce_string,
         map_encoding: kwargs.map_encoding,
+        wrap_root: wrap_root_field.clone(),
     };
 
     let mut out = Vec::with_capacity(string_chunked.len());

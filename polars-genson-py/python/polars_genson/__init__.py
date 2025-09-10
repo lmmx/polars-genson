@@ -93,6 +93,7 @@ def infer_json_schema(
     map_threshold: int = 20,
     force_field_types: dict[str, str] | None = None,
     avro: bool = False,
+    wrap_root: str | None = None,
 ) -> pl.Expr:
     """Infer JSON schema from a string column containing JSON data.
 
@@ -118,6 +119,9 @@ def infer_json_schema(
         Example: ``{"labels": "map", "claims": "record"}``.
     avro: bool, default False
         Whether to output an Avro schema instead of JSON schema.
+    wrap_root : str | None, default None
+        If a string, wrap each JSON row under that key before inference.
+        If ``None``, leave rows unchanged.
 
     Returns:
     -------
@@ -131,6 +135,7 @@ def infer_json_schema(
         "debug": debug,
         "map_threshold": map_threshold,
         "avro": avro,
+        "wrap_root": wrap_root,
     }
     if schema_uri is not None:
         kwargs["schema_uri"] = schema_uri
@@ -150,6 +155,7 @@ def infer_polars_schema(
     map_threshold: int = 20,
     force_field_types: dict[str, str] | None = None,
     avro: bool = False,
+    wrap_root: str | None = None,
 ) -> pl.Expr:
     """Infer Polars schema from a string column containing JSON data.
 
@@ -173,6 +179,9 @@ def infer_polars_schema(
         Example: ``{"labels": "map", "claims": "record"}``.
     avro: bool, default False
         Whether to read the input as an Avro schema instead of JSON schema.
+    wrap_root : str | None, default None
+        If a string, wrap each JSON row under that key before inference.
+        If ``None``, leave rows unchanged.
 
     Returns:
     -------
@@ -186,6 +195,7 @@ def infer_polars_schema(
         "debug": debug,
         "map_threshold": map_threshold,
         "avro": avro,
+        "wrap_root": wrap_root,
     }
     if not merge_schemas:
         url = "https://github.com/lmmx/polars-genson/issues/37"
@@ -206,6 +216,7 @@ def normalise_json(
     map_encoding: Literal["entries", "mapping", "kv"] = "kv",
     map_threshold: int = 20,
     force_field_types: dict[str, str] | None = None,
+    wrap_root: str | None = None,
 ) -> pl.Expr:
     """Normalise a JSON string column against an inferred Avro schema.
 
@@ -238,6 +249,9 @@ def normalise_json(
     force_field_types : dict[str, str], optional
         Override the inferred type for specific fields. Keys are field names,
         values must be either ``"map"`` or ``"record"``.
+    wrap_root : str | None, default None
+        Wrap each JSON row under that key before normalisation.
+        If ``None``, leave rows unchanged.
 
     Returns:
     -------
@@ -271,6 +285,7 @@ def normalise_json(
         "coerce_string": coerce_strings,
         "map_encoding": map_encoding,
         "map_threshold": map_threshold,
+        "wrap_root": wrap_root,
     }
     if force_field_types is not None:
         kwargs["force_field_types"] = force_field_types
@@ -306,6 +321,7 @@ class GensonNamespace:
         map_threshold: int = 20,
         force_field_types: dict[str, str] | None = None,
         avro: bool = False,
+        wrap_root: bool | str | None = None,
     ) -> pl.Schema:
         # ) -> pl.Schema | list[pl.Schema]:
         """Infer Polars schema from a string column containing JSON data.
@@ -331,6 +347,9 @@ class GensonNamespace:
         avro : bool, default False
             Whether to infer using Avro schema semantics (unions, maps, nullability).
             By default (`False`), JSON Schema mode is used.
+        wrap_root : str | bool | None, default None
+            If a string, wrap each JSON row under that key before inference.
+            If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
 
         Returns:
         -------
@@ -344,6 +363,7 @@ class GensonNamespace:
             if force_field_types is None
             else {"force_field_types": force_field_types}
         )
+        wrap_root_field = column if wrap_root is True else wrap_root
         result = self._df.select(
             infer_polars_schema(
                 pl.col(column),
@@ -354,6 +374,7 @@ class GensonNamespace:
                 map_threshold=map_threshold,
                 **fft,
                 avro=avro,
+                wrap_root=wrap_root_field,
             ).first()
         )
 
@@ -378,6 +399,7 @@ class GensonNamespace:
         map_threshold: int = 20,
         force_field_types: dict[str, str] | None = None,
         avro: bool = False,
+        wrap_root: bool | str | None = None,
     ) -> dict | list[dict]:
         """Infer JSON schema from a string column containing JSON data.
 
@@ -403,6 +425,9 @@ class GensonNamespace:
             Example: ``{"labels": "map", "claims": "record"}``.
         avro: bool, default False
             Whether to read the input as an Avro schema instead of JSON schema.
+        wrap_root : str | bool | None, default None
+            If a string, wrap each JSON row under that key before inference.
+            If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
 
         Returns:
         -------
@@ -410,6 +435,7 @@ class GensonNamespace:
             The inferred JSON schema as a dictionary (if merge_schemas=True) or
             list of schemas (if merge_schemas=False)
         """
+        wrap_root_field = column if wrap_root is True else wrap_root
         result = self._df.select(
             infer_json_schema(
                 pl.col(column),
@@ -421,6 +447,7 @@ class GensonNamespace:
                 map_threshold=map_threshold,
                 force_field_types=force_field_types,
                 avro=avro,
+                wrap_root=wrap_root_field,
             ).first()
         )
 
@@ -447,6 +474,7 @@ class GensonNamespace:
         map_encoding: Literal["entries", "mapping", "kv"] = "kv",
         map_threshold: int = 20,
         force_field_types: dict[str, str] | None = None,
+        wrap_root: bool | str | None = None,
     ) -> pl.Series:
         """Normalise a JSON string column to conform to an inferred Avro schema.
 
@@ -485,6 +513,9 @@ class GensonNamespace:
             as Avro maps instead of records.
         force_field_types : dict[str, str], optional
             Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
+        wrap_root : str | bool | None, default None
+            If a string, wrap each JSON row under that key before normalisation.
+            If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
 
         Returns:
         -------
@@ -494,6 +525,7 @@ class GensonNamespace:
             If ``unnest=True``, the Series is expanded into multiple columns
             corresponding to schema fields.
         """
+        wrap_root_field = column if wrap_root is True else wrap_root
         expr = normalise_json(
             pl.col(column),
             ignore_outer_array=ignore_outer_array,
@@ -503,6 +535,7 @@ class GensonNamespace:
             map_encoding=map_encoding,
             map_threshold=map_threshold,
             force_field_types=force_field_types,
+            wrap_root=wrap_root_field,
         )
         if decode:
             if map_encoding != "kv":
@@ -518,6 +551,7 @@ class GensonNamespace:
                 map_threshold=map_threshold,
                 force_field_types=force_field_types,
                 avro=True,
+                wrap_root=wrap_root_field,
             )
             dtype = pl.Struct(schema)
             result = self._df.select(expr.str.json_decode(dtype=dtype))

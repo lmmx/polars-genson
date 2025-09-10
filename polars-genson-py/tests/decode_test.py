@@ -129,3 +129,26 @@ def test_decode_map_encoding_entries():
     assert isinstance(row["labels"], list)
     assert {"en": "Hello"} in row["labels"]
     assert {"es": "Hola"} in row["labels"]
+
+
+def test_decode_with_wrap_root_string():
+    """Ensure wrap_root='<field>' nests JSON under that field before decoding."""
+    df = pl.DataFrame(
+        {"json_data": ['{"id": 1, "name": "Alice"}', '{"id": 2, "name": "Bob"}']}
+    )
+    out = df.genson.normalise_json("json_data", decode=True, wrap_root="payload")
+
+    assert out.schema == {"payload": pl.Struct({"id": pl.Int64, "name": pl.String})}
+    assert out.to_dicts() == [
+        {"payload": {"id": 1, "name": "Alice"}},
+        {"payload": {"id": 2, "name": "Bob"}},
+    ]
+
+
+def test_decode_with_wrap_root_true_uses_column_name():
+    """Ensure wrap_root=True wraps using the column name as field name."""
+    df = pl.DataFrame({"json_data": ['{"x": 1}', '{"x": 2}']})
+    out = df.genson.normalise_json("json_data", decode=True, wrap_root=True)
+
+    assert out.schema == {"json_data": pl.Struct({"x": pl.Int64})}
+    assert out.to_dicts() == [{"json_data": {"x": 1}}, {"json_data": {"x": 2}}]
