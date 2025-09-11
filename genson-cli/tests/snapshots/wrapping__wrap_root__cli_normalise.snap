@@ -1,0 +1,17 @@
+---
+source: genson-cli/tests/wrapping.rs
+expression: parse_ndjson(&stdout_str)
+info:
+  input:
+    - en:
+        language: en
+        value: Hello
+      fr:
+        language: fr
+        value: Bonjour
+---
+[
+  {
+    "document": null
+  }
+]

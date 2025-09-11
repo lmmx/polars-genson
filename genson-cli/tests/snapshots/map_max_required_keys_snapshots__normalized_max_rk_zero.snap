@@ -1,6 +1,19 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: normalized
+expression: value
+info:
+  input:
+    - fully_optional:
+        sometimes: here
+        other: maybe
+    - fully_optional:
+        different: keys
+    - has_required:
+        always: present
+        sometimes: here
+    - has_required:
+        always: present
+        other: value
 ---
 [
   {

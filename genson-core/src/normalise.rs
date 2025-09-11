@@ -205,16 +205,31 @@ mod innermod {
             Value::Object(obj) if obj.get("type") == Some(&Value::String("map".into())) => {
                 let default_values = Value::String("string".into());
                 let values_schema = obj.get("values").unwrap_or(&default_values);
+
                 match value {
                     Value::Null => Value::Null,
+
                     Value::Object(m) if m.is_empty() && cfg.empty_as_null => Value::Null,
+
                     Value::Object(m) => {
                         let mut out = serde_json::Map::new();
-                        for (k, v) in m {
-                            out.insert(k, normalise_value(v, values_schema, cfg));
+
+                        if values_schema.get("type") == Some(&Value::String("object".into())) {
+                            // --- Map of records ---
+                            for (k, v) in m {
+                                let normalised_record = normalise_value(v, values_schema, cfg);
+                                out.insert(k, normalised_record);
+                            }
+                        } else {
+                            // --- Map of scalars (existing behaviour) ---
+                            for (k, v) in m {
+                                out.insert(k, normalise_value(v, values_schema, cfg));
+                            }
                         }
+
                         apply_map_encoding(out, cfg.map_encoding)
                     }
+
                     v => {
                         // Scalar fallback: wrap as {"default": v}
                         let mut synthetic = serde_json::Map::new();
@@ -371,6 +386,73 @@ mod innermod {
                     "bool_field": true
                 })
             );
+        }
+
+        #[test]
+        fn test_normalise_map_of_records() {
+            // Schema: map<string, record{language:string, value:string}>
+            let schema = json!({
+                "type": "map",
+                "values": {
+                    "type": "object",
+                    "properties": {
+                        "language": { "type": "string" },
+                        "value": { "type": "string" }
+                    },
+                    "required": ["language", "value"]
+                }
+            });
+
+            // Input data
+            let input = json!({
+                "en": { "language": "en", "value": "Hello" },
+                "fr": { "language": "fr", "value": "Bonjour" }
+            });
+
+            let cfg = NormaliseConfig::default();
+
+            let normalised = normalise_value(input, &schema, &cfg);
+
+            // Expect same shape back (since it's already valid against schema)
+            let expected = json!({
+                "en": { "language": "en", "value": "Hello" },
+                "fr": { "language": "fr", "value": "Bonjour" }
+            });
+
+            assert_eq!(normalised, expected);
+        }
+
+        #[test]
+        fn test_normalise_map_of_records_with_null() {
+            // Same schema as before
+            let schema = json!({
+                "type": "map",
+                "values": {
+                    "type": "object",
+                    "properties": {
+                        "language": { "type": "string" },
+                        "value": { "type": "string" }
+                    },
+                    "required": ["language", "value"]
+                }
+            });
+
+            // Input with a null value (should normalise to null for that entry)
+            let input = json!({
+                "en": { "language": "en", "value": "Hello" },
+                "fr": null
+            });
+
+            let cfg = NormaliseConfig::default();
+
+            let normalised = normalise_value(input, &schema, &cfg);
+
+            let expected = json!({
+                "en": { "language": "en", "value": "Hello" },
+                "fr": null
+            });
+
+            assert_eq!(normalised, expected);
         }
     }
 }

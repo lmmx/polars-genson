@@ -1,6 +1,6 @@
 ---
-source: genson-cli/tests/normalise.rs
-expression: avro_str
+source: genson-cli/tests/map_of_records.rs
+expression: stdout_str
 info:
   input:
     - en:

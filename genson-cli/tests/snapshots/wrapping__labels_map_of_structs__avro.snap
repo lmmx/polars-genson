@@ -1,6 +1,6 @@
 ---
-source: genson-cli/tests/normalise.rs
-expression: avro_str
+source: genson-cli/tests/wrapping.rs
+expression: value
 info:
   input:
     - en:
@@ -25,25 +25,15 @@ info:
   "namespace": "genson",
   "fields": [
     {
-      "name": "document",
+      "name": "labels",
       "type": {
+        "name": "labels",
         "type": "map",
         "values": {
-          "type": "record",
-          "name": "document_extensions",
-          "namespace": "genson",
-          "fields": [
-            {
-              "name": "language",
-              "type": "string"
-            },
-            {
-              "name": "value",
-              "type": "string"
-            }
-          ]
-        },
-        "name": "document"
+          "name": "labels_values",
+          "type": "map",
+          "values": "string"
+        }
       }
     }
   ]

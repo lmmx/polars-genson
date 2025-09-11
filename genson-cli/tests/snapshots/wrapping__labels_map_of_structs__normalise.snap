@@ -1,5 +1,5 @@
 ---
-source: genson-cli/tests/normalise.rs
+source: genson-cli/tests/wrapping.rs
 expression: value
 info:
   input:

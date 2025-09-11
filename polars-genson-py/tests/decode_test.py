@@ -38,7 +38,7 @@ def test_decode_map_to_kv_struct():
             ]
         }
     )
-    out = df.genson.normalise_json("json_data", decode=True, map_threshold=0)
+    out = df.genson.normalise_json("json_data", decode=True, map_threshold=2)
 
     # Schema should encode map as list of {key,value}
     assert out.schema == {

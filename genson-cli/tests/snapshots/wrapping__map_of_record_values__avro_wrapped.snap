@@ -1,20 +1,20 @@
 ---
-source: genson-cli/tests/normalise.rs
-expression: avro_str
+source: genson-cli/tests/wrapping.rs
+expression: value
 info:
   input:
     - en:
         language: en
-        value: Jack Bauer
+        value: Hello
       fr:
         language: fr
-        value: Jack Bauer
+        value: Bonjour
     - en:
         language: en
-        value: happiness
+        value: Hi
       fr:
         language: fr
-        value: bonheur
+        value: Salut
       rn:
         language: rn
         value: Umunezero
