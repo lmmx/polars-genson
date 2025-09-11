@@ -1,0 +1,35 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: schema
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "user": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "type": "object"
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "config",
+    "user"
+  ],
+  "type": "object"
+}
