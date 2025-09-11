@@ -1,0 +1,37 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: avro_schema
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "user",
+      "type": {
+        "type": "record",
+        "name": "user",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "config",
+      "type": {
+        "name": "config",
+        "type": "map",
+        "values": "string"
+      }
+    }
+  ]
+}

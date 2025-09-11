@@ -1,0 +1,42 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: normalized
+---
+[
+  {
+    "two_required": {
+      "common1": "always",
+      "common2": "present",
+      "varies": "sometimes"
+    },
+    "three_required": null
+  },
+  {
+    "two_required": {
+      "common1": "always",
+      "common2": "present",
+      "other": "value"
+    },
+    "three_required": null
+  },
+  {
+    "two_required": null,
+    "three_required": {
+      "stable1": "always",
+      "stable2": "present",
+      "stable3": "here",
+      "varies": "sometimes",
+      "other": null
+    }
+  },
+  {
+    "two_required": null,
+    "three_required": {
+      "stable1": "always",
+      "stable2": "present",
+      "stable3": "here",
+      "varies": null,
+      "other": "value"
+    }
+  }
+]

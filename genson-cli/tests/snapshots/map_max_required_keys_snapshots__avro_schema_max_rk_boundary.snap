@@ -1,0 +1,71 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: avro_schema
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "at_map_threshold",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "at_map_threshold",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "key1",
+              "type": "string"
+            },
+            {
+              "name": "key2",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "at_rk_limit",
+      "type": [
+        "null",
+        {
+          "name": "at_rk_limit",
+          "type": "map",
+          "values": "string"
+        }
+      ]
+    },
+    {
+      "name": "over_rk_limit",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "over_rk_limit",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "req1",
+              "type": "string"
+            },
+            {
+              "name": "req2",
+              "type": "string"
+            },
+            {
+              "name": "optional",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

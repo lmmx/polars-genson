@@ -1,0 +1,34 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: schema0
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "data": {
+      "properties": {
+        "always1": {
+          "type": "string"
+        },
+        "always2": {
+          "type": "string"
+        },
+        "sometimes": {
+          "type": "string"
+        },
+        "other": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "always1",
+        "always2"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "type": "object"
+}

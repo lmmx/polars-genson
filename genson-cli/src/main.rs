@@ -63,6 +63,17 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --map-threshold".into());
                 }
             }
+            "--map-max-rk" | "--map-max-required-keys" => {
+                if i + 1 < args.len() {
+                    config.map_max_required_keys =
+                        Some(args[i + 1].parse::<usize>().map_err(|_| {
+                            format!("Invalid value for --map-max-required-keys: {}", args[i + 1])
+                        })?);
+                    i += 1;
+                } else {
+                    return Err("Missing value for --map-max-required-keys".into());
+                }
+            }
             "--force-type" => {
                 if i + 1 < args.len() {
                     for pair in args[i + 1].split(',') {
@@ -186,6 +197,11 @@ fn print_help() {
     println!("    --coerce-strings      Coerce numeric/boolean strings to schema type during normalisation");
     println!("    --keep-empty          Keep empty arrays/maps instead of turning them into nulls");
     println!("    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)");
+    println!(
+        "    --map-max-rk <N>      Maximum required keys for Map inference (default: no limit)"
+    );
+    println!("    --map-max-required-keys <N>");
+    println!("                          Same as --map-max-rk");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     println!("                          Example: --force-type labels:map,claims:record");
     println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");

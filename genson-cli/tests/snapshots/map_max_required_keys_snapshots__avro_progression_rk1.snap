@@ -1,0 +1,43 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: avro1
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "data",
+      "type": {
+        "type": "record",
+        "name": "data",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "always1",
+            "type": "string"
+          },
+          {
+            "name": "always2",
+            "type": "string"
+          },
+          {
+            "name": "sometimes",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          {
+            "name": "other",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
