@@ -91,6 +91,7 @@ def infer_json_schema(
     merge_schemas: bool = True,
     debug: bool = False,
     map_threshold: int = 20,
+    map_max_required_keys: int | None = None,
     force_field_types: dict[str, str] | None = None,
     avro: bool = False,
     wrap_root: str | None = None,
@@ -114,6 +115,10 @@ def infer_json_schema(
     map_threshold : int, default 20
         Number of keys above which a heterogeneous object may be rewritten
         as a map (unless overridden).
+    map_max_required_keys : int, optional
+        Maximum number of required keys allowed for Map inference. Objects with more
+        required keys will be forced to Record type. If None, no gating based on
+        required key count (preserves existing behavior).
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
@@ -134,6 +139,7 @@ def infer_json_schema(
         "merge_schemas": merge_schemas,
         "debug": debug,
         "map_threshold": map_threshold,
+        "map_max_required_keys": map_max_required_keys,
         "avro": avro,
         "wrap_root": wrap_root,
     }
@@ -153,6 +159,7 @@ def infer_polars_schema(
     merge_schemas: bool = True,
     debug: bool = False,
     map_threshold: int = 20,
+    map_max_required_keys: int | None = None,
     force_field_types: dict[str, str] | None = None,
     avro: bool = False,
     wrap_root: str | None = None,
@@ -174,6 +181,10 @@ def infer_polars_schema(
     map_threshold : int, default 20
         Number of keys above which a heterogeneous object may be rewritten
         as a map (unless overridden).
+    map_max_required_keys : int, optional
+        Maximum number of required keys allowed for Map inference. Objects with more
+        required keys will be forced to Record type. If None, no gating based on
+        required key count.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
@@ -194,6 +205,7 @@ def infer_polars_schema(
         "merge_schemas": merge_schemas,
         "debug": debug,
         "map_threshold": map_threshold,
+        "map_max_required_keys": map_max_required_keys,
         "avro": avro,
         "wrap_root": wrap_root,
     }
@@ -215,6 +227,7 @@ def normalise_json(
     coerce_strings: bool = False,
     map_encoding: Literal["entries", "mapping", "kv"] = "kv",
     map_threshold: int = 20,
+    map_max_required_keys: int | None = None,
     force_field_types: dict[str, str] | None = None,
     wrap_root: str | None = None,
 ) -> pl.Expr:
@@ -246,6 +259,10 @@ def normalise_json(
     map_threshold : int, default 20
         Maximum number of keys before an object is treated as a map
         (unless overridden).
+    map_max_required_keys : int, optional
+        Maximum number of required keys allowed for Map inference during schema
+        inference. Objects with more required keys will be forced to Record type.
+        If None, no gating based on required key count.
     force_field_types : dict[str, str], optional
         Override the inferred type for specific fields. Keys are field names,
         values must be either ``"map"`` or ``"record"``.
@@ -285,6 +302,7 @@ def normalise_json(
         "coerce_string": coerce_strings,
         "map_encoding": map_encoding,
         "map_threshold": map_threshold,
+        "map_max_required_keys": map_max_required_keys,
         "wrap_root": wrap_root,
     }
     if force_field_types is not None:
@@ -319,6 +337,7 @@ class GensonNamespace:
         merge_schemas: bool = True,
         debug: bool = False,
         map_threshold: int = 20,
+        map_max_required_keys: int | None = None,
         force_field_types: dict[str, str] | None = None,
         avro: bool = False,
         wrap_root: bool | str | None = None,
@@ -341,6 +360,10 @@ class GensonNamespace:
         map_threshold : int, default 20
             Number of keys above which a heterogeneous object may be rewritten
             as a map (unless overridden).
+        map_max_required_keys : int, optional
+            Maximum number of required keys allowed for Map inference. Objects with more
+            required keys will be forced to Record type. If None, no gating based on
+            required key count.
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
@@ -372,6 +395,7 @@ class GensonNamespace:
                 merge_schemas=merge_schemas,
                 debug=debug,
                 map_threshold=map_threshold,
+                map_max_required_keys=map_max_required_keys,
                 **fft,
                 avro=avro,
                 wrap_root=wrap_root_field,
@@ -397,6 +421,7 @@ class GensonNamespace:
         merge_schemas: bool = True,
         debug: bool = False,
         map_threshold: int = 20,
+        map_max_required_keys: int | None = None,
         force_field_types: dict[str, str] | None = None,
         avro: bool = False,
         wrap_root: bool | str | None = None,
@@ -420,6 +445,10 @@ class GensonNamespace:
         map_threshold : int, default 20
             Number of keys above which a heterogeneous object may be rewritten
             as a map (unless overridden).
+        map_max_required_keys : int, optional
+            Maximum number of required keys allowed for Map inference. Objects with more
+            required keys will be forced to Record type. If None, no gating based on
+            required key count.
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
@@ -445,6 +474,7 @@ class GensonNamespace:
                 merge_schemas=merge_schemas,
                 debug=debug,
                 map_threshold=map_threshold,
+                map_max_required_keys=map_max_required_keys,
                 force_field_types=force_field_types,
                 avro=avro,
                 wrap_root=wrap_root_field,
@@ -473,6 +503,7 @@ class GensonNamespace:
         coerce_strings: bool = False,
         map_encoding: Literal["entries", "mapping", "kv"] = "kv",
         map_threshold: int = 20,
+        map_max_required_keys: int | None = None,
         force_field_types: dict[str, str] | None = None,
         wrap_root: bool | str | None = None,
     ) -> pl.Series:
@@ -511,6 +542,10 @@ class GensonNamespace:
         map_threshold : int, default 20
             Threshold above which objects with many varying keys are normalised
             as Avro maps instead of records.
+        map_max_required_keys : int, optional
+            Maximum number of required keys allowed for Map inference during schema
+            inference. Objects with more required keys will be forced to Record type.
+            If None, no gating based on required key count.
         force_field_types : dict[str, str], optional
             Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
         wrap_root : str | bool | None, default None
@@ -534,6 +569,7 @@ class GensonNamespace:
             coerce_strings=coerce_strings,
             map_encoding=map_encoding,
             map_threshold=map_threshold,
+            map_max_required_keys=map_max_required_keys,
             force_field_types=force_field_types,
             wrap_root=wrap_root_field,
         )
@@ -549,6 +585,7 @@ class GensonNamespace:
                 ndjson=ndjson,
                 merge_schemas=True,
                 map_threshold=map_threshold,
+                map_max_required_keys=map_max_required_keys,
                 force_field_types=force_field_types,
                 avro=True,
                 wrap_root=wrap_root_field,

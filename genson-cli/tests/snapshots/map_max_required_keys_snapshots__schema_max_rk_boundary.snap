@@ -1,0 +1,49 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: schema
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "at_map_threshold": {
+      "properties": {
+        "key1": {
+          "type": "string"
+        },
+        "key2": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key1",
+        "key2"
+      ],
+      "type": "object"
+    },
+    "at_rk_limit": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "over_rk_limit": {
+      "properties": {
+        "req1": {
+          "type": "string"
+        },
+        "req2": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "req1",
+        "req2"
+      ],
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

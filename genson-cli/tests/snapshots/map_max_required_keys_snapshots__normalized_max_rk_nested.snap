@@ -1,0 +1,38 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: normalized
+---
+[
+  {
+    "user": {
+      "id": 1,
+      "name": "Alice"
+    },
+    "config": {
+      "host": "localhost",
+      "port": "8080",
+      "debug": "true"
+    }
+  },
+  {
+    "user": {
+      "id": 2,
+      "name": "Bob"
+    },
+    "config": {
+      "host": "prod.com",
+      "port": "443"
+    }
+  },
+  {
+    "user": {
+      "id": 3,
+      "name": "Charlie"
+    },
+    "config": {
+      "host": "test.com",
+      "port": "3000",
+      "env": "test"
+    }
+  }
+]

@@ -1,0 +1,55 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: normalized
+---
+[
+  {
+    "at_map_threshold": {
+      "key1": "val1",
+      "key2": "val2"
+    },
+    "at_rk_limit": null,
+    "over_rk_limit": null
+  },
+  {
+    "at_map_threshold": {
+      "key1": "val3",
+      "key2": "val4"
+    },
+    "at_rk_limit": null,
+    "over_rk_limit": null
+  },
+  {
+    "at_map_threshold": null,
+    "at_rk_limit": {
+      "required": "always",
+      "optional": "sometimes"
+    },
+    "over_rk_limit": null
+  },
+  {
+    "at_map_threshold": null,
+    "at_rk_limit": {
+      "required": "always"
+    },
+    "over_rk_limit": null
+  },
+  {
+    "at_map_threshold": null,
+    "at_rk_limit": null,
+    "over_rk_limit": {
+      "req1": "always",
+      "req2": "present",
+      "optional": "sometimes"
+    }
+  },
+  {
+    "at_map_threshold": null,
+    "at_rk_limit": null,
+    "over_rk_limit": {
+      "req1": "always",
+      "req2": "present",
+      "optional": null
+    }
+  }
+]

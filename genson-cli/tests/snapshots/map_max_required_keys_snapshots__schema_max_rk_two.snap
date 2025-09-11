@@ -1,0 +1,41 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: schema
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "two_required": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "three_required": {
+      "properties": {
+        "stable1": {
+          "type": "string"
+        },
+        "stable2": {
+          "type": "string"
+        },
+        "stable3": {
+          "type": "string"
+        },
+        "varies": {
+          "type": "string"
+        },
+        "other": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "stable1",
+        "stable2",
+        "stable3"
+      ],
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

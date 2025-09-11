@@ -1,0 +1,61 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: avro_schema
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "two_required",
+      "type": [
+        "null",
+        {
+          "name": "two_required",
+          "type": "map",
+          "values": "string"
+        }
+      ]
+    },
+    {
+      "name": "three_required",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "three_required",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "stable1",
+              "type": "string"
+            },
+            {
+              "name": "stable2",
+              "type": "string"
+            },
+            {
+              "name": "stable3",
+              "type": "string"
+            },
+            {
+              "name": "varies",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "other",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

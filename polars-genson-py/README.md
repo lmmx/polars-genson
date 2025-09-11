@@ -152,6 +152,35 @@ The Polars schema inference automatically handles:
 - ✅ **Optional fields** present in some but not all objects
 - ✅ **Deep nesting** with multiple levels of structure
 
+### Map vs Record Inference Control
+
+For objects with varying keys, you can control whether they're inferred as Maps (dynamic key-value pairs) or Records (fixed fields) using the `map_threshold` and `map_max_required_keys` parameters:
+
+```python
+# Data with different key patterns
+df = pl.DataFrame({
+    "json_data": [
+        '{"user": {"id": 1, "name": "Alice"}, "attributes": {"source": "web", "campaign": "summer"}}',
+        '{"user": {"id": 2, "name": "Bob"}, "attributes": {"source": "mobile"}}'
+    ]
+})
+
+# Default: both user and attributes become Records
+schema_default = df.genson.infer_json_schema("json_data")
+
+# Lower thresholds: distinguish structured Records from dynamic Maps
+schema_controlled = df.genson.infer_json_schema("json_data", 
+    map_threshold=2,           # Objects with ≥2 keys can be Maps
+    map_max_required_keys=1    # Maps can have ≤1 required key
+)
+```
+
+In the controlled example:
+- `user` has 2 required keys (`id`, `name`) > 1 → **Record** (structured)
+- `attributes` has 1 required key (`source`) ≤ 1 → **Map** (dynamic)
+
+This gives you fine-grained control over how objects with different key stability patterns are classified.
+
 ### Root Wrapping (`wrap_root`)
 
 By default, inferred schemas treat each JSON object as the root.  
@@ -426,6 +455,7 @@ Infers a JSON Schema (or Avro, if requested) from a string column.
 * `merge_schemas`: Merge schemas from all rows (default: `True`). If `False`, returns one schema **per row** as a list.
 * `debug`: Print debug information (default: `False`)
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`. Example: `{"labels": "map", "claims": "record"}`
 * `avro`: Output Avro schema instead of JSON Schema (default: `False`)
 * `wrap_root`: Control root wrapping.
@@ -451,6 +481,7 @@ Infers a native Polars schema from a string column.
 * `merge_schemas`: Merge schemas from all rows (default: `True`). *(Currently the only supported mode.)*
 * `debug`: Print debug information (default: `False`)
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`
 * `avro`: Infer using **Avro semantics** (unions, maps, nullability) instead of pure JSON Schema semantics (default: `False`)
 * `wrap_root`: Control root wrapping.
@@ -480,6 +511,7 @@ Normalises each JSON string in the column against a single, inferred **Avro** sc
 * `coerce_strings`: Coerce numeric/boolean strings (e.g. `"42"`, `"true"`) into numbers/booleans where the schema expects them (default: `False`)
 * `map_encoding`: Encoding for Avro maps: `"kv"` (default), `"mapping"`, or `"entries"`
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
+* `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides (`"map"`/`"record"`)
 * `wrap_root`: Control root wrapping.
 

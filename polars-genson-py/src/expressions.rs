@@ -32,6 +32,9 @@ pub struct GensonKwargs {
     pub map_threshold: usize,
 
     #[serde(default)]
+    pub map_max_required_keys: Option<usize>,
+
+    #[serde(default)]
     pub force_field_types: std::collections::HashMap<String, String>,
 
     /// Whether to emit Avro schema instead of JSON Schema
@@ -149,6 +152,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
                 schema_uri: kwargs.schema_uri.clone(),
                 map_threshold: kwargs.map_threshold,
+                map_max_required_keys: kwargs.map_max_required_keys,
                 force_field_types: kwargs.force_field_types.clone(),
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
@@ -185,6 +189,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
                     schema_uri: kwargs.schema_uri.clone(),
                     map_threshold: kwargs.map_threshold,
+                    map_max_required_keys: kwargs.map_max_required_keys,
                     force_field_types: kwargs.force_field_types.clone(),
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
@@ -264,6 +269,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
             schema_uri: kwargs.schema_uri.clone(),
             map_threshold: kwargs.map_threshold,
+            map_max_required_keys: kwargs.map_max_required_keys,
             force_field_types: kwargs.force_field_types.clone(),
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
@@ -396,6 +402,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
         schema_uri: kwargs.schema_uri.clone(),
         map_threshold: kwargs.map_threshold,
+        map_max_required_keys: kwargs.map_max_required_keys,
         force_field_types: kwargs.force_field_types.clone(),
         avro: true, // normalisation implies Avro
         wrap_root: wrap_root_field.clone(),
