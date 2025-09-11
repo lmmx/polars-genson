@@ -916,6 +916,7 @@ dependencies = [
  "genson-core",
  "insta",
  "predicates",
+ "serde",
  "serde_json",
  "tempfile",
 ]

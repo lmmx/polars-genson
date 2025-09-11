@@ -1,6 +1,26 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: schema
+expression: value
+info:
+  input:
+    - at_map_threshold:
+        key1: val1
+        key2: val2
+    - at_map_threshold:
+        key1: val3
+        key2: val4
+    - at_rk_limit:
+        required: always
+        optional: sometimes
+    - at_rk_limit:
+        required: always
+    - over_rk_limit:
+        req1: always
+        req2: present
+        optional: sometimes
+    - over_rk_limit:
+        req1: always
+        req2: present
 ---
 {
   "$schema": "http://json-schema.org/schema#",

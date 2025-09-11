@@ -1,6 +1,23 @@
 ---
 source: genson-cli/tests/wrapping.rs
-expression: avro_root_str
+expression: value
+info:
+  input:
+    - en:
+        language: en
+        value: Hello
+      fr:
+        language: fr
+        value: Bonjour
+    - en:
+        language: en
+        value: Hi
+      fr:
+        language: fr
+        value: Salut
+      rn:
+        language: rn
+        value: Umunezero
 ---
 {
   "type": "record",

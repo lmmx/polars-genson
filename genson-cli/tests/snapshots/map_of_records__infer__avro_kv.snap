@@ -1,6 +1,23 @@
 ---
 source: genson-cli/tests/map_of_records.rs
-expression: avro_str
+expression: stdout_str
+info:
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
 ---
 {
   "type": "record",

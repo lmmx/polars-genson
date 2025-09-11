@@ -1,6 +1,10 @@
 ---
 source: genson-cli/tests/normalise.rs
-expression: stdout_str
+expression: value
+info:
+  input:
+    - foo: present
+    - bar: 123
 ---
 {"foo":"present","bar":null}
 {"foo":null,"bar":123}

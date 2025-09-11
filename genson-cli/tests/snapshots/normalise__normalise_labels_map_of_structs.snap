@@ -1,6 +1,23 @@
 ---
 source: genson-cli/tests/normalise.rs
-expression: pretty_output
+expression: value
+info:
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
 ---
 {
   "document": null

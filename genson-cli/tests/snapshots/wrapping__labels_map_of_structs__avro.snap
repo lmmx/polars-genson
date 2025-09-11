@@ -1,6 +1,23 @@
 ---
 source: genson-cli/tests/wrapping.rs
-expression: avro_str
+expression: value
+info:
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
 ---
 {
   "type": "record",

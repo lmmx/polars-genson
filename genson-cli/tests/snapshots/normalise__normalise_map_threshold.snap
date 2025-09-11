@@ -1,6 +1,14 @@
 ---
 source: genson-cli/tests/normalise.rs
-expression: stdout_str
+expression: value
+info:
+  input:
+    - id: A
+      labels:
+        en: Hello
+    - id: B
+      labels:
+        fr: Bonjour
 ---
 {"id":"A","labels":{"en":"Hello"}}
 {"id":"B","labels":{"fr":"Bonjour"}}
