@@ -75,7 +75,14 @@ fn test_map_max_rk_avro(data: &str, threshold: usize, max_rk: Option<usize>) -> 
 
 #[test]
 fn test_map_max_rk_none_existing_behavior() {
-    // Test data: structured objects with varying required key counts
+    /// Tests default behavior when map_max_required_keys is None.
+    ///
+    /// Expected outputs:
+    /// - JSON Schema: `structured` field becomes Map (additionalProperties) because it meets
+    ///   map_threshold=3 and has homogeneous string values. `below_threshold` stays Record
+    ///   (properties) because it has only 1 key < threshold.
+    /// - Avro Schema: `structured` becomes "type": "map", `below_threshold` becomes "type": "record"
+    /// - Normalized: Map fields preserve key-value structure, Record fields have fixed schema
     let data = r#"
 {"structured": {"req1": "val1", "req2": "val2", "req3": "val3"}}
 {"structured": {"req1": "val4", "req2": "val5", "req3": "val6"}}
@@ -97,7 +104,13 @@ fn test_map_max_rk_none_existing_behavior() {
 
 #[test]
 fn test_map_max_rk_zero_strict_optional_only() {
-    // Test data: objects with 0 vs 1+ required keys
+    /// Tests strictest setting where only objects with 0 required keys can become Maps.
+    ///
+    /// Expected outputs:
+    /// - JSON Schema: `fully_optional` becomes Map (additionalProperties) because all keys
+    ///   are optional (0 ≤ 0). `has_required` stays Record because 1 required key > 0.
+    /// - Avro Schema: `fully_optional` becomes "type": "map", `has_required` becomes "type": "record"
+    /// - Normalized: Only fully optional structures get Map treatment
     let data = r#"
 {"fully_optional": {"sometimes": "here", "other": "maybe"}}
 {"fully_optional": {"different": "keys"}}
@@ -119,7 +132,13 @@ fn test_map_max_rk_zero_strict_optional_only() {
 
 #[test]
 fn test_map_max_rk_one_moderate_stability() {
-    // Test data: objects with 1 vs 2+ required keys
+    /// Tests moderate setting allowing Maps with up to 1 required key.
+    ///
+    /// Expected outputs:
+    /// - JSON Schema: `one_required` becomes Map (additionalProperties) because 1 required
+    ///   key ≤ 1. `two_required` stays Record because 2 required keys > 1.
+    /// - Avro Schema: `one_required` becomes "type": "map", `two_required` becomes "type": "record"
+    /// - Normalized: Objects with moderate stability (1 required key) get Map treatment
     let data = r#"
 {"one_required": {"common": "always", "varies": "sometimes"}}
 {"one_required": {"common": "always", "other": "different"}}
@@ -141,7 +160,13 @@ fn test_map_max_rk_one_moderate_stability() {
 
 #[test]
 fn test_map_max_rk_two_lenient_stability() {
-    // Test data: objects with 2 vs 3+ required keys
+    /// Tests lenient setting allowing Maps with up to 2 required keys.
+    ///
+    /// Expected outputs:
+    /// - JSON Schema: `two_required` becomes Map (additionalProperties) because 2 required
+    ///   keys ≤ 2. `three_required` stays Record because 3 required keys > 2.
+    /// - Avro Schema: `two_required` becomes "type": "map", `three_required` becomes "type": "record"
+    /// - Normalized: Objects with higher stability (2 required keys) still get Map treatment
     let data = r#"
 {"two_required": {"common1": "always", "common2": "present", "varies": "sometimes"}}
 {"two_required": {"common1": "always", "common2": "present", "other": "value"}}
@@ -163,7 +188,13 @@ fn test_map_max_rk_two_lenient_stability() {
 
 #[test]
 fn test_map_max_rk_boundary_conditions() {
-    // Test edge cases: exactly at thresholds
+    /// Tests exact threshold boundaries to verify gate logic.
+    ///
+    /// Expected outputs:
+    /// - JSON Schema: `at_map_threshold` and `over_rk_limit` stay Records (2 required > 1).
+    ///   `at_rk_limit` becomes Map (1 required ≤ 1).
+    /// - Avro Schema: Two "type": "record" and one "type": "map"
+    /// - Normalized: Only the object exactly at the required key limit gets Map treatment
     let data = r#"
 {"at_map_threshold": {"key1": "val1", "key2": "val2"}}
 {"at_map_threshold": {"key1": "val3", "key2": "val4"}}
@@ -189,7 +220,14 @@ fn test_map_max_rk_boundary_conditions() {
 
 #[test]
 fn test_map_max_rk_complex_nested() {
-    // Test nested objects with different required key patterns
+    /// Tests nested objects with different required key patterns and homogeneity requirements.
+    ///
+    /// Expected outputs:
+    /// - JSON Schema: Root level stays Record (user+config required, but mixed types).
+    ///   `user` stays Record (id+name required, but mixed int/string types).
+    ///   `config` becomes Map (host+port required ≤ 2, homogeneous strings).
+    /// - Avro Schema: Root and user are "type": "record", config is "type": "map"
+    /// - Normalized: Only config field gets Map treatment due to homogeneity + required key count
     let data = r#"
 {"user": {"id": 1, "name": "Alice"}, "config": {"host": "localhost", "port": "8080", "debug": "true"}}
 {"user": {"id": 2, "name": "Bob"}, "config": {"host": "prod.com", "port": "443"}}
@@ -212,7 +250,16 @@ fn test_map_max_rk_complex_nested() {
 
 #[test]
 fn test_map_max_rk_progression() {
-    // Single dataset tested with different max_rk values to show progression
+    /// Tests same dataset with different max_rk values to show progressive behavior.
+    /// Data has 2 required keys (always1, always2).
+    ///
+    /// Expected outputs:
+    /// - max_rk=0: `data` stays Record because 2 required > 0
+    /// - max_rk=1: `data` stays Record because 2 required > 1  
+    /// - max_rk=2: `data` becomes Map because 2 required ≤ 2
+    ///
+    /// Avro schemas should show "type": "record" for rk0/rk1, "type": "map" for rk2
+    /// Normalized data should reflect the Record vs Map structure accordingly
     let data = r#"
 {"data": {"always1": "val1", "always2": "val2", "sometimes": "val3"}}
 {"data": {"always1": "val4", "always2": "val5"}}
