@@ -15,41 +15,62 @@ fn parse_ndjson(output: &str) -> Vec<Value> {
         .collect()
 }
 
-/// Helper: create temp file with test data and return both schema and normalized output
-fn test_map_max_rk(data: &str, threshold: usize, max_rk: Option<usize>) -> (Value, Vec<Value>) {
+/// Helper: run CLI and return schema
+fn get_schema(data: &str, threshold: usize, max_rk: Option<usize>, avro: bool) -> Value {
     let mut temp = NamedTempFile::new().unwrap();
     writeln!(temp, "{}", data).unwrap();
 
     let threshold_str = threshold.to_string();
     let rk_str = max_rk.map(|rk| rk.to_string());
 
-    // Get schema
-    let mut schema_cmd = Command::cargo_bin("genson-cli").unwrap();
+    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
     let mut args = vec!["--ndjson", "--map-threshold", &threshold_str];
+    if avro {
+        args.insert(0, "--avro");
+    }
     if let Some(ref rk_val) = rk_str {
         args.extend_from_slice(&["--map-max-rk", rk_val]);
     }
     args.push(temp.path().to_str().unwrap());
-    schema_cmd.args(&args);
+    cmd.args(&args);
 
-    let schema_output = schema_cmd.assert().success().get_output().stdout.clone();
-    let schema_str = String::from_utf8(schema_output).unwrap();
-    let schema: Value = serde_json::from_str(&schema_str).unwrap();
+    let output = cmd.assert().success().get_output().stdout.clone();
+    let output_str = String::from_utf8(output).unwrap();
+    serde_json::from_str(&output_str).unwrap()
+}
 
-    // Get normalized output
-    let mut norm_cmd = Command::cargo_bin("genson-cli").unwrap();
-    let mut norm_args = vec!["--normalise", "--ndjson", "--map-threshold", &threshold_str];
+/// Helper: run CLI and return normalized data
+fn get_normalized(data: &str, threshold: usize, max_rk: Option<usize>) -> Vec<Value> {
+    let mut temp = NamedTempFile::new().unwrap();
+    writeln!(temp, "{}", data).unwrap();
+
+    let threshold_str = threshold.to_string();
+    let rk_str = max_rk.map(|rk| rk.to_string());
+
+    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
+    let mut args = vec!["--normalise", "--ndjson", "--map-threshold", &threshold_str];
     if let Some(ref rk_val) = rk_str {
-        norm_args.extend_from_slice(&["--map-max-rk", rk_val]);
+        args.extend_from_slice(&["--map-max-rk", rk_val]);
     }
-    norm_args.push(temp.path().to_str().unwrap());
-    norm_cmd.args(&norm_args);
+    args.push(temp.path().to_str().unwrap());
+    cmd.args(&args);
 
-    let norm_output = norm_cmd.assert().success().get_output().stdout.clone();
-    let norm_str = String::from_utf8(norm_output).unwrap();
-    let normalized = parse_ndjson(&norm_str);
+    let output = cmd.assert().success().get_output().stdout.clone();
+    let output_str = String::from_utf8(output).unwrap();
+    parse_ndjson(&output_str)
+}
 
-    (schema, normalized)
+/// Helper: create temp file with test data and return both schema and normalized output
+fn test_map_max_rk(data: &str, threshold: usize, max_rk: Option<usize>) -> (Value, Vec<Value>) {
+    (
+        get_schema(data, threshold, max_rk, false),
+        get_normalized(data, threshold, max_rk),
+    )
+}
+
+/// Helper: create temp file with test data and return Avro schema
+fn test_map_max_rk_avro(data: &str, threshold: usize, max_rk: Option<usize>) -> Value {
+    get_schema(data, threshold, max_rk, true)
 }
 
 #[test]
@@ -63,10 +84,12 @@ fn test_map_max_rk_none_existing_behavior() {
 "#;
 
     let (schema, normalized) = test_map_max_rk(data, 3, None);
+    let avro_schema = test_map_max_rk_avro(data, 3, None);
 
     // Snapshot schema: structured meets threshold and is homogeneous → Map
     // below_threshold doesn't meet threshold → Record
     assert_json_snapshot!("schema_max_rk_none", schema);
+    assert_json_snapshot!("avro_schema_max_rk_none", avro_schema);
 
     // Snapshot normalized data showing Map vs Record behavior
     assert_json_snapshot!("normalized_max_rk_none", normalized);
@@ -83,10 +106,12 @@ fn test_map_max_rk_zero_strict_optional_only() {
 "#;
 
     let (schema, normalized) = test_map_max_rk(data, 2, Some(0));
+    let avro_schema = test_map_max_rk_avro(data, 2, Some(0));
 
     // Snapshot schema: fully_optional has 0 required keys → Map
     // has_required has 1 required key → Record (blocked by max_rk=0)
     assert_json_snapshot!("schema_max_rk_zero", schema);
+    assert_json_snapshot!("avro_schema_max_rk_zero", avro_schema);
 
     // Snapshot normalized data showing strict Map detection
     assert_json_snapshot!("normalized_max_rk_zero", normalized);
@@ -103,10 +128,12 @@ fn test_map_max_rk_one_moderate_stability() {
 "#;
 
     let (schema, normalized) = test_map_max_rk(data, 2, Some(1));
+    let avro_schema = test_map_max_rk_avro(data, 2, Some(1));
 
     // Snapshot schema: one_required has 1 required key → Map (allowed)
     // two_required has 2 required keys → Record (blocked by max_rk=1)
     assert_json_snapshot!("schema_max_rk_one", schema);
+    assert_json_snapshot!("avro_schema_max_rk_one", avro_schema);
 
     // Snapshot normalized data showing moderate Map detection
     assert_json_snapshot!("normalized_max_rk_one", normalized);
@@ -123,10 +150,12 @@ fn test_map_max_rk_two_lenient_stability() {
 "#;
 
     let (schema, normalized) = test_map_max_rk(data, 3, Some(2));
+    let avro_schema = test_map_max_rk_avro(data, 3, Some(2));
 
     // Snapshot schema: two_required has 2 required keys → Map (allowed)
     // three_required has 3 required keys → Record (blocked by max_rk=2)
     assert_json_snapshot!("schema_max_rk_two", schema);
+    assert_json_snapshot!("avro_schema_max_rk_two", avro_schema);
 
     // Snapshot normalized data showing lenient Map detection
     assert_json_snapshot!("normalized_max_rk_two", normalized);
@@ -145,12 +174,14 @@ fn test_map_max_rk_boundary_conditions() {
 "#;
 
     let (schema, normalized) = test_map_max_rk(data, 2, Some(1));
+    let avro_schema = test_map_max_rk_avro(data, 2, Some(1));
 
     // Snapshot schema showing boundary behavior:
     // at_map_threshold: 2 keys, 2 required → Record (2 > 1)
     // at_rk_limit: 2 keys, 1 required → Map (1 ≤ 1)
     // over_rk_limit: 2 keys, 2 required → Record (2 > 1)
     assert_json_snapshot!("schema_max_rk_boundary", schema);
+    assert_json_snapshot!("avro_schema_max_rk_boundary", avro_schema);
 
     // Snapshot normalized data showing boundary cases
     assert_json_snapshot!("normalized_max_rk_boundary", normalized);
@@ -166,12 +197,14 @@ fn test_map_max_rk_complex_nested() {
 "#;
 
     let (schema, normalized) = test_map_max_rk(data, 2, Some(2));
+    let avro_schema = test_map_max_rk_avro(data, 2, Some(2));
 
     // Snapshot schema:
     // Root: user, config both required (2 ≤ 2) → could be Map but fails homogeneity
     // user: id, name both required (2 ≤ 2) → could be Map but fails homogeneity
     // config: host, port required, others optional (2 ≤ 2) → Map (homogeneous strings)
     assert_json_snapshot!("schema_max_rk_nested", schema);
+    assert_json_snapshot!("avro_schema_max_rk_nested", avro_schema);
 
     // Snapshot normalized data showing nested Map/Record decisions
     assert_json_snapshot!("normalized_max_rk_nested", normalized);
@@ -188,20 +221,26 @@ fn test_map_max_rk_progression() {
 
     // Test with max_rk=0: should be Record (2 required > 0)
     let (schema0, norm0) = test_map_max_rk(data, 2, Some(0));
+    let avro0 = test_map_max_rk_avro(data, 2, Some(0));
 
     // Test with max_rk=1: should be Record (2 required > 1)
     let (schema1, norm1) = test_map_max_rk(data, 2, Some(1));
+    let avro1 = test_map_max_rk_avro(data, 2, Some(1));
 
     // Test with max_rk=2: should be Map (2 required ≤ 2)
     let (schema2, norm2) = test_map_max_rk(data, 2, Some(2));
+    let avro2 = test_map_max_rk_avro(data, 2, Some(2));
 
     // Snapshot all three to show progression
     assert_json_snapshot!("schema_progression_rk0", schema0);
+    assert_json_snapshot!("avro_progression_rk0", avro0);
     assert_json_snapshot!("normalized_progression_rk0", norm0);
 
     assert_json_snapshot!("schema_progression_rk1", schema1);
+    assert_json_snapshot!("avro_progression_rk1", avro1);
     assert_json_snapshot!("normalized_progression_rk1", norm1);
 
     assert_json_snapshot!("schema_progression_rk2", schema2);
+    assert_json_snapshot!("avro_progression_rk2", avro2);
     assert_json_snapshot!("normalized_progression_rk2", norm2);
 }
