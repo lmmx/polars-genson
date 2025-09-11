@@ -1,0 +1,34 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: normalized
+---
+[
+  {
+    "structured": {
+      "req1": "val1",
+      "req2": "val2",
+      "req3": "val3"
+    },
+    "below_threshold": null
+  },
+  {
+    "structured": {
+      "req1": "val4",
+      "req2": "val5",
+      "req3": "val6"
+    },
+    "below_threshold": null
+  },
+  {
+    "structured": null,
+    "below_threshold": {
+      "only": "one"
+    }
+  },
+  {
+    "structured": null,
+    "below_threshold": {
+      "only": "two"
+    }
+  }
+]
