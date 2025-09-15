@@ -370,6 +370,58 @@ print(df.genson.normalise_json("json_data", coerce_strings=True).to_list())
 # ['{"id": 42, "active": true}', '{"id": 7, "active": false}']
 ```
 
+### Schema-Aware Decoding
+
+The `decode` parameter can be either a **boolean** or a **schema**.
+
+- `decode=True` → Infer a schema automatically, then decode JSON into native Polars types.  
+- `decode=False` → Leave values as normalised JSON strings.  
+- `decode=pl.Schema | pl.Struct` → Use your own schema for decoding (skip re-inference).
+
+```python
+import polars as pl
+import polars_genson
+
+df = pl.DataFrame({
+    "json_data": [
+        '{"id": 1, "active": true}',
+        '{"id": 2, "active": false}'
+    ]
+})
+
+# Explicit schema
+schema = pl.Struct({
+    "id": pl.Int64,
+    "active": pl.Boolean,
+})
+
+# Use schema directly for decoding
+decoded = df.genson.normalise_json("json_data", decode=schema)
+print(decoded)
+```
+
+Output:
+
+```
+shape: (2, 2)
+┌─────┬────────┐
+│ id  ┆ active │
+│ --- ┆ ---    │
+│ i64 ┆ bool   │
+╞═════╪════════╡
+│ 1   ┆ true   │
+│ 2   ┆ false  │
+└─────┴────────┘
+```
+
+**Note:** Normalisation always aligns rows to a consistent schema internally.
+Passing your own schema skips the extra inference step, which can improve performance,
+but if your schema doesn’t match what’s in the data, you'll hit a decoding error
+(`polars.exceptions.ComputeError` from `.str.json_decode`). That may in fact be desirable to halt on though.
+
+For the best of both worlds, you can run with decode=True once, capture the resulting `.schema`,
+and then reuse it in future calls.
+
 ## Advanced Usage
 
 ### Per-Row Schema Processing

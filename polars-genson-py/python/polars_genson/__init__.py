@@ -495,7 +495,7 @@ class GensonNamespace:
         self,
         column: str,
         *,
-        decode: bool = True,
+        decode: bool | pl.Schema = True,
         unnest: bool = True,
         ignore_outer_array: bool = True,
         ndjson: bool = False,
@@ -516,9 +516,15 @@ class GensonNamespace:
         ----------
         column : str
             Name of the column containing JSON strings.
-        decode : bool, default True
-            If True, decode the normalised JSON strings into native Polars
-            datatypes after normalisation. If False, leave as raw JSON strings instead.
+        decode : bool | pl.Schema, default True
+            Controls how the normalised JSON strings are decoded after
+            normalisation:
+
+            - If False leave values as raw JSON strings.
+            - If True (default), decode into native Polars datatypes,
+              with the schema inferred from the data (may be slower).
+            - If a polars.Schema, decode using the
+              provided schema dtype directly (fast path, skips final schema inference).
         unnest : bool, default True
             Only applies if `decode=True`. If True, expand the decoded struct
             into separate columns for each schema field. If False, keep a
@@ -578,19 +584,25 @@ class GensonNamespace:
                 # Map type fields must be k:v encoded as infer_polars_schema assumes it
                 # This could be done, it would always make record fields, ...but why?
                 raise NotImplementedError("map_encoding must be kv to decode to Polars")
-            # Infer Avro schema and convert it to Polars Schema
-            schema = self.infer_polars_schema(
-                column,
-                ignore_outer_array=ignore_outer_array,
-                ndjson=ndjson,
-                merge_schemas=True,
-                map_threshold=map_threshold,
-                map_max_required_keys=map_max_required_keys,
-                force_field_types=force_field_types,
-                avro=True,
-                wrap_root=wrap_root_field,
-            )
-            dtype = pl.Struct(schema)
+
+            if decode is True:
+                # Infer Avro schema and convert it to Polars Schema
+                schema = self.infer_polars_schema(
+                    column,
+                    ignore_outer_array=ignore_outer_array,
+                    ndjson=ndjson,
+                    merge_schemas=True,
+                    map_threshold=map_threshold,
+                    map_max_required_keys=map_max_required_keys,
+                    force_field_types=force_field_types,
+                    avro=True,
+                    wrap_root=wrap_root_field,
+                )
+                dtype = pl.Struct(schema)
+            else:
+                # decode was passed as a Polars Schema directly
+                dtype = decode
+
             result = self._df.select(expr.str.json_decode(dtype=dtype))
             if unnest:
                 result = result.unnest(expr.meta.output_name())
