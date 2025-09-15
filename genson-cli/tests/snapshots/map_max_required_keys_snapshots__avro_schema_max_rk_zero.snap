@@ -1,6 +1,27 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: avro_schema
+expression: value
+info:
+  approved: true
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "0"
+  input:
+    - fully_optional:
+        sometimes: here
+        other: maybe
+    - fully_optional:
+        different: keys
+    - has_required:
+        always: present
+        sometimes: here
+    - has_required:
+        always: present
+        other: value
 ---
 {
   "type": "record",

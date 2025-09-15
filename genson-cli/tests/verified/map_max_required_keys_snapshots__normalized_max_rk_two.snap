@@ -1,0 +1,71 @@
+---
+blessing:
+reason: "Map behavior for two_required (2 required keys ≤ 2) omits missing fields, Record behavior for three_required (3 required keys > 2) pads missing fields with null"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+    - "--map-max-rk"
+    - "2"
+  input:
+    - two_required:
+        common1: always
+        common2: present
+        varies: sometimes
+    - two_required:
+        common1: always
+        common2: present
+        other: value
+    - three_required:
+        stable1: always
+        stable2: present
+        stable3: here
+        varies: sometimes
+    - three_required:
+        stable1: always
+        stable2: present
+        stable3: here
+        other: value
+---
+[
+  {
+    "two_required": {
+      "common1": "always",
+      "common2": "present",
+      "varies": "sometimes"
+    },
+    "three_required": null
+  },
+  {
+    "two_required": {
+      "common1": "always",
+      "common2": "present",
+      "other": "value"
+    },
+    "three_required": null
+  },
+  {
+    "two_required": null,
+    "three_required": {
+      "stable1": "always",
+      "stable2": "present",
+      "stable3": "here",
+      "varies": "sometimes",
+      "other": null
+    }
+  },
+  {
+    "two_required": null,
+    "three_required": {
+      "stable1": "always",
+      "stable2": "present",
+      "stable3": "here",
+      "varies": null,
+      "other": "value"
+    }
+  }
+]

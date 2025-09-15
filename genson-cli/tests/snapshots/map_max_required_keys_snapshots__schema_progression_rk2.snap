@@ -1,6 +1,26 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: schema2
+expression: value
+info:
+  approved: true
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "2"
+  input:
+    - data:
+        always1: val1
+        always2: val2
+        sometimes: val3
+    - data:
+        always1: val4
+        always2: val5
+    - data:
+        always1: val6
+        always2: val7
+        other: val8
 ---
 {
   "$schema": "http://json-schema.org/schema#",

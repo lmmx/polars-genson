@@ -1,0 +1,61 @@
+---
+blessing:
+reason: "Normalised to map of records with kv map encoding, record has 2 fields"
+source: genson-cli/tests/wrapping.rs
+expression: value
+info:
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+    - "--map-encoding"
+    - kv
+    - "--wrap-root"
+    - labels
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "labels",
+      "type": {
+        "name": "labels",
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "labels_values",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "language",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

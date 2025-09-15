@@ -1,8 +1,10 @@
 // genson-cli/tests/map_max_required_keys_snapshots.rs
 
 use assert_cmd::Command;
-use insta::assert_json_snapshot;
+use insta::{assert_json_snapshot, with_settings};
+use serde::Serialize;
 use serde_json::Value;
+use std::fs;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -15,8 +17,66 @@ fn parse_ndjson(output: &str) -> Vec<Value> {
         .collect()
 }
 
-/// Helper: run CLI and return schema
-fn get_schema(data: &str, threshold: usize, max_rk: Option<usize>, avro: bool) -> Value {
+/// Check if the current output matches the verified/blessed version
+fn is_output_approved<T: Serialize>(snapshot_name: &str, output: &T) -> bool {
+    let module_file = file!();
+    let module_stem = std::path::Path::new(module_file)
+        .file_stem()
+        .unwrap()
+        .to_string_lossy();
+    let verified_path = format!("tests/verified/{}__{}.snap", module_stem, snapshot_name);
+
+    if let Ok(verified_content) = fs::read_to_string(&verified_path) {
+        // Extract just the content part from the verified snapshot
+        // Skip the YAML header (everything up to and including the "---" line)
+        if let Some(header_end) = verified_content.find("\n---\n") {
+            let verified_output = &verified_content[header_end + 5..]; // Skip "\n---\n"
+
+            // Serialize current output to JSON string for comparison
+            if let Ok(current_json) = serde_json::to_string_pretty(output) {
+                // Parse both as Value to ensure consistent formatting
+                if let (Ok(verified_val), Ok(current_val)) = (
+                    serde_json::from_str::<Value>(verified_output.trim()),
+                    serde_json::from_str::<Value>(&current_json),
+                ) {
+                    return verified_val == current_val;
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Attach the input data as metadata and snapshot the given value.
+fn snapshot_with_input<T: Serialize>(name: &str, input_data: &str, value: T, args: Vec<String>) {
+    // Parse each NDJSON line of input into proper JSON
+    let input_json: Vec<Value> = input_data
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| serde_json::from_str::<Value>(l).unwrap())
+        .collect();
+
+    // Check if this output matches the blessed/verified version
+    let approved = is_output_approved(name, &value);
+
+    with_settings!({
+        info => &serde_json::json!({
+            "approved": approved,
+            "args": args,
+            "input": input_json
+        })
+    }, {
+        assert_json_snapshot!(name, value);
+    });
+}
+
+/// Run CLI and return schema (as JSON Value) and the args used.
+fn get_schema(
+    data: &str,
+    threshold: usize,
+    max_rk: Option<usize>,
+    avro: bool,
+) -> (Value, Vec<String>) {
     let mut temp = NamedTempFile::new().unwrap();
     writeln!(temp, "{}", data).unwrap();
 
@@ -32,15 +92,26 @@ fn get_schema(data: &str, threshold: usize, max_rk: Option<usize>, avro: bool) -
         args.extend_from_slice(&["--map-max-rk", rk_val]);
     }
     args.push(temp.path().to_str().unwrap());
+
+    // Save args for return (excluding temp file path)
+    let args_owned: Vec<String> = args[..args.len() - 1]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+
     cmd.args(&args);
 
     let output = cmd.assert().success().get_output().stdout.clone();
     let output_str = String::from_utf8(output).unwrap();
-    serde_json::from_str(&output_str).unwrap()
+    (serde_json::from_str(&output_str).unwrap(), args_owned)
 }
 
-/// Helper: run CLI and return normalized data
-fn get_normalized(data: &str, threshold: usize, max_rk: Option<usize>) -> Vec<Value> {
+/// Run CLI and return normalized data (as Vec of JSON Values) and the args used.
+fn get_normalized(
+    data: &str,
+    threshold: usize,
+    max_rk: Option<usize>,
+) -> (Vec<Value>, Vec<String>) {
     let mut temp = NamedTempFile::new().unwrap();
     writeln!(temp, "{}", data).unwrap();
 
@@ -53,23 +124,37 @@ fn get_normalized(data: &str, threshold: usize, max_rk: Option<usize>) -> Vec<Va
         args.extend_from_slice(&["--map-max-rk", rk_val]);
     }
     args.push(temp.path().to_str().unwrap());
+
+    // Save args for return (excluding temp file path)
+    let args_owned: Vec<String> = args[..args.len() - 1]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+
     cmd.args(&args);
 
     let output = cmd.assert().success().get_output().stdout.clone();
     let output_str = String::from_utf8(output).unwrap();
-    parse_ndjson(&output_str)
+    (parse_ndjson(&output_str), args_owned)
 }
 
-/// Helper: create temp file with test data and return both schema and normalized output
-fn test_map_max_rk(data: &str, threshold: usize, max_rk: Option<usize>) -> (Value, Vec<Value>) {
-    (
-        get_schema(data, threshold, max_rk, false),
-        get_normalized(data, threshold, max_rk),
-    )
+/// Helper: create temp file with test data and return both schema and normalized output with their args
+fn test_map_max_rk(
+    data: &str,
+    threshold: usize,
+    max_rk: Option<usize>,
+) -> (Value, Vec<Value>, Vec<String>, Vec<String>) {
+    let (schema, schema_args) = get_schema(data, threshold, max_rk, false);
+    let (normalized, norm_args) = get_normalized(data, threshold, max_rk);
+    (schema, normalized, schema_args, norm_args)
 }
 
-/// Helper: create temp file with test data and return Avro schema
-fn test_map_max_rk_avro(data: &str, threshold: usize, max_rk: Option<usize>) -> Value {
+/// Helper: create temp file with test data and return Avro schema with args
+fn test_map_max_rk_avro(
+    data: &str,
+    threshold: usize,
+    max_rk: Option<usize>,
+) -> (Value, Vec<String>) {
     get_schema(data, threshold, max_rk, true)
 }
 
@@ -90,16 +175,16 @@ fn test_map_max_rk_none_existing_behavior() {
 {"below_threshold": {"only": "two"}}
 "#;
 
-    let (schema, normalized) = test_map_max_rk(data, 3, None);
-    let avro_schema = test_map_max_rk_avro(data, 3, None);
+    let (schema, normalized, schema_args, norm_args) = test_map_max_rk(data, 3, None);
+    let (avro_schema, avro_args) = test_map_max_rk_avro(data, 3, None);
 
     // Snapshot schema: structured meets threshold and is homogeneous → Map
     // below_threshold doesn't meet threshold → Record
-    assert_json_snapshot!("schema_max_rk_none", schema);
-    assert_json_snapshot!("avro_schema_max_rk_none", avro_schema);
+    snapshot_with_input("schema_max_rk_none", data, schema, schema_args);
+    snapshot_with_input("avro_schema_max_rk_none", data, avro_schema, avro_args);
 
     // Snapshot normalized data showing Map vs Record behavior
-    assert_json_snapshot!("normalized_max_rk_none", normalized);
+    snapshot_with_input("normalized_max_rk_none", data, normalized, norm_args);
 }
 
 #[test]
@@ -118,16 +203,16 @@ fn test_map_max_rk_zero_strict_optional_only() {
 {"has_required": {"always": "present", "other": "value"}}
 "#;
 
-    let (schema, normalized) = test_map_max_rk(data, 2, Some(0));
-    let avro_schema = test_map_max_rk_avro(data, 2, Some(0));
+    let (schema, normalized, schema_args, norm_args) = test_map_max_rk(data, 2, Some(0));
+    let (avro_schema, avro_args) = test_map_max_rk_avro(data, 2, Some(0));
 
     // Snapshot schema: fully_optional has 0 required keys → Map
     // has_required has 1 required key → Record (blocked by max_rk=0)
-    assert_json_snapshot!("schema_max_rk_zero", schema);
-    assert_json_snapshot!("avro_schema_max_rk_zero", avro_schema);
+    snapshot_with_input("schema_max_rk_zero", data, schema, schema_args);
+    snapshot_with_input("avro_schema_max_rk_zero", data, avro_schema, avro_args);
 
     // Snapshot normalized data showing strict Map detection
-    assert_json_snapshot!("normalized_max_rk_zero", normalized);
+    snapshot_with_input("normalized_max_rk_zero", data, normalized, norm_args);
 }
 
 #[test]
@@ -146,16 +231,16 @@ fn test_map_max_rk_one_moderate_stability() {
 {"two_required": {"stable1": "always", "stable2": "present", "other": "value"}}
 "#;
 
-    let (schema, normalized) = test_map_max_rk(data, 2, Some(1));
-    let avro_schema = test_map_max_rk_avro(data, 2, Some(1));
+    let (schema, normalized, schema_args, norm_args) = test_map_max_rk(data, 2, Some(1));
+    let (avro_schema, avro_args) = test_map_max_rk_avro(data, 2, Some(1));
 
     // Snapshot schema: one_required has 1 required key → Map (allowed)
     // two_required has 2 required keys → Record (blocked by max_rk=1)
-    assert_json_snapshot!("schema_max_rk_one", schema);
-    assert_json_snapshot!("avro_schema_max_rk_one", avro_schema);
+    snapshot_with_input("schema_max_rk_one", data, schema, schema_args);
+    snapshot_with_input("avro_schema_max_rk_one", data, avro_schema, avro_args);
 
     // Snapshot normalized data showing moderate Map detection
-    assert_json_snapshot!("normalized_max_rk_one", normalized);
+    snapshot_with_input("normalized_max_rk_one", data, normalized, norm_args);
 }
 
 #[test]
@@ -174,16 +259,16 @@ fn test_map_max_rk_two_lenient_stability() {
 {"three_required": {"stable1": "always", "stable2": "present", "stable3": "here", "other": "value"}}
 "#;
 
-    let (schema, normalized) = test_map_max_rk(data, 3, Some(2));
-    let avro_schema = test_map_max_rk_avro(data, 3, Some(2));
+    let (schema, normalized, schema_args, norm_args) = test_map_max_rk(data, 3, Some(2));
+    let (avro_schema, avro_args) = test_map_max_rk_avro(data, 3, Some(2));
 
     // Snapshot schema: two_required has 2 required keys → Map (allowed)
     // three_required has 3 required keys → Record (blocked by max_rk=2)
-    assert_json_snapshot!("schema_max_rk_two", schema);
-    assert_json_snapshot!("avro_schema_max_rk_two", avro_schema);
+    snapshot_with_input("schema_max_rk_two", data, schema, schema_args);
+    snapshot_with_input("avro_schema_max_rk_two", data, avro_schema, avro_args);
 
     // Snapshot normalized data showing lenient Map detection
-    assert_json_snapshot!("normalized_max_rk_two", normalized);
+    snapshot_with_input("normalized_max_rk_two", data, normalized, norm_args);
 }
 
 #[test]
@@ -191,61 +276,54 @@ fn test_map_max_rk_boundary_conditions() {
     // Tests exact threshold boundaries to verify gate logic.
     //
     // Expected outputs:
-    // - JSON Schema: `at_map_threshold` and `over_rk_limit` stay Records (2 required > 1).
+    // - JSON Schema: `over_rk_limit` stays Record (2 required > 1).
     //   `at_rk_limit` becomes Map (1 required ≤ 1).
     // - Avro Schema: Two "type": "record" and one "type": "map"
     // - Normalized: Only the object exactly at the required key limit gets Map treatment
     let data = r#"
-{"at_map_threshold": {"key1": "val1", "key2": "val2"}}
-{"at_map_threshold": {"key1": "val3", "key2": "val4"}}
-{"at_rk_limit": {"required": "always", "optional": "sometimes"}}
-{"at_rk_limit": {"required": "always"}}
-{"over_rk_limit": {"req1": "always", "req2": "present", "optional": "sometimes"}}
+{"at_rk_limit": {"req1": "always", "optional2": "sometimes"}}
+{"at_rk_limit": {"req1": "always"}}
+{"over_rk_limit": {"req1": "always", "req2": "present", "optional3": "sometimes"}}
 {"over_rk_limit": {"req1": "always", "req2": "present"}}
 "#;
 
-    let (schema, normalized) = test_map_max_rk(data, 2, Some(1));
-    let avro_schema = test_map_max_rk_avro(data, 2, Some(1));
+    let (schema, normalized, schema_args, norm_args) = test_map_max_rk(data, 2, Some(1));
+    let (avro_schema, avro_args) = test_map_max_rk_avro(data, 2, Some(1));
 
     // Snapshot schema showing boundary behavior:
-    // at_map_threshold: 2 keys, 2 required → Record (2 > 1)
     // at_rk_limit: 2 keys, 1 required → Map (1 ≤ 1)
     // over_rk_limit: 2 keys, 2 required → Record (2 > 1)
-    assert_json_snapshot!("schema_max_rk_boundary", schema);
-    assert_json_snapshot!("avro_schema_max_rk_boundary", avro_schema);
+    snapshot_with_input("schema_max_rk_boundary", data, schema, schema_args);
+    snapshot_with_input("avro_schema_max_rk_boundary", data, avro_schema, avro_args);
 
     // Snapshot normalized data showing boundary cases
-    assert_json_snapshot!("normalized_max_rk_boundary", normalized);
+    snapshot_with_input("normalized_max_rk_boundary", data, normalized, norm_args);
 }
 
 #[test]
 fn test_map_max_rk_complex_nested() {
-    // Tests nested objects with different required key patterns and homogeneity requirements.
+    // Tests nested objects with different required key counts.
     //
     // Expected outputs:
-    // - JSON Schema: Root level stays Record (user+config required, but mixed types).
-    //   `user` stays Record (id+name required, but mixed int/string types).
-    //   `config` becomes Map (host+port required ≤ 2, homogeneous strings).
-    // - Avro Schema: Root and user are "type": "record", config is "type": "map"
-    // - Normalized: Only config field gets Map treatment due to homogeneity + required key count
+    // - user: 3 required keys (id, name, role) > 2 → Record (blocked by max_rk)
+    // - config: 2 required keys (host, port) ≤ 2 → Map (allowed by max_rk)
     let data = r#"
-{"user": {"id": 1, "name": "Alice"}, "config": {"host": "localhost", "port": "8080", "debug": "true"}}
-{"user": {"id": 2, "name": "Bob"}, "config": {"host": "prod.com", "port": "443"}}
-{"user": {"id": 3, "name": "Charlie"}, "config": {"host": "test.com", "port": "3000", "env": "test"}}
+{"user": {"id": "1", "name": "Alice", "role": "admin"}, "config": {"host": "localhost", "port": "8080", "debug": "true"}}
+{"user": {"id": "2", "name": "Bob", "role": "user"}, "config": {"host": "prod.com", "port": "443"}}
+{"user": {"id": "3", "name": "Charlie", "role": "user"}, "config": {"host": "test.com", "port": "3000", "env": "test"}}
 "#;
 
-    let (schema, normalized) = test_map_max_rk(data, 2, Some(2));
-    let avro_schema = test_map_max_rk_avro(data, 2, Some(2));
+    let (schema, normalized, schema_args, norm_args) = test_map_max_rk(data, 2, Some(2));
+    let (avro_schema, avro_args) = test_map_max_rk_avro(data, 2, Some(2));
 
     // Snapshot schema:
-    // Root: user, config both required (2 ≤ 2) → could be Map but fails homogeneity
-    // user: id, name both required (2 ≤ 2) → could be Map but fails homogeneity
-    // config: host, port required, others optional (2 ≤ 2) → Map (homogeneous strings)
-    assert_json_snapshot!("schema_max_rk_nested", schema);
-    assert_json_snapshot!("avro_schema_max_rk_nested", avro_schema);
+    // user: 3 required keys > 2 → Record (blocked by max_rk limit)
+    // config: 2 required keys ≤ 2 → Map (allowed by max_rk limit)
+    snapshot_with_input("schema_max_rk_nested", data, schema, schema_args);
+    snapshot_with_input("avro_schema_max_rk_nested", data, avro_schema, avro_args);
 
-    // Snapshot normalized data showing nested Map/Record decisions
-    assert_json_snapshot!("normalized_max_rk_nested", normalized);
+    // Snapshot normalized data showing user as Record, config as Map
+    snapshot_with_input("normalized_max_rk_nested", data, normalized, norm_args);
 }
 
 #[test]
@@ -267,27 +345,27 @@ fn test_map_max_rk_progression() {
 "#;
 
     // Test with max_rk=0: should be Record (2 required > 0)
-    let (schema0, norm0) = test_map_max_rk(data, 2, Some(0));
-    let avro0 = test_map_max_rk_avro(data, 2, Some(0));
+    let (schema0, norm0, schema_args0, norm_args0) = test_map_max_rk(data, 2, Some(0));
+    let (avro0, avro_args0) = test_map_max_rk_avro(data, 2, Some(0));
 
     // Test with max_rk=1: should be Record (2 required > 1)
-    let (schema1, norm1) = test_map_max_rk(data, 2, Some(1));
-    let avro1 = test_map_max_rk_avro(data, 2, Some(1));
+    let (schema1, norm1, schema_args1, norm_args1) = test_map_max_rk(data, 2, Some(1));
+    let (avro1, avro_args1) = test_map_max_rk_avro(data, 2, Some(1));
 
     // Test with max_rk=2: should be Map (2 required ≤ 2)
-    let (schema2, norm2) = test_map_max_rk(data, 2, Some(2));
-    let avro2 = test_map_max_rk_avro(data, 2, Some(2));
+    let (schema2, norm2, schema_args2, norm_args2) = test_map_max_rk(data, 2, Some(2));
+    let (avro2, avro_args2) = test_map_max_rk_avro(data, 2, Some(2));
 
     // Snapshot all three to show progression
-    assert_json_snapshot!("schema_progression_rk0", schema0);
-    assert_json_snapshot!("avro_progression_rk0", avro0);
-    assert_json_snapshot!("normalized_progression_rk0", norm0);
+    snapshot_with_input("schema_progression_rk0", data, schema0, schema_args0);
+    snapshot_with_input("avro_progression_rk0", data, avro0, avro_args0);
+    snapshot_with_input("normalized_progression_rk0", data, norm0, norm_args0);
 
-    assert_json_snapshot!("schema_progression_rk1", schema1);
-    assert_json_snapshot!("avro_progression_rk1", avro1);
-    assert_json_snapshot!("normalized_progression_rk1", norm1);
+    snapshot_with_input("schema_progression_rk1", data, schema1, schema_args1);
+    snapshot_with_input("avro_progression_rk1", data, avro1, avro_args1);
+    snapshot_with_input("normalized_progression_rk1", data, norm1, norm_args1);
 
-    assert_json_snapshot!("schema_progression_rk2", schema2);
-    assert_json_snapshot!("avro_progression_rk2", avro2);
-    assert_json_snapshot!("normalized_progression_rk2", norm2);
+    snapshot_with_input("schema_progression_rk2", data, schema2, schema_args2);
+    snapshot_with_input("avro_progression_rk2", data, avro2, avro_args2);
+    snapshot_with_input("normalized_progression_rk2", data, norm2, norm_args2);
 }

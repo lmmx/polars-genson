@@ -1,6 +1,33 @@
 ---
 source: genson-cli/tests/normalise.rs
-expression: stdout_str
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+  input:
+    - id: Q1
+      aliases: []
+      labels: {}
+      description: Example entity
+    - id: Q2
+      aliases:
+        - Sample
+      labels:
+        en: Hello
+      description: ~
+    - id: Q3
+      aliases: ~
+      labels:
+        fr: Bonjour
+      description: Third one
+    - id: Q4
+      aliases:
+        - X
+        - Y
+      labels: {}
+      description: ""
 ---
 {"id":"Q1","aliases":null,"labels":{"en":null,"fr":null},"description":"Example entity"}
 {"id":"Q2","aliases":["Sample"],"labels":{"en":"Hello","fr":null},"description":null}

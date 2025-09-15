@@ -1,0 +1,74 @@
+---
+source: genson-cli/tests/wrapping.rs
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+    - "--map-encoding"
+    - kv
+    - "--wrap-root"
+    - labels
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
+---
+{
+  "labels": [
+    {
+      "key": "en",
+      "value": {
+        "language": "en",
+        "value": "Jack Bauer"
+      }
+    },
+    {
+      "key": "fr",
+      "value": {
+        "language": "fr",
+        "value": "Jack Bauer"
+      }
+    }
+  ]
+}
+{
+  "labels": [
+    {
+      "key": "en",
+      "value": {
+        "language": "en",
+        "value": "happiness"
+      }
+    },
+    {
+      "key": "fr",
+      "value": {
+        "language": "fr",
+        "value": "bonheur"
+      }
+    },
+    {
+      "key": "rn",
+      "value": {
+        "language": "rn",
+        "value": "Umunezero"
+      }
+    }
+  ]
+}

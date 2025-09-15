@@ -1,6 +1,16 @@
 ---
 source: genson-cli/tests/normalise.rs
-expression: stdout_str
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+  input:
+    - foo: json
+    - foo:
+        - bar
+        - baz
 ---
 {"foo":["json"]}
 {"foo":["bar","baz"]}

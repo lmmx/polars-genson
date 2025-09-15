@@ -1,55 +1,57 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: normalized
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - at_rk_limit:
+        req1: always
+        optional2: sometimes
+    - at_rk_limit:
+        req1: always
+    - over_rk_limit:
+        req1: always
+        req2: present
+        optional3: sometimes
+    - over_rk_limit:
+        req1: always
+        req2: present
 ---
 [
   {
-    "at_map_threshold": {
-      "key1": "val1",
-      "key2": "val2"
-    },
-    "at_rk_limit": null,
-    "over_rk_limit": null
-  },
-  {
-    "at_map_threshold": {
-      "key1": "val3",
-      "key2": "val4"
-    },
-    "at_rk_limit": null,
-    "over_rk_limit": null
-  },
-  {
-    "at_map_threshold": null,
     "at_rk_limit": {
-      "required": "always",
-      "optional": "sometimes"
+      "req1": "always",
+      "optional2": "sometimes"
     },
     "over_rk_limit": null
   },
   {
-    "at_map_threshold": null,
     "at_rk_limit": {
-      "required": "always"
+      "req1": "always"
     },
     "over_rk_limit": null
   },
   {
-    "at_map_threshold": null,
     "at_rk_limit": null,
     "over_rk_limit": {
       "req1": "always",
       "req2": "present",
-      "optional": "sometimes"
+      "optional3": "sometimes"
     }
   },
   {
-    "at_map_threshold": null,
     "at_rk_limit": null,
     "over_rk_limit": {
       "req1": "always",
       "req2": "present",
-      "optional": null
+      "optional3": null
     }
   }
 ]

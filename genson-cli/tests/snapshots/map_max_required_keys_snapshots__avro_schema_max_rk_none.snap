@@ -1,6 +1,26 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: avro_schema
+expression: value
+info:
+  approved: true
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+  input:
+    - structured:
+        req1: val1
+        req2: val2
+        req3: val3
+    - structured:
+        req1: val4
+        req2: val5
+        req3: val6
+    - below_threshold:
+        only: one
+    - below_threshold:
+        only: two
 ---
 {
   "type": "record",

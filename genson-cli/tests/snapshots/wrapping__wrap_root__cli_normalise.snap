@@ -1,0 +1,52 @@
+---
+source: genson-cli/tests/wrapping.rs
+expression: parse_ndjson(&stdout_str)
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+    - "--map-encoding"
+    - kv
+    - "--wrap-root"
+    - labels
+  input:
+    - en:
+        language: en
+        value: Hello
+      fr:
+        language: fr
+        value: Bonjour
+      es:
+        language: es
+        value: Hola
+---
+[
+  {
+    "labels": [
+      {
+        "key": "en",
+        "value": {
+          "language": "en",
+          "value": "Hello"
+        }
+      },
+      {
+        "key": "fr",
+        "value": {
+          "language": "fr",
+          "value": "Bonjour"
+        }
+      },
+      {
+        "key": "es",
+        "value": {
+          "language": "es",
+          "value": "Hola"
+        }
+      }
+    ]
+  }
+]

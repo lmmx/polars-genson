@@ -1,0 +1,75 @@
+---
+blessing:
+reason: "Map<Record{language,value}>, the Map gets kv encoded"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-encoding"
+    - kv
+    - "--map-threshold"
+    - "3"
+    - "--wrap-root"
+    - labels
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
+---
+{
+  "labels": [
+    {
+      "key": "en",
+      "value": {
+        "language": "en",
+        "value": "Jack Bauer"
+      }
+    },
+    {
+      "key": "fr",
+      "value": {
+        "language": "fr",
+        "value": "Jack Bauer"
+      }
+    }
+  ]
+}
+{
+  "labels": [
+    {
+      "key": "en",
+      "value": {
+        "language": "en",
+        "value": "happiness"
+      }
+    },
+    {
+      "key": "fr",
+      "value": {
+        "language": "fr",
+        "value": "bonheur"
+      }
+    },
+    {
+      "key": "rn",
+      "value": {
+        "language": "rn",
+        "value": "Umunezero"
+      }
+    }
+  ]
+}

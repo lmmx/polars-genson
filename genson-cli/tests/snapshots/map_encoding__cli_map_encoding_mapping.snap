@@ -1,6 +1,20 @@
 ---
 source: genson-cli/tests/map_encoding.rs
-expression: parse_ndjson(&stdout_str)
+expression: parsed_output
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--map-encoding"
+    - mapping
+  input:
+    id: A
+    labels:
+      en: Hello
+      fr: Bonjour
 ---
 [
   {

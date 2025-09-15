@@ -1,6 +1,21 @@
 ---
 source: genson-cli/tests/normalise.rs
-expression: stdout_str
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--coerce-strings"
+  input:
+    - int_field: 1
+      float_field: 3.14
+      bool_field: true
+    - int_field: "42"
+      float_field: "2.718"
+      bool_field: "false"
+    - int_field: ~
+      float_field: ~
 ---
 {"int_field":1,"float_field":3.14,"bool_field":true}
 {"int_field":42,"float_field":2.718,"bool_field":false}

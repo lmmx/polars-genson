@@ -1,4 +1,5 @@
 import ".just/commit.just"
+import ".just/bless.just"
 
 default: clippy
 
@@ -327,7 +328,7 @@ fix-eof-ws mode="":
     whitespace-format --add-new-line-marker-at-end-of-file \
           --new-line-marker=linux \
           --normalize-new-line-markers \
-          --exclude ".git/|target/|dist/|\.so$|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
+          --exclude ".git/|target/|dist/|\.swp|\.so$|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
           $ARGS \
           .
 

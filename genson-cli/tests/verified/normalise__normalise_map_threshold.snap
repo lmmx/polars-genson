@@ -1,0 +1,16 @@
+---
+blessing:
+reason: "Setting map threshold to 2 gives a simple string-valued Map, we do not see a Record with null fields"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - id: A
+      labels:
+        en: Hello
+    - id: B
+      labels:
+        fr: Bonjour
+---
+{"id":"A","labels":{"en":"Hello"}}
+{"id":"B","labels":{"fr":"Bonjour"}}

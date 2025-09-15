@@ -1,6 +1,33 @@
 ---
 source: genson-cli/tests/normalise.rs
 expression: avro_str
+info:
+  approved: true
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-encoding"
+    - kv
+    - "--map-threshold"
+    - "3"
+    - "--wrap-root"
+    - labels
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
 ---
 {
   "type": "record",
@@ -10,38 +37,23 @@ expression: avro_str
     {
       "name": "labels",
       "type": {
-        "type": "record",
         "name": "labels",
-        "namespace": "genson.document_types",
-        "fields": [
-          {
-            "name": "en",
-            "type": {
-              "name": "en",
-              "type": "map",
-              "values": "string"
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "labels_values",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "language",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "type": "string"
             }
-          },
-          {
-            "name": "fr",
-            "type": {
-              "name": "fr",
-              "type": "map",
-              "values": "string"
-            }
-          },
-          {
-            "name": "rn",
-            "type": [
-              "null",
-              {
-                "name": "rn",
-                "type": "map",
-                "values": "string"
-              }
-            ]
-          }
-        ]
+          ]
+        }
       }
     }
   ]

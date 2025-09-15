@@ -1,6 +1,30 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: normalized
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - one_required:
+        common: always
+        varies: sometimes
+    - one_required:
+        common: always
+        other: different
+    - two_required:
+        stable1: always
+        stable2: present
+        varies: sometimes
+    - two_required:
+        stable1: always
+        stable2: present
+        other: value
 ---
 [
   {

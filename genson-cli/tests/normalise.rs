@@ -1,5 +1,7 @@
 use assert_cmd::Command;
-use insta::assert_snapshot;
+use insta::{assert_snapshot, with_settings};
+use serde_json::Value;
+use std::fs;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -15,338 +17,291 @@ fn pretty_print_ndjson(raw: &str) -> String {
         .join("\n")
 }
 
-#[test]
-fn test_normalise_ndjson_snapshot() {
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(
-        temp,
-        r#"{{"id": "Q1", "aliases": [], "labels": {{}}, "description": "Example entity"}}"#
-    )
-    .unwrap();
-    writeln!(
-        temp,
-        r#"{{"id": "Q2", "aliases": ["Sample"], "labels": {{"en": "Hello"}}, "description": null}}"#
-    )
-    .unwrap();
-    writeln!(
-        temp,
-        r#"{{"id": "Q3", "aliases": null, "labels": {{"fr": "Bonjour"}}, "description": "Third one"}}"#
-    ).unwrap();
-    writeln!(
-        temp,
-        r#"{{"id": "Q4", "aliases": ["X","Y"], "labels": {{}}, "description": ""}}"#
-    )
-    .unwrap();
+/// Check if the current output matches the verified/blessed version
+fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
+    // file!() gives something like "tests/normalise.rs"
+    let module_file = file!();
+    let module_stem = std::path::Path::new(module_file)
+        .file_stem()
+        .unwrap()
+        .to_string_lossy();
 
+    let verified_path = format!("tests/verified/{}__{}.snap", module_stem, snapshot_name);
+
+    if let Ok(verified_content) = fs::read_to_string(&verified_path) {
+        // Extract just the content part from the verified snapshot
+        // Skip the YAML header (everything up to and including the "---" line)
+        if let Some(header_end) = verified_content.find("\n---\n") {
+            let verified_output = &verified_content[header_end + 5..]; // Skip "\n---\n"
+            return verified_output.trim() == output.trim();
+        }
+    }
+    false
+}
+
+/// Run genson-cli with given args, writing `rows` into a temp NDJSON file,
+/// and snapshot the CLI output with the input data included in the header.
+fn run_normalise_snapshot(name: &str, rows: &[&str], extra_args: &[&str], pretty: bool) {
+    // write rows to a temp NDJSON file
+    let mut temp = NamedTempFile::new().unwrap();
+    for row in rows {
+        writeln!(temp, "{}", row).unwrap();
+    }
+
+    // run the CLI
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
+    let mut args = vec!["--normalise", "--ndjson"];
+    args.extend_from_slice(extra_args);
+    args.push(temp.path().to_str().unwrap());
+    cmd.args(&args);
 
     let output = cmd.assert().success().get_output().stdout.clone();
     let stdout_str = String::from_utf8(output).unwrap();
 
-    assert_snapshot!("normalise_ndjson", stdout_str);
+    // optionally pretty-print NDJSON
+    let value = if pretty {
+        pretty_print_ndjson(&stdout_str)
+    } else {
+        stdout_str.clone()
+    };
+
+    // attach the original input rows as structured JSON in the header
+    let input_json: Vec<Value> = rows
+        .iter()
+        .map(|s| serde_json::from_str::<Value>(s).unwrap())
+        .collect();
+
+    // Check if this output matches the blessed/verified version
+    let approved = is_output_approved(name, &value);
+
+    with_settings!({
+        info => &serde_json::json!({
+            "approved": approved,
+            "args": args[..args.len()-1],  // exclude the temp file path
+            "input": input_json
+        })
+    }, {
+        assert_snapshot!(name, value);
+    });
+}
+
+/// Simple helper for Avro-only schema snapshots
+fn run_avro_schema_snapshot(name: &str, rows: &[&str], extra_args: &[&str]) {
+    let mut temp = NamedTempFile::new().unwrap();
+    for row in rows {
+        writeln!(temp, "{}", row).unwrap();
+    }
+
+    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
+    let mut args = vec!["--avro", "--ndjson"];
+    args.extend_from_slice(extra_args);
+    args.push(temp.path().to_str().unwrap());
+    cmd.args(&args);
+
+    let output = cmd.assert().success().get_output().stdout.clone();
+    let avro_str = String::from_utf8(output).unwrap();
+
+    let input_json: Vec<Value> = rows
+        .iter()
+        .map(|s| serde_json::from_str::<Value>(s).unwrap())
+        .collect();
+
+    // Check if this output matches the blessed/verified version
+    let approved = is_output_approved(name, &avro_str);
+
+    with_settings!({
+        info => &serde_json::json!({
+            "approved": approved,
+            "args": &args[..&args.len()-1],  // exclude the temp file path
+            "input": input_json
+        })
+    }, {
+        assert_snapshot!(name, avro_str);
+    });
+}
+
+#[test]
+fn test_normalise_ndjson_snapshot() {
+    run_normalise_snapshot(
+        "normalise_ndjson",
+        &[
+            r#"{"id": "Q1", "aliases": [], "labels": {}, "description": "Example entity"}"#,
+            r#"{"id": "Q2", "aliases": ["Sample"], "labels": {"en": "Hello"}, "description": null}"#,
+            r#"{"id": "Q3", "aliases": null, "labels": {"fr": "Bonjour"}, "description": "Third one"}"#,
+            r#"{"id": "Q4", "aliases": ["X","Y"], "labels": {}, "description": ""}"#,
+        ],
+        &[],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_union_coercion_snapshot() {
-    // Create NDJSON file with heterogeneous types
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(
-        temp,
-        r#"{{"int_field": 1, "float_field": 3.14, "bool_field": true}}"#
-    )
-    .unwrap();
-    // These are strings but since the schema type is a union, the first type takes precedence and
-    // the type coercion from string kicks in
-    writeln!(
-        temp,
-        r#"{{"int_field": "42", "float_field": "2.718", "bool_field": "false"}}"#
-    )
-    .unwrap();
-    writeln!(temp, r#"{{"int_field": null, "float_field": null}}"#).unwrap();
-
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args([
-        "--normalise",
-        "--coerce-strings",
-        "--ndjson",
-        temp.path().to_str().unwrap(),
-    ]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Compare against snapshot
-    assert_snapshot!("normalise_union_coercion", stdout_str);
+    run_normalise_snapshot(
+        "normalise_union_coercion",
+        &[
+            r#"{"int_field": 1, "float_field": 3.14, "bool_field": true}"#,
+            r#"{"int_field": "42", "float_field": "2.718", "bool_field": "false"}"#,
+            r#"{"int_field": null, "float_field": null}"#,
+        ],
+        &["--coerce-strings"],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_string_or_array_snapshot() {
-    // NDJSON with heterogeneous shapes for "foo"
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(temp, r#"{{"foo": "json"}}"#).unwrap();
-    writeln!(temp, r#"{{"foo": ["bar", "baz"]}}"#).unwrap();
-
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot ensures scalar string widened to array, and arrays pass through
-    assert_snapshot!("normalise_string_or_array", stdout_str);
+    run_normalise_snapshot(
+        "normalise_string_or_array",
+        &[r#"{"foo": "json"}"#, r#"{"foo": ["bar", "baz"]}"#],
+        &[],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_string_or_array_snapshot_rev() {
-    // NDJSON with heterogeneous shapes for "foo"
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(temp, r#"{{"foo": ["bar", "baz"]}}"#).unwrap();
-    writeln!(temp, r#"{{"foo": "json"}}"#).unwrap();
-
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot ensures scalar string widened to array, and arrays pass through
-    assert_snapshot!("normalise_string_or_array_rev", stdout_str);
+    run_normalise_snapshot(
+        "normalise_string_or_array_rev",
+        &[r#"{"foo": ["bar", "baz"]}"#, r#"{"foo": "json"}"#],
+        &[],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_object_or_array_snapshot() {
-    // Create NDJSON file with mixed object/array values for the same field
-    let mut temp = NamedTempFile::new().unwrap();
-    // First row: array of objects
-    writeln!(temp, r#"{{"foo": [{{"bar": 1}}]}}"#).unwrap();
-    // Second row: single object
-    writeln!(temp, r#"{{"foo": {{"bar": 2}}}}"#).unwrap();
-
-    // Run CLI with normalisation enabled
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot should show that the single object was widened to an array
-    assert_snapshot!("normalise_object_or_array", stdout_str);
+    run_normalise_snapshot(
+        "normalise_object_or_array",
+        &[r#"{"foo": [{"bar": 1}]}"#, r#"{"foo": {"bar": 2}}"#],
+        &[],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_missing_field_snapshot() {
-    // NDJSON with one row missing the "foo" field entirely
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(temp, r#"{{"foo": "present"}}"#).unwrap();
-    writeln!(temp, r#"{{"bar": 123}}"#).unwrap(); // foo missing here
-
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot should show that the second row has "foo": null
-    assert_snapshot!("normalise_missing_field", stdout_str);
+    run_normalise_snapshot(
+        "normalise_missing_field",
+        &[r#"{"foo": "present"}"#, r#"{"bar": 123}"#],
+        &[],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_null_vs_missing_field_snapshot() {
-    // First row: foo explicitly null
-    // Second row: foo completely missing
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(temp, r#"{{"foo": null, "bar": 1}}"#).unwrap();
-    writeln!(temp, r#"{{"bar": 2}}"#).unwrap();
-
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot should show: row 1 foo=null, row 2 foo=null (injected for missing)
-    assert_snapshot!("normalise_null_vs_missing_field", stdout_str);
+    run_normalise_snapshot(
+        "normalise_null_vs_missing_field",
+        &[r#"{"foo": null, "bar": 1}"#, r#"{"bar": 2}"#],
+        &[],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_empty_map_snapshot() {
-    // NDJSON where "labels" is always an empty map
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(temp, r#"{{"id": "A", "labels": {{}}}}"#).unwrap();
-    writeln!(temp, r#"{{"id": "B", "labels": {{"en": "Hello"}}}}"#).unwrap();
-
-    // Run CLI with normalisation enabled (default empty_as_null=true)
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args([
-        "--normalise",
-        "--ndjson",
-        "--map-threshold",
-        "0",
-        temp.path().to_str().unwrap(),
-    ]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot should show labels normalised to null
-    assert_snapshot!("normalise_empty_map", stdout_str);
+    run_normalise_snapshot(
+        "normalise_empty_map",
+        &[
+            r#"{"id": "A", "labels": {}}"#,
+            r#"{"id": "B", "labels": {"en": "Hello"}}"#,
+        ],
+        &["--map-threshold", "0"],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_map_threshold_snapshot() {
-    // NDJSON where "labels" vary but all values are strings
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(temp, r#"{{"id": "A", "labels": {{"en": "Hello"}}}}"#).unwrap();
-    writeln!(temp, r#"{{"id": "B", "labels": {{"fr": "Bonjour"}}}}"#).unwrap();
-
-    // Use low map threshold to force rewriting into "map" type
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args([
-        "--normalise",
-        "--ndjson",
-        "--map-threshold",
-        "2",
-        temp.path().to_str().unwrap(),
-    ]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot should show "labels" stabilised as a map (additionalProperties form)
-    assert_snapshot!("normalise_map_threshold", stdout_str);
+    run_normalise_snapshot(
+        "normalise_map_threshold",
+        &[
+            r#"{"id": "A", "labels": {"en": "Hello"}}"#,
+            r#"{"id": "B", "labels": {"fr": "Bonjour"}}"#,
+        ],
+        &["--map-threshold", "2"],
+        false,
+    );
 }
 
 #[test]
 fn test_normalise_scalar_to_map_snapshot() {
-    // NDJSON where "labels" is sometimes scalar
-    let mut temp = NamedTempFile::new().unwrap();
-    writeln!(temp, r#"{{"id": "A", "labels": "foo"}}"#).unwrap();
-    writeln!(temp, r#"{{"id": "B", "labels": {{"en": "Hello"}}}}"#).unwrap();
-
-    // Run CLI with normalisation enabled
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args(["--normalise", "--ndjson", temp.path().to_str().unwrap()]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    // Snapshot should show row 1 coerced into {"labels":{"default":"foo"}}
-    assert_snapshot!("normalise_scalar_to_map", stdout_str);
+    run_normalise_snapshot(
+        "normalise_scalar_to_map",
+        &[
+            r#"{"id": "A", "labels": "foo"}"#,
+            r#"{"id": "B", "labels": {"en": "Hello"}}"#,
+        ],
+        &["--map-threshold", "1"],
+        false,
+    );
 }
 
+/// Both schema and normalisation give `{"document": null}`, unclear why (threshold invariant)
 #[test]
 fn test_normalise_labels_map_of_structs_snapshot() {
-    // NDJSON where each row is literally a raw JSON string
-    let mut temp = NamedTempFile::new().unwrap();
+    // The following DO NOT WORK if provided the content of the labels field at the top level
+    run_normalise_snapshot(
+        "normalise_labels_map_of_structs",
+        &[
+            r#"{"labels":{"en":{"language":"en","value":"Jack Bauer"},"fr":{"language":"fr","value":"Jack Bauer"}}}"#,
+            r#"{"labels":{"en":{"language":"en","value":"happiness"},"fr":{"language":"fr","value":"bonheur"},"rn":{"language":"rn","value":"Umunezero"}}}"#,
+        ],
+        &["--map-encoding", "kv", "--map-threshold", "3"],
+        true,
+    );
 
-    // First row: two languages
-    writeln!(
-        temp,
-        r#"{{"en":{{"language":"en","value":"Jack Bauer"}},"fr":{{"language":"fr","value":"Jack Bauer"}}}}"#
-    )
-    .unwrap();
-
-    // Second row: three languages
-    writeln!(
-        temp,
-        r#"{{"en":{{"language":"en","value":"happiness"}},"fr":{{"language":"fr","value":"bonheur"}},"rn":{{"language":"rn","value":"Umunezero"}}}}"#
-    )
-    .unwrap();
-
-    // Run CLI with normalisation enabled and force map detection
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args([
-        "--normalise",
-        "--ndjson",
-        "--map-encoding",
-        "kv",
-        "--map-threshold",
-        "0", // ensure it's treated as a map
-        temp.path().to_str().unwrap(),
-    ]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    let pretty_output = pretty_print_ndjson(&stdout_str);
-
-    assert_snapshot!("normalise_labels_map_of_structs", pretty_output);
-
-    // ---------- Second call: avro schema ----------
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args([
-        "--avro",
-        "--ndjson",
-        "--map-encoding",
-        "kv",
-        "--map-threshold",
-        "0",
-        temp.path().to_str().unwrap(),
-    ]);
-
-    let avro_output = cmd.assert().success().get_output().stdout.clone();
-    let avro_str = String::from_utf8(avro_output).unwrap();
-
-    assert_snapshot!("avro_labels_map_of_structs", avro_str);
+    // Avro schema variant
+    run_avro_schema_snapshot(
+        "avro_labels_map_of_structs",
+        &[
+            r#"{"labels":{"en":{"language":"en","value":"Jack Bauer"},"fr":{"language":"fr","value":"Jack Bauer"}}}"#,
+            r#"{"labels":{"en":{"language":"en","value":"happiness"},"fr":{"language":"fr","value":"bonheur"},"rn":{"language":"rn","value":"Umunezero"}}}"#,
+        ],
+        &["--map-encoding", "kv", "--map-threshold", "3"],
+    );
 }
 
+/// A map of structs is a Map<key:String, value:<Record{language:String,Value:String}>>
+/// The key and value should be promoted to "key": ..., "value": ... in the kv map encoding
+///
+/// - The inner record should be schematised to Record
+/// - The outer map should be promoted to kv map encoding
 #[test]
 fn test_normalise_labels_wrap_map_of_structs_snapshot() {
-    // NDJSON where each row is literally a raw JSON string
-    let mut temp = NamedTempFile::new().unwrap();
+    run_normalise_snapshot(
+        "normalise_labels_wrap_map_of_structs",
+        &[
+            r#"{"en":{"language":"en","value":"Jack Bauer"},"fr":{"language":"fr","value":"Jack Bauer"}}"#,
+            r#"{"en":{"language":"en","value":"happiness"},"fr":{"language":"fr","value":"bonheur"},"rn":{"language":"rn","value":"Umunezero"}}"#,
+        ],
+        &[
+            "--map-encoding",
+            "kv",
+            "--map-threshold",
+            "3",
+            "--wrap-root",
+            "labels",
+        ],
+        true,
+    );
 
-    // First row: two languages
-    writeln!(
-        temp,
-        r#"{{"en":{{"language":"en","value":"Jack Bauer"}},"fr":{{"language":"fr","value":"Jack Bauer"}}}}"#
-    )
-    .unwrap();
-
-    // Second row: three languages
-    writeln!(
-        temp,
-        r#"{{"en":{{"language":"en","value":"happiness"}},"fr":{{"language":"fr","value":"bonheur"}},"rn":{{"language":"rn","value":"Umunezero"}}}}"#
-    )
-    .unwrap();
-
-    // Run CLI with normalisation enabled and force map detection
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args([
-        "--normalise",
-        "--ndjson",
-        "--map-encoding",
-        "kv",
-        "--map-threshold",
-        "0", // ensure it's treated as a map
-        "--wrap-root",
-        "labels",
-        temp.path().to_str().unwrap(),
-    ]);
-
-    let output = cmd.assert().success().get_output().stdout.clone();
-    let stdout_str = String::from_utf8(output).unwrap();
-
-    let pretty_output = pretty_print_ndjson(&stdout_str);
-
-    assert_snapshot!("normalise_labels_wrap_map_of_structs", pretty_output);
-
-    // ---------- Second call: avro schema ----------
-    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    cmd.args([
-        "--avro",
-        "--ndjson",
-        "--map-encoding",
-        "kv",
-        "--map-threshold",
-        "0",
-        "--wrap-root",
-        "labels",
-        temp.path().to_str().unwrap(),
-    ]);
-
-    let avro_output = cmd.assert().success().get_output().stdout.clone();
-    let avro_str = String::from_utf8(avro_output).unwrap();
-
-    assert_snapshot!("avro_labels_wrap_map_of_structs", avro_str);
+    // Avro schema variant
+    let rows = [
+        r#"{"en":{"language":"en","value":"Jack Bauer"},"fr":{"language":"fr","value":"Jack Bauer"}}"#,
+        r#"{"en":{"language":"en","value":"happiness"},"fr":{"language":"fr","value":"bonheur"},"rn":{"language":"rn","value":"Umunezero"}}"#,
+    ];
+    run_avro_schema_snapshot(
+        "avro_labels_wrap_map_of_structs",
+        &rows,
+        &[
+            "--map-encoding",
+            "kv",
+            "--map-threshold",
+            "3",
+            "--wrap-root",
+            "labels",
+        ],
+    );
 }

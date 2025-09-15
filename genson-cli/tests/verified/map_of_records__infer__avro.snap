@@ -1,0 +1,57 @@
+---
+blessing:
+reason: "Map of records with language and value fields"
+source: genson-cli/tests/map_of_records.rs
+expression: stdout_str
+info:
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "document",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "document_extensions",
+          "namespace": "genson",
+          "fields": [
+            {
+              "name": "language",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "type": "string"
+            }
+          ]
+        },
+        "name": "document"
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+---
+blessing:
+reason: "fully_optional is Map<String, String> because 0 required keys ≤ 0, has_required is Record<always: String, sometimes: String, other: String> because 1 required key > 0"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "0"
+  input:
+    - fully_optional:
+        sometimes: here
+        other: maybe
+    - fully_optional:
+        different: keys
+    - has_required:
+        always: present
+        sometimes: here
+    - has_required:
+        always: present
+        other: value
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "fully_optional": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "has_required": {
+      "properties": {
+        "always": {
+          "type": "string"
+        },
+        "sometimes": {
+          "type": "string"
+        },
+        "other": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "always"
+      ],
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

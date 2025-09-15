@@ -1,6 +1,39 @@
 ---
 source: genson-cli/tests/map_max_required_keys_snapshots.rs
-expression: avro_schema
+expression: value
+info:
+  approved: true
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "2"
+  input:
+    - user:
+        id: "1"
+        name: Alice
+        role: admin
+      config:
+        host: localhost
+        port: "8080"
+        debug: "true"
+    - user:
+        id: "2"
+        name: Bob
+        role: user
+      config:
+        host: prod.com
+        port: "443"
+    - user:
+        id: "3"
+        name: Charlie
+        role: user
+      config:
+        host: test.com
+        port: "3000"
+        env: test
 ---
 {
   "type": "record",
@@ -16,10 +49,14 @@ expression: avro_schema
         "fields": [
           {
             "name": "id",
-            "type": "int"
+            "type": "string"
           },
           {
             "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "role",
             "type": "string"
           }
         ]

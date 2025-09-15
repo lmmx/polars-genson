@@ -1,0 +1,58 @@
+---
+blessing:
+reason: "at_rk_limit is a Map (1 required key <= 1) so omits missing fields, Record behaviour for over_rk_limit (2 required keys > 1) pads missing optional3 with null"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - at_rk_limit:
+        req1: always
+        optional2: sometimes
+    - at_rk_limit:
+        req1: always
+    - over_rk_limit:
+        req1: always
+        req2: present
+        optional3: sometimes
+    - over_rk_limit:
+        req1: always
+        req2: present
+---
+[
+  {
+    "at_rk_limit": {
+      "req1": "always",
+      "optional2": "sometimes"
+    },
+    "over_rk_limit": null
+  },
+  {
+    "at_rk_limit": {
+      "req1": "always"
+    },
+    "over_rk_limit": null
+  },
+  {
+    "at_rk_limit": null,
+    "over_rk_limit": {
+      "req1": "always",
+      "req2": "present",
+      "optional3": "sometimes"
+    }
+  },
+  {
+    "at_rk_limit": null,
+    "over_rk_limit": {
+      "req1": "always",
+      "req2": "present",
+      "optional3": null
+    }
+  }
+]

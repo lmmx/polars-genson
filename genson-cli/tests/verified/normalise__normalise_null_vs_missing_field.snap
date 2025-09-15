@@ -1,0 +1,13 @@
+---
+blessing:
+reason: "A present null and absent field look the same after normalisation"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - foo: ~
+      bar: 1
+    - bar: 2
+---
+{"foo":null,"bar":1}
+{"foo":null,"bar":2}

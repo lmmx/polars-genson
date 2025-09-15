@@ -27,11 +27,14 @@ fn test_empty_objects_handled_correctly() {
 
 #[test]
 fn test_single_key_objects() {
-    let json_strings = vec![r#"{"single": {"only_key": "value"}}"#.to_string()];
+    let json_strings = vec![
+        r#"{"single": {"one_key": "value"}}"#.to_string(),
+        r#"{"single": {"extra_key": "value"}}"#.to_string(),
+    ];
 
     let config = SchemaInferenceConfig {
         map_threshold: 1,
-        map_max_required_keys: Some(1), // Exactly at the threshold
+        map_max_required_keys: Some(0), // Exactly at the threshold
         ..Default::default()
     };
 

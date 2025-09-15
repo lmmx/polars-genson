@@ -1,0 +1,14 @@
+---
+blessing:
+reason: "Coerce an object record into a list of records"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - foo:
+        - bar: 1
+    - foo:
+        bar: 2
+---
+{"foo":[{"bar":1}]}
+{"foo":[{"bar":2}]}
