@@ -3,7 +3,7 @@
 
 import polars as pl
 import polars_genson as pg
-from pytest import mark
+from pytest import mark, raises
 
 
 def test_decode_basic_record_schema_and_values():
@@ -152,3 +152,45 @@ def test_decode_with_wrap_root_true_uses_column_name():
 
     assert out.schema == {"json_data": pl.Struct({"x": pl.Int64})}
     assert out.to_dicts() == [{"json_data": {"x": 1}}, {"json_data": {"x": 2}}]
+
+
+def test_decode_with_explicit_schema():
+    """Verify that passing a schema to decode skips inference and uses dtype directly."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"id": 1, "name": "Alice"}',
+                '{"id": 2, "name": "Bob"}',
+            ]
+        }
+    )
+
+    schema = pl.Struct({"id": pl.Int64, "name": pl.String})
+
+    out = df.genson.normalise_json("json_data", decode=schema)
+
+    # Should match the schema exactly
+    assert out.schema == pl.Schema(schema)
+
+    # Values should decode according to the provided schema
+    assert out.to_dicts() == [
+        {"id": 1, "name": "Alice"},
+        {"id": 2, "name": "Bob"},
+    ]
+
+
+def test_decode_with_invalid_schema():
+    """Verify that passing a schema to decode skips inference and uses dtype directly."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"id": 1, "name": "Alice"}',
+                '{"id": 2, "name": "Bob"}',
+            ]
+        }
+    )
+
+    schema = pl.Struct({"id": pl.Int64, "name": pl.Null})
+
+    with raises(pl.exceptions.ComputeError):
+        out = df.genson.normalise_json("json_data", decode=schema)

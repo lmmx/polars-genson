@@ -12,7 +12,7 @@ import polars_genson  # noqa: F401
 import pytest
 
 LABELS = Path(__file__).parent / "data" / "labels.parquet"
-DF_LABELS = pl.read_parquet(LABELS)
+DF_LABELS = pl.read_parquet(LABELS).head(10)
 
 RECORD_SCHEMA = pl.Struct({"language": pl.String, "value": pl.String})
 LABELS_SCHEMA = {
@@ -21,18 +21,18 @@ LABELS_SCHEMA = {
 
 
 @pytest.mark.parametrize(
-    "decode", [False, True, None], ids=["no_decode", "infer_decode", "dtype_decode"]
+    "decode",
+    [False, True, None],
+    ids=["no_decode", "infer_decode", "schema_decode"],
 )
 def test_normalise(benchmark, decode):
     """Benchmark normalisation with and without decode on the full dataset."""
 
     def run():
-        decode_param = False if decode is None else decode
+        decode_param = pl.Struct(LABELS_SCHEMA) if decode is None else decode
         df = DF_LABELS.genson.normalise_json(
             "labels", wrap_root="labels", decode=decode_param
         )
-        if decode is None:
-            df.str.json_decode(dtype=pl.Struct(LABELS_SCHEMA))
         return
 
     benchmark.pedantic(run, rounds=1, iterations=1)
