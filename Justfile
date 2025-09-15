@@ -500,7 +500,7 @@ ship-wheels mode="":
 # --------------------------------------------------------------------------------------------------
 
 # Rust release workflow using release-plz
-ship-rust:
+ship-rust bump_level="auto":
     #!/usr/bin/env -S echo-comment --shell-flags="-euo pipefail" --color="\\033[38;5;202m"
 
     just check-no-fmt-feat
@@ -527,6 +527,12 @@ ship-rust:
     # 🔍 Dry-run release...
     just publish-rust --dry-run
     # ✅ Dry-run went OK, proceeding to real release
+
+    if [[ "{{bump_level}}" != "auto" ]]; then
+        cargo set-version -p genson-core --bump {{bump_level}}
+        cargo set-version -p polars-jsonschema-bridge --bump {{bump_level}}
+        cargo set-version -p genson-cli --bump {{bump_level}}
+    fi
     
     # 🦀 Update Cargo.toml versions and changelogs
     release-plz update
