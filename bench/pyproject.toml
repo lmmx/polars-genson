@@ -1,0 +1,13 @@
+[project]
+dependencies = ["polars-genson[polars]>=0.2.0", "pytest-benchmark>=5.1.0"]
+description = "Benchmarking polars-genson"
+name = "polars-genson-bench"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.1.0"
+
+[tool.uv.workspace]
+members = ["."]
+
+[tool.pytest.ini_options]
+addopts = "--benchmark-only --benchmark-columns=mean,ops,rounds,iterations"

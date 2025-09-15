@@ -121,6 +121,10 @@ test-pl *args:
 test-js *args:
     cargo nextest run {{args}}
 
+[working-directory: 'bench']
+bench *args:
+    pytest -q {{args}}
+
 # -------------------------------------
 
 [working-directory: 'polars-genson-py']
@@ -328,7 +332,7 @@ fix-eof-ws mode="":
     whitespace-format --add-new-line-marker-at-end-of-file \
           --new-line-marker=linux \
           --normalize-new-line-markers \
-          --exclude ".git/|target/|dist/|\.swp|\.so$|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
+          --exclude ".git/|target/|dist/|\.swp|.egg-info/|\.so$|.json$|.lock$|.parquet$|.venv/|.stubs/|\..*cache/" \
           $ARGS \
           .
 
