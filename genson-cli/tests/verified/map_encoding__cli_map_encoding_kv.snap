@@ -1,0 +1,34 @@
+---
+blessing:
+reason: "Each object key:value pair is put into a singleton key:value entry record"
+source: genson-cli/tests/map_encoding.rs
+expression: parsed_output
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--map-encoding"
+    - kv
+  input:
+    id: A
+    labels:
+      en: Hello
+      fr: Bonjour
+---
+[
+  {
+    "id": "A",
+    "labels": [
+      {
+        "key": "en",
+        "value": "Hello"
+      },
+      {
+        "key": "fr",
+        "value": "Bonjour"
+      }
+    ]
+  }
+]

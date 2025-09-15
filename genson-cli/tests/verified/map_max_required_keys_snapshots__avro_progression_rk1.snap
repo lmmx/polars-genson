@@ -1,0 +1,65 @@
+---
+blessing:
+reason: "Nulls are injected for record fields (sometimes, other) as we detect the data field as a record with 2 optional fields and map-max-rk=1 is too low to allow that to be a Map"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - data:
+        always1: val1
+        always2: val2
+        sometimes: val3
+    - data:
+        always1: val4
+        always2: val5
+    - data:
+        always1: val6
+        always2: val7
+        other: val8
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "data",
+      "type": {
+        "type": "record",
+        "name": "data",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "always1",
+            "type": "string"
+          },
+          {
+            "name": "always2",
+            "type": "string"
+          },
+          {
+            "name": "sometimes",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          {
+            "name": "other",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

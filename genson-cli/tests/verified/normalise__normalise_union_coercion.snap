@@ -1,0 +1,19 @@
+---
+blessing:
+reason: "Int and bool coerced from strings"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - int_field: 1
+      float_field: 3.14
+      bool_field: true
+    - int_field: "42"
+      float_field: "2.718"
+      bool_field: "false"
+    - int_field: ~
+      float_field: ~
+---
+{"int_field":1,"float_field":3.14,"bool_field":true}
+{"int_field":42,"float_field":2.718,"bool_field":false}
+{"int_field":null,"float_field":null,"bool_field":null}

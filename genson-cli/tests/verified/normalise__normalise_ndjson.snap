@@ -1,0 +1,33 @@
+---
+blessing:
+reason: "Empties to null, low key count object becomes record with nulls not map, null/empty string descriptions preserved"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - id: Q1
+      aliases: []
+      labels: {}
+      description: Example entity
+    - id: Q2
+      aliases:
+        - Sample
+      labels:
+        en: Hello
+      description: ~
+    - id: Q3
+      aliases: ~
+      labels:
+        fr: Bonjour
+      description: Third one
+    - id: Q4
+      aliases:
+        - X
+        - Y
+      labels: {}
+      description: ""
+---
+{"id":"Q1","aliases":null,"labels":{"en":null,"fr":null},"description":"Example entity"}
+{"id":"Q2","aliases":["Sample"],"labels":{"en":"Hello","fr":null},"description":null}
+{"id":"Q3","aliases":null,"labels":{"en":null,"fr":"Bonjour"},"description":"Third one"}
+{"id":"Q4","aliases":["X","Y"],"labels":{"en":null,"fr":null},"description":""}

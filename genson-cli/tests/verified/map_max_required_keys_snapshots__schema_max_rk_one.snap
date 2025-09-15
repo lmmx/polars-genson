@@ -1,0 +1,61 @@
+---
+blessing:
+reason: "one_required is Map<String, String> because 1 required key ≤ 1, two_required is Record<stable1: String, stable2: String, varies: String, other: String> because 2 required keys > 1"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - one_required:
+        common: always
+        varies: sometimes
+    - one_required:
+        common: always
+        other: different
+    - two_required:
+        stable1: always
+        stable2: present
+        varies: sometimes
+    - two_required:
+        stable1: always
+        stable2: present
+        other: value
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "one_required": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "two_required": {
+      "properties": {
+        "stable1": {
+          "type": "string"
+        },
+        "stable2": {
+          "type": "string"
+        },
+        "varies": {
+          "type": "string"
+        },
+        "other": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "stable1",
+        "stable2"
+      ],
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

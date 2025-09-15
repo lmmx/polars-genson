@@ -1,0 +1,15 @@
+---
+blessing:
+reason: "Promotion of scalar string to a string-valued map singleton with a default key"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - id: A
+      labels: foo
+    - id: B
+      labels:
+        en: Hello
+---
+{"id":"A","labels":{"default":"foo"}}
+{"id":"B","labels":{"en":"Hello"}}

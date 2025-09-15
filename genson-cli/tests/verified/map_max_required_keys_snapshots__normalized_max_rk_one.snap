@@ -1,0 +1,63 @@
+---
+blessing:
+reason: "Map behavior for one_required (1 required key ≤ 1) omits missing fields, Record behavior for two_required (2 required keys > 1) pads missing fields with null"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - one_required:
+        common: always
+        varies: sometimes
+    - one_required:
+        common: always
+        other: different
+    - two_required:
+        stable1: always
+        stable2: present
+        varies: sometimes
+    - two_required:
+        stable1: always
+        stable2: present
+        other: value
+---
+[
+  {
+    "one_required": {
+      "common": "always",
+      "varies": "sometimes"
+    },
+    "two_required": null
+  },
+  {
+    "one_required": {
+      "common": "always",
+      "other": "different"
+    },
+    "two_required": null
+  },
+  {
+    "one_required": null,
+    "two_required": {
+      "stable1": "always",
+      "stable2": "present",
+      "varies": "sometimes",
+      "other": null
+    }
+  },
+  {
+    "one_required": null,
+    "two_required": {
+      "stable1": "always",
+      "stable2": "present",
+      "varies": null,
+      "other": "value"
+    }
+  }
+]

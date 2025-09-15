@@ -1,0 +1,14 @@
+---
+blessing:
+reason: "Coerce the string json to array singleton (reverse order)"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - foo:
+        - bar
+        - baz
+    - foo: json
+---
+{"foo":["bar","baz"]}
+{"foo":["json"]}

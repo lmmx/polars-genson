@@ -1,0 +1,75 @@
+---
+blessing:
+reason: "Record behavior for user (3 required keys > 2) enforces fixed schema, Map behavior for config (2 required keys ≤ 2) allows flexible structure"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "2"
+  input:
+    - user:
+        id: "1"
+        name: Alice
+        role: admin
+      config:
+        host: localhost
+        port: "8080"
+        debug: "true"
+    - user:
+        id: "2"
+        name: Bob
+        role: user
+      config:
+        host: prod.com
+        port: "443"
+    - user:
+        id: "3"
+        name: Charlie
+        role: user
+      config:
+        host: test.com
+        port: "3000"
+        env: test
+---
+[
+  {
+    "user": {
+      "id": "1",
+      "name": "Alice",
+      "role": "admin"
+    },
+    "config": {
+      "host": "localhost",
+      "port": "8080",
+      "debug": "true"
+    }
+  },
+  {
+    "user": {
+      "id": "2",
+      "name": "Bob",
+      "role": "user"
+    },
+    "config": {
+      "host": "prod.com",
+      "port": "443"
+    }
+  },
+  {
+    "user": {
+      "id": "3",
+      "name": "Charlie",
+      "role": "user"
+    },
+    "config": {
+      "host": "test.com",
+      "port": "3000",
+      "env": "test"
+    }
+  }
+]

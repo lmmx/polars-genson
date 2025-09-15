@@ -1,0 +1,56 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "0"
+  input:
+    - fully_optional:
+        sometimes: here
+        other: maybe
+    - fully_optional:
+        different: keys
+    - has_required:
+        always: present
+        sometimes: here
+    - has_required:
+        always: present
+        other: value
+---
+[
+  {
+    "fully_optional": {
+      "sometimes": "here",
+      "other": "maybe"
+    },
+    "has_required": null
+  },
+  {
+    "fully_optional": {
+      "different": "keys"
+    },
+    "has_required": null
+  },
+  {
+    "fully_optional": null,
+    "has_required": {
+      "always": "present",
+      "sometimes": "here",
+      "other": null
+    }
+  },
+  {
+    "fully_optional": null,
+    "has_required": {
+      "always": "present",
+      "sometimes": null,
+      "other": "value"
+    }
+  }
+]

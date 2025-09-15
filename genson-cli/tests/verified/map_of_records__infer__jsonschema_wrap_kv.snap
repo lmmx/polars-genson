@@ -1,0 +1,58 @@
+---
+blessing:
+reason: "Map of records (language and value fields) wrapped under labels root"
+source: genson-cli/tests/map_of_records.rs
+expression: stdout_str
+info:
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+    - "--map-encoding"
+    - kv
+    - "--wrap-root"
+    - labels
+  input:
+    - en:
+        language: en
+        value: Jack Bauer
+      fr:
+        language: fr
+        value: Jack Bauer
+    - en:
+        language: en
+        value: happiness
+      fr:
+        language: fr
+        value: bonheur
+      rn:
+        language: rn
+        value: Umunezero
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "labels": {
+      "type": "object",
+      "additionalProperties": {
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "value"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "required": [
+    "labels"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,72 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  approved: true
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - at_rk_limit:
+        req1: always
+        optional2: sometimes
+    - at_rk_limit:
+        req1: always
+    - over_rk_limit:
+        req1: always
+        req2: present
+        optional3: sometimes
+    - over_rk_limit:
+        req1: always
+        req2: present
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "at_rk_limit",
+      "type": [
+        "null",
+        {
+          "name": "at_rk_limit",
+          "type": "map",
+          "values": "string"
+        }
+      ]
+    },
+    {
+      "name": "over_rk_limit",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "over_rk_limit",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "req1",
+              "type": "string"
+            },
+            {
+              "name": "req2",
+              "type": "string"
+            },
+            {
+              "name": "optional3",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

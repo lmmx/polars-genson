@@ -1,0 +1,74 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  approved: true
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "0"
+  input:
+    - fully_optional:
+        sometimes: here
+        other: maybe
+    - fully_optional:
+        different: keys
+    - has_required:
+        always: present
+        sometimes: here
+    - has_required:
+        always: present
+        other: value
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "fully_optional",
+      "type": [
+        "null",
+        {
+          "name": "fully_optional",
+          "type": "map",
+          "values": "string"
+        }
+      ]
+    },
+    {
+      "name": "has_required",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "has_required",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "always",
+              "type": "string"
+            },
+            {
+              "name": "sometimes",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "other",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

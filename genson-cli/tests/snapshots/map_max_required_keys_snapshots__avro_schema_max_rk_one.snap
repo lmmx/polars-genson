@@ -1,0 +1,81 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  approved: true
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - one_required:
+        common: always
+        varies: sometimes
+    - one_required:
+        common: always
+        other: different
+    - two_required:
+        stable1: always
+        stable2: present
+        varies: sometimes
+    - two_required:
+        stable1: always
+        stable2: present
+        other: value
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "one_required",
+      "type": [
+        "null",
+        {
+          "name": "one_required",
+          "type": "map",
+          "values": "string"
+        }
+      ]
+    },
+    {
+      "name": "two_required",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "two_required",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "stable1",
+              "type": "string"
+            },
+            {
+              "name": "stable2",
+              "type": "string"
+            },
+            {
+              "name": "varies",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "other",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

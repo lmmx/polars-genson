@@ -1,0 +1,71 @@
+---
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  approved: true
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "2"
+  input:
+    - user:
+        id: "1"
+        name: Alice
+        role: admin
+      config:
+        host: localhost
+        port: "8080"
+        debug: "true"
+    - user:
+        id: "2"
+        name: Bob
+        role: user
+      config:
+        host: prod.com
+        port: "443"
+    - user:
+        id: "3"
+        name: Charlie
+        role: user
+      config:
+        host: test.com
+        port: "3000"
+        env: test
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "user": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role"
+      ],
+      "type": "object"
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "config",
+    "user"
+  ],
+  "type": "object"
+}

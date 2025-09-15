@@ -1,0 +1,15 @@
+---
+blessing:
+reason: "Empty object gets normalised to null"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - id: A
+      labels: {}
+    - id: B
+      labels:
+        en: Hello
+---
+{"id":"A","labels":null}
+{"id":"B","labels":{"en":"Hello"}}

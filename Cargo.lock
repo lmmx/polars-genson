@@ -216,9 +216,9 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "avrotize"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "167ab0d6338ce08b5f70a93ae11cfc0020d446227cb0ff3e9a75f8c9f1d482f1"
+checksum = "38bfb541d218d6c829414aad28bdad0392685ebdfda48a8211ed3b85f5163a57"
 dependencies = [
  "regex",
  "reqwest",
@@ -910,19 +910,20 @@ dependencies = [
 
 [[package]]
 name = "genson-cli"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "assert_cmd",
  "genson-core",
  "insta",
  "predicates",
+ "serde",
  "serde_json",
  "tempfile",
 ]
 
 [[package]]
 name = "genson-core"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "avrotize",
  "crustrace",

@@ -1,0 +1,57 @@
+---
+blessing:
+reason: "Each object k:v pair is put in a singleton entry, all under a labels wrapped root"
+source: genson-cli/tests/map_encoding.rs
+expression: parsed_output
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--map-threshold"
+    - "2"
+    - "--map-encoding"
+    - kv
+    - "--wrap-root"
+    - labels
+  input:
+    en:
+      language: en
+      value: Hello
+    fr:
+      language: fr
+      value: Bonjour
+---
+[
+  {
+    "labels": [
+      {
+        "key": "en",
+        "value": [
+          {
+            "key": "language",
+            "value": "en"
+          },
+          {
+            "key": "value",
+            "value": "Hello"
+          }
+        ]
+      },
+      {
+        "key": "fr",
+        "value": [
+          {
+            "key": "language",
+            "value": "fr"
+          },
+          {
+            "key": "value",
+            "value": "Bonjour"
+          }
+        ]
+      }
+    ]
+  }
+]

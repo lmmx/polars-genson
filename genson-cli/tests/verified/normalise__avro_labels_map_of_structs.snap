@@ -1,0 +1,61 @@
+---
+blessing:
+reason: "A map fo records under a labels field"
+source: genson-cli/tests/normalise.rs
+expression: avro_str
+info:
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-encoding"
+    - kv
+    - "--map-threshold"
+    - "3"
+  input:
+    - labels:
+        en:
+          language: en
+          value: Jack Bauer
+        fr:
+          language: fr
+          value: Jack Bauer
+    - labels:
+        en:
+          language: en
+          value: happiness
+        fr:
+          language: fr
+          value: bonheur
+        rn:
+          language: rn
+          value: Umunezero
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "labels",
+      "type": {
+        "name": "labels",
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "labels_values",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "language",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

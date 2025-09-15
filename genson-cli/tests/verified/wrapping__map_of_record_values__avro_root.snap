@@ -1,0 +1,57 @@
+---
+blessing:
+reason: "Map of records in Avro"
+source: genson-cli/tests/wrapping.rs
+expression: value
+info:
+  args:
+    - "--avro"
+    - "--ndjson"
+    - "--map-threshold"
+    - "3"
+  input:
+    - en:
+        language: en
+        value: Hello
+      fr:
+        language: fr
+        value: Bonjour
+    - en:
+        language: en
+        value: Hi
+      fr:
+        language: fr
+        value: Salut
+      rn:
+        language: rn
+        value: Umunezero
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "document",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "document_extensions",
+          "namespace": "genson",
+          "fields": [
+            {
+              "name": "language",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "type": "string"
+            }
+          ]
+        },
+        "name": "document"
+      }
+    }
+  ]
+}

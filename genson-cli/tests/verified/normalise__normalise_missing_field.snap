@@ -1,0 +1,12 @@
+---
+blessing:
+reason: "Fill in nulls in each record"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  input:
+    - foo: present
+    - bar: 123
+---
+{"foo":"present","bar":null}
+{"foo":null,"bar":123}

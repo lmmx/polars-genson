@@ -1,6 +1,19 @@
 ---
 source: genson-cli/tests/normalise.rs
-expression: stdout_str
+expression: value
+info:
+  approved: true
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "1"
+  input:
+    - id: A
+      labels: foo
+    - id: B
+      labels:
+        en: Hello
 ---
-{"id":"A","labels":{"en":null}}
+{"id":"A","labels":{"default":"foo"}}
 {"id":"B","labels":{"en":"Hello"}}

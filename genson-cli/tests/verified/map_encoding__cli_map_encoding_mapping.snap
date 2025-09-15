@@ -1,0 +1,28 @@
+---
+blessing:
+reason: "Each object mapping is kept as an object of multiple k:v pairs"
+source: genson-cli/tests/map_encoding.rs
+expression: parsed_output
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--map-encoding"
+    - mapping
+  input:
+    id: A
+    labels:
+      en: Hello
+      fr: Bonjour
+---
+[
+  {
+    "id": "A",
+    "labels": {
+      "en": "Hello",
+      "fr": "Bonjour"
+    }
+  }
+]

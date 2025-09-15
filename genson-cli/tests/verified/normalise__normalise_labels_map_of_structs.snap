@@ -1,0 +1,75 @@
+---
+blessing:
+reason: "When normalised with a parent field a map of records can be normalised"
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--map-encoding"
+    - kv
+    - "--map-threshold"
+    - "3"
+  input:
+    - labels:
+        en:
+          language: en
+          value: Jack Bauer
+        fr:
+          language: fr
+          value: Jack Bauer
+    - labels:
+        en:
+          language: en
+          value: happiness
+        fr:
+          language: fr
+          value: bonheur
+        rn:
+          language: rn
+          value: Umunezero
+---
+{
+  "labels": [
+    {
+      "key": "en",
+      "value": {
+        "language": "en",
+        "value": "Jack Bauer"
+      }
+    },
+    {
+      "key": "fr",
+      "value": {
+        "language": "fr",
+        "value": "Jack Bauer"
+      }
+    }
+  ]
+}
+{
+  "labels": [
+    {
+      "key": "en",
+      "value": {
+        "language": "en",
+        "value": "happiness"
+      }
+    },
+    {
+      "key": "fr",
+      "value": {
+        "language": "fr",
+        "value": "bonheur"
+      }
+    },
+    {
+      "key": "rn",
+      "value": {
+        "language": "rn",
+        "value": "Umunezero"
+      }
+    }
+  ]
+}

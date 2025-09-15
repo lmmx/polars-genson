@@ -1,0 +1,55 @@
+---
+blessing:
+reason: "data field is Record<always1: String, always2: String, sometimes: String, other: String> because 2 required keys > 1"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - data:
+        always1: val1
+        always2: val2
+        sometimes: val3
+    - data:
+        always1: val4
+        always2: val5
+    - data:
+        always1: val6
+        always2: val7
+        other: val8
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "data": {
+      "properties": {
+        "always1": {
+          "type": "string"
+        },
+        "always2": {
+          "type": "string"
+        },
+        "sometimes": {
+          "type": "string"
+        },
+        "other": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "always1",
+        "always2"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,56 @@
+---
+blessing:
+reason: "at_rk_limit is Map<String, String>, over_rk_limit is Record<req1: String, req2: String, optional3: String>"
+source: genson-cli/tests/map_max_required_keys_snapshots.rs
+expression: value
+info:
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+  input:
+    - at_rk_limit:
+        req1: always
+        optional2: sometimes
+    - at_rk_limit:
+        req1: always
+    - over_rk_limit:
+        req1: always
+        req2: present
+        optional3: sometimes
+    - over_rk_limit:
+        req1: always
+        req2: present
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "at_rk_limit": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "over_rk_limit": {
+      "properties": {
+        "req1": {
+          "type": "string"
+        },
+        "req2": {
+          "type": "string"
+        },
+        "optional3": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "req1",
+        "req2"
+      ],
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

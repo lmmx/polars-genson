@@ -20,6 +20,9 @@ mod innermod {
         pub schema_uri: Option<String>,
         /// Threshold above which non-fixed keys are treated as a map
         pub map_threshold: usize,
+        /// Maximum number of required keys a Map can have. If None, no gating based on required keys.
+        /// If Some(n), objects with more than n required keys will be forced to Record type.
+        pub map_max_required_keys: Option<usize>,
         /// Force override of field treatment, e.g. {"labels": "map"}
         pub force_field_types: std::collections::HashMap<String, String>,
         /// Wrap the inferred top-level schema under a single required field with this name.
@@ -38,6 +41,7 @@ mod innermod {
                 delimiter: None,
                 schema_uri: Some("AUTO".to_string()),
                 map_threshold: 20,
+                map_max_required_keys: None,
                 force_field_types: std::collections::HashMap::new(),
                 wrap_root: None,
                 #[cfg(feature = "avro")]
@@ -95,9 +99,10 @@ mod innermod {
     /// # Rules
     /// - If the current field name matches a `force_field_types` override, that wins
     ///   (`"map"` rewrites to `additionalProperties`, `"record"` leaves as-is).
-    /// - Otherwise, if the number of keys in `properties` is at least
-    ///   `config.map_threshold` *and* all values are homogeneous strings,
-    ///   the object is rewritten as a map.
+    /// - Otherwise, applies map inference heuristics based on:
+    ///   - Total key cardinality (`map_threshold`)
+    ///   - Required key cardinality (`map_max_required_keys`)
+    ///   - Value homogeneity (all values must be homogeneous strings)
     /// - Recurses into nested objects/arrays, carrying field names down so overrides apply.
     fn rewrite_objects(
         schema: &mut Value,
@@ -119,7 +124,6 @@ mod innermod {
                             return; // no need to apply heuristics or recurse
                         }
                         "record" => {
-                            // leave as-is, but still recurse into children
                             if let Some(props) =
                                 obj.get_mut("properties").and_then(|p| p.as_object_mut())
                             {
@@ -130,7 +134,7 @@ mod innermod {
                             if let Some(items) = obj.get_mut("items") {
                                 rewrite_objects(items, None, config);
                             }
-                            return; // skip heuristics
+                            return;
                         }
                         _ => {}
                     }
@@ -139,20 +143,69 @@ mod innermod {
 
             // --- Heuristic rewrite ---
             if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
-                let key_count = props.len();
+                let key_count = props.len(); // |UK| - total keys observed
+                let above_threshold = key_count >= config.map_threshold;
 
-                let homogeneous = props
-                    .values()
-                    .all(|v| v.get("type") == Some(&Value::String("string".into())));
+                // Copy out child schema shapes
+                let child_schemas: Vec<Value> = props.values().cloned().collect();
 
-                if key_count >= config.map_threshold && homogeneous {
-                    obj.remove("properties");
-                    obj.remove("required");
-                    obj.insert(
-                        "additionalProperties".to_string(),
-                        serde_json::json!({ "type": "string" }),
-                    );
-                    return;
+                // Detect map-of-records only if:
+                // - all children are identical
+                // - and that child is itself an object with "properties" (i.e. a proper record)
+                if above_threshold {
+                    if let Some(first) = child_schemas.first() {
+                        if first.get("type") == Some(&Value::String("object".into()))
+                            && first.get("properties").is_some()
+                            && child_schemas.len() > 1
+                        {
+                            let all_same = child_schemas.iter().all(|other| other == first);
+                            if all_same {
+                                obj.remove("properties");
+                                obj.remove("required");
+                                obj.insert("additionalProperties".to_string(), first.clone());
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                // Calculate required key count |RK|
+                let required_key_count = obj
+                    .get("required")
+                    .and_then(|r| r.as_array())
+                    .map(|r| r.len())
+                    .unwrap_or(0);
+
+                // Check if all values are homogeneous schemas
+                let homogeneous_schema = if let Some(first_schema) = props.values().next() {
+                    if props.values().all(|schema| schema == first_schema) {
+                        Some(first_schema.clone())
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                // Apply map inference logic
+                let should_be_map = if above_threshold && homogeneous_schema.is_some() {
+                    if let Some(max_required) = config.map_max_required_keys {
+                        required_key_count <= max_required
+                    } else {
+                        true
+                    }
+                } else {
+                    false
+                };
+
+                if should_be_map {
+                    if let Some(schema) = homogeneous_schema {
+                        obj.remove("properties");
+                        obj.remove("required");
+                        obj.insert("type".to_string(), Value::String("object".to_string()));
+                        obj.insert("additionalProperties".to_string(), schema);
+                        return;
+                    }
                 }
             }
 
@@ -824,6 +877,318 @@ mod innermod {
             assert_eq!(sch["type"], "object");
             assert_eq!(sch["required"], serde_json::json!(["labels"]));
             assert!(sch["properties"]["labels"].is_object());
+        }
+
+        #[test]
+        fn test_rewrite_objects_map_of_records() {
+            use serde_json::json;
+
+            // Schema that genson-rs would roughly emit for {"en": {...}, "fr": {...}}
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "en": {
+                        "type": "object",
+                        "properties": {
+                            "language": { "type": "string" },
+                            "value": { "type": "string" }
+                        },
+                        "required": ["language", "value"]
+                    },
+                    "fr": {
+                        "type": "object",
+                        "properties": {
+                            "language": { "type": "string" },
+                            "value": { "type": "string" }
+                        },
+                        "required": ["language", "value"]
+                    }
+                },
+                "required": ["en","fr"]
+            });
+
+            let cfg = SchemaInferenceConfig {
+                map_threshold: 2, // force detection at 2 keys
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &cfg);
+
+            // After rewrite, we should have additionalProperties instead of fixed properties
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("properties").is_none());
+            assert!(schema.get("required").is_none());
+
+            // additionalProperties should carry the inner record shape
+            let ap = schema
+                .get("additionalProperties")
+                .expect("should insert additionalProperties");
+
+            assert_eq!(ap["type"], "object");
+            assert_eq!(ap["properties"]["language"], json!({ "type": "string" }));
+            assert_eq!(ap["properties"]["value"], json!({ "type": "string" }));
+        }
+
+        #[test]
+        fn test_map_of_strings_not_promoted_to_records() {
+            let schema = json!({
+                "type": "object",
+                "properties": {
+                    "labels": {
+                        "type": "object",
+                        "properties": {
+                            "en": { "type": "string" },
+                            "fr": { "type": "string" }
+                        },
+                        "required": ["en", "fr"]
+                    }
+                },
+                "required": ["labels"]
+            });
+
+            let mut sch = schema.clone();
+            let cfg = SchemaInferenceConfig {
+                map_threshold: 2,
+                ..Default::default()
+            };
+            rewrite_objects(&mut sch, None, &cfg);
+
+            assert_eq!(
+                sch["properties"]["labels"]["additionalProperties"]["type"],
+                "string"
+            );
+        }
+
+        #[test]
+        fn test_rewrite_objects_respects_map_max_required_keys() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"},
+                    "field2": {"type": "string"}
+                },
+                "required": ["field1", "field2"]
+            });
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 2,
+                map_max_required_keys: Some(1), // Max 1 required key for maps
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &config);
+
+            // Should remain as record because 2 required keys > 1
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("properties").is_some());
+            assert!(schema.get("additionalProperties").is_none());
+        }
+
+        #[test]
+        fn test_rewrite_objects_allows_map_with_few_required_keys() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"},
+                    "field2": {"type": "string"}
+                },
+                "required": ["field1"] // Only 1 required key
+            });
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 2,
+                map_max_required_keys: Some(1), // Max 1 required key for maps
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &config);
+
+            // Should become map because 1 required key ≤ 1
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("additionalProperties").is_some());
+            assert!(schema.get("properties").is_none());
+        }
+
+        #[test]
+        fn test_rewrite_objects_none_max_required_keys_preserves_behavior() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"},
+                    "field2": {"type": "string"},
+                    "field3": {"type": "string"}
+                },
+                "required": ["field1", "field2", "field3"]
+            });
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 2,
+                map_max_required_keys: None, // No gating
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &config);
+
+            // Should become map because None means no gating (old behavior)
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("additionalProperties").is_some());
+            assert!(schema.get("properties").is_none());
+        }
+
+        #[test]
+        fn test_rewrite_objects_zero_max_required_keys() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"},
+                    "field2": {"type": "string"}
+                },
+                "required": ["field1"]
+            });
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 2,
+                map_max_required_keys: Some(0), // Only allow maps with 0 required keys
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &config);
+
+            // Should remain as record because 1 required key > 0
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("properties").is_some());
+            assert!(schema.get("additionalProperties").is_none());
+        }
+
+        #[test]
+        fn test_rewrite_objects_zero_required_keys_allowed() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"},
+                    "field2": {"type": "string"}
+                }
+                // No required array = 0 required keys
+            });
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 2,
+                map_max_required_keys: Some(0), // Only allow maps with 0 required keys
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &config);
+
+            // Should become map because 0 required keys ≤ 0
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("additionalProperties").is_some());
+            assert!(schema.get("properties").is_none());
+        }
+
+        #[test]
+        fn test_rewrite_objects_force_override_wins() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"},
+                    "field2": {"type": "string"}
+                },
+                "required": ["field1", "field2"]
+            });
+
+            let mut force_types = std::collections::HashMap::new();
+            force_types.insert("test_field".to_string(), "map".to_string());
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 2,
+                map_max_required_keys: Some(0), // Would normally block this
+                force_field_types: force_types,
+                ..Default::default()
+            };
+
+            // Apply with field name that matches force override
+            rewrite_objects(&mut schema, Some("test_field"), &config);
+
+            // Should become map despite having required keys due to force override
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("additionalProperties").is_some());
+            assert!(schema.get("properties").is_none());
+        }
+
+        #[test]
+        fn test_rewrite_objects_non_homogeneous_values_not_rewritten() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"},
+                    "field2": {"type": "integer"} // Non-homogeneous
+                },
+                "required": []
+            });
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 2,
+                map_max_required_keys: Some(5), // Would allow this
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &config);
+
+            // Should remain as record because values are not homogeneous
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("properties").is_some());
+            assert!(schema.get("additionalProperties").is_none());
+        }
+
+        #[test]
+        fn test_rewrite_objects_below_threshold_not_rewritten() {
+            let mut schema = json!({
+                "type": "object",
+                "properties": {
+                    "field1": {"type": "string"}
+                },
+                "required": []
+            });
+
+            let config = SchemaInferenceConfig {
+                map_threshold: 5,               // Above the key count
+                map_max_required_keys: Some(5), // Would allow this
+                ..Default::default()
+            };
+
+            rewrite_objects(&mut schema, None, &config);
+
+            // Should remain as record because below threshold
+            assert_eq!(schema["type"], "object");
+            assert!(schema.get("properties").is_some());
+            assert!(schema.get("additionalProperties").is_none());
+        }
+
+        // Existing tests...
+        #[test]
+        fn test_map_max_required_keys_with_wrap_root() {
+            let json_strings = vec![
+                r#"{"en":{"language":"en","value":"Hello"},"fr":{"language":"fr","value":"Bonjour"}}"#.to_string(),
+            ];
+
+            let cfg = SchemaInferenceConfig {
+                wrap_root: Some("labels".to_string()),
+                map_threshold: 2,
+                map_max_required_keys: Some(1), // Should allow the wrapped content
+                ..Default::default()
+            };
+
+            let out = infer_json_schema_from_strings(&json_strings, cfg).unwrap();
+            let sch = out.schema;
+
+            assert_eq!(sch["type"], "object");
+            assert_eq!(sch["required"], serde_json::json!(["labels"]));
+
+            // The wrapped labels should have the map logic applied
+            let labels_content = &sch["properties"]["labels"];
+            assert!(labels_content.is_object());
+
+            println!("✅ map_max_required_keys works with wrap_root");
         }
     }
 }
