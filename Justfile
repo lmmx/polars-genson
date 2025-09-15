@@ -529,6 +529,11 @@ ship-rust bump_level="auto":
     # ✅ Dry-run went OK, proceeding to real release
 
     if [[ "{{bump_level}}" != "auto" ]]; then
+        if [[ -n "$(git status --porcelain)" ]]; then
+            # ❌ Working directory must be clean for manual version bump
+            git status --short
+            exit 1
+        fi
         cargo set-version -p genson-core --bump {{bump_level}}
         cargo set-version -p polars-jsonschema-bridge --bump {{bump_level}}
         cargo set-version -p genson-cli --bump {{bump_level}}
