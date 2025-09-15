@@ -41,8 +41,6 @@ fn test_single_key_objects() {
     let result = infer_json_schema_from_strings(&json_strings, config)
         .expect("Schema inference should succeed");
 
-    dbg!(&result.schema);
-
     // single has 1 key which is required, should be allowed (1 ≤ 1)
     let single_field = &result.schema["properties"]["single"];
     assert_eq!(single_field["type"], "object");
