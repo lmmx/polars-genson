@@ -473,9 +473,7 @@ release bump_level="patch":
       false
     }
     
-    # 🎊 Wait for the current wheel build to finish then fetch and publish
-    just ship-wheels
-    
+# OLD: no longer use this release approach for Python, CI auto-releases the tag
 # Ship a new version as the final step of the release process (idempotent)
 [working-directory: 'polars-genson-py']
 ship-wheels mode="":
