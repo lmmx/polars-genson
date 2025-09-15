@@ -537,10 +537,14 @@ ship-rust bump_level="auto":
         cargo set-version -p genson-core --bump {{bump_level}}
         cargo set-version -p polars-jsonschema-bridge --bump {{bump_level}}
         cargo set-version -p genson-cli --bump {{bump_level}}
+
+        # 🦀 Update Cargo.toml versions and changelogs
+        release-plz update --allow-dirty
+    else
+        # 🦀 Update Cargo.toml versions and changelogs
+        release-plz update
     fi
     
-    # 🦀 Update Cargo.toml versions and changelogs
-    release-plz update
     git add .
     # Run a pre-precommit lint pass to avoid the linter halting our release!
     just precommit || true
