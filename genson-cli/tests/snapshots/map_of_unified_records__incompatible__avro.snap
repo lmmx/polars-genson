@@ -1,0 +1,90 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: true
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "5"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - letter:
+        a:
+          alphabet: 0
+          vowel: 0
+          frequency: 0.0817
+    - letter:
+        b:
+          alphabet: one
+          consonant: 0
+          frequency: 0.015
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "letter",
+      "type": {
+        "type": "record",
+        "name": "letter",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "a",
+            "type": [
+              "null",
+              {
+                "type": "record",
+                "name": "a",
+                "namespace": "genson.document_types.letter_types",
+                "fields": [
+                  {
+                    "name": "alphabet",
+                    "type": "int"
+                  },
+                  {
+                    "name": "vowel",
+                    "type": "int"
+                  },
+                  {
+                    "name": "frequency",
+                    "type": "float"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "b",
+            "type": [
+              "null",
+              {
+                "type": "record",
+                "name": "b",
+                "namespace": "genson.document_types.letter_types",
+                "fields": [
+                  {
+                    "name": "alphabet",
+                    "type": "string"
+                  },
+                  {
+                    "name": "consonant",
+                    "type": "int"
+                  },
+                  {
+                    "name": "frequency",
+                    "type": "float"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
