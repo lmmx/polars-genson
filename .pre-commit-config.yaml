@@ -32,3 +32,4 @@ repos:
     hooks:
       - id: debug-statements
       - id: name-tests-test
+        exclude: ".*/data/.*"
