@@ -225,3 +225,77 @@ def test_wrap_scalars_promotes_scalar_to_object():
     assert "value__string" in inner_field_names, (
         f"Expected promoted scalar key 'value__string', got {inner_field_names}"
     )
+
+
+def test_wrap_scalars_normalisation():
+    """Normalisation should correctly promote scalars when wrap_scalars is enabled."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                # Row 1: value is an object
+                '{"root": {"A": {"id": 1, "value": {"hello": "world"}}}}',
+                # Row 2: value is also an object
+                '{"root": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
+                # Row 3: value is just a string → should be promoted
+                '{"root": {"C": {"id": 3, "value": "scalar-string"}}}',
+            ]
+        }
+    )
+
+    # Normalise with wrap_scalars enabled
+    normalised = df.genson.normalise_json(
+        "json_data",
+        map_threshold=3,
+        map_max_required_keys=2,
+        unify_maps=True,
+        wrap_scalars=True,
+    ).to_dicts()
+
+    # Should have unified structure with promoted scalar
+    assert normalised == [
+        {
+            "root": [
+                {
+                    "key": "A",
+                    "value": {
+                        "id": 1,
+                        "value": {
+                            "hello": "world",
+                            "foo": None,
+                            "value__string": None,
+                        },
+                    },
+                }
+            ]
+        },
+        {
+            "root": [
+                {
+                    "key": "B",
+                    "value": {
+                        "id": 2,
+                        "value": {
+                            "hello": None,
+                            "foo": "bar",
+                            "value__string": None,
+                        },
+                    },
+                }
+            ]
+        },
+        {
+            "root": [
+                {
+                    "key": "C",
+                    "value": {
+                        "id": 3,
+                        "value": {
+                            "hello": None,
+                            "foo": None,
+                            "value__string": "scalar-string",
+                        },
+                    },
+                }
+            ]
+        },
+    ]
