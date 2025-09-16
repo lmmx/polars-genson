@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.2...genson-cli-v0.2.3) - 2025-09-16
+
+### <!-- 6 -->Testing
+
+- bless array unification snapshots ([#85](https://github.com/lmmx/polars-genson/pull/85))
+
+### <!-- 9 -->Other
+
+- strengthen type unification ([#86](https://github.com/lmmx/polars-genson/pull/86))
+
 ## [0.2.2](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.1...genson-cli-v0.2.2) - 2025-09-16
 
 ### <!-- 5 -->Refactor
