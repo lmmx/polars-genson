@@ -132,7 +132,7 @@ mod innermod {
         let mut all_fields = ordermap::OrderMap::new();
         let mut field_counts = std::collections::HashMap::new();
 
-        // Collect all field types and count occurrences (OrderMap preserves insertion order)
+        // Collect all field types and count occurrences
         for schema in schemas {
             if let Some(Value::Object(props)) = schema.get("properties") {
                 for (field_name, field_schema) in props {
@@ -142,10 +142,25 @@ mod innermod {
                         ordermap::map::Entry::Vacant(e) => {
                             e.insert(field_schema.clone());
                         }
-                        ordermap::map::Entry::Occupied(e) => {
-                            // Field exists in multiple schemas - check compatibility
-                            if e.get() != field_schema {
-                                return None; // Incompatible field types
+                        ordermap::map::Entry::Occupied(mut e) => {
+                            let existing = e.get().clone();
+                            if existing != *field_schema {
+                                // Try recursive unify if both are objects
+                                if existing.get("type") == Some(&Value::String("object".into()))
+                                    && field_schema.get("type")
+                                        == Some(&Value::String("object".into()))
+                                {
+                                    if let Some(unified) = check_unifiable_schemas(&[
+                                        existing.clone(),
+                                        field_schema.clone(),
+                                    ]) {
+                                        e.insert(unified);
+                                    } else {
+                                        return None;
+                                    }
+                                } else {
+                                    return None; // fundamentally incompatible types
+                                }
                             }
                         }
                     }
@@ -154,11 +169,9 @@ mod innermod {
         }
 
         let total_schemas = schemas.len();
-
-        // Create unified properties: universal fields first, then optional fields (both in insertion order)
         let mut unified_properties = serde_json::Map::new();
 
-        // First pass: add universal fields (non-nullable)
+        // Required in all -> non-nullable
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count == total_schemas {
@@ -166,7 +179,7 @@ mod innermod {
             }
         }
 
-        // Second pass: add optional fields (nullable)
+        // Missing in some -> nullable
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count < total_schemas {

@@ -31,79 +31,52 @@ info:
     {
       "name": "letters",
       "type": {
-        "type": "record",
         "name": "letters",
-        "namespace": "genson.document_types",
-        "fields": [
-          {
-            "name": "a",
-            "type": [
-              "null",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "letters_values",
+            "namespace": "genson.document_types",
+            "fields": [
               {
-                "type": "array",
-                "items": {
-                  "type": "record",
-                  "name": "a",
-                  "namespace": "genson.document_types.letters_types",
-                  "fields": [
-                    {
-                      "name": "index",
-                      "type": "int"
-                    },
-                    {
-                      "name": "value",
-                      "type": {
-                        "type": "record",
-                        "name": "value",
-                        "namespace": "genson.document_types.letters_types.a_types",
-                        "fields": [
-                          {
-                            "name": "vowel",
-                            "type": "boolean"
-                          }
+                "name": "index",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "value",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "value",
+                    "namespace": "genson.document_types.letters_values_types",
+                    "fields": [
+                      {
+                        "name": "vowel",
+                        "type": [
+                          "null",
+                          "boolean"
+                        ]
+                      },
+                      {
+                        "name": "cap",
+                        "type": [
+                          "null",
+                          "string"
                         ]
                       }
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "name": "b",
-            "type": [
-              "null",
-              {
-                "type": "array",
-                "items": {
-                  "type": "record",
-                  "name": "b",
-                  "namespace": "genson.document_types.letters_types",
-                  "fields": [
-                    {
-                      "name": "index",
-                      "type": "int"
-                    },
-                    {
-                      "name": "value",
-                      "type": {
-                        "type": "record",
-                        "name": "value",
-                        "namespace": "genson.document_types.letters_types.b_types",
-                        "fields": [
-                          {
-                            "name": "cap",
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
+                    ]
+                  }
+                ]
               }
             ]
           }
-        ]
+        }
       }
     }
   ]

@@ -26,61 +26,35 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "letters": {
-      "properties": {
-        "a": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "index": {
-                "type": "integer"
-              },
-              "value": {
-                "properties": {
-                  "vowel": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "index": {
+              "type": "integer"
+            },
+            "value": {
+              "type": "object",
+              "properties": {
+                "vowel": [
+                  "null",
+                  {
                     "type": "boolean"
                   }
-                },
-                "required": [
-                  "vowel"
                 ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "index",
-              "value"
-            ],
-            "type": "object"
-          }
-        },
-        "b": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "index": {
-                "type": "integer"
-              },
-              "value": {
-                "properties": {
-                  "cap": {
+                "cap": [
+                  "null",
+                  {
                     "type": "string"
                   }
-                },
-                "required": [
-                  "cap"
-                ],
-                "type": "object"
+                ]
               }
-            },
-            "required": [
-              "index",
-              "value"
-            ],
-            "type": "object"
+            }
           }
         }
-      },
-      "type": "object"
+      }
     }
   },
   "required": [
