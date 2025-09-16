@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.1...genson-cli-v0.2.2) - 2025-09-16
+
+### <!-- 5 -->Refactor
+
+- simplify claims fixture ([#82](https://github.com/lmmx/polars-genson/pull/82))
+
+### <!-- 9 -->Other
+
+- map unify array of records ([#83](https://github.com/lmmx/polars-genson/pull/83))
+
 ## [0.2.1](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.0...genson-cli-v0.2.1) - 2025-09-16
 
 ### <!-- 6 -->Testing
