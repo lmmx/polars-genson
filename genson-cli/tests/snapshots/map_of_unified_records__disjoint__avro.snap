@@ -1,0 +1,72 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: true
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - letter:
+        a:
+          vowel: 0
+          a_for: apple
+    - letter:
+        b:
+          consonant: 0
+          b_for: byte
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "letter",
+      "type": {
+        "name": "letter",
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "letter_values",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "vowel",
+              "type": [
+                "null",
+                "int"
+              ]
+            },
+            {
+              "name": "a_for",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "consonant",
+              "type": [
+                "null",
+                "int"
+              ]
+            },
+            {
+              "name": "b_for",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

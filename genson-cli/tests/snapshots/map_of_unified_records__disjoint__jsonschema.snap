@@ -1,0 +1,63 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: true
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+    - "--unify-maps"
+  input:
+    - letter:
+        a:
+          vowel: 0
+          a_for: apple
+    - letter:
+        b:
+          consonant: 0
+          b_for: byte
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "letter": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "vowel": [
+            "null",
+            {
+              "type": "integer"
+            }
+          ],
+          "a_for": [
+            "null",
+            {
+              "type": "string"
+            }
+          ],
+          "consonant": [
+            "null",
+            {
+              "type": "integer"
+            }
+          ],
+          "b_for": [
+            "null",
+            {
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "letter"
+  ],
+  "type": "object"
+}

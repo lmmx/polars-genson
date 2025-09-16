@@ -1,0 +1,56 @@
+{
+  "claims": {
+    "A": [
+      {
+        "value": {
+          "id": "X",
+          "labels": {
+            "en": "thing"
+          }
+        },
+        "rank": "normal"
+      }
+    ],
+    "B": [
+      {
+        "value": {
+          "time": "2020-01-01"
+        },
+        "rank": "normal"
+      }
+    ],
+    "C": [
+      {
+        "value": {
+          "id": "Y",
+          "labels": {
+            "en": "other"
+          }
+        },
+        "qualifiers": {
+          "D": [
+            {
+              "value": {
+                "id": "Z",
+                "labels": {
+                  "en": "extra"
+                }
+              }
+            }
+          ],
+          "E": [
+            {
+              "value": {
+                "id": "Z",
+                "labels": {
+                  "en": "extra"
+                }
+              }
+            }
+          ]
+        },
+        "rank": "normal"
+      }
+    ]
+  }
+}

@@ -84,6 +84,14 @@ fn letter_frequency_rows() -> Vec<&'static str> {
     ]
 }
 
+/// Disjoint rows: minimal 2 rows with non-overlapping fields
+fn disjoint_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letter": {"a": {"vowel": 0, "a_for": "apple"}}}"#,
+        r#"{"letter": {"b": {"consonant": 0, "b_for": "byte"}}}"#,
+    ]
+}
+
 /// Incompatible rows: minimal 2 rows with conflicting `alphabet` types
 fn incompatible_rows() -> Vec<&'static str> {
     vec![
@@ -128,6 +136,21 @@ fn test_incompatible_maps_normalize() {
         incompatible_rows(),
         &["--normalise"],
     );
+}
+
+#[test]
+fn test_disjoint_maps_jsonschema() {
+    run_genson_unified("disjoint__jsonschema", disjoint_rows(), &[]);
+}
+
+#[test]
+fn test_disjoint_maps_avro() {
+    run_genson_unified("disjoint__avro", disjoint_rows(), &["--avro"]);
+}
+
+#[test]
+fn test_disjoint_maps_normalize() {
+    run_genson_unified("disjoint__normalize", disjoint_rows(), &["--normalise"]);
 }
 
 // Tests for unify map of array of records
