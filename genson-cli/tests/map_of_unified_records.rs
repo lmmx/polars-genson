@@ -25,6 +25,14 @@ fn letter_frequency_rows() -> Vec<&'static str> {
     ]
 }
 
+/// Incompatible rows: minimal 2 rows with conflicting `alphabet` types
+fn incompatible_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letter": {"a": {"alphabet": 0, "vowel": 0, "frequency": 0.0817}}}"#, // int
+        r#"{"letter": {"b": {"alphabet": "one", "consonant": 0, "frequency": 0.0150}}}"#, // string
+    ]
+}
+
 /// Check if the current output matches the verified/blessed version
 fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
     let module_file = file!();
@@ -44,8 +52,8 @@ fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
 }
 
 /// Run genson-cli with unify-maps and given extra args
-fn run_genson_unified(name: &str, extra_args: &[&str]) {
-    let temp = write_ndjson(&letter_frequency_rows());
+fn run_genson_unified(name: &str, rows: Vec<&str>, extra_args: &[&str]) {
+    let temp = write_ndjson(&rows);
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
     let mut args = vec!["--ndjson", "--map-threshold", "5", "--unify-maps"];
@@ -57,7 +65,7 @@ fn run_genson_unified(name: &str, extra_args: &[&str]) {
     let output = cmd.assert().success().get_output().stdout.clone();
     let stdout_str = String::from_utf8(output).unwrap();
 
-    let input_json: Vec<Value> = letter_frequency_rows()
+    let input_json: Vec<Value> = rows
         .into_iter()
         .map(|s| serde_json::from_str::<Value>(s).unwrap())
         .collect();
@@ -77,15 +85,38 @@ fn run_genson_unified(name: &str, extra_args: &[&str]) {
 
 #[test]
 fn test_unified_maps_jsonschema() {
-    run_genson_unified("unified__jsonschema", &[]);
+    run_genson_unified("unified__jsonschema", letter_frequency_rows(), &[]);
 }
 
 #[test]
 fn test_unified_maps_avro() {
-    run_genson_unified("unified__avro", &["--avro"]);
+    run_genson_unified("unified__avro", letter_frequency_rows(), &["--avro"]);
 }
 
 #[test]
 fn test_unified_maps_normalize() {
-    run_genson_unified("unified__normalize", &["--normalise"]);
+    run_genson_unified(
+        "unified__normalize",
+        letter_frequency_rows(),
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_incompatible_maps_jsonschema() {
+    run_genson_unified("incompatible__jsonschema", incompatible_rows(), &[]);
+}
+
+#[test]
+fn test_incompatible_maps_avro() {
+    run_genson_unified("incompatible__avro", incompatible_rows(), &["--avro"]);
+}
+
+#[test]
+fn test_incompatible_maps_normalize() {
+    run_genson_unified(
+        "incompatible__normalize",
+        incompatible_rows(),
+        &["--normalise"],
+    );
 }
