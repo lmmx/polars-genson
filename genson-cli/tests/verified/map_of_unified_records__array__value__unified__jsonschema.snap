@@ -1,8 +1,9 @@
 ---
+blessing:
+reason: "Nested value objects unify correctly into JSON Schema with additionalProperties as array<object> and nullable vowel/cap fields"
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"
@@ -14,11 +15,13 @@ info:
     - letters:
         a:
           - index: 0
-            vowel: 0
+            value:
+              vowel: true
     - letters:
         b:
           - index: 1
-            consonant: 0
+            value:
+              cap: B
 ---
 {
   "$schema": "http://json-schema.org/schema#",
@@ -33,18 +36,23 @@ info:
             "index": {
               "type": "integer"
             },
-            "vowel": [
-              "null",
-              {
-                "type": "integer"
+            "value": {
+              "type": "object",
+              "properties": {
+                "vowel": [
+                  "null",
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "cap": [
+                  "null",
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            ],
-            "consonant": [
-              "null",
-              {
-                "type": "integer"
-              }
-            ]
+            }
           }
         }
       }

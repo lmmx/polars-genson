@@ -1,8 +1,9 @@
 ---
+blessing:
+reason: "Conflicting array item types (int vs string index) prevent unification, so schema outputs distinct object definitions for keys a and b"
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"

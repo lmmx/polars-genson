@@ -1,8 +1,9 @@
 ---
+blessing:
+reason: "Array of records with int index unify correctly; schema inferred as map<array<record>>"
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"
@@ -15,13 +16,11 @@ info:
     - letters:
         a:
           - index: 0
-            value:
-              vowel: true
+            vowel: 0
     - letters:
         b:
           - index: 1
-            value:
-              cap: B
+            consonant: 0
 ---
 {
   "type": "record",
@@ -48,30 +47,17 @@ info:
                 ]
               },
               {
-                "name": "value",
+                "name": "vowel",
                 "type": [
                   "null",
-                  {
-                    "type": "record",
-                    "name": "value",
-                    "namespace": "genson.document_types.letters_values_types",
-                    "fields": [
-                      {
-                        "name": "vowel",
-                        "type": [
-                          "null",
-                          "boolean"
-                        ]
-                      },
-                      {
-                        "name": "cap",
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ]
-                  }
+                  "int"
+                ]
+              },
+              {
+                "name": "consonant",
+                "type": [
+                  "null",
+                  "int"
                 ]
               }
             ]

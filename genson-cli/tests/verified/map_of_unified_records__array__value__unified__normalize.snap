@@ -1,8 +1,9 @@
 ---
+blessing:
+reason: "Normalization shows nested value object unification with null padding for vowel/cap"
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"
@@ -15,11 +16,13 @@ info:
     - letters:
         a:
           - index: 0
-            vowel: 0
+            value:
+              vowel: true
     - letters:
         b:
           - index: 1
-            consonant: 0
+            value:
+              cap: B
 ---
-{"letters":{"a":[{"index":0,"vowel":0,"consonant":null}]}}
-{"letters":{"b":[{"index":1,"vowel":null,"consonant":0}]}}
+{"letters":{"a":[{"index":0,"value":{"vowel":true,"cap":null}}]}}
+{"letters":{"b":[{"index":1,"value":{"vowel":null,"cap":"B"}}]}}

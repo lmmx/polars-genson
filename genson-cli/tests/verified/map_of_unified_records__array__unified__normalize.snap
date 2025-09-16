@@ -1,8 +1,9 @@
 ---
+blessing:
+reason: "Normalization shows unified array of records with selective null padding for vowel/consonant"
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"

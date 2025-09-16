@@ -2,7 +2,7 @@
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: false
+  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"

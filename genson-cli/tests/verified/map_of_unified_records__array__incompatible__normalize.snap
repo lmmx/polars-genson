@@ -1,8 +1,9 @@
 ---
+blessing:
+reason: "Normalization shows null padding across array values due to incompatible index types"
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"
@@ -18,8 +19,8 @@ info:
             vowel: 0
     - letters:
         b:
-          - index: 1
+          - index: one
             consonant: 0
 ---
-{"letters":{"a":[{"index":0,"vowel":0,"consonant":null}]}}
-{"letters":{"b":[{"index":1,"vowel":null,"consonant":0}]}}
+{"letters":{"a":[{"index":0,"vowel":0}],"b":null}}
+{"letters":{"a":null,"b":[{"index":"one","consonant":0}]}}
