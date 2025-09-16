@@ -181,6 +181,101 @@ In the controlled example:
 
 This gives you fine-grained control over how objects with different key stability patterns are classified.
 
+Here's a section to add to the README that demonstrates the unified maps feature with a simple example:
+
+## Schema Unification
+
+For objects with heterogeneous but compatible record structures, `polars-genson` can **unify** them into a single map schema instead of creating separate fixed fields. This is useful for dynamic data where keys represent similar entities with slightly different structures.
+
+### Unifying Compatible Record Types
+
+```python
+import polars as pl
+
+# Example: Letter frequency data with vowel/consonant variants
+df = pl.DataFrame({
+    "json_data": [
+        '{"letter": {"a": {"alphabet": 0, "vowel": 0, "frequency": 0.0817}, "b": {"alphabet": 1, "consonant": 0, "frequency": 0.0150}, "c": {"alphabet": 2, "consonant": 1, "frequency": 0.0278}}}'
+    ]
+})
+
+# Without unification: creates fixed record with separate a, b, c fields
+schema_default = df.genson.infer_json_schema("json_data", avro=True, map_threshold=3)
+
+# With unification: creates map with unified record values
+schema_unified = df.genson.infer_json_schema("json_data", avro=True, map_threshold=3, unify_maps=True)
+```
+
+**Without unification**, you get separate fields:
+```json
+{
+  "letter": {
+    "type": "record",
+    "fields": [
+      {"name": "a", "type": {...}},
+      {"name": "b", "type": {...}},
+      {"name": "c", "type": {...}}
+    ]
+  }
+}
+```
+
+**With unification** (`unify_maps=True`), compatible records are merged:
+```json
+{
+  "letter": {
+    "type": "map",
+    "values": {
+      "type": "record",
+      "fields": [
+        {"name": "alphabet", "type": "int"},      // shared field (always present)
+        {"name": "frequency", "type": "float"},   // shared field (always present)  
+        {"name": "vowel", "type": ["null", "int"]},     // optional (vowels only)
+        {"name": "consonant", "type": ["null", "int"]}  // optional (consonants only)
+      ]
+    }
+  }
+}
+```
+
+### Normalization with Unified Schema
+
+```python
+# Normalise with unified schema - each key gets the same record structure
+normalized = df.genson.normalise_json("json_data", map_threshold=3, unify_maps=True).to_dicts()
+
+print(normalized[0])
+```
+
+Output:
+```python
+{
+  'letter': [
+    {'key': 'a', 'value': {'alphabet': 0, 'frequency': 0.0817, 'vowel': 0, 'consonant': None}},
+    {'key': 'b', 'value': {'alphabet': 1, 'frequency': 0.0150, 'vowel': None, 'consonant': 0}},
+    {'key': 'c', 'value': {'alphabet': 2, 'frequency': 0.0278, 'vowel': None, 'consonant': 1}}
+  ]
+}
+```
+
+### When Unification Fails
+
+Records with **conflicting field types** cannot be unified:
+
+```python
+df_conflict = pl.DataFrame({
+    "json_data": [
+        '{"data": {"person1": {"name": "Alice", "age": 30}, "person2": {"name": "Bob", "age": "twenty-five"}}}'
+    ]
+})
+
+# age field has conflicting types (int vs string) - unification fails
+schema = df_conflict.genson.infer_json_schema("json_data", avro=True, map_threshold=1, unify_maps=True)
+# Results in separate record fields, not a unified map
+```
+
+The `unify_maps` feature enables more flexible schema inference for semi-structured data while maintaining type safety by rejecting incompatible field combinations.
+
 ### Root Wrapping (`wrap_root`)
 
 By default, inferred schemas treat each JSON object as the root.  
