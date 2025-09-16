@@ -1,0 +1,87 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "5"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - letter:
+        a:
+          alphabet: 0
+          vowel: 0
+          frequency: 0.0817
+    - letter:
+        b:
+          alphabet: 1
+          consonant: 0
+          frequency: 0.015
+    - letter:
+        c:
+          alphabet: 2
+          consonant: 1
+          frequency: 0.0278
+    - letter:
+        d:
+          alphabet: 3
+          consonant: 2
+          frequency: 0.0425
+    - letter:
+        e:
+          alphabet: 4
+          vowel: 4
+          frequency: 0.127
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "letter",
+      "type": {
+        "name": "letter",
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "letter_values",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "alphabet",
+              "type": [
+                "null",
+                "int"
+              ]
+            },
+            {
+              "name": "frequency",
+              "type": [
+                "null",
+                "float"
+              ]
+            },
+            {
+              "name": "vowel",
+              "type": [
+                "null",
+                "int"
+              ]
+            },
+            {
+              "name": "consonant",
+              "type": [
+                "null",
+                "int"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

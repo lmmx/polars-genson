@@ -34,6 +34,10 @@ pub struct GensonKwargs {
     #[serde(default)]
     pub map_max_required_keys: Option<usize>,
 
+    /// Enable unification of compatible but non-homogeneous record schemas into maps
+    #[serde(default)]
+    pub unify_maps: bool,
+
     #[serde(default)]
     pub force_field_types: std::collections::HashMap<String, String>,
 
@@ -153,6 +157,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 schema_uri: kwargs.schema_uri.clone(),
                 map_threshold: kwargs.map_threshold,
                 map_max_required_keys: kwargs.map_max_required_keys,
+                unify_maps: kwargs.unify_maps,
                 force_field_types: kwargs.force_field_types.clone(),
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
@@ -190,6 +195,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     schema_uri: kwargs.schema_uri.clone(),
                     map_threshold: kwargs.map_threshold,
                     map_max_required_keys: kwargs.map_max_required_keys,
+                    unify_maps: kwargs.unify_maps,
                     force_field_types: kwargs.force_field_types.clone(),
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
@@ -270,6 +276,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             schema_uri: kwargs.schema_uri.clone(),
             map_threshold: kwargs.map_threshold,
             map_max_required_keys: kwargs.map_max_required_keys,
+            unify_maps: kwargs.unify_maps,
             force_field_types: kwargs.force_field_types.clone(),
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
@@ -403,6 +410,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         schema_uri: kwargs.schema_uri.clone(),
         map_threshold: kwargs.map_threshold,
         map_max_required_keys: kwargs.map_max_required_keys,
+        unify_maps: kwargs.unify_maps,
         force_field_types: kwargs.force_field_types.clone(),
         avro: true, // normalisation implies Avro
         wrap_root: wrap_root_field.clone(),

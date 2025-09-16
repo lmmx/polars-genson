@@ -92,6 +92,7 @@ def infer_json_schema(
     debug: bool = False,
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
+    unify_maps: bool = False,
     force_field_types: dict[str, str] | None = None,
     avro: bool = False,
     wrap_root: str | None = None,
@@ -119,6 +120,10 @@ def infer_json_schema(
         Maximum number of required keys allowed for Map inference. Objects with more
         required keys will be forced to Record type. If None, no gating based on
         required key count (preserves existing behavior).
+    unify_maps : bool, default False
+        Enable unification of compatible but non-homogeneous record schemas into maps.
+        When True, record schemas with compatible field types can be merged into a single
+        map schema with selective nullable fields.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
@@ -140,6 +145,7 @@ def infer_json_schema(
         "debug": debug,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
+        "unify_maps": unify_maps,
         "avro": avro,
         "wrap_root": wrap_root,
     }
@@ -160,6 +166,7 @@ def infer_polars_schema(
     debug: bool = False,
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
+    unify_maps: bool = False,
     force_field_types: dict[str, str] | None = None,
     avro: bool = False,
     wrap_root: str | None = None,
@@ -185,6 +192,10 @@ def infer_polars_schema(
         Maximum number of required keys allowed for Map inference. Objects with more
         required keys will be forced to Record type. If None, no gating based on
         required key count.
+    unify_maps : bool, default False
+        Enable unification of compatible but non-homogeneous record schemas into maps.
+        When True, record schemas with compatible field types can be merged into a single
+        map schema with selective nullable fields.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
@@ -206,6 +217,7 @@ def infer_polars_schema(
         "debug": debug,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
+        "unify_maps": unify_maps,
         "avro": avro,
         "wrap_root": wrap_root,
     }
@@ -228,6 +240,7 @@ def normalise_json(
     map_encoding: Literal["entries", "mapping", "kv"] = "kv",
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
+    unify_maps: bool = False,
     force_field_types: dict[str, str] | None = None,
     wrap_root: str | None = None,
 ) -> pl.Expr:
@@ -263,6 +276,10 @@ def normalise_json(
         Maximum number of required keys allowed for Map inference during schema
         inference. Objects with more required keys will be forced to Record type.
         If None, no gating based on required key count.
+    unify_maps : bool, default False
+        Enable unification of compatible but non-homogeneous record schemas into maps.
+        When True, record schemas with compatible field types can be merged into a single
+        map schema with selective nullable fields.
     force_field_types : dict[str, str], optional
         Override the inferred type for specific fields. Keys are field names,
         values must be either ``"map"`` or ``"record"``.
@@ -303,6 +320,7 @@ def normalise_json(
         "map_encoding": map_encoding,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
+        "unify_maps": unify_maps,
         "wrap_root": wrap_root,
     }
     if force_field_types is not None:
@@ -338,6 +356,7 @@ class GensonNamespace:
         debug: bool = False,
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
+        unify_maps: bool = False,
         force_field_types: dict[str, str] | None = None,
         avro: bool = False,
         wrap_root: bool | str | None = None,
@@ -364,6 +383,10 @@ class GensonNamespace:
             Maximum number of required keys allowed for Map inference. Objects with more
             required keys will be forced to Record type. If None, no gating based on
             required key count.
+        unify_maps : bool, default False
+            Enable unification of compatible but non-homogeneous record schemas into maps.
+            When True, record schemas with compatible field types can be merged into a single
+            map schema with selective nullable fields.
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
@@ -396,6 +419,7 @@ class GensonNamespace:
                 debug=debug,
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
+                unify_maps=unify_maps,
                 **fft,
                 avro=avro,
                 wrap_root=wrap_root_field,
@@ -422,6 +446,7 @@ class GensonNamespace:
         debug: bool = False,
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
+        unify_maps: bool = False,
         force_field_types: dict[str, str] | None = None,
         avro: bool = False,
         wrap_root: bool | str | None = None,
@@ -449,6 +474,10 @@ class GensonNamespace:
             Maximum number of required keys allowed for Map inference. Objects with more
             required keys will be forced to Record type. If None, no gating based on
             required key count.
+        unify_maps : bool, default False
+            Enable unification of compatible but non-homogeneous record schemas into maps.
+            When True, record schemas with compatible field types can be merged into a single
+            map schema with selective nullable fields.
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
@@ -475,6 +504,7 @@ class GensonNamespace:
                 debug=debug,
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
+                unify_maps=unify_maps,
                 force_field_types=force_field_types,
                 avro=avro,
                 wrap_root=wrap_root_field,
@@ -504,6 +534,7 @@ class GensonNamespace:
         map_encoding: Literal["entries", "mapping", "kv"] = "kv",
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
+        unify_maps: bool = False,
         force_field_types: dict[str, str] | None = None,
         wrap_root: bool | str | None = None,
     ) -> pl.Series:
@@ -552,6 +583,10 @@ class GensonNamespace:
             Maximum number of required keys allowed for Map inference during schema
             inference. Objects with more required keys will be forced to Record type.
             If None, no gating based on required key count.
+        unify_maps : bool, default False
+            Enable unification of compatible but non-homogeneous record schemas into maps.
+            When True, record schemas with compatible field types can be merged into a single
+            map schema with selective nullable fields.
         force_field_types : dict[str, str], optional
             Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
         wrap_root : str | bool | None, default None
@@ -576,6 +611,7 @@ class GensonNamespace:
             map_encoding=map_encoding,
             map_threshold=map_threshold,
             map_max_required_keys=map_max_required_keys,
+            unify_maps=unify_maps,
             force_field_types=force_field_types,
             wrap_root=wrap_root_field,
         )
@@ -594,6 +630,7 @@ class GensonNamespace:
                     merge_schemas=True,
                     map_threshold=map_threshold,
                     map_max_required_keys=map_max_required_keys,
+                    unify_maps=unify_maps,
                     force_field_types=force_field_types,
                     avro=True,
                     wrap_root=wrap_root_field,
