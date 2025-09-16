@@ -52,7 +52,7 @@ info:
           "namespace": "genson.document_types",
           "fields": [
             {
-              "name": "consonant",
+              "name": "alphabet",
               "type": [
                 "null",
                 "int"
@@ -73,7 +73,7 @@ info:
               ]
             },
             {
-              "name": "alphabet",
+              "name": "consonant",
               "type": [
                 "null",
                 "int"

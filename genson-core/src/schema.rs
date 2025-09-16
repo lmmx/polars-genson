@@ -116,17 +116,6 @@ mod innermod {
     ///   - Non-record types in the collection
     ///   - Conflicting field types (same field name, different types)
     ///   - Empty schema collection
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// // These schemas can be unified:
-    /// let schema_a = json!({"type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "integer"}}});
-    /// let schema_b = json!({"type": "object", "properties": {"name": {"type": "string"}, "city": {"type": "string"}}});
-    ///
-    /// // Result: name stays required, age and city become nullable
-    /// // {"type": "object", "properties": {"name": {"type": "string"}, "age": ["null", {"type": "integer"}], "city": ["null", {"type": "string"}]}}
-    /// ```
     fn check_unifiable_schemas(schemas: &[Value]) -> Option<Value> {
         if schemas.is_empty() {
             return None;
@@ -140,20 +129,20 @@ mod innermod {
             return None;
         }
 
-        let mut all_fields = std::collections::HashMap::new();
+        let mut all_fields = ordermap::OrderMap::new();
         let mut field_counts = std::collections::HashMap::new();
 
-        // Collect all field types and count occurrences
+        // Collect all field types and count occurrences (OrderMap preserves insertion order)
         for schema in schemas {
             if let Some(Value::Object(props)) = schema.get("properties") {
                 for (field_name, field_schema) in props {
                     *field_counts.entry(field_name.clone()).or_insert(0) += 1;
 
                     match all_fields.entry(field_name.clone()) {
-                        std::collections::hash_map::Entry::Vacant(e) => {
+                        ordermap::map::Entry::Vacant(e) => {
                             e.insert(field_schema.clone());
                         }
-                        std::collections::hash_map::Entry::Occupied(e) => {
+                        ordermap::map::Entry::Occupied(e) => {
                             // Field exists in multiple schemas - check compatibility
                             if e.get() != field_schema {
                                 return None; // Incompatible field types
@@ -166,20 +155,25 @@ mod innermod {
 
         let total_schemas = schemas.len();
 
-        // Create unified schema: nullable only if missing from some schemas
-        let unified_properties: serde_json::Map<String, Value> = all_fields
-            .into_iter()
-            .map(|(name, field_type)| {
-                let count = field_counts.get(&name).unwrap_or(&0);
-                if *count == total_schemas {
-                    // Present in all schemas - keep as required
-                    (name, field_type)
-                } else {
-                    // Missing from some schemas - make nullable
-                    (name, serde_json::json!(["null", field_type]))
-                }
-            })
-            .collect();
+        // Create unified properties: universal fields first, then optional fields (both in insertion order)
+        let mut unified_properties = serde_json::Map::new();
+
+        // First pass: add universal fields (non-nullable)
+        for (field_name, field_type) in &all_fields {
+            let count = field_counts.get(field_name).unwrap_or(&0);
+            if *count == total_schemas {
+                unified_properties.insert(field_name.clone(), field_type.clone());
+            }
+        }
+
+        // Second pass: add optional fields (nullable)
+        for (field_name, field_type) in &all_fields {
+            let count = field_counts.get(field_name).unwrap_or(&0);
+            if *count < total_schemas {
+                unified_properties
+                    .insert(field_name.clone(), serde_json::json!(["null", field_type]));
+            }
+        }
 
         Some(serde_json::json!({
             "type": "object",
