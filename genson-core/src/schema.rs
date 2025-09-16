@@ -353,8 +353,22 @@ mod innermod {
                     total_schemas - count,
                     total_schemas
                 );
-                unified_properties
-                    .insert(field_name.clone(), serde_json::json!(["null", field_type]));
+
+                // Create proper JSON Schema nullable syntax
+                if let Some(type_str) = field_type.get("type").and_then(|t| t.as_str()) {
+                    // Create a copy of the field_type and modify its type to be a union
+                    let mut nullable_field = field_type.clone();
+                    nullable_field["type"] = serde_json::json!(["null", type_str]);
+                    unified_properties.insert(field_name.clone(), nullable_field);
+                } else {
+                    // Fallback for schemas without explicit type
+                    unified_properties.insert(
+                        field_name.clone(),
+                        serde_json::json!({
+                            "anyOf": [{"type": "null"}, field_type]
+                        }),
+                    );
+                }
             }
         }
 

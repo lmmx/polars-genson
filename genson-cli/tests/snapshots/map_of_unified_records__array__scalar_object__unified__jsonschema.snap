@@ -39,32 +39,32 @@ info:
             "value": {
               "type": "object",
               "properties": {
-                "id": [
-                  "null",
-                  {
-                    "type": "string"
-                  }
-                ],
-                "labels": [
-                  "null",
-                  {
-                    "properties": {
-                      "en": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "en"
-                    ],
-                    "type": "object"
-                  }
-                ],
-                "value__string": [
-                  "null",
-                  {
-                    "type": "string"
-                  }
-                ]
+                "id": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "labels": {
+                  "properties": {
+                    "en": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "en"
+                  ],
+                  "type": [
+                    "null",
+                    "object"
+                  ]
+                },
+                "value__string": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                }
               }
             }
           }
