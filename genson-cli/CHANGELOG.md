@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.0...genson-cli-v0.2.1) - 2025-09-16
+
+### <!-- 6 -->Testing
+
+- snapshot incompatible record results ([#81](https://github.com/lmmx/polars-genson/pull/81))
+- bless the test cases for map of unified records ([#80](https://github.com/lmmx/polars-genson/pull/80))
+
+### <!-- 9 -->Other
+
+- unify map of union of records ([#79](https://github.com/lmmx/polars-genson/pull/79))
+
 ## [0.1.9](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.1.8...genson-cli-v0.1.9) - 2025-09-11
 
 ### <!-- 9 -->Other
