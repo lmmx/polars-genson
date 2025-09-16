@@ -1,0 +1,88 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - letters:
+        a:
+          - index: 0
+            vowel: 0
+    - letters:
+        b:
+          - index: 1
+            consonant: 0
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "letters",
+      "type": {
+        "type": "record",
+        "name": "letters",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "a",
+            "type": [
+              "null",
+              {
+                "type": "array",
+                "items": {
+                  "type": "record",
+                  "name": "a",
+                  "namespace": "genson.document_types.letters_types",
+                  "fields": [
+                    {
+                      "name": "index",
+                      "type": "int"
+                    },
+                    {
+                      "name": "vowel",
+                      "type": "int"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "b",
+            "type": [
+              "null",
+              {
+                "type": "array",
+                "items": {
+                  "type": "record",
+                  "name": "b",
+                  "namespace": "genson.document_types.letters_types",
+                  "fields": [
+                    {
+                      "name": "index",
+                      "type": "int"
+                    },
+                    {
+                      "name": "consonant",
+                      "type": "int"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

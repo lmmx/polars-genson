@@ -14,25 +14,6 @@ fn write_ndjson(rows: &[&str]) -> NamedTempFile {
     temp
 }
 
-/// Letter frequency data with vowel/consonant record variants
-fn letter_frequency_rows() -> Vec<&'static str> {
-    vec![
-        r#"{"letter": {"a": {"alphabet": 0, "vowel": 0, "frequency": 0.0817}}}"#,
-        r#"{"letter": {"b": {"alphabet": 1, "consonant": 0, "frequency": 0.0150}}}"#,
-        r#"{"letter": {"c": {"alphabet": 2, "consonant": 1, "frequency": 0.0278}}}"#,
-        r#"{"letter": {"d": {"alphabet": 3, "consonant": 2, "frequency": 0.0425}}}"#,
-        r#"{"letter": {"e": {"alphabet": 4, "vowel": 4, "frequency": 0.1270}}}"#,
-    ]
-}
-
-/// Incompatible rows: minimal 2 rows with conflicting `alphabet` types
-fn incompatible_rows() -> Vec<&'static str> {
-    vec![
-        r#"{"letter": {"a": {"alphabet": 0, "vowel": 0, "frequency": 0.0817}}}"#, // int
-        r#"{"letter": {"b": {"alphabet": "one", "consonant": 0, "frequency": 0.0150}}}"#, // string
-    ]
-}
-
 /// Check if the current output matches the verified/blessed version
 fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
     let module_file = file!();
@@ -56,7 +37,14 @@ fn run_genson_unified(name: &str, rows: Vec<&str>, extra_args: &[&str]) {
     let temp = write_ndjson(&rows);
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    let mut args = vec!["--ndjson", "--map-threshold", "5", "--unify-maps"];
+    let mut args = vec![
+        "--ndjson",
+        "--map-threshold",
+        "2",
+        "--map-max-rk",
+        "1",
+        "--unify-maps",
+    ];
     args.extend_from_slice(extra_args);
     args.push(temp.path().to_str().unwrap());
     let args_for_metadata = args.clone();
@@ -81,6 +69,27 @@ fn run_genson_unified(name: &str, rows: Vec<&str>, extra_args: &[&str]) {
     }, {
         assert_snapshot!(name, stdout_str);
     });
+}
+
+// Tests for unify map of records
+
+/// Letter frequency data with vowel/consonant record variants
+fn letter_frequency_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letter": {"a": {"alphabet": 0, "vowel": 0, "frequency": 0.0817}}}"#,
+        r#"{"letter": {"b": {"alphabet": 1, "consonant": 0, "frequency": 0.0150}}}"#,
+        r#"{"letter": {"c": {"alphabet": 2, "consonant": 1, "frequency": 0.0278}}}"#,
+        r#"{"letter": {"d": {"alphabet": 3, "consonant": 2, "frequency": 0.0425}}}"#,
+        r#"{"letter": {"e": {"alphabet": 4, "vowel": 4, "frequency": 0.1270}}}"#,
+    ]
+}
+
+/// Incompatible rows: minimal 2 rows with conflicting `alphabet` types
+fn incompatible_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letter": {"a": {"alphabet": 0, "vowel": 0, "frequency": 0.0817}}}"#, // int
+        r#"{"letter": {"b": {"alphabet": "one", "consonant": 0, "frequency": 0.0150}}}"#, // string
+    ]
 }
 
 #[test]
@@ -117,6 +126,70 @@ fn test_incompatible_maps_normalize() {
     run_genson_unified(
         "incompatible__normalize",
         incompatible_rows(),
+        &["--normalise"],
+    );
+}
+
+// Tests for unify map of array of records
+
+/// Minimal array-of-records rows: vowel vs consonant variants
+fn array_of_records_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letters": {"a": [{"index": 0, "vowel": 0}]}}"#,
+        r#"{"letters": {"b": [{"index": 1, "consonant": 0}]}}"#,
+    ]
+}
+
+/// Incompatible array-of-records rows: conflict on index type (int vs string)
+fn array_of_records_incompatible_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letters": {"a": [{"index": 0, "vowel": 0}]}}"#, // int index
+        r#"{"letters": {"b": [{"index": "one", "consonant": 0}]}}"#, // string index
+    ]
+}
+
+#[test]
+fn test_array_unified_jsonschema() {
+    run_genson_unified("array__unified__jsonschema", array_of_records_rows(), &[]);
+}
+
+#[test]
+fn test_array_unified_avro() {
+    run_genson_unified("array__unified__avro", array_of_records_rows(), &["--avro"]);
+}
+
+#[test]
+fn test_array_unified_normalize() {
+    run_genson_unified(
+        "array__unified__normalize",
+        array_of_records_rows(),
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_array_incompatible_jsonschema() {
+    run_genson_unified(
+        "array__incompatible__jsonschema",
+        array_of_records_incompatible_rows(),
+        &[],
+    );
+}
+
+#[test]
+fn test_array_incompatible_avro() {
+    run_genson_unified(
+        "array__incompatible__avro",
+        array_of_records_incompatible_rows(),
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_array_incompatible_normalize() {
+    run_genson_unified(
+        "array__incompatible__normalize",
+        array_of_records_incompatible_rows(),
         &["--normalise"],
     );
 }

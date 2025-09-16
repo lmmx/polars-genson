@@ -7,7 +7,9 @@ info:
   args:
     - "--ndjson"
     - "--map-threshold"
-    - "5"
+    - "2"
+    - "--map-max-rk"
+    - "1"
     - "--unify-maps"
     - "--normalise"
   input:
