@@ -25,4 +25,4 @@ info:
             value: scalar-string
 ---
 {"letters":{"a":[{"index":0,"value":{"id":"X","labels":{"en":"thing"},"value__string":null}}]}}
-{"letters":{"b":[{"index":1,"value":{"id":null,"labels":null,"value__string":null}}]}}
+{"letters":{"b":[{"index":1,"value":{"id":null,"labels":null,"value__string":"scalar-string"}}]}}
