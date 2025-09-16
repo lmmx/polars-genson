@@ -41,6 +41,9 @@ pub struct GensonKwargs {
     #[serde(default)]
     pub force_field_types: std::collections::HashMap<String, String>,
 
+    #[serde(default = "default_wrap_scalars")]
+    pub wrap_scalars: bool,
+
     /// Whether to emit Avro schema instead of JSON Schema
     #[serde(default)]
     pub avro: bool,
@@ -76,6 +79,10 @@ fn default_merge_schemas() -> bool {
 }
 
 fn default_empty_as_null() -> bool {
+    true
+}
+
+fn default_wrap_scalars() -> bool {
     true
 }
 
@@ -159,6 +166,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 map_max_required_keys: kwargs.map_max_required_keys,
                 unify_maps: kwargs.unify_maps,
                 force_field_types: kwargs.force_field_types.clone(),
+                wrap_scalars: kwargs.wrap_scalars,
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
             };
@@ -197,6 +205,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     map_max_required_keys: kwargs.map_max_required_keys,
                     unify_maps: kwargs.unify_maps,
                     force_field_types: kwargs.force_field_types.clone(),
+                    wrap_scalars: kwargs.wrap_scalars,
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
                 };
@@ -278,6 +287,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             map_max_required_keys: kwargs.map_max_required_keys,
             unify_maps: kwargs.unify_maps,
             force_field_types: kwargs.force_field_types.clone(),
+            wrap_scalars: kwargs.wrap_scalars,
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
         };
@@ -412,6 +422,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         map_max_required_keys: kwargs.map_max_required_keys,
         unify_maps: kwargs.unify_maps,
         force_field_types: kwargs.force_field_types.clone(),
+        wrap_scalars: kwargs.wrap_scalars,
         avro: true, // normalisation implies Avro
         wrap_root: wrap_root_field.clone(),
     };

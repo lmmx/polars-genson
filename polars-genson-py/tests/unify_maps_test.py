@@ -179,3 +179,49 @@ def test_unify_maps_below_threshold():
     letter_field = next(f for f in avro_schema["fields"] if f["name"] == "letter")
     # Should remain as record due to threshold
     assert letter_field["type"]["type"] == "record"
+
+
+def test_wrap_scalars_promotes_scalar_to_object():
+    """Scalar values should be promoted into objects when wrap_scalars is enabled."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                # Row 1: value is an object
+                '{"root": {"A": {"id": 1, "value": {"hello": "world"}}}}',
+                # Row 2: value is also an object
+                '{"root": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
+                # Row 3: value is just a string → should be promoted
+                '{"root": {"C": {"id": 3, "value": "scalar-string"}}}',
+            ]
+        }
+    )
+
+    avro_schema = df.genson.infer_json_schema(
+        "json_data",
+        avro=True,
+        map_threshold=3,
+        map_max_required_keys=2,
+        unify_maps=True,
+        wrap_scalars=True,
+    )
+
+    root_field = next(f for f in avro_schema["fields"] if f["name"] == "root")
+    assert root_field["type"]["type"] == "map"
+
+    values_schema = root_field["type"]["values"]
+    assert values_schema["type"] == "record"
+
+    field_names = {f["name"] for f in values_schema["fields"]}
+    # Should include id, value. value should itself be a record that includes "hello"/"foo"
+    # and a synthetic key for the promoted scalar (value__string)
+    assert "id" in field_names
+    assert "value" in field_names
+
+    value_field = next(f for f in values_schema["fields"] if f["name"] == "value")
+    assert value_field["type"][1]["type"] == "record"
+
+    inner_field_names = {f["name"] for f in value_field["type"][1]["fields"]}
+    assert "hello" in inner_field_names or "foo" in inner_field_names
+    assert "value__string" in inner_field_names, (
+        f"Expected promoted scalar key 'value__string', got {inner_field_names}"
+    )

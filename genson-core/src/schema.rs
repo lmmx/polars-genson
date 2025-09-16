@@ -27,6 +27,10 @@ mod innermod {
         pub unify_maps: bool,
         /// Force override of field treatment, e.g. {"labels": "map"}
         pub force_field_types: std::collections::HashMap<String, String>,
+        /// Whether to promote scalar values to wrapped objects when they collide with record values
+        /// during unification. If `true`, scalars are promoted under a synthetic property name derived from
+        /// the parent field and the scalar type (e.g. "foo__string"). If `false`, don't unify on conflicts.
+        pub wrap_scalars: bool,
         /// Wrap the inferred top-level schema under a single required field with this name.
         /// Example: wrap_root = Some("labels") turns `{...}` into
         /// `{"type":"object","properties":{"labels":{...}},"required":["labels"]}`.
@@ -46,6 +50,7 @@ mod innermod {
                 map_max_required_keys: None,
                 unify_maps: false,
                 force_field_types: std::collections::HashMap::new(),
+                wrap_scalars: true,
                 wrap_root: None,
                 #[cfg(feature = "avro")]
                 avro: false,
@@ -122,6 +127,27 @@ mod innermod {
         }
     }
 
+    /// Return a string representation of a JSON Schema type.
+    /// If it’s a union, pick the first non-"null" type.
+    fn schema_type_str(schema: &Value) -> String {
+        if let Some(t) = schema.get("type").and_then(|v| v.as_str()) {
+            return t.to_string();
+        }
+
+        // handle union case: ["null", {"type": "string"}]
+        if let Some(arr) = schema.as_array() {
+            for v in arr {
+                if v != "null" {
+                    if let Some(t) = v.get("type").and_then(|x| x.as_str()) {
+                        return t.to_string();
+                    }
+                }
+            }
+        }
+
+        "unknown".to_string()
+    }
+
     /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
     ///
     /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
@@ -136,6 +162,10 @@ mod innermod {
     /// Fields present in all schemas remain required, while fields missing from some schemas
     /// become nullable unions (e.g., `["null", {"type": "string"}]`).
     ///
+    /// When `wrap_scalars` is enabled, scalar types that collide with object types are promoted
+    /// to singleton objects under a synthetic key (e.g., `value__string`), allowing unification
+    /// to succeed instead of failing.
+    ///
     /// # Returns
     ///
     /// - `Some(unified_schema)` if schemas can be unified - contains all unique fields with selective nullability
@@ -143,7 +173,7 @@ mod innermod {
     ///   - Non-record types in the collection
     ///   - Conflicting field types (same field name, different types)
     ///   - Empty schema collection
-    fn check_unifiable_schemas(schemas: &[Value], path: &str) -> Option<Value> {
+    fn check_unifiable_schemas(schemas: &[Value], path: &str, wrap_scalars: bool) -> Option<Value> {
         if schemas.is_empty() {
             eprintln!("{path}: failed (empty schema list)");
             return None;
@@ -227,6 +257,7 @@ mod innermod {
                                 if let Some(unified) = check_unifiable_schemas(
                                     &[existing.clone(), new.clone()],
                                     &format!("{path}.{}", field_name),
+                                    wrap_scalars,
                                 ) {
                                     eprintln!(
                                         "Field `{field_name}` unified successfully after recursion"
@@ -237,9 +268,58 @@ mod innermod {
                                     return None;
                                 }
                             } else {
+                                // Handle scalar vs object promotion if wrap_scalars is enabled
+                                if wrap_scalars {
+                                    let existing_is_obj = existing.get("type")
+                                        == Some(&Value::String("object".into()));
+                                    let new_is_obj = field_schema.get("type")
+                                        == Some(&Value::String("object".into()));
+
+                                    if existing_is_obj ^ new_is_obj {
+                                        // One is object, other is scalar → wrap scalar
+                                        let (obj_schema, scalar_schema, scalar_side) =
+                                            if existing_is_obj {
+                                                (existing.clone(), field_schema.clone(), "new")
+                                            } else {
+                                                (field_schema.clone(), existing.clone(), "existing")
+                                            };
+
+                                        let type_suffix = schema_type_str(&scalar_schema);
+                                        let wrapped_key =
+                                            format!("{}__{}", field_name, type_suffix);
+
+                                        eprintln!(
+                                            "Promoting scalar on {} side: wrapping into object under key `{}`",
+                                            scalar_side, wrapped_key
+                                        );
+
+                                        let mut wrapped_props = serde_json::Map::new();
+                                        wrapped_props.insert(wrapped_key, scalar_schema.clone());
+
+                                        let promoted = serde_json::json!({
+                                            "type": "object",
+                                            "properties": wrapped_props
+                                        });
+
+                                        // Recursively unify with the object schema
+                                        if let Some(unified) = check_unifiable_schemas(
+                                            &[obj_schema.clone(), promoted.clone()],
+                                            &format!("{path}.{}", field_name),
+                                            wrap_scalars,
+                                        ) {
+                                            eprintln!(
+                                                "Field `{field_name}` unified successfully after scalar promotion"
+                                            );
+                                            e.insert(unified);
+                                            continue;
+                                        }
+                                    }
+                                }
+
+                                // If we didn’t handle it, it’s a true conflict
                                 eprintln!(
                                     "{path}.{field_name}: incompatible types:\n  existing={:#?}\n  new={:#?}",
-                                    existing, new
+                                    existing, field_schema
                                 );
                                 return None; // fundamentally incompatible types
                             }
@@ -374,7 +454,21 @@ mod innermod {
                 let mut unified_schema: Option<Value> = None;
                 if let Some(first_schema) = props.values().next() {
                     if props.values().all(|schema| schema == first_schema) {
-                        unified_schema = Some(first_schema.clone());
+                        // Handle union types properly - extract the non-null type for additionalProperties
+                        if let Value::Array(arr) = first_schema {
+                            if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
+                                // This is a nullable union - extract the non-null type
+                                let non_null_type = arr
+                                    .iter()
+                                    .find(|v| *v != &Value::String("null".to_string()))
+                                    .unwrap();
+                                unified_schema = Some(non_null_type.clone());
+                            } else {
+                                unified_schema = Some(first_schema.clone());
+                            }
+                        } else {
+                            unified_schema = Some(first_schema.clone());
+                        }
                     } else if config.unify_maps {
                         // Detect if these are all arrays of records
                         if child_schemas
@@ -393,9 +487,11 @@ mod innermod {
                                 }
                             }
                             if all_items_ok {
-                                if let Some(unified_items) =
-                                    check_unifiable_schemas(&item_schemas, field_name.unwrap_or(""))
-                                {
+                                if let Some(unified_items) = check_unifiable_schemas(
+                                    &item_schemas,
+                                    field_name.unwrap_or(""),
+                                    config.wrap_scalars,
+                                ) {
                                     unified_schema = Some(serde_json::json!({
                                         "type": "array",
                                         "items": unified_items
@@ -403,8 +499,11 @@ mod innermod {
                                 }
                             }
                         } else {
-                            unified_schema =
-                                check_unifiable_schemas(&child_schemas, field_name.unwrap_or(""));
+                            unified_schema = check_unifiable_schemas(
+                                &child_schemas,
+                                field_name.unwrap_or(""),
+                                config.wrap_scalars,
+                            );
                         }
                     }
                 }
@@ -1386,7 +1485,6 @@ mod innermod {
             assert!(schema.get("additionalProperties").is_none());
         }
 
-        // Existing tests...
         #[test]
         fn test_map_max_required_keys_with_wrap_root() {
             let json_strings = vec![
@@ -1411,6 +1509,57 @@ mod innermod {
             assert!(labels_content.is_object());
 
             println!("✅ map_max_required_keys works with wrap_root");
+        }
+
+        #[test]
+        fn test_wrap_scalars_in_map_of_records() {
+            let json_strings = vec![
+                // "root" field is a map, all map keys have a record{id,value},
+                // for map keys A/B value is a record{hello} and for map key C value is a string
+                // Row 1: value is an object
+                r#"{"root": {"A": {"id": 1, "value": {"hello": "world"}}}}"#.to_string(),
+                // Row 2: value is an object, again
+                r#"{"root": {"B": {"id": 2, "value": {"hello": "foo"}}}}"#.to_string(),
+                // Row 3: value is just a string
+                r#"{"root": {"C": {"id": 3, "value": "bar"}}}"#.to_string(),
+            ];
+
+            let cfg = SchemaInferenceConfig {
+                map_threshold: 3,
+                map_max_required_keys: Some(0),
+                unify_maps: true,
+                wrap_scalars: true,
+                ..Default::default()
+            };
+
+            let result = infer_json_schema_from_strings(&json_strings, cfg)
+                .expect("Schema inference should succeed with wrap_scalars");
+
+            let sch = result.schema;
+
+            // Navigate to root map’s value type
+            let root_additional = &sch["properties"]["root"]["additionalProperties"];
+            assert_eq!(root_additional["type"], "object");
+
+            // The "value" field should be promoted and contain both object and scalar string form
+            let value_schema = &root_additional["properties"]["value"];
+            assert!(value_schema.is_object());
+
+            // Should contain the synthetic key for the wrapped scalar
+            assert!(
+                value_schema["properties"]
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .any(|k| k.contains("__string")),
+                "Expected synthetic scalar wrapper key inside value schema, got: {}",
+                serde_json::to_string_pretty(value_schema).unwrap()
+            );
+
+            println!(
+                "✅ wrap_scalars promoted scalar inside map-of-records: {}",
+                serde_json::to_string_pretty(value_schema).unwrap()
+            );
         }
     }
 }

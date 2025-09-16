@@ -29,6 +29,35 @@
         "rank": "normal"
       }
     ],
+    "P463": [
+      {
+        "mainsnak": {
+          "property": "P463",
+          "datatype": "wikibase-item",
+          "datavalue": {
+            "value": {
+              "id": "Q43229",
+              "labels": {
+                "en": "United Nations",
+                "fr": "Nations unies",
+                "de": "Vereinte Nationen",
+                "es": "Naciones Unidas",
+                "pt": "Nações Unidas"
+              }
+            },
+            "type": "wikibase-entityid"
+          },
+          "property-labels": {
+            "en": "member of",
+            "fr": "membre de",
+            "de": "Mitglied von",
+            "es": "miembro de",
+            "pt": "membro de"
+          }
+        },
+        "rank": "normal"
+      }
+    ],
     "P569": [
       {
         "mainsnak": {
@@ -103,6 +132,90 @@
               "property-labels": { "en": "with qualifier" }
             }
           ]
+        },
+        "rank": "normal"
+      }
+    ],
+    "P7704": [
+      {
+        "mainsnak": {
+          "property": "P7704",
+          "datatype": "external-id",
+          "datavalue": {
+            "type": "string"
+          },
+          "property-labels": {
+            "en": "example property",
+            "fr": "propriété d'exemple",
+            "de": "Beispieleigenschaft",
+            "es": "propiedad de ejemplo",
+            "pt": "propriedade de exemplo"
+          }
+        },
+        "rank": "preferred",
+        "references": [
+          {
+            "P813": [
+              {
+                "property": "P813",
+                "datatype": "time",
+                "datavalue": {
+                  "value": {
+                    "time": "+2024-01-01T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                  },
+                  "type": "time"
+                },
+                "property-labels": {
+                  "en": "retrieved",
+                  "fr": "consulté le",
+                  "de": "abgerufen",
+                  "es": "recuperado",
+                  "pt": "recuperado em"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "P1476": [
+      {
+        "mainsnak": {
+          "property": "P1476",
+          "datatype": "monolingualtext",
+          "datavalue": {
+            "value": { "text": "Example title", "language": "en" },
+            "type": "monolingualtext"
+          },
+          "property-labels": {
+            "en": "title",
+            "fr": "titre",
+            "de": "Titel",
+            "es": "título",
+            "pt": "título"
+          }
+        },
+        "rank": "normal"
+      }
+    ],
+    "P10291": [
+      {
+        "mainsnak": {
+          "property": "P10291",
+          "datatype": "external-id",
+          "datavalue": { "value": "9359", "type": "string" },
+          "property-labels": {
+            "en": "English label",
+            "fr": "Libellé français",
+            "de": "Deutsches Etikett",
+            "es": "Etiqueta en español",
+            "pt": "rótulo em português"
+          }
         },
         "rank": "normal"
       }

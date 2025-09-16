@@ -252,3 +252,39 @@ fn test_array_value_unified_normalize() {
         &["--normalise"],
     );
 }
+
+/// Minimal array-of-records rows with scalar vs object `value`.
+/// "a" has `value` as object with {id, labels}, "b" has `value` as string.
+fn array_of_records_scalar_object_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letters": {"a": [{"index": 0, "value": {"id": "X", "labels": {"en": "thing"}}}]}}"#,
+        r#"{"letters": {"b": [{"index": 1, "value": "scalar-string"}]}}"#,
+    ]
+}
+
+#[test]
+fn test_array_scalar_object_unified_jsonschema() {
+    run_genson_unified(
+        "array__scalar_object__unified__jsonschema",
+        array_of_records_scalar_object_rows(),
+        &[],
+    );
+}
+
+#[test]
+fn test_array_scalar_object_unified_avro() {
+    run_genson_unified(
+        "array__scalar_object__unified__avro",
+        array_of_records_scalar_object_rows(),
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_array_scalar_object_unified_normalize() {
+    run_genson_unified(
+        "array__scalar_object__unified__normalize",
+        array_of_records_scalar_object_rows(),
+        &["--normalise"],
+    );
+}
