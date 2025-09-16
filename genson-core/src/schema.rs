@@ -267,19 +267,41 @@ mod innermod {
                     .unwrap_or(0);
 
                 // Check for unifiable schemas
-                let unified_schema = if let Some(first_schema) = props.values().next() {
+                let mut unified_schema: Option<Value> = None;
+                if let Some(first_schema) = props.values().next() {
                     if props.values().all(|schema| schema == first_schema) {
-                        // Homogeneous case
-                        Some(first_schema.clone())
+                        unified_schema = Some(first_schema.clone());
                     } else if config.unify_maps {
-                        // Try unification
-                        check_unifiable_schemas(&child_schemas)
-                    } else {
-                        None
+                        // Detect if these are all arrays of records
+                        if child_schemas
+                            .iter()
+                            .all(|s| s.get("type") == Some(&Value::String("array".into())))
+                        {
+                            // Collect item schemas, short-circuit if any missing
+                            let mut item_schemas = Vec::with_capacity(child_schemas.len());
+                            let mut all_items_ok = true;
+                            for s in &child_schemas {
+                                if let Some(items) = s.get("items") {
+                                    item_schemas.push(items.clone());
+                                } else {
+                                    all_items_ok = false;
+                                    break;
+                                }
+                            }
+                            if all_items_ok {
+                                if let Some(unified_items) = check_unifiable_schemas(&item_schemas)
+                                {
+                                    unified_schema = Some(serde_json::json!({
+                                        "type": "array",
+                                        "items": unified_items
+                                    }));
+                                }
+                            }
+                        } else {
+                            unified_schema = check_unifiable_schemas(&child_schemas);
+                        }
                     }
-                } else {
-                    None
-                };
+                }
 
                 // Apply map inference logic
                 let should_be_map = if above_threshold && unified_schema.is_some() {

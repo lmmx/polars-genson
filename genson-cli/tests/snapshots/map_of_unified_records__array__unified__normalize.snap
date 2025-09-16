@@ -21,5 +21,5 @@ info:
           - index: 1
             consonant: 0
 ---
-{"letters":{"a":[{"index":0,"vowel":0}],"b":null}}
-{"letters":{"a":null,"b":[{"index":1,"consonant":0}]}}
+{"letters":{"a":[{"index":0,"vowel":0,"consonant":null}]}}
+{"letters":{"b":[{"index":1,"vowel":null,"consonant":0}]}}

@@ -24,45 +24,30 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "letters": {
-      "properties": {
-        "a": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "index": {
-                "type": "integer"
-              },
-              "vowel": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "index": {
+              "type": "integer"
+            },
+            "vowel": [
+              "null",
+              {
                 "type": "integer"
               }
-            },
-            "required": [
-              "index",
-              "vowel"
             ],
-            "type": "object"
-          }
-        },
-        "b": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "index": {
-                "type": "integer"
-              },
-              "consonant": {
+            "consonant": [
+              "null",
+              {
                 "type": "integer"
               }
-            },
-            "required": [
-              "consonant",
-              "index"
-            ],
-            "type": "object"
+            ]
           }
         }
-      },
-      "type": "object"
+      }
     }
   },
   "required": [
