@@ -1,0 +1,22 @@
+{
+  "claims": {
+    "P31": [
+      {
+        "mainsnak": {
+          "datavalue": {
+            "value": { "id": "Q5" }
+          }
+        }
+      }
+    ],
+    "P569": [
+      {
+        "mainsnak": {
+          "datavalue": {
+            "value": { "time": "+1956-05-08T00:00:00Z" }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -193,3 +193,39 @@ fn test_array_incompatible_normalize() {
         &["--normalise"],
     );
 }
+
+/// Minimal array-of-records rows with mismatched nested `value` objects.
+/// "a" has `value.vowel` (boolean), "b" has `value.cap` (string).
+fn array_of_records_value_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"letters": {"a": [{"index": 0, "value": {"vowel": true}}]}}"#,
+        r#"{"letters": {"b": [{"index": 1, "value": {"cap": "B"}}]}}"#,
+    ]
+}
+
+#[test]
+fn test_array_value_unified_jsonschema() {
+    run_genson_unified(
+        "array__value__unified__jsonschema",
+        array_of_records_value_rows(),
+        &[],
+    );
+}
+
+#[test]
+fn test_array_value_unified_avro() {
+    run_genson_unified(
+        "array__value__unified__avro",
+        array_of_records_value_rows(),
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_array_value_unified_normalize() {
+    run_genson_unified(
+        "array__value__unified__normalize",
+        array_of_records_value_rows(),
+        &["--normalise"],
+    );
+}
