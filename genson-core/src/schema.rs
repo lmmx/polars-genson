@@ -95,10 +95,10 @@ mod innermod {
         Ok(())
     }
 
-    /// Check if a collection of record schemas can be unified into a single schema with nullable fields.
+    /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
     ///
     /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
-    /// can be merged into a single schema where all fields are optional/nullable. This enables
+    /// can be merged into a single schema where only missing fields become nullable. This enables
     /// map inference for cases where record values have compatible but non-identical structures.
     ///
     /// Schemas are considered unifiable if:
@@ -106,9 +106,12 @@ mod innermod {
     /// 2. Field names are either disjoint OR have identical types when they overlap
     /// 3. No field has conflicting type definitions across schemas
     ///
+    /// Fields present in all schemas remain required, while fields missing from some schemas
+    /// become nullable unions (e.g., `["null", {"type": "string"}]`).
+    ///
     /// # Returns
     ///
-    /// - `Some(unified_schema)` if schemas can be unified - contains all unique fields as nullable
+    /// - `Some(unified_schema)` if schemas can be unified - contains all unique fields with selective nullability
     /// - `None` if schemas cannot be unified due to:
     ///   - Non-record types in the collection
     ///   - Conflicting field types (same field name, different types)
@@ -121,7 +124,7 @@ mod innermod {
     /// let schema_a = json!({"type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "integer"}}});
     /// let schema_b = json!({"type": "object", "properties": {"name": {"type": "string"}, "city": {"type": "string"}}});
     ///
-    /// // Result: unified schema with nullable age and city fields
+    /// // Result: name stays required, age and city become nullable
     /// // {"type": "object", "properties": {"name": {"type": "string"}, "age": ["null", {"type": "integer"}], "city": ["null", {"type": "string"}]}}
     /// ```
     fn check_unifiable_schemas(schemas: &[Value]) -> Option<Value> {
@@ -138,11 +141,14 @@ mod innermod {
         }
 
         let mut all_fields = std::collections::HashMap::new();
+        let mut field_counts = std::collections::HashMap::new();
 
-        // Collect all field types across schemas
+        // Collect all field types and count occurrences
         for schema in schemas {
             if let Some(Value::Object(props)) = schema.get("properties") {
                 for (field_name, field_schema) in props {
+                    *field_counts.entry(field_name.clone()).or_insert(0) += 1;
+
                     match all_fields.entry(field_name.clone()) {
                         std::collections::hash_map::Entry::Vacant(e) => {
                             e.insert(field_schema.clone());
@@ -158,12 +164,20 @@ mod innermod {
             }
         }
 
-        // Create unified schema with all fields as nullable
+        let total_schemas = schemas.len();
+
+        // Create unified schema: nullable only if missing from some schemas
         let unified_properties: serde_json::Map<String, Value> = all_fields
             .into_iter()
             .map(|(name, field_type)| {
-                let nullable_type = serde_json::json!(["null", field_type]);
-                (name, nullable_type)
+                let count = field_counts.get(&name).unwrap_or(&0);
+                if *count == total_schemas {
+                    // Present in all schemas - keep as required
+                    (name, field_type)
+                } else {
+                    // Missing from some schemas - make nullable
+                    (name, serde_json::json!(["null", field_type]))
+                }
             })
             .collect();
 
