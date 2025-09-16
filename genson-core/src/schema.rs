@@ -95,6 +95,33 @@ mod innermod {
         Ok(())
     }
 
+    /// Normalize a schema that may be wrapped in one or more layers of
+    /// `["null", <type>]` union arrays.
+    ///
+    /// During inference, schemas often get wrapped in a nullable-union
+    /// more than once (e.g. `["null", ["null", {"type": "string"}]]`).
+    /// This helper strips away *all* redundant layers of `["null", ...]`
+    /// until only the innermost non-null schema remains.
+    ///
+    /// This ensures that equality checks and recursive unification don’t
+    /// spuriously fail due to extra layers of null-wrapping.
+    fn normalise_nullable<'a>(v: &'a serde_json::Value) -> &'a serde_json::Value {
+        let mut current = v;
+        loop {
+            if let Some(arr) = current.as_array() {
+                if arr.len() == 2 && arr.contains(&serde_json::Value::String("null".to_string())) {
+                    // peel off the non-null element
+                    current = arr
+                        .iter()
+                        .find(|x| *x != &serde_json::Value::String("null".to_string()))
+                        .unwrap();
+                    continue;
+                }
+            }
+            return current;
+        }
+    }
+
     /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
     ///
     /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
@@ -116,8 +143,9 @@ mod innermod {
     ///   - Non-record types in the collection
     ///   - Conflicting field types (same field name, different types)
     ///   - Empty schema collection
-    fn check_unifiable_schemas(schemas: &[Value]) -> Option<Value> {
+    fn check_unifiable_schemas(schemas: &[Value], path: &str) -> Option<Value> {
         if schemas.is_empty() {
+            eprintln!("{path}: failed (empty schema list)");
             return None;
         }
 
@@ -126,45 +154,101 @@ mod innermod {
             .iter()
             .all(|s| s.get("type") == Some(&Value::String("object".into())))
         {
+            // eprintln!("{path}: failed (non-object schema): {schemas:?}");
             return None;
         }
 
         let mut all_fields = ordermap::OrderMap::new();
         let mut field_counts = std::collections::HashMap::new();
 
+        // Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
+        let schemas_compatible = |existing: &Value, new: &Value| -> Option<Value> {
+            if existing == new {
+                return Some(existing.clone());
+            }
+
+            // Check if one is nullable and the other isn't
+            // Nullable schema format: ["null", actual_type]
+            let (existing_nullable, existing_inner) = match existing {
+                Value::Array(arr) if arr.len() == 2 && arr[0] == Value::String("null".into()) => {
+                    (true, &arr[1])
+                }
+                _ => (false, existing),
+            };
+
+            let (new_nullable, new_inner) = match new {
+                Value::Array(arr) if arr.len() == 2 && arr[0] == Value::String("null".into()) => {
+                    (true, &arr[1])
+                }
+                _ => (false, new),
+            };
+
+            // If the inner types match, return the nullable version
+            if existing_inner == new_inner {
+                if existing_nullable || new_nullable {
+                    return Some(serde_json::json!(["null", existing_inner]));
+                } else {
+                    return Some(existing_inner.clone());
+                }
+            }
+
+            None
+        };
+
         // Collect all field types and count occurrences
-        for schema in schemas {
+        for (i, schema) in schemas.iter().enumerate() {
             if let Some(Value::Object(props)) = schema.get("properties") {
                 for (field_name, field_schema) in props {
                     *field_counts.entry(field_name.clone()).or_insert(0) += 1;
 
                     match all_fields.entry(field_name.clone()) {
                         ordermap::map::Entry::Vacant(e) => {
-                            e.insert(field_schema.clone());
+                            eprintln!("Schema[{i}] introduces new field `{field_name}`");
+
+                            // Normalise before storing
+                            e.insert(normalise_nullable(field_schema).clone());
                         }
                         ordermap::map::Entry::Occupied(mut e) => {
-                            let existing = e.get().clone();
-                            if existing != *field_schema {
+                            // Normalise both sides before comparison
+                            let existing = normalise_nullable(e.get()).clone();
+                            let new = normalise_nullable(field_schema).clone();
+
+                            // First try the compatibility check for nullable/non-nullable
+                            if let Some(compatible_schema) = schemas_compatible(&existing, &new) {
+                                eprintln!("Field `{field_name}` compatible (nullable/non-nullable unification)");
+                                e.insert(compatible_schema);
+                            } else if existing.get("type") == Some(&Value::String("object".into()))
+                                && new.get("type") == Some(&Value::String("object".into()))
+                            {
                                 // Try recursive unify if both are objects
-                                if existing.get("type") == Some(&Value::String("object".into()))
-                                    && field_schema.get("type")
-                                        == Some(&Value::String("object".into()))
-                                {
-                                    if let Some(unified) = check_unifiable_schemas(&[
-                                        existing.clone(),
-                                        field_schema.clone(),
-                                    ]) {
-                                        e.insert(unified);
-                                    } else {
-                                        return None;
-                                    }
+                                eprintln!(
+                                    "Field `{field_name}` has conflicting object schemas, attempting recursive unify"
+                                );
+                                if let Some(unified) = check_unifiable_schemas(
+                                    &[existing.clone(), new.clone()],
+                                    &format!("{path}.{}", field_name),
+                                ) {
+                                    eprintln!(
+                                        "Field `{field_name}` unified successfully after recursion"
+                                    );
+                                    e.insert(unified);
                                 } else {
-                                    return None; // fundamentally incompatible types
+                                    eprintln!("{path}.{}: failed to unify", field_name);
+                                    return None;
                                 }
+                            } else {
+                                eprintln!(
+                                    "{path}.{field_name}: incompatible types:\n  existing={:#?}\n  new={:#?}",
+                                    existing, new
+                                );
+                                return None; // fundamentally incompatible types
                             }
                         }
                     }
                 }
+            } else {
+                eprintln!("Schema[{i}] has no properties object");
+                return None;
             }
         }
 
@@ -175,6 +259,7 @@ mod innermod {
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count == total_schemas {
+                eprintln!("Field `{field_name}` present in all schemas → keeping non-nullable");
                 unified_properties.insert(field_name.clone(), field_type.clone());
             }
         }
@@ -183,11 +268,17 @@ mod innermod {
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count < total_schemas {
+                eprintln!(
+                    "Field `{field_name}` missing in {}/{} schemas → making nullable",
+                    total_schemas - count,
+                    total_schemas
+                );
                 unified_properties
                     .insert(field_name.clone(), serde_json::json!(["null", field_type]));
             }
         }
 
+        eprintln!("Schemas unified successfully");
         Some(serde_json::json!({
             "type": "object",
             "properties": unified_properties
@@ -302,7 +393,8 @@ mod innermod {
                                 }
                             }
                             if all_items_ok {
-                                if let Some(unified_items) = check_unifiable_schemas(&item_schemas)
+                                if let Some(unified_items) =
+                                    check_unifiable_schemas(&item_schemas, field_name.unwrap_or(""))
                                 {
                                     unified_schema = Some(serde_json::json!({
                                         "type": "array",
@@ -311,7 +403,8 @@ mod innermod {
                                 }
                             }
                         } else {
-                            unified_schema = check_unifiable_schemas(&child_schemas);
+                            unified_schema =
+                                check_unifiable_schemas(&child_schemas, field_name.unwrap_or(""));
                         }
                     }
                 }
