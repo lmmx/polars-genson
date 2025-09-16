@@ -110,7 +110,7 @@ mod innermod {
     ///
     /// This ensures that equality checks and recursive unification don’t
     /// spuriously fail due to extra layers of null-wrapping.
-    fn normalise_nullable<'a>(v: &'a serde_json::Value) -> &'a serde_json::Value {
+    fn normalise_nullable(v: &serde_json::Value) -> &serde_json::Value {
         let mut current = v;
         loop {
             if let Some(arr) = current.as_array() {
@@ -197,28 +197,35 @@ mod innermod {
                 return Some(existing.clone());
             }
 
-            // Check if one is nullable and the other isn't
-            // Nullable schema format: ["null", actual_type]
-            let (existing_nullable, existing_inner) = match existing {
-                Value::Array(arr) if arr.len() == 2 && arr[0] == Value::String("null".into()) => {
-                    (true, &arr[1])
+            // Handle new JSON Schema nullable format: {"type": ["null", "string"]}
+            let extract_nullable_info = |schema: &Value| -> (bool, Value) {
+                if let Some(Value::Array(type_arr)) = schema.get("type") {
+                    if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
+                        let non_null_type = type_arr
+                            .iter()
+                            .find(|t| *t != &Value::String("null".into()))
+                            .unwrap();
+                        (true, serde_json::json!({"type": non_null_type}))
+                    } else {
+                        (false, schema.clone())
+                    }
+                } else {
+                    (false, schema.clone())
                 }
-                _ => (false, existing),
             };
 
-            let (new_nullable, new_inner) = match new {
-                Value::Array(arr) if arr.len() == 2 && arr[0] == Value::String("null".into()) => {
-                    (true, &arr[1])
-                }
-                _ => (false, new),
-            };
+            let (existing_nullable, existing_inner) = extract_nullable_info(existing);
+            let (new_nullable, new_inner) = extract_nullable_info(new);
 
             // If the inner types match, return the nullable version
             if existing_inner == new_inner {
                 if existing_nullable || new_nullable {
-                    return Some(serde_json::json!(["null", existing_inner]));
+                    let inner_type = existing_inner.get("type").unwrap();
+                    return Some(serde_json::json!({
+                        "type": ["null", inner_type]
+                    }));
                 } else {
-                    return Some(existing_inner.clone());
+                    return Some(existing_inner);
                 }
             }
 
@@ -362,12 +369,8 @@ mod innermod {
                     unified_properties.insert(field_name.clone(), nullable_field);
                 } else {
                     // Fallback for schemas without explicit type
-                    unified_properties.insert(
-                        field_name.clone(),
-                        serde_json::json!({
-                            "anyOf": [{"type": "null"}, field_type]
-                        }),
-                    );
+                    unified_properties
+                        .insert(field_name.clone(), serde_json::json!(["null", field_type]));
                 }
             }
         }

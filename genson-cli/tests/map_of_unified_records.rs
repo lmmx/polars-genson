@@ -288,3 +288,55 @@ fn test_array_scalar_object_unified_normalize() {
         &["--normalise"],
     );
 }
+
+/// Run genson-cli with claims fixture using single JSON file (not NDJSON)
+fn run_genson_claims_fixture(name: &str, extra_args: &[&str]) {
+    let fixture_content = include_str!("data/claims_fixture.json");
+    let temp = write_json_file(fixture_content);
+
+    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
+    let mut args = vec!["--map-threshold", "2", "--unify-maps"];
+    args.extend_from_slice(extra_args);
+    args.push(temp.path().to_str().unwrap());
+    let args_for_metadata = args.clone();
+    cmd.args(args);
+
+    let output = cmd.assert().success().get_output().stdout.clone();
+    let stdout_str = String::from_utf8(output).unwrap();
+
+    let input_json: Value = serde_json::from_str(fixture_content).unwrap();
+
+    let approved = is_output_approved(name, &stdout_str);
+
+    with_settings!({
+        info => &serde_json::json!({
+            "approved": approved,
+            "args": args_for_metadata[..args_for_metadata.len()-1],
+            "input": input_json
+        })
+    }, {
+        assert_snapshot!(name, stdout_str);
+    });
+}
+
+/// Helper: write JSON content to a temp file (not NDJSON)
+fn write_json_file(content: &str) -> NamedTempFile {
+    let mut temp = NamedTempFile::new().unwrap();
+    write!(temp, "{}", content).unwrap();
+    temp
+}
+
+#[test]
+fn test_claims_fixture_unified_jsonschema() {
+    run_genson_claims_fixture("claims_fixture__unified__jsonschema", &[]);
+}
+
+#[test]
+fn test_claims_fixture_unified_avro() {
+    run_genson_claims_fixture("claims_fixture__unified__avro", &["--avro"]);
+}
+
+#[test]
+fn test_claims_fixture_unified_normalize() {
+    run_genson_claims_fixture("claims_fixture__unified__normalize", &["--normalise"]);
+}

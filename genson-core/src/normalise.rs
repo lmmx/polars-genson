@@ -181,15 +181,16 @@ mod innermod {
                                     // If this is a synthetic field that matches the scalar type
                                     if name.contains("__") {
                                         let type_suffix = name.split("__").last().unwrap_or("");
-                                        let matches_type = match (scalar_value, type_suffix) {
-                                            (Value::String(_), "string") => true,
-                                            (
-                                                Value::Number(_),
-                                                "int" | "long" | "float" | "double",
-                                            ) => true,
-                                            (Value::Bool(_), "boolean") => true,
-                                            _ => false,
-                                        };
+                                        let matches_type = matches!(
+                                            (scalar_value, type_suffix),
+                                            (Value::String(_), "string")
+                                                | (
+                                                    Value::Number(_),
+                                                    "int" | "long" | "float" | "double",
+                                                )
+                                                | (Value::Bool(_), "boolean")
+                                        );
+
                                         if matches_type {
                                             scalar_value.clone()
                                         } else {
