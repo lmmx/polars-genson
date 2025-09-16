@@ -132,7 +132,7 @@ mod innermod {
         let mut all_fields = ordermap::OrderMap::new();
         let mut field_counts = std::collections::HashMap::new();
 
-        // Collect all field types and count occurrences (OrderMap preserves insertion order)
+        // Collect all field types and count occurrences
         for schema in schemas {
             if let Some(Value::Object(props)) = schema.get("properties") {
                 for (field_name, field_schema) in props {
@@ -142,10 +142,25 @@ mod innermod {
                         ordermap::map::Entry::Vacant(e) => {
                             e.insert(field_schema.clone());
                         }
-                        ordermap::map::Entry::Occupied(e) => {
-                            // Field exists in multiple schemas - check compatibility
-                            if e.get() != field_schema {
-                                return None; // Incompatible field types
+                        ordermap::map::Entry::Occupied(mut e) => {
+                            let existing = e.get().clone();
+                            if existing != *field_schema {
+                                // Try recursive unify if both are objects
+                                if existing.get("type") == Some(&Value::String("object".into()))
+                                    && field_schema.get("type")
+                                        == Some(&Value::String("object".into()))
+                                {
+                                    if let Some(unified) = check_unifiable_schemas(&[
+                                        existing.clone(),
+                                        field_schema.clone(),
+                                    ]) {
+                                        e.insert(unified);
+                                    } else {
+                                        return None;
+                                    }
+                                } else {
+                                    return None; // fundamentally incompatible types
+                                }
                             }
                         }
                     }
@@ -154,11 +169,9 @@ mod innermod {
         }
 
         let total_schemas = schemas.len();
-
-        // Create unified properties: universal fields first, then optional fields (both in insertion order)
         let mut unified_properties = serde_json::Map::new();
 
-        // First pass: add universal fields (non-nullable)
+        // Required in all -> non-nullable
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count == total_schemas {
@@ -166,7 +179,7 @@ mod innermod {
             }
         }
 
-        // Second pass: add optional fields (nullable)
+        // Missing in some -> nullable
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count < total_schemas {
@@ -267,19 +280,41 @@ mod innermod {
                     .unwrap_or(0);
 
                 // Check for unifiable schemas
-                let unified_schema = if let Some(first_schema) = props.values().next() {
+                let mut unified_schema: Option<Value> = None;
+                if let Some(first_schema) = props.values().next() {
                     if props.values().all(|schema| schema == first_schema) {
-                        // Homogeneous case
-                        Some(first_schema.clone())
+                        unified_schema = Some(first_schema.clone());
                     } else if config.unify_maps {
-                        // Try unification
-                        check_unifiable_schemas(&child_schemas)
-                    } else {
-                        None
+                        // Detect if these are all arrays of records
+                        if child_schemas
+                            .iter()
+                            .all(|s| s.get("type") == Some(&Value::String("array".into())))
+                        {
+                            // Collect item schemas, short-circuit if any missing
+                            let mut item_schemas = Vec::with_capacity(child_schemas.len());
+                            let mut all_items_ok = true;
+                            for s in &child_schemas {
+                                if let Some(items) = s.get("items") {
+                                    item_schemas.push(items.clone());
+                                } else {
+                                    all_items_ok = false;
+                                    break;
+                                }
+                            }
+                            if all_items_ok {
+                                if let Some(unified_items) = check_unifiable_schemas(&item_schemas)
+                                {
+                                    unified_schema = Some(serde_json::json!({
+                                        "type": "array",
+                                        "items": unified_items
+                                    }));
+                                }
+                            }
+                        } else {
+                            unified_schema = check_unifiable_schemas(&child_schemas);
+                        }
                     }
-                } else {
-                    None
-                };
+                }
 
                 // Apply map inference logic
                 let should_be_map = if above_threshold && unified_schema.is_some() {

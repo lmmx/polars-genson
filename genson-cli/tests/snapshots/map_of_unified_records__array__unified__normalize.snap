@@ -1,0 +1,25 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+    - "--unify-maps"
+    - "--normalise"
+  input:
+    - letters:
+        a:
+          - index: 0
+            vowel: 0
+    - letters:
+        b:
+          - index: 1
+            consonant: 0
+---
+{"letters":{"a":[{"index":0,"vowel":0,"consonant":null}]}}
+{"letters":{"b":[{"index":1,"vowel":null,"consonant":0}]}}
