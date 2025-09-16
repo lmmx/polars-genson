@@ -1,0 +1,17 @@
+{
+  "claims": {
+    "P31": [
+      {
+        "mainsnak": {
+          "property": "P31"
+        },
+        "rank": "normal"
+      }
+    ],
+    "P569": [
+      {
+        "rank": "normal"
+      }
+    ]
+  }
+}
