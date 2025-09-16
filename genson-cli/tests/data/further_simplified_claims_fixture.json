@@ -1,0 +1,48 @@
+{
+  "claims": {
+    "P31": [
+      {
+        "mainsnak": {
+          "property": "P31",
+          "datatype": "wikibase-item",
+          "datavalue": {
+            "value": {
+              "id": "Q5",
+              "labels": {
+                "en": "human",
+                "fr": "être humain"
+              }
+            },
+            "type": "wikibase-entityid"
+          },
+          "property-labels": {
+            "en": "instance of",
+            "fr": "est une instance de"
+          }
+        },
+        "rank": "normal"
+      }
+    ],
+    "P569": [
+      {
+        "mainsnak": {
+          "property": "P569",
+          "datatype": "time",
+          "datavalue": {
+            "value": {
+              "time": "+1956-05-08T00:00:00Z",
+              "precision": 11,
+              "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+            },
+            "type": "time"
+          },
+          "property-labels": {
+            "en": "date of birth",
+            "fr": "date de naissance"
+          }
+        },
+        "rank": "normal"
+      }
+    ]
+  }
+}
