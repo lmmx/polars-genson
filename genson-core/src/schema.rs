@@ -23,6 +23,8 @@ mod innermod {
         /// Maximum number of required keys a Map can have. If None, no gating based on required keys.
         /// If Some(n), objects with more than n required keys will be forced to Record type.
         pub map_max_required_keys: Option<usize>,
+        /// Enable unification of compatible but non-homogeneous record schemas into maps
+        pub unify_maps: bool,
         /// Force override of field treatment, e.g. {"labels": "map"}
         pub force_field_types: std::collections::HashMap<String, String>,
         /// Wrap the inferred top-level schema under a single required field with this name.
@@ -42,6 +44,7 @@ mod innermod {
                 schema_uri: Some("AUTO".to_string()),
                 map_threshold: 20,
                 map_max_required_keys: None,
+                unify_maps: false,
                 force_field_types: std::collections::HashMap::new(),
                 wrap_root: None,
                 #[cfg(feature = "avro")]
@@ -92,6 +95,84 @@ mod innermod {
         Ok(())
     }
 
+    /// Check if a collection of record schemas can be unified into a single schema with nullable fields.
+    ///
+    /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
+    /// can be merged into a single schema where all fields are optional/nullable. This enables
+    /// map inference for cases where record values have compatible but non-identical structures.
+    ///
+    /// Schemas are considered unifiable if:
+    /// 1. All schemas represent record types (`"type": "object"` with `"properties"`)
+    /// 2. Field names are either disjoint OR have identical types when they overlap
+    /// 3. No field has conflicting type definitions across schemas
+    ///
+    /// # Returns
+    ///
+    /// - `Some(unified_schema)` if schemas can be unified - contains all unique fields as nullable
+    /// - `None` if schemas cannot be unified due to:
+    ///   - Non-record types in the collection
+    ///   - Conflicting field types (same field name, different types)
+    ///   - Empty schema collection
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// // These schemas can be unified:
+    /// let schema_a = json!({"type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "integer"}}});
+    /// let schema_b = json!({"type": "object", "properties": {"name": {"type": "string"}, "city": {"type": "string"}}});
+    ///
+    /// // Result: unified schema with nullable age and city fields
+    /// // {"type": "object", "properties": {"name": {"type": "string"}, "age": ["null", {"type": "integer"}], "city": ["null", {"type": "string"}]}}
+    /// ```
+    fn check_unifiable_schemas(schemas: &[Value]) -> Option<Value> {
+        if schemas.is_empty() {
+            return None;
+        }
+
+        // Only unify record schemas
+        if !schemas
+            .iter()
+            .all(|s| s.get("type") == Some(&Value::String("object".into())))
+        {
+            return None;
+        }
+
+        let mut all_fields = std::collections::HashMap::new();
+
+        // Collect all field types across schemas
+        for schema in schemas {
+            if let Some(Value::Object(props)) = schema.get("properties") {
+                for (field_name, field_schema) in props {
+                    match all_fields.entry(field_name.clone()) {
+                        std::collections::hash_map::Entry::Vacant(e) => {
+                            e.insert(field_schema.clone());
+                        }
+                        std::collections::hash_map::Entry::Occupied(e) => {
+                            // Field exists in multiple schemas - check compatibility
+                            if e.get() != field_schema {
+                                return None; // Incompatible field types
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Create unified schema with all fields as nullable
+        let unified_properties: serde_json::Map<String, Value> = all_fields
+            .into_iter()
+            .map(|(name, field_type)| {
+                let nullable_type = serde_json::json!(["null", field_type]);
+                (name, nullable_type)
+            })
+            .collect();
+
+        Some(serde_json::json!({
+            "type": "object",
+            "properties": unified_properties
+        }))
+    }
+
     /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
     ///
     /// This mutates the schema in place, applying user overrides and heuristics.
@@ -102,7 +183,8 @@ mod innermod {
     /// - Otherwise, applies map inference heuristics based on:
     ///   - Total key cardinality (`map_threshold`)
     ///   - Required key cardinality (`map_max_required_keys`)
-    ///   - Value homogeneity (all values must be homogeneous strings)
+    ///   - Value homogeneity (all values must be homogeneous) OR
+    ///   - Value unifiability (compatible record schemas when `unify_maps` enabled)
     /// - Recurses into nested objects/arrays, carrying field names down so overrides apply.
     fn rewrite_objects(
         schema: &mut Value,
@@ -176,10 +258,14 @@ mod innermod {
                     .map(|r| r.len())
                     .unwrap_or(0);
 
-                // Check if all values are homogeneous schemas
-                let homogeneous_schema = if let Some(first_schema) = props.values().next() {
+                // Check for unifiable schemas
+                let unified_schema = if let Some(first_schema) = props.values().next() {
                     if props.values().all(|schema| schema == first_schema) {
+                        // Homogeneous case
                         Some(first_schema.clone())
+                    } else if config.unify_maps {
+                        // Try unification
+                        check_unifiable_schemas(&child_schemas)
                     } else {
                         None
                     }
@@ -188,7 +274,7 @@ mod innermod {
                 };
 
                 // Apply map inference logic
-                let should_be_map = if above_threshold && homogeneous_schema.is_some() {
+                let should_be_map = if above_threshold && unified_schema.is_some() {
                     if let Some(max_required) = config.map_max_required_keys {
                         required_key_count <= max_required
                     } else {
@@ -199,7 +285,7 @@ mod innermod {
                 };
 
                 if should_be_map {
-                    if let Some(schema) = homogeneous_schema {
+                    if let Some(schema) = unified_schema {
                         obj.remove("properties");
                         obj.remove("required");
                         obj.insert("type".to_string(), Value::String("object".to_string()));

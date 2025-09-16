@@ -74,6 +74,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --map-max-required-keys".into());
                 }
             }
+            "--unify-maps" => {
+                config.unify_maps = true;
+            }
             "--force-type" => {
                 if i + 1 < args.len() {
                     for pair in args[i + 1].split(',') {
@@ -201,6 +204,7 @@ fn print_help() {
         "    --map-max-rk <N>      Maximum required keys for Map inference (default: no limit)"
     );
     println!("    --map-max-required-keys <N>");
+    println!("    --unify-maps          Enable unification of compatible record schemas into maps");
     println!("                          Same as --map-max-rk");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     println!("                          Example: --force-type labels:map,claims:record");

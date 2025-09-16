@@ -39,104 +39,36 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "letter": {
-      "properties": {
-        "a": {
-          "properties": {
-            "alphabet": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "alphabet": [
+            "null",
+            {
               "type": "integer"
-            },
-            "vowel": {
+            }
+          ],
+          "vowel": [
+            "null",
+            {
               "type": "integer"
-            },
-            "frequency": {
+            }
+          ],
+          "consonant": [
+            "null",
+            {
+              "type": "integer"
+            }
+          ],
+          "frequency": [
+            "null",
+            {
               "type": "number"
             }
-          },
-          "required": [
-            "alphabet",
-            "frequency",
-            "vowel"
-          ],
-          "type": "object"
-        },
-        "b": {
-          "properties": {
-            "alphabet": {
-              "type": "integer"
-            },
-            "consonant": {
-              "type": "integer"
-            },
-            "frequency": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "alphabet",
-            "consonant",
-            "frequency"
-          ],
-          "type": "object"
-        },
-        "c": {
-          "properties": {
-            "alphabet": {
-              "type": "integer"
-            },
-            "consonant": {
-              "type": "integer"
-            },
-            "frequency": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "alphabet",
-            "consonant",
-            "frequency"
-          ],
-          "type": "object"
-        },
-        "d": {
-          "properties": {
-            "alphabet": {
-              "type": "integer"
-            },
-            "consonant": {
-              "type": "integer"
-            },
-            "frequency": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "alphabet",
-            "consonant",
-            "frequency"
-          ],
-          "type": "object"
-        },
-        "e": {
-          "properties": {
-            "alphabet": {
-              "type": "integer"
-            },
-            "vowel": {
-              "type": "integer"
-            },
-            "frequency": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "alphabet",
-            "frequency",
-            "vowel"
-          ],
-          "type": "object"
+          ]
         }
-      },
-      "type": "object"
+      }
     }
   },
   "required": [
