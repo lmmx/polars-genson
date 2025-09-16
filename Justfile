@@ -123,7 +123,17 @@ test-js *args:
 
 [working-directory: 'bench']
 bench *args:
-    pytest -q {{args}}
+    $(uv python find) -m pytest -q {{args}}
+
+[working-directory: 'bench']
+bench-update:
+    #!/usr/bin/env -S bash -euo pipefail
+    uv sync -P polars-genson
+    echo -e "\n---\n" >> README.md
+    echo "## "$(uv pip show polars-genson | head -2 | cut -d " " -f 2- | tr '[A-Z]' '[a-z]') >> README.md
+    printf "\n\`\`\`py" >> README.md
+    just bench | grep -v 100% >> README.md
+    echo -e "\`\`\`" >> README.md
 
 # -------------------------------------
 
