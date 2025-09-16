@@ -11,6 +11,9 @@ import polars as pl
 import polars_genson  # noqa: F401
 import pytest
 
+N_ROUNDS = 20
+N_ITERATIONS = 10
+
 LABELS = Path(__file__).parent / "data" / "labels.parquet"
 DF_LABELS = pl.read_parquet(LABELS).head(10)
 
@@ -35,7 +38,7 @@ def test_normalise(benchmark, decode):
         )
         return
 
-    benchmark.pedantic(run, rounds=1, iterations=1)
+    benchmark.pedantic(run, rounds=N_ROUNDS, iterations=N_ITERATIONS)
 
 
 def test_infer_schema_json(benchmark):
@@ -44,7 +47,7 @@ def test_infer_schema_json(benchmark):
     def run():
         _ = DF_LABELS.genson.infer_json_schema("labels", wrap_root="labels")
 
-    benchmark.pedantic(run, rounds=1, iterations=1)
+    benchmark.pedantic(run, rounds=N_ROUNDS, iterations=N_ITERATIONS)
 
 
 def test_infer_schema_avro(benchmark):
@@ -53,4 +56,4 @@ def test_infer_schema_avro(benchmark):
     def run():
         _ = DF_LABELS.genson.infer_json_schema("labels", wrap_root="labels", avro=True)
 
-    benchmark.pedantic(run, rounds=1, iterations=1)
+    benchmark.pedantic(run, rounds=N_ROUNDS, iterations=N_ITERATIONS)

@@ -1,5 +1,5 @@
 [project]
-dependencies = ["polars-genson[polars]>=0.2.0", "pytest-benchmark>=5.1.0"]
+dependencies = ["polars-genson[polars]>=0", "pytest-benchmark>=5.1.0"]
 description = "Benchmarking polars-genson"
 name = "polars-genson-bench"
 readme = "README.md"
@@ -10,4 +10,5 @@ version = "0.1.0"
 members = ["."]
 
 [tool.pytest.ini_options]
-addopts = "--benchmark-only --benchmark-columns=mean,ops,rounds,iterations"
+# addopts = "--benchmark-only --benchmark-columns=mean,ops,rounds,iterations"
+addopts = "--benchmark-only"
