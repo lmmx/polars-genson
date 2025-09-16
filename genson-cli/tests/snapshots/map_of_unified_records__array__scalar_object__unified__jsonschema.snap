@@ -15,12 +15,13 @@ info:
         a:
           - index: 0
             value:
-              vowel: true
+              id: X
+              labels:
+                en: thing
     - letters:
         b:
           - index: 1
-            value:
-              cap: B
+            value: scalar-string
 ---
 {
   "$schema": "http://json-schema.org/schema#",
@@ -38,13 +39,27 @@ info:
             "value": {
               "type": "object",
               "properties": {
-                "vowel": {
+                "id": {
                   "type": [
                     "null",
-                    "boolean"
+                    "string"
                   ]
                 },
-                "cap": {
+                "labels": {
+                  "properties": {
+                    "en": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "en"
+                  ],
+                  "type": [
+                    "null",
+                    "object"
+                  ]
+                },
+                "value__string": {
                   "type": [
                     "null",
                     "string"

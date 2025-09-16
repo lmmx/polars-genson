@@ -1,0 +1,71 @@
+{
+  "claims": {
+    "P31": [
+      {
+        "mainsnak": {
+          "datatype": "wikibase-item",
+          "datavalue": {
+            "value": {
+              "id": "Q5",
+              "labels": {
+                "en": "human",
+                "fr": "être humain"
+              }
+            },
+            "type": "wikibase-entityid"
+          }
+        },
+        "rank": "normal"
+      }
+    ],
+    "P569": [
+      {
+        "mainsnak": {
+          "datatype": "time",
+          "datavalue": {
+            "value": {
+              "time": "+1956-05-08T00:00:00Z"
+            },
+            "type": "time"
+          }
+        },
+        "rank": "normal"
+      }
+    ],
+    "P5800": [
+      {
+        "mainsnak": {
+          "datatype": "wikibase-item",
+          "datavalue": {
+            "value": {
+              "id": "Q530917",
+              "labels": {
+                "en": "Sample item",
+                "fr": "élément d'exemple"
+              }
+            },
+            "type": "wikibase-entityid"
+          }
+        },
+        "qualifiers": {
+          "P10663": [
+            {
+              "datatype": "wikibase-item",
+              "datavalue": {
+                "value": {
+                  "id": "Q123",
+                  "labels": {
+                    "en": "Another item",
+                    "fr": "autre élément"
+                  }
+                },
+                "type": "wikibase-entityid"
+              }
+            }
+          ]
+        },
+        "rank": "normal"
+      }
+    ]
+  }
+}

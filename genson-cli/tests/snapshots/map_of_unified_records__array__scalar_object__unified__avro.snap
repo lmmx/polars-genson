@@ -1,0 +1,101 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - letters:
+        a:
+          - index: 0
+            value:
+              id: X
+              labels:
+                en: thing
+    - letters:
+        b:
+          - index: 1
+            value: scalar-string
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "letters",
+      "type": {
+        "name": "letters",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "letters_values",
+            "namespace": "genson.document_types",
+            "fields": [
+              {
+                "name": "index",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "value",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "value",
+                    "namespace": "genson.document_types.letters_values_types",
+                    "fields": [
+                      {
+                        "name": "id",
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      {
+                        "name": "labels",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "labels",
+                            "namespace": "genson.document_types.letters_values_types.value_types",
+                            "fields": [
+                              {
+                                "name": "en",
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "value__string",
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

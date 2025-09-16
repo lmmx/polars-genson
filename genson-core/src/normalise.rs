@@ -176,7 +176,30 @@ mod innermod {
                         {
                             let val = match &value {
                                 Value::Object(m) => m.get(name).cloned().unwrap_or(Value::Null),
-                                _ => Value::Null,
+                                // Handle scalar promotion case
+                                scalar_value => {
+                                    // If this is a synthetic field that matches the scalar type
+                                    if name.contains("__") {
+                                        let type_suffix = name.split("__").last().unwrap_or("");
+                                        let matches_type = matches!(
+                                            (scalar_value, type_suffix),
+                                            (Value::String(_), "string")
+                                                | (
+                                                    Value::Number(_),
+                                                    "int" | "long" | "float" | "double",
+                                                )
+                                                | (Value::Bool(_), "boolean")
+                                        );
+
+                                        if matches_type {
+                                            scalar_value.clone()
+                                        } else {
+                                            Value::Null
+                                        }
+                                    } else {
+                                        Value::Null
+                                    }
+                                }
                             };
                             out.insert(name.clone(), normalise_value(val, field_schema, cfg));
                         }

@@ -1,0 +1,21 @@
+{
+  "claims": {
+    "A": [
+      {
+        "value": {
+          "id": "X",
+          "labels": {
+            "en": "thing"
+          }
+        },
+        "rank": "normal"
+      }
+    ],
+    "B": [
+      {
+        "value": "plain-scalar",
+        "rank": "normal"
+      }
+    ]
+  }
+}

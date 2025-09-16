@@ -110,6 +110,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --map-encoding".into());
                 }
             }
+            "--no-wrap-scalars" => {
+                config.wrap_scalars = false;
+            }
             "--wrap-root" => {
                 if i + 1 < args.len() {
                     config.wrap_root = Some(args[i + 1].clone());
@@ -212,6 +215,7 @@ fn print_help() {
     println!("                          mapping = Avro/JSON object (shared dict)");
     println!("                          entries = list of single-entry objects (individual dicts)");
     println!("                          kv      = list of {{key,value}} objects");
+    println!("    --no-wrap-scalars     Disable scalar promotion (keep raw scalar types)");
     println!("    --wrap-root <field>   Wrap top-level schema under this required field");
     println!();
     println!("EXAMPLES:");

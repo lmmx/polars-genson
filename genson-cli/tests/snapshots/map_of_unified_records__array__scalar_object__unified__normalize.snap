@@ -1,0 +1,28 @@
+---
+source: genson-cli/tests/map_of_unified_records.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "2"
+    - "--map-max-rk"
+    - "1"
+    - "--unify-maps"
+    - "--normalise"
+  input:
+    - letters:
+        a:
+          - index: 0
+            value:
+              id: X
+              labels:
+                en: thing
+    - letters:
+        b:
+          - index: 1
+            value: scalar-string
+---
+{"letters":{"a":[{"index":0,"value":{"id":"X","labels":{"en":"thing"},"value__string":null}}]}}
+{"letters":{"b":[{"index":1,"value":{"id":null,"labels":null,"value__string":"scalar-string"}}]}}
