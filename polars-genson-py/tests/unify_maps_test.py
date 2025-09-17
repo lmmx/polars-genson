@@ -40,11 +40,8 @@ def test_unify_maps_creates_unified_map():
     field_types = {f["name"]: f["type"] for f in values_schema["fields"]}
 
     # alphabet and frequency are in all records - should be non-nullable
-    assert field_types["alphabet"] == [
-        "null",
-        "int",
-    ]  # Actually all are nullable in current impl
-    assert field_types["frequency"] == ["null", "float"]
+    assert field_types["alphabet"] == "int"
+    assert field_types["frequency"] == "float"
 
     # vowel and consonant are only in some records - should be nullable
     assert field_types["vowel"] == ["null", "int"]
@@ -218,9 +215,9 @@ def test_wrap_scalars_promotes_scalar_to_object():
     assert "value" in field_names
 
     value_field = next(f for f in values_schema["fields"] if f["name"] == "value")
-    assert value_field["type"][1]["type"] == "record"
+    assert value_field["type"]["type"] == "record"
 
-    inner_field_names = {f["name"] for f in value_field["type"][1]["fields"]}
+    inner_field_names = {f["name"] for f in value_field["type"]["fields"]}
     assert "hello" in inner_field_names or "foo" in inner_field_names
     assert "value__string" in inner_field_names, (
         f"Expected promoted scalar key 'value__string', got {inner_field_names}"
