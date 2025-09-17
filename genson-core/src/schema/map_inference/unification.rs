@@ -1,6 +1,6 @@
 // genson-core/src/schema/unification.rs
 use crate::{debug, debug_verbose, schema::core::SchemaInferenceConfig};
-use serde_json::Value;
+use serde_json::{json, Map, Value};
 
 /// Normalize a schema that may be wrapped in one or more layers of
 /// `["null", <type>]` union arrays.
@@ -64,7 +64,7 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
                     .iter()
                     .find(|t| *t != &Value::String("null".into()))
                     .unwrap();
-                (true, serde_json::json!({"type": non_null_type}))
+                (true, json!({"type": non_null_type}))
             } else {
                 (false, schema.clone())
             }
@@ -80,7 +80,7 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     if existing_inner == new_inner {
         if existing_nullable || new_nullable {
             let inner_type = existing_inner.get("type").unwrap();
-            return Some(serde_json::json!({
+            return Some(json!({
                 "type": ["null", inner_type]
             }));
         } else {
@@ -206,10 +206,10 @@ pub(crate) fn check_unifiable_schemas(
                                         scalar_side, wrapped_key
                                     );
 
-                                    let mut wrapped_props = serde_json::Map::new();
+                                    let mut wrapped_props = Map::new();
                                     wrapped_props.insert(wrapped_key, scalar_schema.clone());
 
-                                    let promoted = serde_json::json!({
+                                    let promoted = json!({
                                         "type": "object",
                                         "properties": wrapped_props
                                     });
@@ -246,7 +246,7 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     let total_schemas = schemas.len();
-    let mut unified_properties = serde_json::Map::new();
+    let mut unified_properties = Map::new();
 
     // Required in all -> non-nullable
     for (field_name, field_type) in &all_fields {
@@ -275,18 +275,17 @@ pub(crate) fn check_unifiable_schemas(
             if let Some(type_str) = field_type.get("type").and_then(|t| t.as_str()) {
                 // Create a copy of the field_type and modify its type to be a union
                 let mut nullable_field = field_type.clone();
-                nullable_field["type"] = serde_json::json!(["null", type_str]);
+                nullable_field["type"] = json!(["null", type_str]);
                 unified_properties.insert(field_name.clone(), nullable_field);
             } else {
                 // Fallback for schemas without explicit type
-                unified_properties
-                    .insert(field_name.clone(), serde_json::json!(["null", field_type]));
+                unified_properties.insert(field_name.clone(), json!(["null", field_type]));
             }
         }
     }
 
     debug!(config, "Schemas unified successfully");
-    Some(serde_json::json!({
+    Some(json!({
         "type": "object",
         "properties": unified_properties
     }))
