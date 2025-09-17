@@ -50,6 +50,47 @@ fn schema_type_str(schema: &Value) -> String {
     "unknown".to_string()
 }
 
+/// Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
+fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
+    if existing == new {
+        return Some(existing.clone());
+    }
+
+    // Handle new JSON Schema nullable format: {"type": ["null", "string"]}
+    let extract_nullable_info = |schema: &Value| -> (bool, Value) {
+        if let Some(Value::Array(type_arr)) = schema.get("type") {
+            if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
+                let non_null_type = type_arr
+                    .iter()
+                    .find(|t| *t != &Value::String("null".into()))
+                    .unwrap();
+                (true, serde_json::json!({"type": non_null_type}))
+            } else {
+                (false, schema.clone())
+            }
+        } else {
+            (false, schema.clone())
+        }
+    };
+
+    let (existing_nullable, existing_inner) = extract_nullable_info(existing);
+    let (new_nullable, new_inner) = extract_nullable_info(new);
+
+    // If the inner types match, return the nullable version
+    if existing_inner == new_inner {
+        if existing_nullable || new_nullable {
+            let inner_type = existing_inner.get("type").unwrap();
+            return Some(serde_json::json!({
+                "type": ["null", inner_type]
+            }));
+        } else {
+            return Some(existing_inner);
+        }
+    }
+
+    None
+}
+
 /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
 ///
 /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
@@ -96,47 +137,6 @@ pub(crate) fn check_unifiable_schemas(
 
     let mut all_fields = ordermap::OrderMap::new();
     let mut field_counts = std::collections::HashMap::new();
-
-    // Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
-    let schemas_compatible = |existing: &Value, new: &Value| -> Option<Value> {
-        if existing == new {
-            return Some(existing.clone());
-        }
-
-        // Handle new JSON Schema nullable format: {"type": ["null", "string"]}
-        let extract_nullable_info = |schema: &Value| -> (bool, Value) {
-            if let Some(Value::Array(type_arr)) = schema.get("type") {
-                if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-                    let non_null_type = type_arr
-                        .iter()
-                        .find(|t| *t != &Value::String("null".into()))
-                        .unwrap();
-                    (true, serde_json::json!({"type": non_null_type}))
-                } else {
-                    (false, schema.clone())
-                }
-            } else {
-                (false, schema.clone())
-            }
-        };
-
-        let (existing_nullable, existing_inner) = extract_nullable_info(existing);
-        let (new_nullable, new_inner) = extract_nullable_info(new);
-
-        // If the inner types match, return the nullable version
-        if existing_inner == new_inner {
-            if existing_nullable || new_nullable {
-                let inner_type = existing_inner.get("type").unwrap();
-                return Some(serde_json::json!({
-                    "type": ["null", inner_type]
-                }));
-            } else {
-                return Some(existing_inner);
-            }
-        }
-
-        None
-    };
 
     // Collect all field types and count occurrences
     for (i, schema) in schemas.iter().enumerate() {
