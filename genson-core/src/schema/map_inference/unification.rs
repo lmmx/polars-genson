@@ -1,5 +1,5 @@
 // genson-core/src/schema/unification.rs
-use crate::{debug, schema::core::SchemaInferenceConfig};
+use crate::{debug, debug_verbose, schema::core::SchemaInferenceConfig};
 use serde_json::Value;
 
 /// Normalize a schema that may be wrapped in one or more layers of
@@ -146,7 +146,7 @@ pub(crate) fn check_unifiable_schemas(
 
                 match all_fields.entry(field_name.clone()) {
                     ordermap::map::Entry::Vacant(e) => {
-                        debug!(config, "Schema[{i}] introduces new field `{field_name}`");
+                        debug_verbose!(config, "Schema[{i}] introduces new field `{field_name}`");
 
                         // Normalise before storing
                         e.insert(normalise_nullable(field_schema).clone());

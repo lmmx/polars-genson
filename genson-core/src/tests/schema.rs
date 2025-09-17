@@ -1,6 +1,5 @@
 // genson-core/src/tests/schema.rs
 use super::*;
-use crate::debug;
 use predicates::prelude::*;
 use serde_json::json;
 
@@ -366,7 +365,7 @@ fn test_invalid_ndjson_line() {
     assert!(result.is_err(), "Expected error for malformed NDJSON line");
 
     let err_msg = result.unwrap_err();
-    debug!(config, "Got error: {}", err_msg);
+    eprintln!("Got error: {}", err_msg);
     assert!(
         err_msg.contains("Invalid JSON input at index 1: expected value at line 1 column 13"),
         "Error message should report the failing line"

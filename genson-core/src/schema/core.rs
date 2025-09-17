@@ -37,28 +37,23 @@ pub struct SchemaInferenceConfig {
     pub verbosity: DebugVerbosity,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum DebugVerbosity {
     /// Show important unification decisions and failures  
+    #[default]
     Normal,
     /// Show all debug information including field introductions
     Verbose,
 }
 
-impl Default for DebugVerbosity {
-    fn default() -> Self {
-        DebugVerbosity::Normal
-    }
-}
-
 impl SchemaInferenceConfig {
-    pub fn debug(&self, args: std::fmt::Arguments) {
+    pub(crate) fn debug(&self, args: std::fmt::Arguments) {
         if self.debug {
             eprintln!("{}", args);
         }
     }
 
-    pub fn debug_verbose(&self, args: std::fmt::Arguments) {
+    pub(crate) fn debug_verbose(&self, args: std::fmt::Arguments) {
         if self.debug && matches!(self.verbosity, DebugVerbosity::Verbose) {
             eprintln!("{}", args);
         }
