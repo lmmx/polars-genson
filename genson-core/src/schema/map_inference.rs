@@ -1,5 +1,4 @@
 // genson-core/src/schema/map_inference.rs
-// include!("map_inference/unification.rs"); // provides: check_unifiable_schemas
 use crate::schema::core::SchemaInferenceConfig;
 use serde_json::Value;
 mod unification;

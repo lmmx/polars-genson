@@ -6,13 +6,10 @@ use serde_json::Value;
 use std::borrow::Cow;
 use std::panic::{self, AssertUnwindSafe};
 
-// _innermod blocks a `mod core;` declaration so include submodules directly
-// include!("schema/core.rs"); // provides: SchemaInferenceConfig, SchemaInferenceResult, debug!
 mod core;
 pub use core::*;
 mod map_inference;
 use map_inference::*;
-// include!("schema/map_inference.rs"); // provides: rewrite_objects
 
 /// Maximum length of JSON string to include in error messages before truncating
 const MAX_JSON_ERROR_LENGTH: usize = 100;
