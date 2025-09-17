@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7](https://github.com/lmmx/polars-genson/compare/genson-core-v0.2.6...genson-core-v0.2.7) - 2025-09-17
+
+### <!-- 9 -->Other
+
+- respect `--map-max-rk` in `--unify-maps` mode ([#94](https://github.com/lmmx/polars-genson/pull/94))
+
 ## [0.2.6](https://github.com/lmmx/polars-genson/compare/genson-core-v0.2.5...genson-core-v0.2.6) - 2025-09-17
 
 ### <!-- 9 -->Other
