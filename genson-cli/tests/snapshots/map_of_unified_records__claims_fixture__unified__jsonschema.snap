@@ -215,50 +215,9 @@ info:
                         "labels": [
                           "null",
                           {
-                            "type": [
-                              "null",
-                              "object"
-                            ],
-                            "properties": {
-                              "en": {
-                                "type": [
-                                  "null",
-                                  "string"
-                                ]
-                              },
-                              "fr": {
-                                "type": [
-                                  "null",
-                                  "string"
-                                ]
-                              },
-                              "de": {
-                                "type": [
-                                  "null",
-                                  "string"
-                                ]
-                              },
-                              "es": {
-                                "type": [
-                                  "null",
-                                  "string"
-                                ]
-                              },
-                              "pt": {
-                                "type": [
-                                  "null",
-                                  "string"
-                                ]
-                              },
-                              "labels__unknown": [
-                                "null",
-                                {
-                                  "type": "object",
-                                  "additionalProperties": {
-                                    "type": "string"
-                                  }
-                                }
-                              ]
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
                             }
                           }
                         ],

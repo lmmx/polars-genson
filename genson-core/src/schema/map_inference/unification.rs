@@ -64,7 +64,14 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
                     .iter()
                     .find(|t| *t != &Value::String("null".into()))
                     .unwrap();
-                (true, json!({"type": non_null_type}))
+
+                // Create a new schema with the non-null type, preserving other properties
+                let mut non_null_schema = schema.clone();
+                non_null_schema
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("type".to_string(), non_null_type.clone());
+                (true, non_null_schema)
             } else {
                 (false, schema.clone())
             }
@@ -76,13 +83,18 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     let (existing_nullable, existing_inner) = extract_nullable_info(existing);
     let (new_nullable, new_inner) = extract_nullable_info(new);
 
-    // If the inner types match, return the nullable version
+    // If the inner schemas match (including all properties), return the nullable version
     if existing_inner == new_inner {
         if existing_nullable || new_nullable {
-            let inner_type = existing_inner.get("type").unwrap();
-            return Some(json!({
-                "type": ["null", inner_type]
-            }));
+            // Create the nullable version by taking the non-nullable schema and making the type nullable
+            let mut nullable_schema = existing_inner.clone();
+            if let Some(inner_type) = existing_inner.get("type") {
+                nullable_schema
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("type".to_string(), json!(["null", inner_type]));
+            }
+            return Some(nullable_schema);
         } else {
             return Some(existing_inner);
         }
