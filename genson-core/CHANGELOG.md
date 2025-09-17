@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5](https://github.com/lmmx/polars-genson/compare/genson-core-v0.2.4...genson-core-v0.2.5) - 2025-09-17
+
+### <!-- 5 -->Refactor
+
+- refactor tests into included modules ([#91](https://github.com/lmmx/polars-genson/pull/91))
+
+### <!-- 9 -->Other
+
+- modularise the schema handling ([#92](https://github.com/lmmx/polars-genson/pull/92))
+
 ## [0.2.4](https://github.com/lmmx/polars-genson/compare/genson-core-v0.2.3...genson-core-v0.2.4) - 2025-09-17
 
 ### <!-- 6 -->Testing
