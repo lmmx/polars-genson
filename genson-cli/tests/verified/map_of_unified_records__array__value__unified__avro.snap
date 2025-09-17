@@ -43,37 +43,31 @@ info:
             "fields": [
               {
                 "name": "index",
-                "type": [
-                  "null",
-                  "int"
-                ]
+                "type": "int"
               },
               {
                 "name": "value",
-                "type": [
-                  "null",
-                  {
-                    "type": "record",
-                    "name": "value",
-                    "namespace": "genson.document_types.letters_values_types",
-                    "fields": [
-                      {
-                        "name": "vowel",
-                        "type": [
-                          "null",
-                          "boolean"
-                        ]
-                      },
-                      {
-                        "name": "cap",
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ]
-                  }
-                ]
+                "type": {
+                  "type": "record",
+                  "name": "value",
+                  "namespace": "genson.document_types.letters_values_types",
+                  "fields": [
+                    {
+                      "name": "vowel",
+                      "type": [
+                        "null",
+                        "boolean"
+                      ]
+                    },
+                    {
+                      "name": "cap",
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           }

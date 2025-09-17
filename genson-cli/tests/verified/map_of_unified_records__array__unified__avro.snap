@@ -9,7 +9,7 @@ info:
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "1"
+    - "0"
     - "--unify-maps"
     - "--avro"
   input:
@@ -41,10 +41,7 @@ info:
             "fields": [
               {
                 "name": "index",
-                "type": [
-                  "null",
-                  "int"
-                ]
+                "type": "int"
               },
               {
                 "name": "vowel",

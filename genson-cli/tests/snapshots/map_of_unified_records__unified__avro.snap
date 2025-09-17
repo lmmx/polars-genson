@@ -8,7 +8,7 @@ info:
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "1"
+    - "0"
     - "--unify-maps"
     - "--avro"
   input:
@@ -55,17 +55,11 @@ info:
           "fields": [
             {
               "name": "alphabet",
-              "type": [
-                "null",
-                "int"
-              ]
+              "type": "int"
             },
             {
               "name": "frequency",
-              "type": [
-                "null",
-                "float"
-              ]
+              "type": "float"
             },
             {
               "name": "vowel",

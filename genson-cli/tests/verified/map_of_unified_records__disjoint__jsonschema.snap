@@ -29,30 +29,30 @@ info:
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "vowel": [
-            "null",
-            {
-              "type": "integer"
-            }
-          ],
-          "a_for": [
-            "null",
-            {
-              "type": "string"
-            }
-          ],
-          "consonant": [
-            "null",
-            {
-              "type": "integer"
-            }
-          ],
-          "b_for": [
-            "null",
-            {
-              "type": "string"
-            }
-          ]
+          "vowel": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "a_for": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "consonant": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "b_for": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
         }
       }
     }

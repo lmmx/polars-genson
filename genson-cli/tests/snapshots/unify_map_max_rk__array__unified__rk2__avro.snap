@@ -1,5 +1,5 @@
 ---
-source: genson-cli/tests/map_of_unified_records.rs
+source: genson-cli/tests/unify_map_max_rk.rs
 expression: stdout_str
 info:
   approved: true
@@ -8,7 +8,7 @@ info:
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "0"
+    - "2"
     - "--unify-maps"
     - "--avro"
   input:
@@ -34,29 +34,9 @@ info:
         "values": {
           "type": "array",
           "items": {
-            "type": "record",
             "name": "letters_values",
-            "namespace": "genson.document_types",
-            "fields": [
-              {
-                "name": "index",
-                "type": "int"
-              },
-              {
-                "name": "vowel",
-                "type": [
-                  "null",
-                  "int"
-                ]
-              },
-              {
-                "name": "consonant",
-                "type": [
-                  "null",
-                  "int"
-                ]
-              }
-            ]
+            "type": "map",
+            "values": "int"
           }
         }
       }

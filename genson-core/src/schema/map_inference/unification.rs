@@ -29,27 +29,6 @@ fn normalise_nullable(v: &Value) -> &Value {
     }
 }
 
-/// Return a string representation of a JSON Schema type.
-/// If it’s a union, pick the first non-"null" type.
-fn schema_type_str(schema: &Value) -> String {
-    if let Some(t) = schema.get("type").and_then(|v| v.as_str()) {
-        return t.to_string();
-    }
-
-    // handle union case: ["null", {"type": "string"}]
-    if let Some(arr) = schema.as_array() {
-        for v in arr {
-            if v != "null" {
-                if let Some(t) = v.get("type").and_then(|x| x.as_str()) {
-                    return t.to_string();
-                }
-            }
-        }
-    }
-
-    "unknown".to_string()
-}
-
 /// Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
 fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     if existing == new {
@@ -103,6 +82,124 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     None
 }
 
+/// Check if a schema represents a scalar type (not an object or array)
+fn is_scalar_schema(schema: &Value) -> bool {
+    // Check direct type field
+    if let Some(type_val) = schema.get("type") {
+        if let Some(type_str) = type_val.as_str() {
+            return matches!(type_str, "string" | "number" | "integer" | "boolean");
+        }
+
+        // Handle nullable format: {"type": ["null", "string"]}
+        if let Some(arr) = type_val.as_array() {
+            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
+                let non_null_type = arr
+                    .iter()
+                    .find(|t| *t != &Value::String("null".into()))
+                    .and_then(|t| t.as_str());
+                return matches!(
+                    non_null_type,
+                    Some("string" | "number" | "integer" | "boolean")
+                );
+            }
+        }
+    }
+
+    false
+}
+
+/// Check if a schema represents an object type
+fn is_object_schema(schema: &Value) -> bool {
+    // Check direct type field
+    if let Some(type_val) = schema.get("type") {
+        if let Some(type_str) = type_val.as_str() {
+            return type_str == "object";
+        }
+
+        // Handle nullable format: {"type": ["null", "object"]}
+        if let Some(arr) = type_val.as_array() {
+            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
+                let non_null_type = arr
+                    .iter()
+                    .find(|t| *t != &Value::String("null".into()))
+                    .and_then(|t| t.as_str());
+                return non_null_type == Some("object");
+            }
+        }
+    }
+
+    false
+}
+
+/// Extract the scalar type name from a schema
+fn get_scalar_type_name(schema: &Value) -> Option<String> {
+    if let Some(type_val) = schema.get("type") {
+        if let Some(type_str) = type_val.as_str() {
+            if matches!(type_str, "string" | "number" | "integer" | "boolean") {
+                return Some(type_str.to_string());
+            }
+        }
+
+        // Handle nullable format: {"type": ["null", "string"]}
+        if let Some(arr) = type_val.as_array() {
+            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
+                let non_null_type = arr
+                    .iter()
+                    .find(|t| *t != &Value::String("null".into()))
+                    .and_then(|t| t.as_str());
+                if matches!(
+                    non_null_type,
+                    Some("string" | "number" | "integer" | "boolean")
+                ) {
+                    return non_null_type.map(|s| s.to_string());
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// Attempt to promote a scalar schema to an object by wrapping it under a synthetic field name
+fn try_scalar_promotion(
+    object_schema: &Value,
+    scalar_schema: &Value,
+    field_name: &str,
+    scalar_side: &str,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    let Some(scalar_type) = get_scalar_type_name(scalar_schema) else {
+        debug!(config, "Cannot determine scalar type for promotion");
+        return None;
+    };
+
+    let wrapped_key = format!("{}__{}", field_name, scalar_type);
+
+    debug!(
+        config,
+        "Promoting scalar on {} side: wrapping {} into object under key `{}`",
+        scalar_side,
+        scalar_type,
+        wrapped_key
+    );
+
+    let mut wrapped_props = Map::new();
+    wrapped_props.insert(wrapped_key, scalar_schema.clone());
+
+    let promoted = json!({
+        "type": "object",
+        "properties": wrapped_props
+    });
+
+    // Recursively unify with the object schema
+    check_unifiable_schemas(
+        &[object_schema.clone(), promoted],
+        &format!("{path}.{}", field_name),
+        config,
+    )
+}
+
 /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
 ///
 /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
@@ -139,11 +236,7 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     // Only unify record schemas
-    if !schemas
-        .iter()
-        .all(|s| s.get("type") == Some(&Value::String("object".into())))
-    {
-        // debug!(config, "{path}: failed (non-object schema): {schemas:?}");
+    if !schemas.iter().all(is_object_schema) {
         return None;
     }
 
@@ -159,12 +252,9 @@ pub(crate) fn check_unifiable_schemas(
                 match all_fields.entry(field_name.clone()) {
                     ordermap::map::Entry::Vacant(e) => {
                         debug_verbose!(config, "Schema[{i}] introduces new field `{field_name}`");
-
-                        // Normalise before storing
                         e.insert(normalise_nullable(field_schema).clone());
                     }
                     ordermap::map::Entry::Occupied(mut e) => {
-                        // Normalise both sides before comparison
                         let existing = normalise_nullable(e.get()).clone();
                         let new = normalise_nullable(field_schema).clone();
 
@@ -172,9 +262,7 @@ pub(crate) fn check_unifiable_schemas(
                         if let Some(compatible_schema) = schemas_compatible(&existing, &new) {
                             debug_verbose!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
                             e.insert(compatible_schema);
-                        } else if existing.get("type") == Some(&Value::String("object".into()))
-                            && new.get("type") == Some(&Value::String("object".into()))
-                        {
+                        } else if is_object_schema(&existing) && is_object_schema(&new) {
                             // Try recursive unify if both are objects
                             debug!(config,
                                 "Field `{field_name}` has conflicting object schemas, attempting recursive unify"
@@ -193,58 +281,42 @@ pub(crate) fn check_unifiable_schemas(
                                 debug!(config, "{path}.{}: failed to unify", field_name);
                                 return None;
                             }
-                        } else {
-                            // Handle scalar vs object promotion if wrap_scalars is enabled
-                            if config.wrap_scalars {
-                                let existing_is_obj =
-                                    existing.get("type") == Some(&Value::String("object".into()));
-                                let new_is_obj = field_schema.get("type")
-                                    == Some(&Value::String("object".into()));
+                        } else if config.wrap_scalars {
+                            // Try scalar promotion only if one is truly a scalar and the other is an object
+                            let existing_is_obj = is_object_schema(&existing);
+                            let existing_is_scalar = is_scalar_schema(&existing);
+                            let new_is_obj = is_object_schema(&new);
+                            let new_is_scalar = is_scalar_schema(&new);
 
-                                if existing_is_obj ^ new_is_obj {
-                                    // One is object, other is scalar → wrap scalar
-                                    let (obj_schema, scalar_schema, scalar_side) =
-                                        if existing_is_obj {
-                                            (existing.clone(), field_schema.clone(), "new")
-                                        } else {
-                                            (field_schema.clone(), existing.clone(), "existing")
-                                        };
-
-                                    let type_suffix = schema_type_str(&scalar_schema);
-                                    let wrapped_key = format!("{}__{}", field_name, type_suffix);
-
-                                    debug!(config,
-                                        "Promoting scalar on {} side: wrapping into object under key `{}`",
-                                        scalar_side, wrapped_key
-                                    );
-
-                                    let mut wrapped_props = Map::new();
-                                    wrapped_props.insert(wrapped_key, scalar_schema.clone());
-
-                                    let promoted = json!({
-                                        "type": "object",
-                                        "properties": wrapped_props
-                                    });
-
-                                    // Recursively unify with the object schema
-                                    if let Some(unified) = check_unifiable_schemas(
-                                        &[obj_schema.clone(), promoted.clone()],
-                                        &format!("{path}.{}", field_name),
-                                        config,
-                                    ) {
-                                        debug!(config,
-                                            "Field `{field_name}` unified successfully after scalar promotion"
-                                        );
-                                        e.insert(unified);
-                                        continue;
-                                    }
+                            if existing_is_obj && new_is_scalar {
+                                if let Some(unified) = try_scalar_promotion(
+                                    &existing, &new, field_name, "new", path, config,
+                                ) {
+                                    debug!(config, "Field `{field_name}` unified successfully after scalar promotion");
+                                    e.insert(unified);
+                                    continue;
+                                }
+                            } else if new_is_obj && existing_is_scalar {
+                                if let Some(unified) = try_scalar_promotion(
+                                    &new, &existing, field_name, "existing", path, config,
+                                ) {
+                                    debug!(config, "Field `{field_name}` unified successfully after scalar promotion");
+                                    e.insert(unified);
+                                    continue;
                                 }
                             }
 
-                            // If we didn’t handle it, it’s a true conflict
+                            // If we reach here, it's not a valid scalar/object promotion case
+                            debug!(config,
+                                "{path}.{field_name}: incompatible types (not scalar/object promotion):\n  existing={:#?}\n  new={:#?}",
+                                existing, new
+                            );
+                            return None;
+                        } else {
+                            // If we didn't handle it, it's a true conflict
                             debug!(config,
                                 "{path}.{field_name}: incompatible types:\n  existing={:#?}\n  new={:#?}",
-                                existing, field_schema
+                                existing, new
                             );
                             return None; // fundamentally incompatible types
                         }
@@ -259,8 +331,9 @@ pub(crate) fn check_unifiable_schemas(
 
     let total_schemas = schemas.len();
     let mut unified_properties = Map::new();
+    let mut required_fields = Vec::new();
 
-    // Required in all -> non-nullable
+    // Required in all -> non-nullable AND add to required array
     for (field_name, field_type) in &all_fields {
         let count = field_counts.get(field_name).unwrap_or(&0);
         if *count == total_schemas {
@@ -269,6 +342,7 @@ pub(crate) fn check_unifiable_schemas(
                 "Field `{field_name}` present in all schemas → keeping non-nullable"
             );
             unified_properties.insert(field_name.clone(), field_type.clone());
+            required_fields.push(field_name.clone()); // Add to required array
         }
     }
 
@@ -285,20 +359,27 @@ pub(crate) fn check_unifiable_schemas(
 
             // Create proper JSON Schema nullable syntax
             if let Some(type_str) = field_type.get("type").and_then(|t| t.as_str()) {
-                // Create a copy of the field_type and modify its type to be a union
                 let mut nullable_field = field_type.clone();
                 nullable_field["type"] = json!(["null", type_str]);
                 unified_properties.insert(field_name.clone(), nullable_field);
             } else {
-                // Fallback for schemas without explicit type
                 unified_properties.insert(field_name.clone(), json!(["null", field_type]));
             }
         }
     }
 
     debug!(config, "Schemas unified successfully");
-    Some(json!({
+
+    // Build the final schema with required fields
+    let mut result = json!({
         "type": "object",
         "properties": unified_properties
-    }))
+    });
+
+    // Only add required array if there are required fields
+    if !required_fields.is_empty() {
+        result["required"] = json!(required_fields);
+    }
+
+    Some(result)
 }

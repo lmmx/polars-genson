@@ -1,5 +1,5 @@
 ---
-source: genson-cli/tests/map_of_unified_records.rs
+source: genson-cli/tests/unify_map_max_rk.rs
 expression: stdout_str
 info:
   approved: true
@@ -15,13 +15,11 @@ info:
     - letters:
         a:
           - index: 0
-            value:
-              vowel: true
+            vowel: 0
     - letters:
         b:
           - index: 1
-            value:
-              cap: B
+            consonant: 0
 ---
 {
   "type": "record",
@@ -45,28 +43,18 @@ info:
                 "type": "int"
               },
               {
-                "name": "value",
-                "type": {
-                  "type": "record",
-                  "name": "value",
-                  "namespace": "genson.document_types.letters_values_types",
-                  "fields": [
-                    {
-                      "name": "vowel",
-                      "type": [
-                        "null",
-                        "boolean"
-                      ]
-                    },
-                    {
-                      "name": "cap",
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    }
-                  ]
-                }
+                "name": "vowel",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "consonant",
+                "type": [
+                  "null",
+                  "int"
+                ]
               }
             ]
           }

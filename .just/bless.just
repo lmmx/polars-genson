@@ -60,8 +60,9 @@ bless snapshot_file *reason:
 
 # -------- Summarisation recipes ---------
 
-# Show summary of snapshot blessing status
+# Show summary of snapshot blessing status with fallen/unblessed distinction
 [no-cd]
+[no-exit-message]
 snapshot-status:
     #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
     
@@ -69,6 +70,7 @@ snapshot-status:
     CARGO_TOML=$(cargo locate-project --message-format=plain)
     CRATE_ROOT=$(dirname "$CARGO_TOML")
     SNAPSHOTS_DIR="$CRATE_ROOT/tests/snapshots"
+    VERIFIED_DIR="$CRATE_ROOT/tests/verified"
     
     ## Check if snapshots directory exists
     if [[ ! -d "$SNAPSHOTS_DIR" ]]; then
@@ -80,6 +82,8 @@ snapshot-status:
     
     total=0
     approved=0
+    fallen=0
+    unblessed=0
     
     for snap in "$SNAPSHOTS_DIR"/*.snap; do
         if [[ -f "$snap" ]]; then
@@ -89,26 +93,107 @@ snapshot-status:
                 approved=$((approved + 1))
                 # ✓ $filename
             else
-                # ✗ $filename
+                ## Check if verified version exists to distinguish fallen from unblessed
+                if [[ -f "$VERIFIED_DIR/$filename" ]]; then
+                    fallen=$((fallen + 1))
+                    # ↯ $filename
+                else
+                    unblessed=$((unblessed + 1))
+                    # ✗ $filename
+                fi
             fi
         fi
     done
     
     echo ""
-    # Summary: $approved/$total snapshots approved
-
-# List only unblessed snapshots needing attention
-[no-cd]
-unblessed:
-    #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
-    
-    # === Snapshots needing blessing ===
-    just snapshot-status | rg "✗"
+    # Summary: $approved approved, $fallen fallen, $unblessed unblessed ($total total)
 
 # Show which snapshots are already blessed
 [no-cd]
+[no-exit-message]
 blessed:
     #!/usr/bin/env -S echo-comment --color bold-green --shell-flags="-euo pipefail"
     
     # === Blessed snapshots ===
     just snapshot-status | rg "✓"
+
+# List unblessed snapshots that have never been blessed
+[no-cd]
+[no-exit-message]
+profane:
+    #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
+    
+    # === Snapshots needing blessing ===
+    just snapshot-status | rg "✗"
+
+# List unblessed snapshots that have previously blessed but are now stale
+[no-cd]
+[no-exit-message]
+fallen:
+    #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
+    
+    # === Snapshots previously blessed but now stale ===
+    just snapshot-status | rg --colors 'match:fg:208' "↯"
+
+[no-cd]
+[no-exit-message]
+unblessed:
+    -just profane
+    -just fallen
+
+# Rebless a snapshot by preserving the existing blessing reason from verified version
+# Usage: just rebless map_of_records__infer__jsonschema.snap
+[no-cd]
+rebless snapshot_file:
+    #!/usr/bin/env -S echo-comment --color bold-blue --shell-flags="-euo pipefail"
+    
+    ## Find the crate root using cargo
+    CARGO_TOML=$(cargo locate-project --message-format=plain)
+    CRATE_ROOT=$(dirname "$CARGO_TOML")
+    VERIFIED_DIR="$CRATE_ROOT/tests/verified"
+    
+    ## Check if verified version exists
+    if [[ ! -f "$VERIFIED_DIR/{{snapshot_file}}" ]]; then
+        # Error: No verified version of {{snapshot_file}} found - use 'just bless' instead
+        exit 1
+    fi
+    
+    ## Extract existing blessing reason from verified version
+    BLESSING_REASON=""
+    if grep -q "reason:" "$VERIFIED_DIR/{{snapshot_file}}"; then
+        BLESSING_REASON=$(awk '/reason:/ { gsub(/^[[:space:]]*reason:[[:space:]]*"/, ""); gsub(/"[[:space:]]*$/, ""); print; exit }' "$VERIFIED_DIR/{{snapshot_file}}")
+    fi
+    
+    ## Require blessing reason - exit if none found
+    if [[ "$BLESSING_REASON" == "" ]]; then
+        # Error: No blessing reason found in verified version - cannot rebless safely
+        exit 1
+    fi
+    
+    ## Use existing bless recipe with preserved reason
+    # Reblessing with preserved reason: $BLESSING_REASON
+    just bless "{{snapshot_file}}" "$BLESSING_REASON"
+
+# Confess what changed in a fallen snapshot using difft
+# Usage: just confess map_of_records__infer__jsonschema.snap
+[no-cd]
+confess snapshot_file:
+    #!/usr/bin/env -S echo-comment --color bold-magenta --shell-flags="-euo pipefail"
+    
+    ## Find the crate root using cargo
+    CARGO_TOML=$(cargo locate-project --message-format=plain)
+    CRATE_ROOT=$(dirname "$CARGO_TOML")
+    
+    ## Set paths relative to crate root
+    SNAPSHOTS_DIR="$CRATE_ROOT/tests/snapshots"
+    VERIFIED_DIR="$CRATE_ROOT/tests/verified"
+    
+    ## Check if snapshot is actually fallen
+    if ! just fallen | rg -q "↯ {{snapshot_file}}"; then
+        # Error: {{snapshot_file}} is not fallen - use this only for fallen snapshots
+        exit 1
+    fi
+    
+    ## Show the confession
+    # === Confessing changes in {{snapshot_file}} ===
+    difft "$SNAPSHOTS_DIR/{{snapshot_file}}" "$VERIFIED_DIR/{{snapshot_file}}"

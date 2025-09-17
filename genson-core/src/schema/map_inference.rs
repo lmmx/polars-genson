@@ -4,6 +4,41 @@ use serde_json::Value;
 mod unification;
 use unification::*;
 
+/// Extract the non-null schema from a nullable schema, handling both old and new formats
+fn extract_non_null_schema(schema: &Value) -> Value {
+    // Handle new format: {"type": ["null", "string"]}
+    if let Some(Value::Array(type_arr)) = schema.get("type") {
+        if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
+            let non_null_type = type_arr
+                .iter()
+                .find(|t| *t != &Value::String("null".into()))
+                .unwrap();
+
+            // Create a new schema with the non-null type, preserving other properties
+            let mut non_null_schema = schema.clone();
+            non_null_schema
+                .as_object_mut()
+                .unwrap()
+                .insert("type".to_string(), non_null_type.clone());
+            return non_null_schema;
+        }
+    }
+
+    // Handle old legacy format: ["null", {"type": "string"}]
+    if let Value::Array(arr) = schema {
+        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
+            let non_null_schema = arr
+                .iter()
+                .find(|v| *v != &Value::String("null".to_string()))
+                .unwrap();
+            return non_null_schema.clone();
+        }
+    }
+
+    // Not a nullable schema, return as-is
+    schema.clone()
+}
+
 /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
 ///
 /// This mutates the schema in place, applying user overrides and heuristics.
@@ -92,22 +127,17 @@ pub(crate) fn rewrite_objects(
             // Check for unifiable schemas
             let mut unified_schema: Option<Value> = None;
             if let Some(first_schema) = props.values().next() {
-                if props.values().all(|schema| schema == first_schema) {
-                    // Handle union types properly - extract the non-null type for additionalProperties
-                    if let Value::Array(arr) = first_schema {
-                        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
-                            // This is a nullable union - extract the non-null type
-                            let non_null_type = arr
-                                .iter()
-                                .find(|v| *v != &Value::String("null".to_string()))
-                                .unwrap();
-                            unified_schema = Some(non_null_type.clone());
-                        } else {
-                            unified_schema = Some(first_schema.clone());
-                        }
-                    } else {
-                        unified_schema = Some(first_schema.clone());
-                    }
+                // Normalise all schemas for comparison
+                let normalised_schemas: Vec<Value> =
+                    props.values().map(extract_non_null_schema).collect();
+                let first_normalised = extract_non_null_schema(first_schema);
+
+                if normalised_schemas
+                    .iter()
+                    .all(|schema| schema == &first_normalised)
+                {
+                    // All schemas are homogeneous after normalisation
+                    unified_schema = Some(first_normalised);
                 } else if config.unify_maps {
                     // Detect if these are all arrays of records
                     if child_schemas

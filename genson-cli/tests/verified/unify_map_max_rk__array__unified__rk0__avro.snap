@@ -1,8 +1,9 @@
 ---
-source: genson-cli/tests/map_of_unified_records.rs
+blessing:
+reason: "At map max rk 0 the required index key prevents a map from being inferred by unification"
+source: genson-cli/tests/unify_map_max_rk.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"
@@ -15,13 +16,11 @@ info:
     - letters:
         a:
           - index: 0
-            value:
-              vowel: true
+            vowel: 0
     - letters:
         b:
           - index: 1
-            value:
-              cap: B
+            consonant: 0
 ---
 {
   "type": "record",
@@ -45,28 +44,18 @@ info:
                 "type": "int"
               },
               {
-                "name": "value",
-                "type": {
-                  "type": "record",
-                  "name": "value",
-                  "namespace": "genson.document_types.letters_values_types",
-                  "fields": [
-                    {
-                      "name": "vowel",
-                      "type": [
-                        "null",
-                        "boolean"
-                      ]
-                    },
-                    {
-                      "name": "cap",
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    }
-                  ]
-                }
+                "name": "vowel",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "consonant",
+                "type": [
+                  "null",
+                  "int"
+                ]
               }
             ]
           }

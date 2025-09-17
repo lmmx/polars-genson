@@ -9,7 +9,7 @@ info:
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "1"
+    - "0"
     - "--unify-maps"
   input:
     - letters:
@@ -34,19 +34,22 @@ info:
             "index": {
               "type": "integer"
             },
-            "vowel": [
-              "null",
-              {
-                "type": "integer"
-              }
-            ],
-            "consonant": [
-              "null",
-              {
-                "type": "integer"
-              }
-            ]
-          }
+            "vowel": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "consonant": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            }
+          },
+          "required": [
+            "index"
+          ]
         }
       }
     }

@@ -42,7 +42,7 @@ fn run_genson_unified(name: &str, rows: Vec<&str>, extra_args: &[&str]) {
         "--map-threshold",
         "2",
         "--map-max-rk",
-        "1",
+        "0",
         "--unify-maps",
     ];
     args.extend_from_slice(extra_args);

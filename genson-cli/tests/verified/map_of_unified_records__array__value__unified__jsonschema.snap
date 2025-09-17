@@ -39,21 +39,25 @@ info:
             "value": {
               "type": "object",
               "properties": {
-                "vowel": [
-                  "null",
-                  {
-                    "type": "boolean"
-                  }
-                ],
-                "cap": [
-                  "null",
-                  {
-                    "type": "string"
-                  }
-                ]
+                "vowel": {
+                  "type": [
+                    "null",
+                    "boolean"
+                  ]
+                },
+                "cap": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                }
               }
             }
-          }
+          },
+          "required": [
+            "index",
+            "value"
+          ]
         }
       }
     }
