@@ -38,6 +38,9 @@ mod innermod {
         /// Whether to output Avro schema rather than regular JSON Schema.
         #[cfg(feature = "avro")]
         pub avro: bool,
+        /// Enable debug output. When `true`, prints detailed information about schema inference
+        /// processes including field unification, map detection, and scalar wrapping decisions.
+        pub debug: bool,
     }
 
     impl Default for SchemaInferenceConfig {
@@ -54,8 +57,24 @@ mod innermod {
                 wrap_root: None,
                 #[cfg(feature = "avro")]
                 avro: false,
+                debug: false,
             }
         }
+    }
+
+    impl SchemaInferenceConfig {
+        pub fn debug(&self, args: std::fmt::Arguments) {
+            if self.debug {
+                eprintln!("{}", args);
+            }
+        }
+    }
+
+    #[macro_export]
+    macro_rules! debug {
+        ($cfg:expr, $($arg:tt)*) => {
+            $cfg.debug(format_args!($($arg)*))
+        };
     }
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -173,9 +192,13 @@ mod innermod {
     ///   - Non-record types in the collection
     ///   - Conflicting field types (same field name, different types)
     ///   - Empty schema collection
-    fn check_unifiable_schemas(schemas: &[Value], path: &str, wrap_scalars: bool) -> Option<Value> {
+    fn check_unifiable_schemas(
+        schemas: &[Value],
+        path: &str,
+        config: &SchemaInferenceConfig,
+    ) -> Option<Value> {
         if schemas.is_empty() {
-            eprintln!("{path}: failed (empty schema list)");
+            debug!(config, "{path}: failed (empty schema list)");
             return None;
         }
 
@@ -184,7 +207,7 @@ mod innermod {
             .iter()
             .all(|s| s.get("type") == Some(&Value::String("object".into())))
         {
-            // eprintln!("{path}: failed (non-object schema): {schemas:?}");
+            // debug!(config, "{path}: failed (non-object schema): {schemas:?}");
             return None;
         }
 
@@ -240,7 +263,7 @@ mod innermod {
 
                     match all_fields.entry(field_name.clone()) {
                         ordermap::map::Entry::Vacant(e) => {
-                            eprintln!("Schema[{i}] introduces new field `{field_name}`");
+                            debug!(config, "Schema[{i}] introduces new field `{field_name}`");
 
                             // Normalise before storing
                             e.insert(normalise_nullable(field_schema).clone());
@@ -252,31 +275,32 @@ mod innermod {
 
                             // First try the compatibility check for nullable/non-nullable
                             if let Some(compatible_schema) = schemas_compatible(&existing, &new) {
-                                eprintln!("Field `{field_name}` compatible (nullable/non-nullable unification)");
+                                debug!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
                                 e.insert(compatible_schema);
                             } else if existing.get("type") == Some(&Value::String("object".into()))
                                 && new.get("type") == Some(&Value::String("object".into()))
                             {
                                 // Try recursive unify if both are objects
-                                eprintln!(
+                                debug!(config,
                                     "Field `{field_name}` has conflicting object schemas, attempting recursive unify"
                                 );
                                 if let Some(unified) = check_unifiable_schemas(
                                     &[existing.clone(), new.clone()],
                                     &format!("{path}.{}", field_name),
-                                    wrap_scalars,
+                                    config,
                                 ) {
-                                    eprintln!(
+                                    debug!(
+                                        config,
                                         "Field `{field_name}` unified successfully after recursion"
                                     );
                                     e.insert(unified);
                                 } else {
-                                    eprintln!("{path}.{}: failed to unify", field_name);
+                                    debug!(config, "{path}.{}: failed to unify", field_name);
                                     return None;
                                 }
                             } else {
                                 // Handle scalar vs object promotion if wrap_scalars is enabled
-                                if wrap_scalars {
+                                if config.wrap_scalars {
                                     let existing_is_obj = existing.get("type")
                                         == Some(&Value::String("object".into()));
                                     let new_is_obj = field_schema.get("type")
@@ -295,7 +319,7 @@ mod innermod {
                                         let wrapped_key =
                                             format!("{}__{}", field_name, type_suffix);
 
-                                        eprintln!(
+                                        debug!(config,
                                             "Promoting scalar on {} side: wrapping into object under key `{}`",
                                             scalar_side, wrapped_key
                                         );
@@ -312,9 +336,9 @@ mod innermod {
                                         if let Some(unified) = check_unifiable_schemas(
                                             &[obj_schema.clone(), promoted.clone()],
                                             &format!("{path}.{}", field_name),
-                                            wrap_scalars,
+                                            config,
                                         ) {
-                                            eprintln!(
+                                            debug!(config,
                                                 "Field `{field_name}` unified successfully after scalar promotion"
                                             );
                                             e.insert(unified);
@@ -324,7 +348,7 @@ mod innermod {
                                 }
 
                                 // If we didn’t handle it, it’s a true conflict
-                                eprintln!(
+                                debug!(config,
                                     "{path}.{field_name}: incompatible types:\n  existing={:#?}\n  new={:#?}",
                                     existing, field_schema
                                 );
@@ -334,7 +358,7 @@ mod innermod {
                     }
                 }
             } else {
-                eprintln!("Schema[{i}] has no properties object");
+                debug!(config, "Schema[{i}] has no properties object");
                 return None;
             }
         }
@@ -346,7 +370,10 @@ mod innermod {
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count == total_schemas {
-                eprintln!("Field `{field_name}` present in all schemas → keeping non-nullable");
+                debug!(
+                    config,
+                    "Field `{field_name}` present in all schemas → keeping non-nullable"
+                );
                 unified_properties.insert(field_name.clone(), field_type.clone());
             }
         }
@@ -355,7 +382,8 @@ mod innermod {
         for (field_name, field_type) in &all_fields {
             let count = field_counts.get(field_name).unwrap_or(&0);
             if *count < total_schemas {
-                eprintln!(
+                debug!(
+                    config,
                     "Field `{field_name}` missing in {}/{} schemas → making nullable",
                     total_schemas - count,
                     total_schemas
@@ -375,7 +403,7 @@ mod innermod {
             }
         }
 
-        eprintln!("Schemas unified successfully");
+        debug!(config, "Schemas unified successfully");
         Some(serde_json::json!({
             "type": "object",
             "properties": unified_properties
@@ -507,7 +535,7 @@ mod innermod {
                                 if let Some(unified_items) = check_unifiable_schemas(
                                     &item_schemas,
                                     field_name.unwrap_or(""),
-                                    config.wrap_scalars,
+                                    config,
                                 ) {
                                     unified_schema = Some(serde_json::json!({
                                         "type": "array",
@@ -519,7 +547,7 @@ mod innermod {
                             unified_schema = check_unifiable_schemas(
                                 &child_schemas,
                                 field_name.unwrap_or(""),
-                                config.wrap_scalars,
+                                config,
                             );
                         }
                     }
@@ -643,7 +671,7 @@ mod innermod {
         json_strings: &[String],
         config: SchemaInferenceConfig,
     ) -> Result<SchemaInferenceResult, String> {
-        eprintln!("Schema inference config: {:#?}", config);
+        debug!(config, "Schema inference config: {:#?}", config);
         if json_strings.is_empty() {
             return Err("No JSON strings provided".to_string());
         }
@@ -1153,7 +1181,7 @@ mod innermod {
             assert!(result.is_err(), "Expected error for malformed NDJSON line");
 
             let err_msg = result.unwrap_err();
-            eprintln!("Got error: {}", err_msg);
+            debug!(config, "Got error: {}", err_msg);
             assert!(
                 err_msg
                     .contains("Invalid JSON input at index 1: expected value at line 1 column 13"),
