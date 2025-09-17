@@ -7,7 +7,9 @@ pub mod normalise;
 pub mod schema;
 
 // Re-export commonly used items
-pub use schema::{infer_json_schema_from_strings, SchemaInferenceConfig, SchemaInferenceResult};
+pub use schema::{
+    infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig, SchemaInferenceResult,
+};
 
 /// Helper function to infer JSON schema from a collection of JSON strings
 pub fn infer_json_schema(

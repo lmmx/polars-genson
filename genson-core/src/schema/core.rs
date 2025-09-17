@@ -33,6 +33,36 @@ pub struct SchemaInferenceConfig {
     /// Enable debug output. When `true`, prints detailed information about schema inference
     /// processes including field unification, map detection, and scalar wrapping decisions.
     pub debug: bool,
+    /// Controls the verbosity level of debug output
+    pub verbosity: DebugVerbosity,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum DebugVerbosity {
+    /// Show important unification decisions and failures  
+    Normal,
+    /// Show all debug information including field introductions
+    Verbose,
+}
+
+impl Default for DebugVerbosity {
+    fn default() -> Self {
+        DebugVerbosity::Normal
+    }
+}
+
+impl SchemaInferenceConfig {
+    pub fn debug(&self, args: std::fmt::Arguments) {
+        if self.debug {
+            eprintln!("{}", args);
+        }
+    }
+
+    pub fn debug_verbose(&self, args: std::fmt::Arguments) {
+        if self.debug && matches!(self.verbosity, DebugVerbosity::Verbose) {
+            eprintln!("{}", args);
+        }
+    }
 }
 
 impl Default for SchemaInferenceConfig {
@@ -50,14 +80,7 @@ impl Default for SchemaInferenceConfig {
             #[cfg(feature = "avro")]
             avro: false,
             debug: false,
-        }
-    }
-}
-
-impl SchemaInferenceConfig {
-    pub fn debug(&self, args: std::fmt::Arguments) {
-        if self.debug {
-            eprintln!("{}", args);
+            verbosity: DebugVerbosity::default(),
         }
     }
 }
@@ -66,6 +89,13 @@ impl SchemaInferenceConfig {
 macro_rules! debug {
     ($cfg:expr, $($arg:tt)*) => {
         $cfg.debug(format_args!($($arg)*))
+    };
+}
+
+#[macro_export]
+macro_rules! debug_verbose {
+    ($cfg:expr, $($arg:tt)*) => {
+        $cfg.debug_verbose(format_args!($($arg)*))
     };
 }
 
