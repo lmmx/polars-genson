@@ -52,19 +52,23 @@ info:
           "frequency": {
             "type": "number"
           },
-          "vowel": [
-            "null",
-            {
-              "type": "integer"
-            }
-          ],
-          "consonant": [
-            "null",
-            {
-              "type": "integer"
-            }
-          ]
-        }
+          "vowel": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "consonant": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          }
+        },
+        "required": [
+          "alphabet",
+          "frequency"
+        ]
       }
     }
   },

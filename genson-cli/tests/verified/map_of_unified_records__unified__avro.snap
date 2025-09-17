@@ -56,17 +56,11 @@ info:
           "fields": [
             {
               "name": "alphabet",
-              "type": [
-                "null",
-                "int"
-              ]
+              "type": "int"
             },
             {
               "name": "frequency",
-              "type": [
-                "null",
-                "float"
-              ]
+              "type": "float"
             },
             {
               "name": "vowel",

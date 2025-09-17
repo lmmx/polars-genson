@@ -62,6 +62,7 @@ bless snapshot_file *reason:
 
 # Show summary of snapshot blessing status with fallen/unblessed distinction
 [no-cd]
+[no-exit-message]
 snapshot-status:
     #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
     
@@ -109,29 +110,36 @@ snapshot-status:
 
 # Show which snapshots are already blessed
 [no-cd]
+[no-exit-message]
 blessed:
     #!/usr/bin/env -S echo-comment --color bold-green --shell-flags="-euo pipefail"
     
     # === Blessed snapshots ===
     just snapshot-status | rg "✓"
 
-# List only fallen snapshots (previously blessed but now stale)
+# List unblessed snapshots that have never been blessed
 [no-cd]
-fallen:
-    #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
-    
-    # === Fallen snapshots (previously blessed but now stale) ===
-    just snapshot-status | rg --colors 'match:fg:208' "↯"
-
-# List only unblessed snapshots (never been blessed)
-[no-cd]
-unblessed:
+[no-exit-message]
+profane:
     #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
     
     # === Snapshots needing blessing ===
     just snapshot-status | rg "✗"
 
-    just fallen
+# List unblessed snapshots that have previously blessed but are now stale
+[no-cd]
+[no-exit-message]
+fallen:
+    #!/usr/bin/env -S echo-comment --color bold-yellow --shell-flags="-euo pipefail"
+    
+    # === Snapshots previously blessed but now stale ===
+    just snapshot-status | rg --colors 'match:fg:208' "↯"
+
+[no-cd]
+[no-exit-message]
+unblessed:
+    -just profane
+    -just fallen
 
 # Rebless a snapshot by preserving the existing blessing reason from verified version
 # Usage: just rebless map_of_records__infer__jsonschema.snap
