@@ -158,7 +158,7 @@ pub(crate) fn check_unifiable_schemas(
 
                         // First try the compatibility check for nullable/non-nullable
                         if let Some(compatible_schema) = schemas_compatible(&existing, &new) {
-                            debug!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
+                            debug_verbose!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
                             e.insert(compatible_schema);
                         } else if existing.get("type") == Some(&Value::String("object".into()))
                             && new.get("type") == Some(&Value::String("object".into()))
@@ -252,7 +252,7 @@ pub(crate) fn check_unifiable_schemas(
     for (field_name, field_type) in &all_fields {
         let count = field_counts.get(field_name).unwrap_or(&0);
         if *count == total_schemas {
-            debug!(
+            debug_verbose!(
                 config,
                 "Field `{field_name}` present in all schemas → keeping non-nullable"
             );
@@ -264,7 +264,7 @@ pub(crate) fn check_unifiable_schemas(
     for (field_name, field_type) in &all_fields {
         let count = field_counts.get(field_name).unwrap_or(&0);
         if *count < total_schemas {
-            debug!(
+            debug_verbose!(
                 config,
                 "Field `{field_name}` missing in {}/{} schemas → making nullable",
                 total_schemas - count,
