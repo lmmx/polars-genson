@@ -1,6 +1,6 @@
 // genson-core/src/schema/unification.rs
-use crate::{debug, schema::core::SchemaInferenceConfig};
-use serde_json::Value;
+use crate::{debug, debug_verbose, schema::core::SchemaInferenceConfig};
+use serde_json::{json, Map, Value};
 
 /// Normalize a schema that may be wrapped in one or more layers of
 /// `["null", <type>]` union arrays.
@@ -50,6 +50,59 @@ fn schema_type_str(schema: &Value) -> String {
     "unknown".to_string()
 }
 
+/// Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
+fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
+    if existing == new {
+        return Some(existing.clone());
+    }
+
+    // Handle new JSON Schema nullable format: {"type": ["null", "string"]}
+    let extract_nullable_info = |schema: &Value| -> (bool, Value) {
+        if let Some(Value::Array(type_arr)) = schema.get("type") {
+            if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
+                let non_null_type = type_arr
+                    .iter()
+                    .find(|t| *t != &Value::String("null".into()))
+                    .unwrap();
+
+                // Create a new schema with the non-null type, preserving other properties
+                let mut non_null_schema = schema.clone();
+                non_null_schema
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("type".to_string(), non_null_type.clone());
+                (true, non_null_schema)
+            } else {
+                (false, schema.clone())
+            }
+        } else {
+            (false, schema.clone())
+        }
+    };
+
+    let (existing_nullable, existing_inner) = extract_nullable_info(existing);
+    let (new_nullable, new_inner) = extract_nullable_info(new);
+
+    // If the inner schemas match (including all properties), return the nullable version
+    if existing_inner == new_inner {
+        if existing_nullable || new_nullable {
+            // Create the nullable version by taking the non-nullable schema and making the type nullable
+            let mut nullable_schema = existing_inner.clone();
+            if let Some(inner_type) = existing_inner.get("type") {
+                nullable_schema
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("type".to_string(), json!(["null", inner_type]));
+            }
+            return Some(nullable_schema);
+        } else {
+            return Some(existing_inner);
+        }
+    }
+
+    None
+}
+
 /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
 ///
 /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
@@ -97,47 +150,6 @@ pub(crate) fn check_unifiable_schemas(
     let mut all_fields = ordermap::OrderMap::new();
     let mut field_counts = std::collections::HashMap::new();
 
-    // Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
-    let schemas_compatible = |existing: &Value, new: &Value| -> Option<Value> {
-        if existing == new {
-            return Some(existing.clone());
-        }
-
-        // Handle new JSON Schema nullable format: {"type": ["null", "string"]}
-        let extract_nullable_info = |schema: &Value| -> (bool, Value) {
-            if let Some(Value::Array(type_arr)) = schema.get("type") {
-                if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-                    let non_null_type = type_arr
-                        .iter()
-                        .find(|t| *t != &Value::String("null".into()))
-                        .unwrap();
-                    (true, serde_json::json!({"type": non_null_type}))
-                } else {
-                    (false, schema.clone())
-                }
-            } else {
-                (false, schema.clone())
-            }
-        };
-
-        let (existing_nullable, existing_inner) = extract_nullable_info(existing);
-        let (new_nullable, new_inner) = extract_nullable_info(new);
-
-        // If the inner types match, return the nullable version
-        if existing_inner == new_inner {
-            if existing_nullable || new_nullable {
-                let inner_type = existing_inner.get("type").unwrap();
-                return Some(serde_json::json!({
-                    "type": ["null", inner_type]
-                }));
-            } else {
-                return Some(existing_inner);
-            }
-        }
-
-        None
-    };
-
     // Collect all field types and count occurrences
     for (i, schema) in schemas.iter().enumerate() {
         if let Some(Value::Object(props)) = schema.get("properties") {
@@ -146,7 +158,7 @@ pub(crate) fn check_unifiable_schemas(
 
                 match all_fields.entry(field_name.clone()) {
                     ordermap::map::Entry::Vacant(e) => {
-                        debug!(config, "Schema[{i}] introduces new field `{field_name}`");
+                        debug_verbose!(config, "Schema[{i}] introduces new field `{field_name}`");
 
                         // Normalise before storing
                         e.insert(normalise_nullable(field_schema).clone());
@@ -158,7 +170,7 @@ pub(crate) fn check_unifiable_schemas(
 
                         // First try the compatibility check for nullable/non-nullable
                         if let Some(compatible_schema) = schemas_compatible(&existing, &new) {
-                            debug!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
+                            debug_verbose!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
                             e.insert(compatible_schema);
                         } else if existing.get("type") == Some(&Value::String("object".into()))
                             && new.get("type") == Some(&Value::String("object".into()))
@@ -206,10 +218,10 @@ pub(crate) fn check_unifiable_schemas(
                                         scalar_side, wrapped_key
                                     );
 
-                                    let mut wrapped_props = serde_json::Map::new();
+                                    let mut wrapped_props = Map::new();
                                     wrapped_props.insert(wrapped_key, scalar_schema.clone());
 
-                                    let promoted = serde_json::json!({
+                                    let promoted = json!({
                                         "type": "object",
                                         "properties": wrapped_props
                                     });
@@ -246,13 +258,13 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     let total_schemas = schemas.len();
-    let mut unified_properties = serde_json::Map::new();
+    let mut unified_properties = Map::new();
 
     // Required in all -> non-nullable
     for (field_name, field_type) in &all_fields {
         let count = field_counts.get(field_name).unwrap_or(&0);
         if *count == total_schemas {
-            debug!(
+            debug_verbose!(
                 config,
                 "Field `{field_name}` present in all schemas → keeping non-nullable"
             );
@@ -264,7 +276,7 @@ pub(crate) fn check_unifiable_schemas(
     for (field_name, field_type) in &all_fields {
         let count = field_counts.get(field_name).unwrap_or(&0);
         if *count < total_schemas {
-            debug!(
+            debug_verbose!(
                 config,
                 "Field `{field_name}` missing in {}/{} schemas → making nullable",
                 total_schemas - count,
@@ -275,18 +287,17 @@ pub(crate) fn check_unifiable_schemas(
             if let Some(type_str) = field_type.get("type").and_then(|t| t.as_str()) {
                 // Create a copy of the field_type and modify its type to be a union
                 let mut nullable_field = field_type.clone();
-                nullable_field["type"] = serde_json::json!(["null", type_str]);
+                nullable_field["type"] = json!(["null", type_str]);
                 unified_properties.insert(field_name.clone(), nullable_field);
             } else {
                 // Fallback for schemas without explicit type
-                unified_properties
-                    .insert(field_name.clone(), serde_json::json!(["null", field_type]));
+                unified_properties.insert(field_name.clone(), json!(["null", field_type]));
             }
         }
     }
 
     debug!(config, "Schemas unified successfully");
-    Some(serde_json::json!({
+    Some(json!({
         "type": "object",
         "properties": unified_properties
     }))

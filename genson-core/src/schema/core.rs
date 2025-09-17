@@ -33,6 +33,59 @@ pub struct SchemaInferenceConfig {
     /// Enable debug output. When `true`, prints detailed information about schema inference
     /// processes including field unification, map detection, and scalar wrapping decisions.
     pub debug: bool,
+    /// Controls the verbosity level of debug output
+    pub verbosity: DebugVerbosity,
+}
+
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+pub enum DebugVerbosity {
+    /// Show important unification decisions and failures  
+    #[default]
+    Normal,
+    /// Show all debug information including field introductions
+    Verbose,
+}
+
+impl SchemaInferenceConfig {
+    pub(crate) fn debug(&self, args: std::fmt::Arguments) {
+        if self.debug {
+            let message = format!("{}", args);
+            eprintln!("{}", self.maybe_truncate(message));
+        }
+    }
+
+    pub(crate) fn debug_verbose(&self, args: std::fmt::Arguments) {
+        if self.debug && matches!(self.verbosity, DebugVerbosity::Verbose) {
+            let message = format!("{}", args);
+            eprintln!("{}", self.maybe_truncate(message));
+        }
+    }
+
+    fn maybe_truncate(&self, message: String) -> String {
+        let lines: Vec<&str> = message.lines().collect();
+
+        if lines.len() > 20 && self.verbosity == DebugVerbosity::Normal {
+            let mut truncated = String::new();
+
+            // First 10 lines
+            for line in lines.iter().take(10) {
+                truncated.push_str(line);
+                truncated.push('\n');
+            }
+
+            truncated.push_str(&format!("... ({} lines truncated) ...\n", lines.len() - 15));
+
+            // Last 5 lines
+            for line in lines.iter().skip(lines.len() - 5) {
+                truncated.push_str(line);
+                truncated.push('\n');
+            }
+
+            truncated
+        } else {
+            message
+        }
+    }
 }
 
 impl Default for SchemaInferenceConfig {
@@ -50,14 +103,7 @@ impl Default for SchemaInferenceConfig {
             #[cfg(feature = "avro")]
             avro: false,
             debug: false,
-        }
-    }
-}
-
-impl SchemaInferenceConfig {
-    pub fn debug(&self, args: std::fmt::Arguments) {
-        if self.debug {
-            eprintln!("{}", args);
+            verbosity: DebugVerbosity::default(),
         }
     }
 }
@@ -66,6 +112,13 @@ impl SchemaInferenceConfig {
 macro_rules! debug {
     ($cfg:expr, $($arg:tt)*) => {
         $cfg.debug(format_args!($($arg)*))
+    };
+}
+
+#[macro_export]
+macro_rules! debug_verbose {
+    ($cfg:expr, $($arg:tt)*) => {
+        $cfg.debug_verbose(format_args!($($arg)*))
     };
 }
 

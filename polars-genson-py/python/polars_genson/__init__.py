@@ -58,9 +58,9 @@ def schema_to_json(schema: pl.Schema) -> str:
     str
         JSON string representation of the schema
     """
-    assert isinstance(schema, pl.Schema), (
-        f"Expected Schema, got {type(schema)}: {schema}"
-    )
+    assert isinstance(
+        schema, pl.Schema
+    ), f"Expected Schema, got {type(schema)}: {schema}"
     empty_df = schema.to_frame()
     return _rust_schema_to_json(empty_df)
 
@@ -90,6 +90,7 @@ def infer_json_schema(
     schema_uri: str | None = "http://json-schema.org/schema#",
     merge_schemas: bool = True,
     debug: bool = False,
+    verbosity: Literal["Normal", "Verbose"] = "Normal",
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
     unify_maps: bool = False,
@@ -114,6 +115,8 @@ def infer_json_schema(
         Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
         Whether to print debug information
+    verbosity : str, default "Normal"
+        Whether to print verbose debug information
     map_threshold : int, default 20
         Number of keys above which a heterogeneous object may be rewritten
         as a map (unless overridden).
@@ -150,6 +153,7 @@ def infer_json_schema(
         "ndjson": ndjson,
         "merge_schemas": merge_schemas,
         "debug": debug,
+        "verbosity": verbosity,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
@@ -172,6 +176,7 @@ def infer_polars_schema(
     ndjson: bool = False,
     merge_schemas: bool = True,
     debug: bool = False,
+    verbosity: Literal["Normal", "Verbose"] = "Normal",
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
     unify_maps: bool = False,
@@ -194,6 +199,8 @@ def infer_polars_schema(
         Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
         Whether to print debug information
+    verbosity : str, default "Normal"
+        Whether to print verbose debug information
     map_threshold : int, default 20
         Number of keys above which a heterogeneous object may be rewritten
         as a map (unless overridden).
@@ -230,6 +237,7 @@ def infer_polars_schema(
         "ndjson": ndjson,
         "merge_schemas": merge_schemas,
         "debug": debug,
+        "verbosity": verbosity,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
@@ -378,6 +386,7 @@ class GensonNamespace:
         ndjson: bool = False,
         merge_schemas: bool = True,
         debug: bool = False,
+        verbosity: Literal["Normal", "Verbose"] = "Normal",
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
         unify_maps: bool = False,
@@ -401,6 +410,8 @@ class GensonNamespace:
             Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False
             Whether to print debug information
+        verbosity : str, default "Normal"
+            Whether to print verbose debug information
         map_threshold : int, default 20
             Number of keys above which a heterogeneous object may be rewritten
             as a map (unless overridden).
@@ -448,6 +459,7 @@ class GensonNamespace:
                 ndjson=ndjson,
                 merge_schemas=merge_schemas,
                 debug=debug,
+                verbosity=verbosity,
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,
@@ -476,6 +488,7 @@ class GensonNamespace:
         schema_uri: str | None = "http://json-schema.org/schema#",
         merge_schemas: bool = True,
         debug: bool = False,
+        verbosity: Literal["Normal", "Verbose"] = "Normal",
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
         unify_maps: bool = False,
@@ -500,6 +513,8 @@ class GensonNamespace:
             Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False
             Whether to print debug information
+        verbosity : str, default "Normal"
+            Whether to print verbose debug information
         map_threshold : int, default 20
             Number of keys above which a heterogeneous object may be rewritten
             as a map (unless overridden).
@@ -541,6 +556,7 @@ class GensonNamespace:
                 schema_uri=schema_uri,
                 merge_schemas=merge_schemas,
                 debug=debug,
+                verbosity=verbosity,
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,

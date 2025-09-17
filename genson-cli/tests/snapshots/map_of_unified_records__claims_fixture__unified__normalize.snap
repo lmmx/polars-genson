@@ -190,8 +190,7 @@ info:
                   "fr": "être humain",
                   "de": "Mensch",
                   "es": "humano",
-                  "pt": "ser humano",
-                  "labels__unknown": null
+                  "pt": "ser humano"
                 },
                 "time": null,
                 "timezone": null,
@@ -231,8 +230,7 @@ info:
                   "fr": "Nations unies",
                   "de": "Vereinte Nationen",
                   "es": "Naciones Unidas",
-                  "pt": "Nações Unidas",
-                  "labels__unknown": null
+                  "pt": "Nações Unidas"
                 },
                 "time": null,
                 "timezone": null,
@@ -306,8 +304,7 @@ info:
                   "fr": "élément d'exemple",
                   "de": "Beispielobjekt",
                   "es": "elemento de ejemplo",
-                  "pt": "item de exemplo",
-                  "labels__unknown": null
+                  "pt": "item de exemplo"
                 },
                 "time": null,
                 "timezone": null,

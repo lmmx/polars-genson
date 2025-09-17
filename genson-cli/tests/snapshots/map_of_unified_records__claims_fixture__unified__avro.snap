@@ -250,57 +250,9 @@ info:
                                         "type": [
                                           "null",
                                           {
-                                            "type": "record",
                                             "name": "labels",
-                                            "namespace": "genson.document_types.claims_values_types.mainsnak_types.datavalue_types.value_types",
-                                            "fields": [
-                                              {
-                                                "name": "en",
-                                                "type": [
-                                                  "null",
-                                                  "string"
-                                                ]
-                                              },
-                                              {
-                                                "name": "fr",
-                                                "type": [
-                                                  "null",
-                                                  "string"
-                                                ]
-                                              },
-                                              {
-                                                "name": "de",
-                                                "type": [
-                                                  "null",
-                                                  "string"
-                                                ]
-                                              },
-                                              {
-                                                "name": "es",
-                                                "type": [
-                                                  "null",
-                                                  "string"
-                                                ]
-                                              },
-                                              {
-                                                "name": "pt",
-                                                "type": [
-                                                  "null",
-                                                  "string"
-                                                ]
-                                              },
-                                              {
-                                                "name": "labels__unknown",
-                                                "type": [
-                                                  "null",
-                                                  {
-                                                    "name": "labels__unknown",
-                                                    "type": "map",
-                                                    "values": "string"
-                                                  }
-                                                ]
-                                              }
-                                            ]
+                                            "type": "map",
+                                            "values": "string"
                                           }
                                         ]
                                       },

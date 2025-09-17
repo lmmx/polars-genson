@@ -1,5 +1,5 @@
 use genson_core::normalise::{normalise_values, MapEncoding, NormaliseConfig};
-use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
+use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use polars::prelude::*;
 use polars_jsonschema_bridge::deserialise::{schema_to_polars_fields, SchemaFormat};
 use pyo3_polars::derive::polars_expr;
@@ -20,6 +20,9 @@ pub struct GensonKwargs {
 
     #[serde(default)]
     pub debug: bool,
+
+    #[serde(default)]
+    pub verbosity: DebugVerbosity,
 
     #[serde(default = "default_merge_schemas")]
     pub merge_schemas: bool,
@@ -170,6 +173,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
                 debug: kwargs.debug,
+                verbosity: kwargs.verbosity,
             };
 
             let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -210,6 +214,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
                     debug: kwargs.debug,
+                    verbosity: kwargs.verbosity,
                 };
 
                 let single_result = infer_json_schema_from_strings(from_ref(json_str), config)
@@ -293,6 +298,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
             debug: kwargs.debug,
+            verbosity: kwargs.verbosity,
         };
 
         let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -429,6 +435,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         avro: true, // normalisation implies Avro
         wrap_root: wrap_root_field.clone(),
         debug: kwargs.debug,
+        verbosity: kwargs.verbosity,
     };
 
     let schema_result = infer_json_schema_from_strings(&json_strings, config)

@@ -5,7 +5,7 @@ use std::io::{self, Read};
 use genson_core::{
     infer_json_schema,
     normalise::{normalise_values, MapEncoding, NormaliseConfig},
-    SchemaInferenceConfig,
+    DebugVerbosity, SchemaInferenceConfig,
 };
 use serde_json::Value;
 
@@ -123,6 +123,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             }
             "--debug" => {
                 config.debug = true;
+            }
+            "--verbose" => {
+                config.verbosity = DebugVerbosity::Verbose;
             }
             _ => {
                 if !args[i].starts_with('-') && input_file.is_none() {
