@@ -1176,7 +1176,7 @@ mod innermod {
                 ..Default::default()
             };
 
-            let result = infer_json_schema_from_strings(&json_strings, config);
+            let result = infer_json_schema_from_strings(&json_strings, config.clone());
 
             assert!(result.is_err(), "Expected error for malformed NDJSON line");
 
