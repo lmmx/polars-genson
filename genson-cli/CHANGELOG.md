@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.3...genson-cli-v0.2.4) - 2025-09-17
+
+### <!-- 6 -->Testing
+
+- extract more fixtures from the 4 row claims JSONL ([#88](https://github.com/lmmx/polars-genson/pull/88))
+
+### <!-- 9 -->Other
+
+- debug logs ([#89](https://github.com/lmmx/polars-genson/pull/89))
+
 ## [0.2.3](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.2...genson-cli-v0.2.3) - 2025-09-16
 
 ### <!-- 6 -->Testing
