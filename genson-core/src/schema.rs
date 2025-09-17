@@ -809,7 +809,8 @@ mod _innermod {
     }
 
     #[cfg(test)]
-    #[path = "../../tests/schema.rs"]
-    mod tests;
+    mod tests {
+        include!("tests/schema.rs");
+    }
 }
 pub use _innermod::*;

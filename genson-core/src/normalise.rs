@@ -306,7 +306,8 @@ mod _innermod {
     }
 
     #[cfg(test)]
-    #[path = "../../tests/normalise.rs"]
-    mod tests;
+    mod tests {
+        include!("tests/normalise.rs");
+    }
 }
 pub use _innermod::*;
