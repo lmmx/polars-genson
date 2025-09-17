@@ -43,54 +43,48 @@ info:
             "fields": [
               {
                 "name": "index",
-                "type": [
-                  "null",
-                  "int"
-                ]
+                "type": "int"
               },
               {
                 "name": "value",
-                "type": [
-                  "null",
-                  {
-                    "type": "record",
-                    "name": "value",
-                    "namespace": "genson.document_types.letters_values_types",
-                    "fields": [
-                      {
-                        "name": "id",
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      },
-                      {
-                        "name": "labels",
-                        "type": [
-                          "null",
-                          {
-                            "type": "record",
-                            "name": "labels",
-                            "namespace": "genson.document_types.letters_values_types.value_types",
-                            "fields": [
-                              {
-                                "name": "en",
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "value__string",
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ]
-                  }
-                ]
+                "type": {
+                  "type": "record",
+                  "name": "value",
+                  "namespace": "genson.document_types.letters_values_types",
+                  "fields": [
+                    {
+                      "name": "id",
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    {
+                      "name": "labels",
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "labels",
+                          "namespace": "genson.document_types.letters_values_types.value_types",
+                          "fields": [
+                            {
+                              "name": "en",
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "value__string",
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           }

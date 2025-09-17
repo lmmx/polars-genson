@@ -155,9 +155,9 @@ def test_unify_maps_incompatible_field_types():
     # Different types prove unification failed due to incompatible field types
     assert a_age_field["type"] == "int"
     assert b_age_field["type"] == "string"
-    assert (
-        a_age_field["type"] != b_age_field["type"]
-    ), "Age fields should have different types proving unification was correctly rejected"
+    assert a_age_field["type"] != b_age_field["type"], (
+        "Age fields should have different types proving unification was correctly rejected"
+    )
 
 
 def test_unify_maps_below_threshold():
@@ -222,9 +222,9 @@ def test_wrap_scalars_promotes_scalar_to_object():
 
     inner_field_names = {f["name"] for f in value_field["type"][1]["fields"]}
     assert "hello" in inner_field_names or "foo" in inner_field_names
-    assert (
-        "value__string" in inner_field_names
-    ), f"Expected promoted scalar key 'value__string', got {inner_field_names}"
+    assert "value__string" in inner_field_names, (
+        f"Expected promoted scalar key 'value__string', got {inner_field_names}"
+    )
 
 
 def test_wrap_scalars_normalisation():

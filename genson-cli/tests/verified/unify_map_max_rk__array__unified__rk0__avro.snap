@@ -1,7 +1,7 @@
 ---
 blessing:
-reason: "Array of records with int index unify correctly; schema inferred as map<array<record>>"
-source: genson-cli/tests/map_of_unified_records.rs
+reason: "At map max rk 0 the required index key prevents a map from being inferred by unification"
+source: genson-cli/tests/unify_map_max_rk.rs
 expression: stdout_str
 info:
   args:

@@ -1,9 +1,8 @@
 ---
-blessing:
-reason: "Array of records with int index unify correctly; schema inferred as map<array<record>>"
-source: genson-cli/tests/map_of_unified_records.rs
+source: genson-cli/tests/unify_map_max_rk.rs
 expression: stdout_str
 info:
+  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"

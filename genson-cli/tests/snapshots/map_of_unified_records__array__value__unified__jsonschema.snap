@@ -52,7 +52,11 @@ info:
                 }
               }
             }
-          }
+          },
+          "required": [
+            "index",
+            "value"
+          ]
         }
       }
     }

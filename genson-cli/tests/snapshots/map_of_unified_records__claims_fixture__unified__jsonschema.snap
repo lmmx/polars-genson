@@ -293,12 +293,19 @@ info:
                             ]
                           }
                         ]
-                      }
+                      },
+                      "required": [
+                        "value__string"
+                      ]
                     },
                     "type": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "required": [
+                    "value",
+                    "type"
+                  ]
                 },
                 "property-labels": {
                   "type": "object",
@@ -306,7 +313,13 @@ info:
                     "type": "string"
                   }
                 }
-              }
+              },
+              "required": [
+                "property",
+                "datatype",
+                "datavalue",
+                "property-labels"
+              ]
             },
             "rank": {
               "type": "string"
@@ -466,7 +479,11 @@ info:
                 "type": "object"
               }
             }
-          }
+          },
+          "required": [
+            "mainsnak",
+            "rank"
+          ]
         }
       }
     }

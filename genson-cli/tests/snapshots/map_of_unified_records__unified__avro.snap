@@ -2,7 +2,7 @@
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
+  approved: false
   args:
     - "--ndjson"
     - "--map-threshold"
@@ -55,17 +55,11 @@ info:
           "fields": [
             {
               "name": "alphabet",
-              "type": [
-                "null",
-                "int"
-              ]
+              "type": "int"
             },
             {
               "name": "frequency",
-              "type": [
-                "null",
-                "float"
-              ]
+              "type": "float"
             },
             {
               "name": "vowel",

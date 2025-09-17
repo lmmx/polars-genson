@@ -1,14 +1,15 @@
 ---
-source: genson-cli/tests/map_of_unified_records.rs
+blessing:
+reason: "At map max rk 2 the required index key allows a map to be inferred by unification (with a spare)"
+source: genson-cli/tests/unify_map_max_rk.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "0"
+    - "2"
     - "--unify-maps"
     - "--avro"
   input:
@@ -34,29 +35,9 @@ info:
         "values": {
           "type": "array",
           "items": {
-            "type": "record",
             "name": "letters_values",
-            "namespace": "genson.document_types",
-            "fields": [
-              {
-                "name": "index",
-                "type": "int"
-              },
-              {
-                "name": "vowel",
-                "type": [
-                  "null",
-                  "int"
-                ]
-              },
-              {
-                "name": "consonant",
-                "type": [
-                  "null",
-                  "int"
-                ]
-              }
-            ]
+            "type": "map",
+            "values": "int"
           }
         }
       }
