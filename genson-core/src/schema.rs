@@ -643,6 +643,7 @@ mod innermod {
         json_strings: &[String],
         config: SchemaInferenceConfig,
     ) -> Result<SchemaInferenceResult, String> {
+        eprintln!("Schema inference config: {:#?}", config);
         if json_strings.is_empty() {
             return Err("No JSON strings provided".to_string());
         }
