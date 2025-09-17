@@ -169,6 +169,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 wrap_scalars: kwargs.wrap_scalars,
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
+                debug: kwargs.debug,
             };
 
             let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -208,6 +209,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     wrap_scalars: kwargs.wrap_scalars,
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
+                    debug: kwargs.debug,
                 };
 
                 let single_result = infer_json_schema_from_strings(from_ref(json_str), config)
@@ -290,6 +292,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             wrap_scalars: kwargs.wrap_scalars,
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
+            debug: kwargs.debug,
         };
 
         let schema_result = infer_json_schema_from_strings(&json_strings, config)
@@ -425,6 +428,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         wrap_scalars: kwargs.wrap_scalars,
         avro: true, // normalisation implies Avro
         wrap_root: wrap_root_field.clone(),
+        debug: kwargs.debug,
     };
 
     let schema_result = infer_json_schema_from_strings(&json_strings, config)
