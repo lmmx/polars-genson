@@ -1,5 +1,6 @@
-// tests/schema.rs
+// genson-core/src/tests/schema.rs
 use super::*;
+use crate::debug;
 use predicates::prelude::*;
 use serde_json::json;
 
