@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6](https://github.com/lmmx/polars-genson/compare/genson-core-v0.2.5...genson-core-v0.2.6) - 2025-09-17
+
+### <!-- 9 -->Other
+
+- schema unification upgrades ([#93](https://github.com/lmmx/polars-genson/pull/93))
+- remove leftover comments
+
 ## [0.2.5](https://github.com/lmmx/polars-genson/compare/genson-core-v0.2.4...genson-core-v0.2.5) - 2025-09-17
 
 ### <!-- 5 -->Refactor
