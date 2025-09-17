@@ -1,5 +1,9 @@
 // genson-core/src/schema/map_inference.rs
-include!("map_inference/unification.rs"); // provides: check_unifiable_schemas
+// include!("map_inference/unification.rs"); // provides: check_unifiable_schemas
+use crate::schema::core::SchemaInferenceConfig;
+use serde_json::Value;
+mod unification;
+use unification::*;
 
 /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
 ///
@@ -14,7 +18,7 @@ include!("map_inference/unification.rs"); // provides: check_unifiable_schemas
 ///   - Value homogeneity (all values must be homogeneous) OR
 ///   - Value unifiability (compatible record schemas when `unify_maps` enabled)
 /// - Recurses into nested objects/arrays, carrying field names down so overrides apply.
-fn rewrite_objects(
+pub(crate) fn rewrite_objects(
     schema: &mut Value,
     field_name: Option<&str>,
     config: &SchemaInferenceConfig,

@@ -1,4 +1,7 @@
 // genson-core/src/schema/unification.rs
+use crate::{debug, schema::core::SchemaInferenceConfig};
+use serde_json::Value;
+
 /// Normalize a schema that may be wrapped in one or more layers of
 /// `["null", <type>]` union arrays.
 ///
@@ -72,7 +75,7 @@ fn schema_type_str(schema: &Value) -> String {
 ///   - Non-record types in the collection
 ///   - Conflicting field types (same field name, different types)
 ///   - Empty schema collection
-fn check_unifiable_schemas(
+pub(crate) fn check_unifiable_schemas(
     schemas: &[Value],
     path: &str,
     config: &SchemaInferenceConfig,
@@ -181,8 +184,8 @@ fn check_unifiable_schemas(
                         } else {
                             // Handle scalar vs object promotion if wrap_scalars is enabled
                             if config.wrap_scalars {
-                                let existing_is_obj = existing.get("type")
-                                    == Some(&Value::String("object".into()));
+                                let existing_is_obj =
+                                    existing.get("type") == Some(&Value::String("object".into()));
                                 let new_is_obj = field_schema.get("type")
                                     == Some(&Value::String("object".into()));
 
@@ -196,8 +199,7 @@ fn check_unifiable_schemas(
                                         };
 
                                     let type_suffix = schema_type_str(&scalar_schema);
-                                    let wrapped_key =
-                                        format!("{}__{}", field_name, type_suffix);
+                                    let wrapped_key = format!("{}__{}", field_name, type_suffix);
 
                                     debug!(config,
                                         "Promoting scalar on {} side: wrapping into object under key `{}`",
@@ -289,4 +291,3 @@ fn check_unifiable_schemas(
         "properties": unified_properties
     }))
 }
-
