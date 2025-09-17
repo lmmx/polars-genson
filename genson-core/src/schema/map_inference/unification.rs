@@ -236,7 +236,7 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     // Only unify record schemas
-    if !schemas.iter().all(|s| is_object_schema(s)) {
+    if !schemas.iter().all(is_object_schema) {
         return None;
     }
 

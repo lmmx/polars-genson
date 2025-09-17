@@ -129,7 +129,7 @@ pub(crate) fn rewrite_objects(
             if let Some(first_schema) = props.values().next() {
                 // Normalise all schemas for comparison
                 let normalised_schemas: Vec<Value> =
-                    props.values().map(|s| extract_non_null_schema(s)).collect();
+                    props.values().map(extract_non_null_schema).collect();
                 let first_normalised = extract_non_null_schema(first_schema);
 
                 if normalised_schemas
