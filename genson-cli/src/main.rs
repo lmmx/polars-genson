@@ -121,6 +121,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --wrap-root".into());
                 }
             }
+            "--debug" => {
+                config.debug = true;
+            }
             _ => {
                 if !args[i].starts_with('-') && input_file.is_none() {
                     input_file = Some(args[i].clone());
@@ -217,6 +220,7 @@ fn print_help() {
     println!("                          kv      = list of {{key,value}} objects");
     println!("    --no-wrap-scalars     Disable scalar promotion (keep raw scalar types)");
     println!("    --wrap-root <field>   Wrap top-level schema under this required field");
+    println!("    --debug               Enable debug output during schema inference");
     println!();
     println!("EXAMPLES:");
     println!("    genson-cli data.json");
