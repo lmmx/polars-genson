@@ -120,7 +120,11 @@ def test_unify_maps_incompatible_field_types():
     )
 
     avro_schema = df.genson.infer_json_schema(
-        "json_data", avro=True, map_threshold=1, unify_maps=True
+        "json_data",
+        avro=True,
+        map_threshold=1,
+        unify_maps=True,
+        no_root_map=False,
     )
 
     # The Python integration wraps everything under "document"

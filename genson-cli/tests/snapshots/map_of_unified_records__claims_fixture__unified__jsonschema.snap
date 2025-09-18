@@ -5,7 +5,7 @@ info:
   approved: false
   args:
     - "--map-threshold"
-    - "2"
+    - "1"
     - "--unify-maps"
   input:
     claims:
@@ -325,8 +325,72 @@ info:
               "type": "string"
             },
             "qualifiers": {
-              "properties": {
-                "P10663": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "properties": {
+                    "property": {
+                      "type": "string"
+                    },
+                    "datatype": {
+                      "type": "string"
+                    },
+                    "datavalue": {
+                      "properties": {
+                        "value": {
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "labels": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "labels"
+                          ],
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "property-labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "datatype",
+                    "datavalue",
+                    "property",
+                    "property-labels"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": {
                   "type": "array",
                   "items": {
                     "properties": {
@@ -340,19 +404,32 @@ info:
                         "properties": {
                           "value": {
                             "properties": {
-                              "id": {
+                              "time": {
                                 "type": "string"
                               },
-                              "labels": {
-                                "type": "object",
-                                "additionalProperties": {
-                                  "type": "string"
-                                }
+                              "timezone": {
+                                "type": "integer"
+                              },
+                              "before": {
+                                "type": "integer"
+                              },
+                              "after": {
+                                "type": "integer"
+                              },
+                              "precision": {
+                                "type": "integer"
+                              },
+                              "calendarmodel": {
+                                "type": "string"
                               }
                             },
                             "required": [
-                              "id",
-                              "labels"
+                              "after",
+                              "before",
+                              "calendarmodel",
+                              "precision",
+                              "time",
+                              "timezone"
                             ],
                             "type": "object"
                           },
@@ -367,15 +444,10 @@ info:
                         "type": "object"
                       },
                       "property-labels": {
-                        "properties": {
-                          "en": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "en"
-                        ],
-                        "type": "object"
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
                       }
                     },
                     "required": [
@@ -387,96 +459,6 @@ info:
                     "type": "object"
                   }
                 }
-              },
-              "required": [
-                "P10663"
-              ],
-              "type": [
-                "null",
-                "object"
-              ]
-            },
-            "references": {
-              "type": [
-                "null",
-                "array"
-              ],
-              "items": {
-                "properties": {
-                  "P813": {
-                    "type": "array",
-                    "items": {
-                      "properties": {
-                        "property": {
-                          "type": "string"
-                        },
-                        "datatype": {
-                          "type": "string"
-                        },
-                        "datavalue": {
-                          "properties": {
-                            "value": {
-                              "properties": {
-                                "time": {
-                                  "type": "string"
-                                },
-                                "timezone": {
-                                  "type": "integer"
-                                },
-                                "before": {
-                                  "type": "integer"
-                                },
-                                "after": {
-                                  "type": "integer"
-                                },
-                                "precision": {
-                                  "type": "integer"
-                                },
-                                "calendarmodel": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "after",
-                                "before",
-                                "calendarmodel",
-                                "precision",
-                                "time",
-                                "timezone"
-                              ],
-                              "type": "object"
-                            },
-                            "type": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
-                          "type": "object"
-                        },
-                        "property-labels": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "required": [
-                        "datatype",
-                        "datavalue",
-                        "property",
-                        "property-labels"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                },
-                "required": [
-                  "P813"
-                ],
-                "type": "object"
               }
             }
           },

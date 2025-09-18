@@ -27,6 +27,8 @@ pub struct SchemaInferenceConfig {
     /// Example: wrap_root = Some("labels") turns `{...}` into
     /// `{"type":"object","properties":{"labels":{...}},"required":["labels"]}`.
     pub wrap_root: Option<String>,
+    /// Prevent the document root from becoming a map type, even if it meets map inference criteria
+    pub no_root_map: bool,
     /// Whether to output Avro schema rather than regular JSON Schema.
     #[cfg(feature = "avro")]
     pub avro: bool,
@@ -100,6 +102,7 @@ impl Default for SchemaInferenceConfig {
             force_field_types: std::collections::HashMap::new(),
             wrap_scalars: true,
             wrap_root: None,
+            no_root_map: true,
             #[cfg(feature = "avro")]
             avro: false,
             debug: false,

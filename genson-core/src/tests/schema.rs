@@ -462,7 +462,7 @@ fn test_rewrite_objects_map_of_records() {
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &cfg);
+    rewrite_objects(&mut schema, None, &cfg, true);
 
     // After rewrite, we should have additionalProperties instead of fixed properties
     assert_eq!(schema["type"], "object");
@@ -501,7 +501,7 @@ fn test_map_of_strings_not_promoted_to_records() {
         map_threshold: 2,
         ..Default::default()
     };
-    rewrite_objects(&mut sch, None, &cfg);
+    rewrite_objects(&mut sch, None, &cfg, true);
 
     assert_eq!(
         sch["properties"]["labels"]["additionalProperties"]["type"],
@@ -526,7 +526,7 @@ fn test_rewrite_objects_respects_map_max_required_keys() {
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &config);
+    rewrite_objects(&mut schema, None, &config, true);
 
     // Should remain as record because 2 required keys > 1
     assert_eq!(schema["type"], "object");
@@ -547,11 +547,12 @@ fn test_rewrite_objects_allows_map_with_few_required_keys() {
 
     let config = SchemaInferenceConfig {
         map_threshold: 2,
+        no_root_map: false,
         map_max_required_keys: Some(1), // Max 1 required key for maps
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &config);
+    rewrite_objects(&mut schema, None, &config, true);
 
     // Should become map because 1 required key ≤ 1
     assert_eq!(schema["type"], "object");
@@ -574,10 +575,11 @@ fn test_rewrite_objects_none_max_required_keys_preserves_behavior() {
     let config = SchemaInferenceConfig {
         map_threshold: 2,
         map_max_required_keys: None, // No gating
+        no_root_map: false,
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &config);
+    rewrite_objects(&mut schema, None, &config, true);
 
     // Should become map because None means no gating (old behavior)
     assert_eq!(schema["type"], "object");
@@ -602,7 +604,7 @@ fn test_rewrite_objects_zero_max_required_keys() {
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &config);
+    rewrite_objects(&mut schema, None, &config, true);
 
     // Should remain as record because 1 required key > 0
     assert_eq!(schema["type"], "object");
@@ -624,10 +626,11 @@ fn test_rewrite_objects_zero_required_keys_allowed() {
     let config = SchemaInferenceConfig {
         map_threshold: 2,
         map_max_required_keys: Some(0), // Only allow maps with 0 required keys
+        no_root_map: false,
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &config);
+    rewrite_objects(&mut schema, None, &config, true);
 
     // Should become map because 0 required keys ≤ 0
     assert_eq!(schema["type"], "object");
@@ -657,7 +660,7 @@ fn test_rewrite_objects_force_override_wins() {
     };
 
     // Apply with field name that matches force override
-    rewrite_objects(&mut schema, Some("test_field"), &config);
+    rewrite_objects(&mut schema, Some("test_field"), &config, true);
 
     // Should become map despite having required keys due to force override
     assert_eq!(schema["type"], "object");
@@ -682,7 +685,7 @@ fn test_rewrite_objects_non_homogeneous_values_not_rewritten() {
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &config);
+    rewrite_objects(&mut schema, None, &config, true);
 
     // Should remain as record because values are not homogeneous
     assert_eq!(schema["type"], "object");
@@ -706,7 +709,7 @@ fn test_rewrite_objects_below_threshold_not_rewritten() {
         ..Default::default()
     };
 
-    rewrite_objects(&mut schema, None, &config);
+    rewrite_objects(&mut schema, None, &config, true);
 
     // Should remain as record because below threshold
     assert_eq!(schema["type"], "object");
@@ -790,4 +793,60 @@ fn test_wrap_scalars_in_map_of_records() {
         "✅ wrap_scalars promoted scalar inside map-of-records: {}",
         serde_json::to_string_pretty(value_schema).unwrap()
     );
+}
+
+#[test]
+fn test_no_root_map_prevents_root_becoming_map() {
+    let mut schema = json!({
+        "type": "object",
+        "properties": {
+            "field1": {"type": "string"},
+            "field2": {"type": "string"},
+            "field3": {"type": "string"}
+        },
+        "required": []
+    });
+
+    let config = SchemaInferenceConfig {
+        map_threshold: 2,           // Would normally trigger map inference
+        no_root_map: true,         // But this should prevent it
+        ..Default::default()
+    };
+
+    rewrite_objects(&mut schema, None, &config, true);
+
+    // Should remain as record despite meeting map criteria
+    assert_eq!(schema["type"], "object");
+    assert!(schema.get("properties").is_some());
+    assert!(schema.get("additionalProperties").is_none());
+
+    println!("✅ no_root_map=true prevented root from becoming map");
+}
+
+#[test]
+fn test_no_root_map_false_allows_root_becoming_map() {
+    let mut schema = json!({
+        "type": "object",
+        "properties": {
+            "field1": {"type": "string"},
+            "field2": {"type": "string"},
+            "field3": {"type": "string"}
+        },
+        "required": []
+    });
+
+    let config = SchemaInferenceConfig {
+        map_threshold: 2,           // Should trigger map inference
+        no_root_map: false,        // Explicitly allow root maps
+        ..Default::default()
+    };
+
+    rewrite_objects(&mut schema, None, &config, true);
+
+    // Should become map because no_root_map=false allows it
+    assert_eq!(schema["type"], "object");
+    assert!(schema.get("additionalProperties").is_some());
+    assert!(schema.get("properties").is_none());
+
+    println!("✅ no_root_map=false allowed root to become map");
 }

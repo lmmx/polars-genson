@@ -295,7 +295,7 @@ fn run_genson_claims_fixture(name: &str, extra_args: &[&str]) {
     let temp = write_json_file(fixture_content);
 
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
-    let mut args = vec!["--map-threshold", "2", "--unify-maps"];
+    let mut args = vec!["--map-threshold", "1", "--unify-maps"];
     args.extend_from_slice(extra_args);
     args.push(temp.path().to_str().unwrap());
     let args_for_metadata = args.clone();

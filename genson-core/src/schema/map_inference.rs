@@ -56,6 +56,7 @@ pub(crate) fn rewrite_objects(
     schema: &mut Value,
     field_name: Option<&str>,
     config: &SchemaInferenceConfig,
+    is_root: bool,
 ) {
     if let Value::Object(obj) = schema {
         // --- Forced overrides by field name ---
@@ -76,11 +77,11 @@ pub(crate) fn rewrite_objects(
                             obj.get_mut("properties").and_then(|p| p.as_object_mut())
                         {
                             for (k, v) in props {
-                                rewrite_objects(v, Some(k), config);
+                                rewrite_objects(v, Some(k), config, false);
                             }
                         }
                         if let Some(items) = obj.get_mut("items") {
-                            rewrite_objects(items, None, config);
+                            rewrite_objects(items, None, config, false);
                         }
                         return;
                     }
@@ -179,7 +180,10 @@ pub(crate) fn rewrite_objects(
 
             // Apply map inference logic
             let should_be_map = if above_threshold && unified_schema.is_some() {
-                if let Some(max_required) = config.map_max_required_keys {
+                // Skip map inference if this is the root and no_root_map is enabled
+                if is_root && config.no_root_map {
+                    false
+                } else if let Some(max_required) = config.map_max_required_keys {
                     required_key_count <= max_required
                 } else {
                     true
@@ -202,18 +206,18 @@ pub(crate) fn rewrite_objects(
         // --- Recurse into nested values ---
         if let Some(props) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
             for (k, v) in props {
-                rewrite_objects(v, Some(k), config);
+                rewrite_objects(v, Some(k), config, false);
             }
         }
         if let Some(items) = obj.get_mut("items") {
-            rewrite_objects(items, None, config);
+            rewrite_objects(items, None, config, false);
         }
         for v in obj.values_mut() {
-            rewrite_objects(v, None, config);
+            rewrite_objects(v, None, config, false);
         }
     } else if let Value::Array(arr) = schema {
         for v in arr {
-            rewrite_objects(v, None, config);
+            rewrite_objects(v, None, config, false);
         }
     }
 }
