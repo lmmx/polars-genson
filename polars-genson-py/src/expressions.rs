@@ -67,6 +67,9 @@ pub struct GensonKwargs {
     ///   an object with key `"field"`.
     #[serde(default)]
     pub wrap_root: Option<String>,
+
+    #[serde(default = "default_no_root_map")]
+    pub no_root_map: bool,
 }
 
 fn default_map_threshold() -> usize {
@@ -86,6 +89,10 @@ fn default_empty_as_null() -> bool {
 }
 
 fn default_wrap_scalars() -> bool {
+    true
+}
+
+fn default_no_root_map() -> bool {
     true
 }
 
@@ -172,6 +179,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 wrap_scalars: kwargs.wrap_scalars,
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
+                no_root_map: kwargs.no_root_map,
                 debug: kwargs.debug,
                 verbosity: kwargs.verbosity,
             };
@@ -213,6 +221,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     wrap_scalars: kwargs.wrap_scalars,
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
+                    no_root_map: kwargs.no_root_map,
                     debug: kwargs.debug,
                     verbosity: kwargs.verbosity,
                 };
@@ -297,6 +306,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             wrap_scalars: kwargs.wrap_scalars,
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
+            no_root_map: kwargs.no_root_map,
             debug: kwargs.debug,
             verbosity: kwargs.verbosity,
         };
@@ -434,6 +444,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         wrap_scalars: kwargs.wrap_scalars,
         avro: true, // normalisation implies Avro
         wrap_root: wrap_root_field.clone(),
+        no_root_map: kwargs.no_root_map,
         debug: kwargs.debug,
         verbosity: kwargs.verbosity,
     };
