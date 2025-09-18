@@ -1,0 +1,81 @@
+---
+blessing:
+reason: "Inner records have 3 fields < threshold=4 so stay as unified records with index required and vowel/consonant optional (null union types)"
+source: genson-cli/tests/unify_map_threshold.rs
+expression: stdout_str
+info:
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "4"
+    - "--map-max-rk"
+    - "2"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - from: 0
+      to: 1
+      letter:
+        a:
+          index: 0
+          vowel: 0
+        b:
+          index: 1
+          consonant: 0
+    - from: 2
+      to: 3
+      letter:
+        c:
+          index: 2
+          consonant: 1
+        d:
+          index: 3
+          consonant: 2
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "from",
+      "type": "int"
+    },
+    {
+      "name": "to",
+      "type": "int"
+    },
+    {
+      "name": "letter",
+      "type": {
+        "name": "letter",
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "letter_values",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "index",
+              "type": "int"
+            },
+            {
+              "name": "vowel",
+              "type": [
+                "null",
+                "int"
+              ]
+            },
+            {
+              "name": "consonant",
+              "type": [
+                "null",
+                "int"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

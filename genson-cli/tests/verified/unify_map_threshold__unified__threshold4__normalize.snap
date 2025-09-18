@@ -1,0 +1,36 @@
+---
+blessing:
+reason: "Inner records have 3 fields < threshold=4 so stay as records and get unified - vowel and consonant fields get null padded in normalized output"
+source: genson-cli/tests/unify_map_threshold.rs
+expression: stdout_str
+info:
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "4"
+    - "--map-max-rk"
+    - "2"
+    - "--unify-maps"
+    - "--normalise"
+  input:
+    - from: 0
+      to: 1
+      letter:
+        a:
+          index: 0
+          vowel: 0
+        b:
+          index: 1
+          consonant: 0
+    - from: 2
+      to: 3
+      letter:
+        c:
+          index: 2
+          consonant: 1
+        d:
+          index: 3
+          consonant: 2
+---
+{"from":0,"to":1,"letter":{"a":{"index":0,"vowel":0,"consonant":null},"b":{"index":1,"vowel":null,"consonant":0}}}
+{"from":2,"to":3,"letter":{"c":{"index":2,"vowel":null,"consonant":1},"d":{"index":3,"vowel":null,"consonant":2}}}

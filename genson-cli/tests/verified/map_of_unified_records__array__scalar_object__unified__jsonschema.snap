@@ -1,14 +1,15 @@
 ---
+blessing:
+reason: "Scalar string gets promoted to value__string field and unified with object variant - JSON schema shows object with optional id/labels and value__string properties"
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
   args:
     - "--ndjson"
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "0"
+    - "1"
     - "--unify-maps"
   input:
     - letters:
