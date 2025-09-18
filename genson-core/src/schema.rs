@@ -201,7 +201,7 @@ pub fn infer_json_schema_from_strings(
 
             // Get final schema
             let mut final_schema = builder.to_schema();
-            rewrite_objects(&mut final_schema, None, &config);
+            rewrite_objects(&mut final_schema, None, &config, true);
             reorder_unions(&mut final_schema);
 
             #[cfg(feature = "avro")]
