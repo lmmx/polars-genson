@@ -361,8 +361,8 @@ def test_comprehensive_nested_arrays_lists_integration():
 
     for dtype_str, expected in test_cases:
         result = _parse_polars_dtype(dtype_str)
-        assert (
-            result == expected
-        ), f"Failed for {dtype_str}: got {result}, expected {expected}"
+        assert result == expected, (
+            f"Failed for {dtype_str}: got {result}, expected {expected}"
+        )
 
     print("✅ All nested Arrays/Lists test cases passed!")
