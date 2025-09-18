@@ -5,7 +5,7 @@ info:
   approved: false
   args:
     - "--map-threshold"
-    - "2"
+    - "1"
     - "--unify-maps"
     - "--avro"
   input:
@@ -327,82 +327,70 @@ info:
                 "type": [
                   "null",
                   {
-                    "type": "record",
                     "name": "qualifiers",
-                    "namespace": "genson.document_types.claims_values_types",
-                    "fields": [
-                      {
-                        "name": "P10663",
-                        "type": {
-                          "type": "array",
-                          "items": {
-                            "type": "record",
-                            "name": "P10663",
-                            "namespace": "genson.document_types.claims_values_types.qualifiers_types",
-                            "fields": [
-                              {
-                                "name": "property",
-                                "type": "string"
-                              },
-                              {
-                                "name": "datatype",
-                                "type": "string"
-                              },
-                              {
-                                "name": "datavalue",
-                                "type": {
-                                  "type": "record",
-                                  "name": "datavalue",
-                                  "namespace": "genson.document_types.claims_values_types.qualifiers_types.P10663_types",
-                                  "fields": [
-                                    {
-                                      "name": "value",
-                                      "type": {
-                                        "type": "record",
-                                        "name": "value",
-                                        "namespace": "genson.document_types.claims_values_types.qualifiers_types.P10663_types.datavalue_types",
-                                        "fields": [
-                                          {
-                                            "name": "id",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "name": "labels",
-                                            "type": {
-                                              "name": "labels",
-                                              "type": "map",
-                                              "values": "string"
-                                            }
-                                          }
-                                        ]
+                    "type": "map",
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "record",
+                        "name": "qualifiers_values",
+                        "namespace": "genson.document_types.claims_values_types",
+                        "fields": [
+                          {
+                            "name": "property",
+                            "type": "string"
+                          },
+                          {
+                            "name": "datatype",
+                            "type": "string"
+                          },
+                          {
+                            "name": "datavalue",
+                            "type": {
+                              "type": "record",
+                              "name": "datavalue",
+                              "namespace": "genson.document_types.claims_values_types.qualifiers_values_types",
+                              "fields": [
+                                {
+                                  "name": "value",
+                                  "type": {
+                                    "type": "record",
+                                    "name": "value",
+                                    "namespace": "genson.document_types.claims_values_types.qualifiers_values_types.datavalue_types",
+                                    "fields": [
+                                      {
+                                        "name": "id",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "labels",
+                                        "type": {
+                                          "name": "labels",
+                                          "type": "map",
+                                          "values": "string"
+                                        }
                                       }
-                                    },
-                                    {
-                                      "name": "type",
-                                      "type": "string"
-                                    }
-                                  ]
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "type",
+                                  "type": "string"
                                 }
-                              },
-                              {
-                                "name": "property-labels",
-                                "type": {
-                                  "type": "record",
-                                  "name": "property_labels",
-                                  "namespace": "genson.document_types.claims_values_types.qualifiers_types.P10663_types",
-                                  "fields": [
-                                    {
-                                      "name": "en",
-                                      "type": "string"
-                                    }
-                                  ]
-                                }
-                              }
-                            ]
+                              ]
+                            }
+                          },
+                          {
+                            "name": "property-labels",
+                            "type": {
+                              "name": "property-labels",
+                              "type": "map",
+                              "values": "string"
+                            }
                           }
-                        }
+                        ]
                       }
-                    ]
+                    }
                   }
                 ]
               },
@@ -413,88 +401,82 @@ info:
                   {
                     "type": "array",
                     "items": {
-                      "type": "record",
                       "name": "references",
-                      "namespace": "genson.document_types.claims_values_types",
-                      "fields": [
-                        {
-                          "name": "P813",
-                          "type": {
-                            "type": "array",
-                            "items": {
-                              "type": "record",
-                              "name": "P813",
-                              "namespace": "genson.document_types.claims_values_types.references_types",
-                              "fields": [
-                                {
-                                  "name": "property",
-                                  "type": "string"
-                                },
-                                {
-                                  "name": "datatype",
-                                  "type": "string"
-                                },
-                                {
-                                  "name": "datavalue",
-                                  "type": {
-                                    "type": "record",
-                                    "name": "datavalue",
-                                    "namespace": "genson.document_types.claims_values_types.references_types.P813_types",
-                                    "fields": [
-                                      {
-                                        "name": "value",
-                                        "type": {
-                                          "type": "record",
-                                          "name": "value",
-                                          "namespace": "genson.document_types.claims_values_types.references_types.P813_types.datavalue_types",
-                                          "fields": [
-                                            {
-                                              "name": "time",
-                                              "type": "string"
-                                            },
-                                            {
-                                              "name": "timezone",
-                                              "type": "int"
-                                            },
-                                            {
-                                              "name": "before",
-                                              "type": "int"
-                                            },
-                                            {
-                                              "name": "after",
-                                              "type": "int"
-                                            },
-                                            {
-                                              "name": "precision",
-                                              "type": "int"
-                                            },
-                                            {
-                                              "name": "calendarmodel",
-                                              "type": "string"
-                                            }
-                                          ]
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "references_values",
+                          "namespace": "genson.document_types.claims_values_types",
+                          "fields": [
+                            {
+                              "name": "property",
+                              "type": "string"
+                            },
+                            {
+                              "name": "datatype",
+                              "type": "string"
+                            },
+                            {
+                              "name": "datavalue",
+                              "type": {
+                                "type": "record",
+                                "name": "datavalue",
+                                "namespace": "genson.document_types.claims_values_types.references_values_types",
+                                "fields": [
+                                  {
+                                    "name": "value",
+                                    "type": {
+                                      "type": "record",
+                                      "name": "value",
+                                      "namespace": "genson.document_types.claims_values_types.references_values_types.datavalue_types",
+                                      "fields": [
+                                        {
+                                          "name": "time",
+                                          "type": "string"
+                                        },
+                                        {
+                                          "name": "timezone",
+                                          "type": "int"
+                                        },
+                                        {
+                                          "name": "before",
+                                          "type": "int"
+                                        },
+                                        {
+                                          "name": "after",
+                                          "type": "int"
+                                        },
+                                        {
+                                          "name": "precision",
+                                          "type": "int"
+                                        },
+                                        {
+                                          "name": "calendarmodel",
+                                          "type": "string"
                                         }
-                                      },
-                                      {
-                                        "name": "type",
-                                        "type": "string"
-                                      }
-                                    ]
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "type",
+                                    "type": "string"
                                   }
-                                },
-                                {
-                                  "name": "property-labels",
-                                  "type": {
-                                    "name": "property-labels",
-                                    "type": "map",
-                                    "values": "string"
-                                  }
-                                }
-                              ]
+                                ]
+                              }
+                            },
+                            {
+                              "name": "property-labels",
+                              "type": {
+                                "name": "property-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
                             }
-                          }
+                          ]
                         }
-                      ]
+                      }
                     }
                   }
                 ]

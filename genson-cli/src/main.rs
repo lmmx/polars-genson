@@ -121,6 +121,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --wrap-root".into());
                 }
             }
+            "--root-map" => {
+                config.no_root_map = false;
+            }
             "--debug" => {
                 config.debug = true;
             }
@@ -223,6 +226,7 @@ fn print_help() {
     println!("                          kv      = list of {{key,value}} objects");
     println!("    --no-wrap-scalars     Disable scalar promotion (keep raw scalar types)");
     println!("    --wrap-root <field>   Wrap top-level schema under this required field");
+    println!("    --root-map            Allow document root to become a map");
     println!("    --debug               Enable debug output during schema inference");
     println!();
     println!("EXAMPLES:");
