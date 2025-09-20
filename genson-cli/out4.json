@@ -1,0 +1,1770 @@
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "claims",
+      "type": {
+        "type": "record",
+        "name": "claims",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "P31",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P31",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P31_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P31_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P86",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P86",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P86_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P86_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P175",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P175",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P175_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P175_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P435",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P435",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P435_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  },
+                  {
+                    "name": "references",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "references",
+                        "type": "map",
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "references_values",
+                            "namespace": "genson.document_types.claims_types.P435_types",
+                            "fields": [
+                              {
+                                "name": "property",
+                                "type": "string"
+                              },
+                              {
+                                "name": "datavalue",
+                                "type": {
+                                  "type": "record",
+                                  "name": "datavalue",
+                                  "namespace": "genson.document_types.claims_types.P435_types.references_values_types",
+                                  "fields": [
+                                    {
+                                      "name": "id",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "name": "labels",
+                                      "type": {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "datatype",
+                                "type": "string"
+                              },
+                              {
+                                "name": "property-labels",
+                                "type": {
+                                  "name": "property-labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P646",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P646",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P646_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  },
+                  {
+                    "name": "references",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "references",
+                        "type": "map",
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "references_values",
+                            "namespace": "genson.document_types.claims_types.P646_types",
+                            "fields": [
+                              {
+                                "name": "property",
+                                "type": "string"
+                              },
+                              {
+                                "name": "datavalue",
+                                "type": {
+                                  "type": "record",
+                                  "name": "datavalue",
+                                  "namespace": "genson.document_types.claims_types.P646_types.references_values_types",
+                                  "fields": [
+                                    {
+                                      "name": "id",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    },
+                                    {
+                                      "name": "labels",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "name": "labels",
+                                          "type": "map",
+                                          "values": "string"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "time",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    },
+                                    {
+                                      "name": "timezone",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "before",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "after",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "precision",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "calendarmodel",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "datatype",
+                                "type": "string"
+                              },
+                              {
+                                "name": "property-labels",
+                                "type": {
+                                  "name": "property-labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P1417",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P1417",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P1417_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "qualifiers",
+                    "type": {
+                      "name": "qualifiers",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "qualifiers_values",
+                          "namespace": "genson.document_types.claims_types.P1417_types",
+                          "fields": [
+                            {
+                              "name": "property",
+                              "type": "string"
+                            },
+                            {
+                              "name": "datavalue",
+                              "type": "string"
+                            },
+                            {
+                              "name": "datatype",
+                              "type": "string"
+                            },
+                            {
+                              "name": "property-labels",
+                              "type": {
+                                "name": "property-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P443",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P443",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P443_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "qualifiers",
+                    "type": {
+                      "name": "qualifiers",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "qualifiers_values",
+                          "namespace": "genson.document_types.claims_types.P443_types",
+                          "fields": [
+                            {
+                              "name": "property",
+                              "type": "string"
+                            },
+                            {
+                              "name": "datavalue",
+                              "type": {
+                                "type": "record",
+                                "name": "datavalue",
+                                "namespace": "genson.document_types.claims_types.P443_types.qualifiers_values_types",
+                                "fields": [
+                                  {
+                                    "name": "id",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "name": "labels",
+                                    "type": {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "string"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "datatype",
+                              "type": "string"
+                            },
+                            {
+                              "name": "property-labels",
+                              "type": {
+                                "name": "property-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P676",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P676",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P676_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P676_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P407",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P407",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P407_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P407_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P826",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P826",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P826_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P826_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P1827",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P1827",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P1827_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P1651",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P1651",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P1651_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "qualifiers",
+                    "type": {
+                      "name": "qualifiers",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "qualifiers_values",
+                          "namespace": "genson.document_types.claims_types.P1651_types",
+                          "fields": [
+                            {
+                              "name": "property",
+                              "type": "string"
+                            },
+                            {
+                              "name": "datatype",
+                              "type": "string"
+                            },
+                            {
+                              "name": "property-labels",
+                              "type": {
+                                "name": "property-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  },
+                  {
+                    "name": "references",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "references",
+                        "type": "map",
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "references_values",
+                            "namespace": "genson.document_types.claims_types.P1651_types",
+                            "fields": [
+                              {
+                                "name": "property",
+                                "type": "string"
+                              },
+                              {
+                                "name": "datavalue",
+                                "type": {
+                                  "type": "record",
+                                  "name": "datavalue",
+                                  "namespace": "genson.document_types.claims_types.P1651_types.references_values_types",
+                                  "fields": [
+                                    {
+                                      "name": "id",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "name": "labels",
+                                      "type": {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "datatype",
+                                "type": "string"
+                              },
+                              {
+                                "name": "property-labels",
+                                "type": {
+                                  "name": "property-labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P6181",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P6181",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P6181_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P577",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P577",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P577_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P577_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "time",
+                                "type": "string"
+                              },
+                              {
+                                "name": "timezone",
+                                "type": "int"
+                              },
+                              {
+                                "name": "before",
+                                "type": "int"
+                              },
+                              {
+                                "name": "after",
+                                "type": "int"
+                              },
+                              {
+                                "name": "precision",
+                                "type": "int"
+                              },
+                              {
+                                "name": "calendarmodel",
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  },
+                  {
+                    "name": "references",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "references",
+                        "type": "map",
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "references_values",
+                            "namespace": "genson.document_types.claims_types.P577_types",
+                            "fields": [
+                              {
+                                "name": "property",
+                                "type": "string"
+                              },
+                              {
+                                "name": "datavalue",
+                                "type": {
+                                  "type": "record",
+                                  "name": "datavalue",
+                                  "namespace": "genson.document_types.claims_types.P577_types.references_values_types",
+                                  "fields": [
+                                    {
+                                      "name": "id",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "name": "labels",
+                                      "type": {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "datatype",
+                                "type": "string"
+                              },
+                              {
+                                "name": "property-labels",
+                                "type": {
+                                  "name": "property-labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P162",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P162",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P162_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P5229",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P5229",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P5229_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P989",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P989",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P989_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "qualifiers",
+                    "type": {
+                      "name": "qualifiers",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "qualifiers_values",
+                          "namespace": "genson.document_types.claims_types.P989_types",
+                          "fields": [
+                            {
+                              "name": "property",
+                              "type": "string"
+                            },
+                            {
+                              "name": "datavalue",
+                              "type": {
+                                "type": "record",
+                                "name": "datavalue",
+                                "namespace": "genson.document_types.claims_types.P989_types.qualifiers_values_types",
+                                "fields": [
+                                  {
+                                    "name": "id",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "name": "labels",
+                                    "type": {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "string"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "datatype",
+                              "type": "string"
+                            },
+                            {
+                              "name": "property-labels",
+                              "type": {
+                                "name": "property-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P361",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P361",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P361_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P361_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P6900",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P6900",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P6900_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P136",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P136",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P136_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P136_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  },
+                  {
+                    "name": "references",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "references",
+                        "type": "map",
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "references_values",
+                            "namespace": "genson.document_types.claims_types.P136_types",
+                            "fields": [
+                              {
+                                "name": "property",
+                                "type": "string"
+                              },
+                              {
+                                "name": "datavalue",
+                                "type": {
+                                  "type": "record",
+                                  "name": "datavalue",
+                                  "namespace": "genson.document_types.claims_types.P136_types.references_values_types",
+                                  "fields": [
+                                    {
+                                      "name": "id",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    },
+                                    {
+                                      "name": "labels",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "name": "labels",
+                                          "type": "map",
+                                          "values": "string"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "datavalue__string",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "datatype",
+                                "type": "string"
+                              },
+                              {
+                                "name": "property-labels",
+                                "type": {
+                                  "name": "property-labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P2581",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P2581",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P2581_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P7937",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P7937",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "type": "record",
+                      "name": "mainsnak",
+                      "namespace": "genson.document_types.claims_types.P7937_types",
+                      "fields": [
+                        {
+                          "name": "property",
+                          "type": "string"
+                        },
+                        {
+                          "name": "datavalue",
+                          "type": {
+                            "type": "record",
+                            "name": "datavalue",
+                            "namespace": "genson.document_types.claims_types.P7937_types.mainsnak_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "datatype",
+                          "type": "string"
+                        },
+                        {
+                          "name": "property-labels",
+                          "type": {
+                            "name": "property-labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "rank",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
