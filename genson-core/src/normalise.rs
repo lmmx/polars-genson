@@ -1,3 +1,4 @@
+use crate::schema::core::make_promoted_scalar_key;
 use serde_json::{json, Value};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -51,6 +52,16 @@ fn apply_map_encoding(m: serde_json::Map<String, Value>, encoding: MapEncoding) 
                 .collect();
             Value::Array(arr)
         }
+    }
+}
+
+fn get_scalar_type_from_value(value: &Value) -> &'static str {
+    match value {
+        Value::String(_) => "string",
+        Value::Number(n) if n.is_i64() => "int",
+        Value::Number(_) => "float",
+        Value::Bool(_) => "boolean",
+        _ => "unknown",
     }
 }
 
@@ -126,7 +137,12 @@ fn apply_map_encoding(m: serde_json::Map<String, Value>, encoding: MapEncoding) 
 ///   it does not match the schema.
 /// * Avro’s full union semantics are simplified here: only the first matching
 ///   branch is tried, not all possible branches.
-pub fn normalise_value(value: Value, schema: &Value, cfg: &NormaliseConfig) -> Value {
+pub fn normalise_value(
+    value: Value,
+    schema: &Value,
+    cfg: &NormaliseConfig,
+    field_name: Option<&str>,
+) -> Value {
     match schema {
         // Primitive types
         Value::String(t) if t == "string" => match value {
@@ -199,7 +215,10 @@ pub fn normalise_value(value: Value, schema: &Value, cfg: &NormaliseConfig) -> V
                                 }
                             }
                         };
-                        out.insert(name.clone(), normalise_value(val, field_schema, cfg));
+                        out.insert(
+                            name.clone(),
+                            normalise_value(val, field_schema, cfg, Some(name)),
+                        );
                     }
                 }
             }
@@ -215,10 +234,10 @@ pub fn normalise_value(value: Value, schema: &Value, cfg: &NormaliseConfig) -> V
                 Value::Array(arr) if arr.is_empty() && cfg.empty_as_null => Value::Null,
                 Value::Array(arr) => Value::Array(
                     arr.into_iter()
-                        .map(|v| normalise_value(v, items_schema, cfg))
+                        .map(|v| normalise_value(v, items_schema, cfg, field_name))
                         .collect(),
                 ),
-                v => Value::Array(vec![normalise_value(v, items_schema, cfg)]),
+                v => Value::Array(vec![normalise_value(v, items_schema, cfg, field_name)]),
             }
         }
 
@@ -238,13 +257,15 @@ pub fn normalise_value(value: Value, schema: &Value, cfg: &NormaliseConfig) -> V
                     if values_schema.get("type") == Some(&Value::String("object".into())) {
                         // --- Map of records ---
                         for (k, v) in m {
-                            let normalised_record = normalise_value(v, values_schema, cfg);
+                            let normalised_record =
+                                normalise_value(v, values_schema, cfg, Some(&k));
                             out.insert(k, normalised_record);
                         }
                     } else {
                         // --- Map of scalars (existing behaviour) ---
                         for (k, v) in m {
-                            out.insert(k, normalise_value(v, values_schema, cfg));
+                            let normalised_value = normalise_value(v, values_schema, cfg, Some(&k));
+                            out.insert(k, normalised_value);
                         }
                     }
 
@@ -254,7 +275,13 @@ pub fn normalise_value(value: Value, schema: &Value, cfg: &NormaliseConfig) -> V
                 v => {
                     // Scalar fallback: wrap as {"default": v}
                     let mut synthetic = serde_json::Map::new();
-                    synthetic.insert("default".into(), normalise_value(v, values_schema, cfg));
+                    let scalar_type = get_scalar_type_from_value(&v);
+                    let wrapped_key =
+                        make_promoted_scalar_key(field_name.unwrap_or(""), scalar_type);
+                    synthetic.insert(
+                        wrapped_key,
+                        normalise_value(v, values_schema, cfg, field_name),
+                    );
                     apply_map_encoding(synthetic, cfg.map_encoding)
                 }
             }
@@ -269,11 +296,11 @@ pub fn normalise_value(value: Value, schema: &Value, cfg: &NormaliseConfig) -> V
                 } else {
                     // normalise against the first non-null branch
                     let branch = types.iter().find(|t| *t != "null").unwrap();
-                    normalise_value(value, branch, cfg)
+                    normalise_value(value, branch, cfg, field_name)
                 }
             } else {
                 // pick first type
-                normalise_value(value, &types[0], cfg)
+                normalise_value(value, &types[0], cfg, field_name)
             }
         }
 
@@ -293,7 +320,7 @@ pub fn normalise_values(values: Vec<Value>, schema: &Value, cfg: &NormaliseConfi
                     std::iter::once((field.clone(), v)).collect::<serde_json::Map<String, Value>>(),
                 );
             }
-            normalise_value(v, schema, cfg)
+            normalise_value(v, schema, cfg, None) // Only the root call passes field name as None
         })
         .collect()
 }

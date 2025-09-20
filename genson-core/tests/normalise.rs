@@ -13,17 +13,20 @@ fn test_array_empty_behavior() {
         empty_as_null: true,
         ..NormaliseConfig::default()
     };
-    assert_eq!(normalise_value(json!([]), &schema, &cfg), json!(null));
+    assert_eq!(normalise_value(json!([]), &schema, &cfg, None), json!(null));
 
     // empty_as_null = false
     let cfg = NormaliseConfig {
         empty_as_null: false,
         ..NormaliseConfig::default()
     };
-    assert_eq!(normalise_value(json!([]), &schema, &cfg), json!([]));
+    assert_eq!(normalise_value(json!([]), &schema, &cfg, None), json!([]));
 
     // scalar coerced into array
-    assert_eq!(normalise_value(json!("foo"), &schema, &cfg), json!(["foo"]));
+    assert_eq!(
+        normalise_value(json!("foo"), &schema, &cfg, None),
+        json!(["foo"])
+    );
 }
 
 /// Maps: empty → null (with flag), empty → {} (without flag).
@@ -35,16 +38,16 @@ fn test_map_empty_behavior() {
         empty_as_null: true,
         ..NormaliseConfig::default()
     };
-    assert_eq!(normalise_value(json!({}), &schema, &cfg), json!(null));
+    assert_eq!(normalise_value(json!({}), &schema, &cfg, None), json!(null));
 
     let cfg = NormaliseConfig {
         empty_as_null: false,
         ..NormaliseConfig::default()
     };
-    assert_eq!(normalise_value(json!({}), &schema, &cfg), json!({}));
+    assert_eq!(normalise_value(json!({}), &schema, &cfg, None), json!({}));
 
     // Fallback scalar coerced into map
-    let val = normalise_value(json!("foo"), &schema, &cfg);
+    let val = normalise_value(json!("foo"), &schema, &cfg, None);
     assert_eq!(val, json!({"default":"foo"}));
 }
 
@@ -65,7 +68,7 @@ fn test_nested_record_array_field() {
         ..NormaliseConfig::default()
     };
     let input = json!({"id":"1","tags":[]});
-    let norm = normalise_value(input, &schema, &cfg);
+    let norm = normalise_value(input, &schema, &cfg, None);
     assert_eq!(norm, json!({"id":"1","tags":null}));
 
     let cfg = NormaliseConfig {
@@ -73,7 +76,7 @@ fn test_nested_record_array_field() {
         ..NormaliseConfig::default()
     };
     let input = json!({"id":"1","tags":[]});
-    let norm = normalise_value(input, &schema, &cfg);
+    let norm = normalise_value(input, &schema, &cfg, None);
     assert_eq!(norm, json!({"id":"1","tags":[]}));
 }
 
@@ -87,10 +90,13 @@ fn test_union_precedence_array() {
     };
 
     // null stays null
-    assert_eq!(normalise_value(json!(null), &schema, &cfg), json!(null));
+    assert_eq!(
+        normalise_value(json!(null), &schema, &cfg, None),
+        json!(null)
+    );
 
     // scalar coerced to array
-    let val = normalise_value(json!("x"), &schema, &cfg);
+    let val = normalise_value(json!("x"), &schema, &cfg, None);
     assert_eq!(val, json!(["x"]));
 }
 
@@ -104,7 +110,7 @@ fn test_union_precedence_map() {
     };
 
     // scalar coerced into map, because map branch is first non-null
-    let val = normalise_value(json!("foo"), &schema, &cfg);
+    let val = normalise_value(json!("foo"), &schema, &cfg, None);
     assert_eq!(val, json!({"default":"foo"}));
 }
 
@@ -140,7 +146,7 @@ fn test_map_scalar_fallback_encodings() {
         map_encoding: MapEncoding::Mapping,
         ..NormaliseConfig::default()
     };
-    let val = normalise_value(json!("foo"), &schema, &cfg);
+    let val = normalise_value(json!("foo"), &schema, &cfg, None);
     assert_eq!(val, json!({"default": "foo"}));
 
     // Entries
@@ -148,7 +154,7 @@ fn test_map_scalar_fallback_encodings() {
         map_encoding: MapEncoding::Entries,
         ..NormaliseConfig::default()
     };
-    let val = normalise_value(json!("foo"), &schema, &cfg);
+    let val = normalise_value(json!("foo"), &schema, &cfg, None);
     assert_eq!(val, json!([{"default": "foo"}]));
 
     // KeyValueEntries
@@ -156,6 +162,6 @@ fn test_map_scalar_fallback_encodings() {
         map_encoding: MapEncoding::KeyValueEntries,
         ..NormaliseConfig::default()
     };
-    let val = normalise_value(json!("foo"), &schema, &cfg);
+    let val = normalise_value(json!("foo"), &schema, &cfg, None);
     assert_eq!(val, json!([{"key": "default", "value": "foo"}]));
 }

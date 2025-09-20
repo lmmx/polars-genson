@@ -214,7 +214,7 @@ def test_normalise_scalar_to_map_kv():
     out = run_norm(rows, map_threshold=0)
     # Scalar widened into {"default": ...}
     assert out == [
-        '{"id":"A","labels":[{"key":"default","value":"foo"}]}',
+        '{"id":"A","labels":[{"key":"labels__string","value":"foo"}]}',
         '{"id":"B","labels":[{"key":"en","value":"Hello"}]}',
     ]
 
@@ -227,7 +227,7 @@ def test_normalise_scalar_to_map_mapping():
     ]
     out = run_norm(rows, map_threshold=0, map_encoding="mapping")
     # Scalar widened into {"default": ...}
-    assert '"labels":{"default":"foo"}' in out[0]
+    assert '"labels":{"labels__string":"foo"}' in out[0]
     assert '"labels":{"en":"Hello"}}' in out[1]
 
 

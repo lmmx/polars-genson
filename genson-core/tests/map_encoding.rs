@@ -12,7 +12,7 @@ fn test_map_encoding_mapping() {
     };
 
     let input = json!({"en": "Hello", "fr": "Bonjour"});
-    let norm = normalise_value(input, &schema, &cfg);
+    let norm = normalise_value(input, &schema, &cfg, None);
 
     assert_eq!(norm, json!({"en": "Hello", "fr": "Bonjour"}));
 }
@@ -27,7 +27,7 @@ fn test_map_encoding_entries() {
     };
 
     let input = json!({"en": "Hello", "fr": "Bonjour"});
-    let norm = normalise_value(input, &schema, &cfg);
+    let norm = normalise_value(input, &schema, &cfg, None);
 
     assert_eq!(
         norm,
@@ -48,7 +48,7 @@ fn test_map_encoding_key_value_entries() {
     };
 
     let input = json!({"en": "Hello", "fr": "Bonjour"});
-    let norm = normalise_value(input, &schema, &cfg);
+    let norm = normalise_value(input, &schema, &cfg, None);
 
     assert_eq!(
         norm,
@@ -70,7 +70,7 @@ fn test_map_encoding_scalar_fallback() {
         ..NormaliseConfig::default()
     };
     assert_eq!(
-        normalise_value(json!("foo"), &schema, &cfg),
+        normalise_value(json!("foo"), &schema, &cfg, None),
         json!({"default": "foo"})
     );
 
@@ -80,7 +80,7 @@ fn test_map_encoding_scalar_fallback() {
         ..NormaliseConfig::default()
     };
     assert_eq!(
-        normalise_value(json!("foo"), &schema, &cfg),
+        normalise_value(json!("foo"), &schema, &cfg, None),
         json!([{"default": "foo"}])
     );
 
@@ -90,7 +90,7 @@ fn test_map_encoding_scalar_fallback() {
         ..NormaliseConfig::default()
     };
     assert_eq!(
-        normalise_value(json!("foo"), &schema, &cfg),
+        normalise_value(json!("foo"), &schema, &cfg, None),
         json!([{"key": "default", "value": "foo"}])
     );
 }

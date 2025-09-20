@@ -6,7 +6,7 @@ use serde_json::Value;
 use std::borrow::Cow;
 use std::panic::{self, AssertUnwindSafe};
 
-mod core;
+pub(crate) mod core;
 pub use core::*;
 mod map_inference;
 use map_inference::*;

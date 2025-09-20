@@ -182,8 +182,8 @@ def test_unify_maps_below_threshold():
     assert letter_field["type"]["type"] == "record"
 
 
-def test_wrap_scalars_promotes_scalar_to_object():
-    """Scalar values should be promoted into objects when wrap_scalars is enabled."""
+def test_wrap_scalars_promotes_scalar_to_record():
+    """Schema inference: scalar values should be promoted into record fields when wrap_scalars is enabled."""
     df = pl.DataFrame(
         {
             "json_data": [
@@ -229,8 +229,8 @@ def test_wrap_scalars_promotes_scalar_to_object():
     )
 
 
-def test_wrap_scalars_normalisation():
-    """Normalisation should correctly promote scalars when wrap_scalars is enabled."""
+def test_wrap_scalars_promotes_scalar_to_record_normalisation():
+    """Normalisation: scalar values should be promoted into record fields when wrap_scalars is enabled."""
     df = pl.DataFrame(
         {
             "json_data": [
@@ -320,6 +320,109 @@ def test_wrap_scalars_normalisation():
     ]
 
 
-# def test_claims_fixture_parquet_placeholder():
-#     df = pl.read_parquet("tests/data/claims_x4.parquet")
-#     assert False, f"Loaded parquet with {len(df)} rows, {len(df.columns)} columns"
+def test_wrap_scalars_promotes_scalar_to_map():
+    """Schema inference: when value becomes a map, scalar promotion should use consistent naming."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                # Original 3-row case that triggers value field becoming a map
+                # - 3 letters keys (A,B,C) in letters map
+                # - value field has 2 object properties + 1 promoted scalar = 3 properties
+                # - With map_threshold=3, value field becomes a map (meets threshold exactly)
+                '{"letters": {"A": {"id": 1, "value": {"hello": "world"}}}}',
+                '{"letters": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
+                '{"letters": {"C": {"id": 3, "value": "scalar-string"}}}',
+            ]
+        }
+    )
+
+    avro_schema = df.genson.infer_json_schema(
+        "json_data",
+        avro=True,
+        map_threshold=3,  # value field (3 props) meets threshold → becomes map
+        map_max_required_keys=2,  # Allows maps with ≤2 required keys
+        unify_maps=True,
+        wrap_scalars=True,
+    )
+
+    letters_field = next(f for f in avro_schema["fields"] if f["name"] == "letters")
+    assert letters_field["type"]["type"] == "map"
+
+    values_schema = letters_field["type"]["values"]
+    assert values_schema["type"] == "record"
+
+    field_names = {f["name"] for f in values_schema["fields"]}
+    assert "id" in field_names
+    assert "value" in field_names
+
+    value_field = next(f for f in values_schema["fields"] if f["name"] == "value")
+    assert value_field["type"]["type"] == "map"  # Should be map, not record
+
+    # Map should handle strings (including promoted scalars)
+    assert value_field["type"]["values"] == "string"
+
+
+def test_wrap_scalars_promotes_scalar_to_map_normalisation():
+    """Normalisation: when value becomes a map, scalar promotion should use consistent naming."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                # Original 3-row case that triggers value field becoming a map
+                # - 3 letters keys (A,B,C) in letters map
+                # - value field has 2 object properties + 1 promoted scalar = 3 properties
+                # - With map_threshold=3, value field becomes a map (meets threshold exactly)
+                '{"letters": {"A": {"id": 1, "value": {"hello": "world"}}}}',
+                '{"letters": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
+                '{"letters": {"C": {"id": 3, "value": "scalar-string"}}}',
+            ]
+        }
+    )
+
+    # Normalise with settings that cause value to become a map
+    normalised = df.genson.normalise_json(
+        "json_data",
+        map_threshold=3,  # value field (3 props) meets threshold → becomes map
+        map_max_required_keys=2,  # Allows maps with ≤2 required keys
+        unify_maps=True,
+        wrap_scalars=True,
+    ).to_dicts()
+
+    # Should have map structure but with consistent key naming
+    # Currently produces "default" but should produce "value__string"
+    assert normalised == [
+        {
+            "letters": [
+                {
+                    "key": "A",
+                    "value": {
+                        "id": 1,
+                        "value": [{"key": "hello", "value": "world"}],
+                    },
+                }
+            ]
+        },
+        {
+            "letters": [
+                {
+                    "key": "B",
+                    "value": {
+                        "id": 2,
+                        "value": [{"key": "foo", "value": "bar"}],
+                    },
+                }
+            ]
+        },
+        {
+            "letters": [
+                {
+                    "key": "C",
+                    "value": {
+                        "id": 3,
+                        "value": [
+                            {"key": "value__string", "value": "scalar-string"}
+                        ],  # Should be value__string, not default
+                    },
+                }
+            ]
+        },
+    ]
