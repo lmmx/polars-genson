@@ -277,7 +277,7 @@ pub fn normalise_value(
                     let mut synthetic = serde_json::Map::new();
                     let scalar_type = get_scalar_type_from_value(&v);
                     let wrapped_key =
-                        make_promoted_scalar_key(field_name.unwrap_or(""), &scalar_type);
+                        make_promoted_scalar_key(field_name.unwrap_or(""), scalar_type);
                     synthetic.insert(
                         wrapped_key,
                         normalise_value(v, values_schema, cfg, field_name),

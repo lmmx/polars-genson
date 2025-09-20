@@ -14,7 +14,7 @@ fn test_normalise_record() {
 
     let cfg = NormaliseConfig::default();
     let input = json!({"id": 42}); // id is number, labels missing
-    let normalised = normalise_value(input, &schema, &cfg);
+    let normalised = normalise_value(input, &schema, &cfg, None);
 
     assert_eq!(normalised, json!({"id": "42", "labels": Value::Null}));
 }
@@ -25,7 +25,7 @@ fn test_normalise_array_union() {
     let cfg = NormaliseConfig::default();
 
     let input = json!("hello"); // scalar string
-    let normalised = normalise_value(input, &schema, &cfg);
+    let normalised = normalise_value(input, &schema, &cfg, None);
 
     assert_eq!(normalised, json!(["hello"]));
 }
@@ -36,7 +36,7 @@ fn test_empty_map_to_null() {
     let cfg = NormaliseConfig::default();
 
     let input = json!({});
-    let normalised = normalise_value(input, &schema, &cfg);
+    let normalised = normalise_value(input, &schema, &cfg, None);
 
     assert_eq!(normalised, Value::Null);
 }
@@ -50,7 +50,7 @@ fn test_empty_map_preserved_if_flag_off() {
     };
 
     let input = json!({});
-    let normalised = normalise_value(input, &schema, &cfg);
+    let normalised = normalise_value(input, &schema, &cfg, None);
 
     assert_eq!(normalised, json!({}));
 }
@@ -77,7 +77,7 @@ fn test_string_coercion_toggle() {
         coerce_string: false,
         ..NormaliseConfig::default()
     };
-    let norm_no_coerce = normalise_value(input.clone(), &schema, &cfg_no_coerce);
+    let norm_no_coerce = normalise_value(input.clone(), &schema, &cfg_no_coerce, None);
     assert_eq!(
         norm_no_coerce,
         json!({
@@ -92,7 +92,7 @@ fn test_string_coercion_toggle() {
         coerce_string: true,
         ..NormaliseConfig::default()
     };
-    let norm_coerce = normalise_value(input, &schema, &cfg_coerce);
+    let norm_coerce = normalise_value(input, &schema, &cfg_coerce, None);
     assert_eq!(
         norm_coerce,
         json!({
@@ -125,7 +125,7 @@ fn test_normalise_map_of_records() {
 
     let cfg = NormaliseConfig::default();
 
-    let normalised = normalise_value(input, &schema, &cfg);
+    let normalised = normalise_value(input, &schema, &cfg, None);
 
     // Expect same shape back (since it's already valid against schema)
     let expected = json!({
@@ -159,7 +159,7 @@ fn test_normalise_map_of_records_with_null() {
 
     let cfg = NormaliseConfig::default();
 
-    let normalised = normalise_value(input, &schema, &cfg);
+    let normalised = normalise_value(input, &schema, &cfg, None);
 
     let expected = json!({
         "en": { "language": "en", "value": "Hello" },
