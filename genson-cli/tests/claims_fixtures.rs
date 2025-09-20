@@ -1,0 +1,99 @@
+use assert_cmd::Command;
+use insta::{assert_snapshot, with_settings};
+use serde_json::Value;
+use std::fs;
+
+/// Check if the current output matches the verified/blessed version
+fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
+    let module_file = file!();
+    let module_stem = std::path::Path::new(module_file)
+        .file_stem()
+        .unwrap()
+        .to_string_lossy();
+    let verified_path = format!("tests/verified/{}__{}.snap", module_stem, snapshot_name);
+
+    if let Ok(verified_content) = fs::read_to_string(&verified_path) {
+        if let Some(header_end) = verified_content.find("\n---\n") {
+            let verified_output = &verified_content[header_end + 5..];
+            return verified_output.trim() == output.trim();
+        }
+    }
+    false
+}
+
+/// Run genson-cli with claims fixture from disk
+fn run_genson_claims_fixture_from_disk(fixture_path: &str, name: &str, extra_args: &[&str]) {
+    let fixture_content = fs::read_to_string(fixture_path)
+        .unwrap_or_else(|_| panic!("Failed to read fixture file: {}", fixture_path));
+
+    let mut cmd = Command::cargo_bin("genson-cli").unwrap();
+    let mut args = vec![
+        "--ndjson",
+        "--map-threshold",
+        "0",
+        "--unify-maps",
+        "--wrap-root",
+        "claims",
+    ];
+    args.extend_from_slice(extra_args);
+    args.push(fixture_path);
+    let args_for_metadata = args.clone();
+    cmd.args(args);
+
+    let assert_output = cmd.assert().success();
+    let output = assert_output.get_output();
+    let stdout_str = String::from_utf8(output.stdout.clone()).unwrap();
+
+    // Let stderr be visible if there's any debug output
+    if !output.stderr.is_empty() {
+        let stderr_str = String::from_utf8_lossy(&output.stderr);
+        eprintln!("stderr from {}: {}", name, stderr_str);
+    }
+
+    // Parse the NDJSON input for metadata
+    let input_json: Vec<Value> = fixture_content
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .collect();
+
+    let approved = is_output_approved(name, &stdout_str);
+
+    with_settings!({
+        info => &serde_json::json!({
+            "approved": approved,
+            "args": args_for_metadata[..args_for_metadata.len()-1], // exclude file path
+            "input": input_json,
+            "fixture": fixture_path
+        })
+    }, {
+        assert_snapshot!(name, stdout_str);
+    });
+}
+
+#[test]
+fn test_claims_fixture_l2_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L2.jsonl",
+        "claims_fixture_l2__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l2_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L2.jsonl",
+        "claims_fixture_l2__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l2_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L2.jsonl",
+        "claims_fixture_l2__normalize",
+        &["--normalise"],
+    );
+}
