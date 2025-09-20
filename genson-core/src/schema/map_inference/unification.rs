@@ -1,5 +1,8 @@
 // genson-core/src/schema/unification.rs
-use crate::{debug, debug_verbose, schema::core::SchemaInferenceConfig};
+use crate::{
+    debug, debug_verbose,
+    schema::core::{make_promoted_scalar_key, SchemaInferenceConfig},
+};
 use serde_json::{json, Map, Value};
 
 /// Normalize a schema that may be wrapped in one or more layers of
@@ -185,7 +188,7 @@ fn try_scalar_promotion(
         return None;
     };
 
-    let wrapped_key = format!("{}__{}", field_name, scalar_type);
+    let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
 
     debug!(
         config,

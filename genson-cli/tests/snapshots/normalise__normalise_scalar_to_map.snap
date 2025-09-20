@@ -2,7 +2,7 @@
 source: genson-cli/tests/normalise.rs
 expression: value
 info:
-  approved: true
+  approved: false
   args:
     - "--normalise"
     - "--ndjson"
@@ -15,5 +15,5 @@ info:
       labels:
         en: Hello
 ---
-{"id":"A","labels":{"default":"foo"}}
+{"id":"A","labels":{"labels__string":"foo"}}
 {"id":"B","labels":{"en":"Hello"}}

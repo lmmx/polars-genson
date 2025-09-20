@@ -149,3 +149,12 @@ impl SchemaInferenceResult {
         )
     }
 }
+
+/// Generate a consistent key name for promoted scalar values.
+///
+/// Creates keys in the format `{field_prefix}__{scalar_type}` for scalar values
+/// that are promoted to object fields during schema unification or normalisation.
+pub fn make_promoted_scalar_key(field_prefix: &str, scalar_type: &str) -> String {
+    // Could be parameterised by config in future to make configurable
+    format!("{}__{}", field_prefix, scalar_type)
+}
