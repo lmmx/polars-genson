@@ -1,0 +1,4 @@
+{"letters": {"A": {"id": 1, "value": {"hello": "world"}}}}
+{"letters": {"B": {"id": 2, "value": {"foo": "bar"}}}}
+{"letters": {"C": {"id": 3, "value": {"foo": "baz"}}}}
+{"letters": {"D": {"id": 4, "value": "scalar-string"}}}

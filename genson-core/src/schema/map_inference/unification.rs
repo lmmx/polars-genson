@@ -257,10 +257,15 @@ fn unify_scalar_schemas(
     }
 
     // Multiple incompatible scalar types
-    debug!(
-        config,
-        "{}: Cannot unify incompatible scalar types: {:?}", path, base_types
-    );
+    if config.debug {
+        // Avoid the sort if not debugging this at all
+        let mut sorted_types: Vec<_> = base_types.into_iter().collect();
+        sorted_types.sort();
+        debug!(
+            config,
+            "{}: Cannot unify incompatible scalar types: {:?}", path, sorted_types
+        );
+    }
     None
 }
 
