@@ -1,0 +1,33 @@
+---
+source: genson-cli/tests/unify_scalar.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "1"
+    - "--unify-maps"
+    - "--normalise"
+  input:
+    - colors:
+        a:
+          rgb:
+            r: 255
+        b:
+          rgb:
+            g: 128
+    - colors:
+        c:
+          rgb:
+            b: 64
+        a:
+          rgb:
+            g: 200
+    - colors:
+        b:
+          hex: 00ff00
+---
+{"colors":{"a":{"rgb":{"r":255},"hex":null},"b":{"rgb":{"g":128},"hex":null}}}
+{"colors":{"c":{"rgb":{"b":64},"hex":null},"a":{"rgb":{"g":200},"hex":null}}}
+{"colors":{"b":{"rgb":null,"hex":"00ff00"}}}

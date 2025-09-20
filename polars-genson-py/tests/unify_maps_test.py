@@ -187,12 +187,14 @@ def test_wrap_scalars_promotes_scalar_to_object():
     df = pl.DataFrame(
         {
             "json_data": [
-                # Row 1: value is an object
-                '{"root": {"A": {"id": 1, "value": {"hello": "world"}}}}',
-                # Row 2: value is also an object
-                '{"root": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
-                # Row 3: value is just a string → should be promoted
-                '{"root": {"C": {"id": 3, "value": "scalar-string"}}}',
+                # Carefully designed to prevent the value field from becoming a map:
+                # - 4 rows create 4 letter keys (A,B,C,D) in the letters map (0 required keys)
+                # - value field has only 3 distinct properties: hello, foo, value__string (promoted scalar)
+                # - 3 properties < map_threshold=4, so value stays as record with scalar promotion
+                '{"letters": {"A": {"id": 1, "value": {"hello": "world"}}}}',
+                '{"letters": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
+                '{"letters": {"C": {"id": 3, "value": {"foo": "baz"}}}}',  # Different foo value to ensure 2 foo keys
+                '{"letters": {"D": {"id": 4, "value": "scalar-string"}}}',  # Scalar → promotes to value__string
             ]
         }
     )
@@ -200,29 +202,28 @@ def test_wrap_scalars_promotes_scalar_to_object():
     avro_schema = df.genson.infer_json_schema(
         "json_data",
         avro=True,
-        map_threshold=3,
-        map_max_required_keys=2,
+        map_threshold=4,  # Prevents value field (3 props) from becoming map
+        map_max_required_keys=0,  # Allows letters map (0 required) to become map
         unify_maps=True,
         wrap_scalars=True,
     )
 
-    root_field = next(f for f in avro_schema["fields"] if f["name"] == "root")
-    assert root_field["type"]["type"] == "map"
+    letters_field = next(f for f in avro_schema["fields"] if f["name"] == "letters")
+    assert letters_field["type"]["type"] == "map"
 
-    values_schema = root_field["type"]["values"]
+    values_schema = letters_field["type"]["values"]
     assert values_schema["type"] == "record"
 
     field_names = {f["name"] for f in values_schema["fields"]}
-    # Should include id, value. value should itself be a record that includes "hello"/"foo"
-    # and a synthetic key for the promoted scalar (value__string)
     assert "id" in field_names
     assert "value" in field_names
 
     value_field = next(f for f in values_schema["fields"] if f["name"] == "value")
-    assert value_field["type"]["type"] == "record"
+    assert value_field["type"]["type"] == "record"  # Should be record, not map
 
     inner_field_names = {f["name"] for f in value_field["type"]["fields"]}
-    assert "hello" in inner_field_names or "foo" in inner_field_names
+    assert "hello" in inner_field_names
+    assert "foo" in inner_field_names
     assert "value__string" in inner_field_names, (
         f"Expected promoted scalar key 'value__string', got {inner_field_names}"
     )
@@ -233,12 +234,14 @@ def test_wrap_scalars_normalisation():
     df = pl.DataFrame(
         {
             "json_data": [
-                # Row 1: value is an object
-                '{"root": {"A": {"id": 1, "value": {"hello": "world"}}}}',
-                # Row 2: value is also an object
-                '{"root": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
-                # Row 3: value is just a string → should be promoted
-                '{"root": {"C": {"id": 3, "value": "scalar-string"}}}',
+                # Carefully designed to prevent the value field from becoming a map:
+                # - 4 rows create 4 letter keys (A,B,C,D) in the letters map (0 required keys)
+                # - value field has only 3 distinct properties: hello, foo, value__string (promoted scalar)
+                # - 3 properties < map_threshold=4, so value stays as record with scalar promotion
+                '{"letters": {"A": {"id": 1, "value": {"hello": "world"}}}}',
+                '{"letters": {"B": {"id": 2, "value": {"foo": "bar"}}}}',
+                '{"letters": {"C": {"id": 3, "value": {"foo": "baz"}}}}',  # Different foo value to ensure 2 foo keys
+                '{"letters": {"D": {"id": 4, "value": "scalar-string"}}}',  # Scalar → promotes to value__string
             ]
         }
     )
@@ -246,8 +249,8 @@ def test_wrap_scalars_normalisation():
     # Normalise with wrap_scalars enabled
     normalised = df.genson.normalise_json(
         "json_data",
-        map_threshold=3,
-        map_max_required_keys=2,
+        map_threshold=4,  # Prevents value field (3 props) from becoming map
+        map_max_required_keys=0,  # Allows letters map (0 required) to become map
         unify_maps=True,
         wrap_scalars=True,
     ).to_dicts()
@@ -255,7 +258,7 @@ def test_wrap_scalars_normalisation():
     # Should have unified structure with promoted scalar
     assert normalised == [
         {
-            "root": [
+            "letters": [
                 {
                     "key": "A",
                     "value": {
@@ -270,7 +273,7 @@ def test_wrap_scalars_normalisation():
             ]
         },
         {
-            "root": [
+            "letters": [
                 {
                     "key": "B",
                     "value": {
@@ -285,11 +288,26 @@ def test_wrap_scalars_normalisation():
             ]
         },
         {
-            "root": [
+            "letters": [
                 {
                     "key": "C",
                     "value": {
                         "id": 3,
+                        "value": {
+                            "hello": None,
+                            "foo": "baz",
+                            "value__string": None,
+                        },
+                    },
+                }
+            ]
+        },
+        {
+            "letters": [
+                {
+                    "key": "D",
+                    "value": {
+                        "id": 4,
                         "value": {
                             "hello": None,
                             "foo": None,

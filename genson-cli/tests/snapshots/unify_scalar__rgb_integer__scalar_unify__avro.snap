@@ -1,0 +1,66 @@
+---
+source: genson-cli/tests/unify_scalar.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "1"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - colors:
+        a:
+          rgb:
+            r: 255
+        b:
+          rgb:
+            g: 128
+    - colors:
+        c:
+          rgb:
+            b: 64
+        a:
+          rgb:
+            g: 200
+    - colors:
+        b:
+          hex: 00ff00
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "colors",
+      "type": {
+        "name": "colors",
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "colors_values",
+          "namespace": "genson.document_types",
+          "fields": [
+            {
+              "name": "rgb",
+              "type": {
+                "name": "rgb",
+                "type": "map",
+                "values": "int"
+              }
+            },
+            {
+              "name": "hex",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

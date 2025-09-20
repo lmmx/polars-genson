@@ -1,4 +1,5 @@
 // genson-core/src/schema/map_inference.rs
+use crate::debug;
 use crate::schema::core::SchemaInferenceConfig;
 use serde_json::Value;
 mod unification;
@@ -133,13 +134,75 @@ pub(crate) fn rewrite_objects(
                     props.values().map(extract_non_null_schema).collect();
                 let first_normalised = extract_non_null_schema(first_schema);
 
+                // Debug output to diagnose the issue
+                if config.debug {
+                    debug!(
+                        config,
+                        "Checking homogeneity for field {:?} with {} schemas",
+                        field_name.unwrap_or("root"),
+                        normalised_schemas.len()
+                    );
+
+                    let mut unique_schemas = std::collections::BTreeSet::new();
+                    for schema in &normalised_schemas {
+                        unique_schemas.insert(serde_json::to_string(schema).unwrap_or_default());
+                    }
+
+                    if unique_schemas.len() <= 3 {
+                        // Only show details for small sets
+                        debug!(
+                            config,
+                            "Unique normalised schemas ({} total):",
+                            unique_schemas.len()
+                        );
+                        for (i, schema_str) in unique_schemas.iter().enumerate() {
+                            if schema_str.len() > 300 {
+                                // Parse back to Value and pretty-print
+                                if let Ok(schema_value) = serde_json::from_str::<Value>(schema_str)
+                                {
+                                    let pretty_schema = serde_json::to_string_pretty(&schema_value)
+                                        .unwrap_or_default();
+                                    let lines: Vec<&str> = pretty_schema.lines().collect();
+                                    if lines.len() > 12 {
+                                        let first_6 = lines[..6].join("\n");
+                                        let last_6 = lines[lines.len() - 6..].join("\n");
+                                        debug!(
+                                            config,
+                                            "  Schema {}:\n{}\n...({} lines omitted)...\n{}",
+                                            i,
+                                            first_6,
+                                            lines.len() - 12,
+                                            last_6
+                                        );
+                                    } else {
+                                        debug!(config, "  Schema {}:\n{}", i, pretty_schema);
+                                    }
+                                } else {
+                                    debug!(config, "  Schema {}: [invalid JSON]", i);
+                                }
+                            } else {
+                                debug!(config, "  Schema {}: {}", i, schema_str);
+                            }
+                        }
+                    } else {
+                        debug!(
+                            config,
+                            "Found {} unique normalised schemas (too many to display)",
+                            unique_schemas.len()
+                        );
+                    }
+                }
+
                 if normalised_schemas
                     .iter()
                     .all(|schema| schema == &first_normalised)
                 {
                     // All schemas are homogeneous after normalisation
+                    debug!(config, "Schemas are homogeneous after normalisation");
                     unified_schema = Some(first_normalised);
                 } else if config.unify_maps {
+                    debug!(config, "Schemas not homogeneous, attempting unification");
+
                     // Detect if these are all arrays of records
                     if child_schemas
                         .iter()
@@ -180,20 +243,68 @@ pub(crate) fn rewrite_objects(
 
             // Apply map inference logic
             let should_be_map = if above_threshold && unified_schema.is_some() {
+                debug!(
+                    config,
+                    "Checking if should convert to map: above_threshold={}, unified_schema=Some",
+                    above_threshold
+                );
+
                 // Skip map inference if this is the root and no_root_map is enabled
                 if is_root && config.no_root_map {
+                    debug!(
+                        config,
+                        "Skipping map conversion: is root and no_root_map=true"
+                    );
                     false
                 } else if let Some(max_required) = config.map_max_required_keys {
-                    required_key_count <= max_required
+                    let result = required_key_count <= max_required;
+                    debug!(
+                        config,
+                        "Map conversion decision: required_keys={} <= max_required={} = {}",
+                        required_key_count,
+                        max_required,
+                        result
+                    );
+                    result
                 } else {
+                    debug!(
+                        config,
+                        "Map conversion: no max_required_keys limit, converting to map"
+                    );
                     true
                 }
             } else {
+                if !above_threshold {
+                    debug!(
+                        config,
+                        "Not converting to map: below threshold ({} < {})",
+                        key_count,
+                        config.map_threshold
+                    );
+                } else if unified_schema.is_none() {
+                    debug!(config, "Not converting to map: no unified schema");
+                }
                 false
             };
 
             if should_be_map {
                 if let Some(schema) = unified_schema {
+                    let pretty_schema = serde_json::to_string_pretty(&schema).unwrap_or_default();
+                    let lines: Vec<&str> = pretty_schema.lines().collect();
+                    if lines.len() > 12 {
+                        let first_6 = lines[..6].join("\n");
+                        let last_6 = lines[lines.len() - 6..].join("\n");
+                        debug!(config, "Converting field {:?} to map with schema:\n{}\n...({} lines omitted)...\n{}", 
+                               field_name.unwrap_or("root"), first_6, lines.len() - 12, last_6);
+                    } else {
+                        debug!(
+                            config,
+                            "Converting field {:?} to map with schema:\n{}",
+                            field_name.unwrap_or("root"),
+                            pretty_schema
+                        );
+                    }
+
                     obj.remove("properties");
                     obj.remove("required");
                     obj.insert("type".to_string(), Value::String("object".to_string()));

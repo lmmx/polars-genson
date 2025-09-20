@@ -84,6 +84,17 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
 
 /// Check if a schema represents a scalar type (not an object or array)
 fn is_scalar_schema(schema: &Value) -> bool {
+    // Handle old legacy format first: ["null", {"type": "string"}]
+    if let Value::Array(arr) = schema {
+        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
+            let inner_schema = arr
+                .iter()
+                .find(|v| *v != &Value::String("null".to_string()))
+                .unwrap();
+            return is_scalar_schema(inner_schema); // Recursive call
+        }
+    }
+
     // Check direct type field
     if let Some(type_val) = schema.get("type") {
         if let Some(type_str) = type_val.as_str() {
@@ -200,6 +211,56 @@ fn try_scalar_promotion(
     )
 }
 
+fn unify_scalar_schemas(
+    schemas: &[Value],
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    if schemas.is_empty() {
+        return None;
+    }
+
+    // Extract all the scalar types
+    let mut base_types = std::collections::HashSet::new();
+
+    for schema in schemas {
+        if let Some(type_val) = schema.get("type") {
+            if let Some(type_str) = type_val.as_str() {
+                // Direct scalar type
+                base_types.insert(type_str.to_string());
+            } else if let Some(arr) = type_val.as_array() {
+                // Nullable scalar: ["null", "string"]
+                if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
+                    if let Some(non_null_type) = arr
+                        .iter()
+                        .find(|t| *t != &Value::String("null".into()))
+                        .and_then(|t| t.as_str())
+                    {
+                        base_types.insert(non_null_type.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    // If all schemas have the same base type, create a nullable version
+    if base_types.len() == 1 {
+        let base_type = base_types.iter().next().unwrap();
+        debug!(
+            config,
+            "{}: Unified scalar schemas to nullable {}", path, base_type
+        );
+        return Some(json!({"type": ["null", base_type]}));
+    }
+
+    // Multiple incompatible scalar types
+    debug!(
+        config,
+        "{}: Cannot unify incompatible scalar types: {:?}", path, base_types
+    );
+    None
+}
+
 /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
 ///
 /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
@@ -237,6 +298,26 @@ pub(crate) fn check_unifiable_schemas(
 
     // Only unify record schemas
     if !schemas.iter().all(is_object_schema) {
+        // Check if these are all scalar schemas that can be unified
+        if schemas.iter().all(is_scalar_schema) {
+            debug!(
+                config,
+                "{}: All schemas are scalars, attempting scalar unification", path
+            );
+            return unify_scalar_schemas(schemas, path, config);
+        } else {
+            debug!(config, "{}: Not all schemas are scalars", path);
+            for (i, schema) in schemas.iter().enumerate() {
+                if !is_scalar_schema(schema) {
+                    debug!(
+                        config,
+                        "  Schema {} (NOT scalar): {}",
+                        i,
+                        serde_json::to_string(schema).unwrap_or_default()
+                    );
+                }
+            }
+        }
         return None;
     }
 
@@ -382,4 +463,9 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     Some(result)
+}
+
+#[cfg(test)]
+mod tests {
+    include!("../../tests/unification.rs");
 }
