@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.7...genson-cli-v0.2.8) - 2025-09-20
+
+### <!-- 6 -->Testing
+
+- test `--unify-map` in combination with `--map-threshold` ([#96](https://github.com/lmmx/polars-genson/pull/96))
+
+### <!-- 9 -->Other
+
+- harmonise synthetic key for object-promoted scalars in map unification and normalisation ([#100](https://github.com/lmmx/polars-genson/pull/100))
+- unify scalars as well as records ([#98](https://github.com/lmmx/polars-genson/pull/98))
+- prevent root map ([#97](https://github.com/lmmx/polars-genson/pull/97))
+
 ## [0.2.7](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.6...genson-cli-v0.2.7) - 2025-09-17
 
 ### <!-- 9 -->Other
