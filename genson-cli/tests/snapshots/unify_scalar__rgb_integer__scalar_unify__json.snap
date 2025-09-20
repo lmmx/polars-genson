@@ -1,0 +1,64 @@
+---
+source: genson-cli/tests/unify_scalar.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "1"
+    - "--unify-maps"
+  input:
+    - colors:
+        a:
+          rgb:
+            r: 255
+        b:
+          rgb:
+            g: 128
+    - colors:
+        c:
+          rgb:
+            b: 64
+        a:
+          rgb:
+            g: 200
+    - colors:
+        b:
+          hex: 00ff00
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "colors": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "rgb": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            }
+          },
+          "hex": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "rgb"
+        ]
+      }
+    }
+  },
+  "required": [
+    "colors"
+  ],
+  "type": "object"
+}

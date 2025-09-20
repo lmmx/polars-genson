@@ -84,6 +84,17 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
 
 /// Check if a schema represents a scalar type (not an object or array)
 fn is_scalar_schema(schema: &Value) -> bool {
+    // Handle old legacy format first: ["null", {"type": "string"}]
+    if let Value::Array(arr) = schema {
+        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
+            let inner_schema = arr
+                .iter()
+                .find(|v| *v != &Value::String("null".to_string()))
+                .unwrap();
+            return is_scalar_schema(inner_schema); // Recursive call
+        }
+    }
+
     // Check direct type field
     if let Some(type_val) = schema.get("type") {
         if let Some(type_str) = type_val.as_str() {
@@ -289,7 +300,23 @@ pub(crate) fn check_unifiable_schemas(
     if !schemas.iter().all(is_object_schema) {
         // Check if these are all scalar schemas that can be unified
         if schemas.iter().all(is_scalar_schema) {
+            debug!(
+                config,
+                "{}: All schemas are scalars, attempting scalar unification", path
+            );
             return unify_scalar_schemas(schemas, path, config);
+        } else {
+            debug!(config, "{}: Not all schemas are scalars", path);
+            for (i, schema) in schemas.iter().enumerate() {
+                if !is_scalar_schema(schema) {
+                    debug!(
+                        config,
+                        "  Schema {} (NOT scalar): {}",
+                        i,
+                        serde_json::to_string(schema).unwrap_or_default()
+                    );
+                }
+            }
         }
         return None;
     }
@@ -436,4 +463,9 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     Some(result)
+}
+
+#[cfg(test)]
+mod tests {
+    include!("../../tests/unification.rs");
 }
