@@ -100,7 +100,6 @@ fn test_anyof_unification() {
     assert!(anyof_schema.get("properties").is_some(), "Should have properties after unification");
 }
 
-#[ignore]
 #[test]
 fn test_scalar_vs_mixed_type_object_unification() {
     let test_data = vec![
