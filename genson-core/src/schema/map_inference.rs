@@ -286,7 +286,7 @@ pub(crate) fn rewrite_objects(
             // Apply map inference logic
             let should_be_map = if above_threshold && unified_schema.is_some() {
                 // Don't convert to map if the unified schema contains anyOf - let it be processed first
-                if contains_anyof(unified_schema.as_ref().unwrap()) {
+                if unified_schema.as_ref().is_some_and(contains_anyof) {
                     debug!(config, "Not converting to map: unified schema contains anyOf that needs processing");
                     false
                 } else {
