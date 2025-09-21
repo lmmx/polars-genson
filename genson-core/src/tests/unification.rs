@@ -1,6 +1,6 @@
 use super::*;
 use serde_json::json;
-use crate::infer_json_schema_from_strings;
+use crate::{infer_json_schema_from_strings, schema::rewrite_objects};
 
 #[test]
 fn test_scalar_unification_ndjson_mixed_nullable_formats() {
@@ -74,13 +74,14 @@ fn test_is_scalar_schema_with_mixed_formats() {
     assert!(!is_scalar_schema(&json!({"type": "array", "items": {}})));
 }
 
-#[ignore]
 #[test]
-fn test_check_unifiable_schemas_anyof_case() {
-    let schemas = vec![
-        json!({"type": "object", "properties": {"timezone": {"type": "integer"}}}),
-        json!({"type": "string"})
-    ];
+fn test_anyof_unification() {
+    let mut anyof_schema = json!({
+        "anyOf": [
+            {"type": "object", "properties": {"timezone": {"type": "integer"}}},
+            {"type": "string"}
+        ]
+    });
 
     let config = SchemaInferenceConfig {
         map_threshold: 1,
@@ -90,11 +91,13 @@ fn test_check_unifiable_schemas_anyof_case() {
         ..Default::default()
     };
 
-    let result = check_unifiable_schemas(&schemas, "datavalue", &config);
-    println!("Generated schema: {}", serde_json::to_string_pretty(&result).unwrap());
+    rewrite_objects(&mut anyof_schema, Some("datavalue"), &config, false);
+    println!("Generated schema: {}", serde_json::to_string_pretty(&anyof_schema).unwrap());
 
-    // Currently returns None, should return unified schema with scalar promotion
-    assert!(result.is_some(), "Should unify mixed scalar+object schemas with wrap_scalars");
+    // Should be unified to a single object, not anyOf
+    assert!(anyof_schema.get("anyOf").is_none(), "anyOf should be unified away");
+    assert_eq!(anyof_schema["type"], "object");
+    assert!(anyof_schema.get("properties").is_some(), "Should have properties after unification");
 }
 
 #[ignore]

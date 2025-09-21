@@ -100,7 +100,7 @@ pub(crate) fn rewrite_objects(
                     any_of_schemas.len()
                 );
                 if let Some(unified) =
-                    check_unifiable_schemas(any_of_schemas, field_name.unwrap_or(""), config)
+                    unify_anyof_schemas(any_of_schemas, field_name.unwrap_or(""), config)
                 {
                     debug!(config, "Successfully unified anyOf schemas");
                     // Replace the entire schema with the unified result
