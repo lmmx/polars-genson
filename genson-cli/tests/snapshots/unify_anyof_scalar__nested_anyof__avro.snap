@@ -1,0 +1,91 @@
+---
+source: genson-cli/tests/unify_anyof_scalar.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "1"
+    - "--unify-maps"
+    - "--avro"
+  input:
+    - claims:
+        P31:
+          datavalue: string-value
+    - claims:
+        P31:
+          datavalue:
+            timezone: 0
+            precision: 11
+    - claims:
+        P31:
+          datavalue:
+            id: X
+            labels:
+              en: thing
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "claims",
+      "type": {
+        "name": "claims",
+        "type": "map",
+        "values": {
+          "name": "claims_values",
+          "type": "map",
+          "values": {
+            "type": "record",
+            "name": "claims_values_values",
+            "namespace": "genson.document_types",
+            "fields": [
+              {
+                "name": "timezone",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "precision",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "id",
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              {
+                "name": "labels",
+                "type": [
+                  "null",
+                  {
+                    "name": "labels",
+                    "type": "map",
+                    "values": "string"
+                  }
+                ]
+              },
+              {
+                "name": "datavalue__string",
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

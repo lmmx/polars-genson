@@ -220,6 +220,7 @@ fn unify_scalar_schemas(
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
     if schemas.is_empty() {
+        debug!(config, "Empty schema at {}", path);
         return None;
     }
 
@@ -269,6 +270,53 @@ fn unify_scalar_schemas(
     None
 }
 
+pub(crate) fn unify_anyof_schemas(
+    schemas: &[Value],
+    field_name: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    if !config.wrap_scalars {
+        return None;
+    }
+
+    // Check if we have the specific case: some scalars, some objects
+    let has_scalars = schemas.iter().any(is_scalar_schema);
+    let has_objects = schemas.iter().any(is_object_schema);
+
+    if !has_scalars || !has_objects {
+        return None; // Not the mixed case we handle
+    }
+
+    debug!(
+        config,
+        "anyOf unification: promoting scalars for field '{}'", field_name
+    );
+
+    let mut promoted_schemas = Vec::new();
+
+    for schema in schemas {
+        if is_scalar_schema(schema) {
+            if let Some(scalar_type) = get_scalar_type_name(schema) {
+                let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
+                let promoted = json!({
+                    "type": "object",
+                    "properties": {
+                        wrapped_key: schema.clone()
+                    }
+                });
+                promoted_schemas.push(promoted);
+            } else {
+                return None;
+            }
+        } else {
+            promoted_schemas.push(schema.clone());
+        }
+    }
+
+    // Now unify the promoted schemas (all objects)
+    check_unifiable_schemas(&promoted_schemas, field_name, config)
+}
+
 /// Check if a collection of record schemas can be unified into a single schema with selective nullable fields.
 ///
 /// This function determines whether heterogeneous record schemas are "unifiable" - meaning they
@@ -299,6 +347,21 @@ pub(crate) fn check_unifiable_schemas(
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
+    debug_verbose!(
+        config,
+        "=== check_unifiable_schemas called with path='{}' and {} schemas:",
+        path,
+        schemas.len()
+    );
+    for (i, schema) in schemas.iter().enumerate() {
+        debug_verbose!(
+            config,
+            "  Schema[{}]: {}",
+            i,
+            serde_json::to_string(schema).unwrap_or_default()
+        );
+    }
+
     if schemas.is_empty() {
         debug!(config, "{path}: failed (empty schema list)");
         return None;
@@ -325,8 +388,8 @@ pub(crate) fn check_unifiable_schemas(
                     );
                 }
             }
+            return None;
         }
-        return None;
     }
 
     let mut all_fields = ordermap::OrderMap::new();

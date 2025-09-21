@@ -696,6 +696,134 @@ Schemas not homogeneous, attempting unification
   Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
 Not converting to map: no unified schema
 Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+...(261 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+...(685 lines omitted)...
+    "fa",
+    "mzn",
+    "sk",
+    "sh"
+  ]
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"properties":{"pt-br":{"type":"string"},"sl":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"is":{"type":"string"},"tg-cyrl":{"type":"string"},"ast":{"type":"string"},"zh-tw":{"type":"string"},"ml":{"type":"string"},"fr":{"type":"string"},"be-tarask":{"type":"string"},"te":{"type":"string"},"it":{"type":"string"},"es":{"type":"string"},"bn":{"type":"string"},"ms":{"type":"string"},"nb":{"type":"string"},"pl":{"type":"string"},"en-gb":{"type":"string"},"lv":{"type":"string"},"nds":{"type":"string"},"pt":{"type":"string"},"ko":{"type":"string"},"zh-hans":{"type":"string"},"zh":{"type":"string"},"sv":{"type":"string"},"be":{"type":"string"},"sco":{"type":"string"},"hi":{"type":"string"},"mk":{"type":"string"},"id":{"type":"string"},"zh-hant":{"type":"string"},"ro":{"type":"string"},"gl":{"type":"string"},"ms-arab":{"type":"string"},"ru":{"type":"string"},"ca":{"type":"string"},"uk":{"type":"string"},"en":{"type":"string"},"hy":{"type":"string"},"el":{"type":"string"},"cs":{"type":"string"},"scn":{"type":"string"},"ur":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"nl":{"type":"string"},"fa":{"type":"string"},"he":{"type":"string"},"ar":{"type":"string"},"sk":{"type":"string"},"nn":{"type":"string"},"da":{"type":"string"}},"required":["ar","ast","be","be-tarask","bn","ca","cs","da","de","el","en","en-gb","es","fa","fr","gl","he","hi","hu","hy","id","is","it","ja","ko","lv","mk","ml","ms","ms-arab","nb","nds","nl","nn","pl","pt","pt-br","ro","ru","scn","sco","sk","sl","sv","te","tg","tg-cyrl","uk","ur","vi","zh","zh-hans","zh-hant","zh-tw"],"type":["null","object"]},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","properties":{"tt-cyrl":{"type":"string"},"sr-ec":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"yi":{"type":"string"},"nb":{"type":"string"},"pnb":{"type":"string"},"ks":{"type":"string"},"zh-mo":{"type":"string"},"nds":{"type":"string"},"sco":{"type":"string"},"zh-hant":{"type":"string"},"ro":{"type":"string"},"bs":{"type":"string"},"ka":{"type":"string"},"gl":{"type":"string"},"tt":{"type":"string"},"ce":{"type":"string"},"sq":{"type":"string"},"hr":{"type":"string"},"en-ca":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"he":{"type":"string"},"nn":{"type":"string"},"ar":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"ml":{"type":"string"},"smn":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"be":{"type":"string"},"sv":{"type":"string"},"sr-el":{"type":"string"},"bg":{"type":"string"},"ba":{"type":"string"},"tr":{"type":"string"},"dag":{"type":"string"},"br":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"zh-sg":{"type":"string"},"scn":{"type":"string"},"or":{"type":"string"},"zh-cn":{"type":"string"},"frr":{"type":"string"},"xmf":{"type":"string"},"uz":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"zh-hk":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"oc":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"sms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"mg":{"type":"string"},"ko":{"type":"string"},"mr":{"type":"string"},"mk":{"type":"string"},"hi":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"gsw":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"zh-my":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"ilo":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"kaa":{"type":"string"},"id":{"type":"string"},"nap":{"type":"string"},"th":{"type":"string"},"ps":{"type":"string"},"ga":{"type":"string"},"ru":{"type":"string"},"et":{"type":"string"},"gu":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"mzn":{"type":"string"},"sk":{"type":"string"},"sh":{"type":"string"},"arz":{"type":["null","string"]},"la":{"type":["null","string"]},"ia":{"type":["null","string"]},"is":{"type":["null","string"]},"se":{"type":["null","string"]},"pfl":{"type":["null","string"]},"km":{"type":["null","string"]},"kcg":{"type":["null","string"]},"ha":{"type":["null","string"]},"diq":{"type":["null","string"]},"as":{"type":["null","string"]},"yo":{"type":["null","string"]},"ban":{"type":["null","string"]},"pap":{"type":["null","string"]},"sah":{"type":["null","string"]},"ig":{"type":["null","string"]},"lo":{"type":["null","string"]},"no":{"type":["null","string"]},"shi":{"type":["null","string"]},"ta":{"type":["null","string"]},"ku-latn":{"type":["null","string"]},"ckb":{"type":["null","string"]},"ky":{"type":["null","string"]},"nqo":{"type":["null","string"]},"skr":{"type":["null","string"]},"yue":{"type":["null","string"]},"ne":{"type":["null","string"]},"an":{"type":["null","string"]},"mt":{"type":["null","string"]},"kw":{"type":["null","string"]},"gpe":{"type":["null","string"]},"rue":{"type":["null","string"]},"sw":{"type":["null","string"]},"fo":{"type":["null","string"]},"kn":{"type":["null","string"]},"fy":{"type":["null","string"]},"gd":{"type":["null","string"]},"crh":{"type":["null","string"]},"zu":{"type":["null","string"]},"mi":{"type":["null","string"]},"dsb":{"type":["null","string"]}},"required":["tt-cyrl","sr-ec","be-tarask","it","yi","nb","pnb","ks","zh-mo","nds","sco","zh-hant","ro","bs","ka","gl","tt","ce","sq","hr","en-ca","nl","af","he","nn","ar","sl","eu","my","ml","smn","pl","hy","lv","pa","pt","be","sv","sr-el","bg","ba","tr","dag","br","eo","uk","el","zh-sg","scn","or","zh-cn","frr","xmf","uz","da","pt-br","zh-hk","zh-tw","ast","oc","az","te","es","ms","sms","lt","en-gb","vec","mg","ko","mr","mk","hi","hsb","ms-arab","ca","gsw","en","cs","ur","tl","fi","cy","hu","ja","zh-my","tg-cyrl","sr","fr","kk","bn","ilo","zh","zh-hans","kaa","id","nap","th","ps","ga","ru","et","gu","vi","tg","de","lb","fa","mzn","sk","sh"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "properties": {
+    "pt-br": {
+      "type": "string"
+    },
+    "sl": {
+...(211 lines omitted)...
+    "zh-hans",
+    "zh-hant",
+    "zh-tw"
+  ],
+  "type": "object"
+}
+  Schema 1: {"type":"integer"}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"pt-br":{"type":"string"},"sl":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"is":{"type":"string"},"tg-cyrl":{"type":"string"},"ast":{"type":"string"},"zh-tw":{"type":"string"},"ml":{"type":"string"},"fr":{"type":"string"},"be-tarask":{"type":"string"},"te":{"type":"string"},"it":{"type":"string"},"es":{"type":"string"},"bn":{"type":"string"},"ms":{"type":"string"},"nb":{"type":"string"},"pl":{"type":"string"},"en-gb":{"type":"string"},"lv":{"type":"string"},"nds":{"type":"string"},"pt":{"type":"string"},"ko":{"type":"string"},"zh-hans":{"type":"string"},"zh":{"type":"string"},"sv":{"type":"string"},"be":{"type":"string"},"sco":{"type":"string"},"hi":{"type":"string"},"mk":{"type":"string"},"id":{"type":"string"},"zh-hant":{"type":"string"},"ro":{"type":"string"},"gl":{"type":"string"},"ms-arab":{"type":"string"},"ru":{"type":"string"},"ca":{"type":"string"},"uk":{"type":"string"},"en":{"type":"string"},"hy":{"type":"string"},"el":{"type":"string"},"cs":{"type":"string"},"scn":{"type":"string"},"ur":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"nl":{"type":"string"},"fa":{"type":"string"},"he":{"type":"string"},"ar":{"type":"string"},"sk":{"type":"string"},"nn":{"type":"string"},"da":{"type":"string"}},"required":["ar","ast","be","be-tarask","bn","ca","cs","da","de","el","en","en-gb","es","fa","fr","gl","he","hi","hu","hy","id","is","it","ja","ko","lv","mk","ml","ms","ms-arab","nb","nds","nl","nn","pl","pt","pt-br","ro","ru","scn","sco","sk","sl","sv","te","tg","tg-cyrl","uk","ur","vi","zh","zh-hans","zh-hant","zh-tw"],"type":["null","object"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "labels" with 54 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "property-labels" with 152 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+...(41 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (2 total):
   Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
   Schema 1: {"type":"string"}
@@ -2251,6 +2379,134 @@ Schemas not homogeneous, attempting unification
   Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
 Not converting to map: no unified schema
 Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+...(145 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+...(541 lines omitted)...
+    "fa",
+    "mzn",
+    "sk",
+    "sh"
+  ]
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"properties":{"nl":{"type":"string"},"de":{"type":"string"},"it":{"type":"string"},"ca":{"type":"string"},"gl":{"type":"string"},"uk":{"type":"string"},"be-tarask":{"type":"string"},"ja":{"type":"string"},"sr":{"type":"string"},"tt-cyrl":{"type":"string"},"tt":{"type":"string"},"pt":{"type":"string"},"sv":{"type":"string"},"da":{"type":"string"},"bn":{"type":"string"},"ms-arab":{"type":"string"},"cs":{"type":"string"},"nb":{"type":"string"},"ko":{"type":"string"},"en":{"type":"string"},"fr":{"type":"string"},"es":{"type":"string"},"ga":{"type":"string"},"sl":{"type":"string"},"sr-ec":{"type":"string"}},"required":["be-tarask","bn","ca","cs","da","de","en","es","fr","ga","gl","it","ja","ko","ms-arab","nb","nl","pt","sl","sr","sr-ec","sv","tt","tt-cyrl","uk"],"type":["null","object"]},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","properties":{"tt-cyrl":{"type":"string"},"sr-ec":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"nb":{"type":"string"},"pnb":{"type":"string"},"zh-mo":{"type":"string"},"nds":{"type":"string"},"sco":{"type":"string"},"zh-hant":{"type":"string"},"ro":{"type":"string"},"bs":{"type":"string"},"ka":{"type":"string"},"gl":{"type":"string"},"tt":{"type":"string"},"sq":{"type":"string"},"hr":{"type":"string"},"en-ca":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"he":{"type":"string"},"nn":{"type":"string"},"ar":{"type":"string"},"la":{"type":"string"},"ia":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"ml":{"type":"string"},"smn":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"be":{"type":"string"},"sv":{"type":"string"},"sr-el":{"type":"string"},"bg":{"type":"string"},"ba":{"type":"string"},"tr":{"type":"string"},"dag":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"zh-sg":{"type":"string"},"scn":{"type":"string"},"or":{"type":"string"},"zh-cn":{"type":"string"},"frr":{"type":"string"},"xmf":{"type":"string"},"uz":{"type":"string"},"is":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"zh-hk":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"sms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"ko":{"type":"string"},"mr":{"type":"string"},"mk":{"type":"string"},"hi":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"gsw":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"se":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"ilo":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"kaa":{"type":"string"},"id":{"type":"string"},"nap":{"type":"string"},"th":{"type":"string"},"ga":{"type":"string"},"ru":{"type":"string"},"pfl":{"type":"string"},"et":{"type":"string"},"gu":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"mzn":{"type":"string"},"sk":{"type":"string"},"sh":{"type":"string"},"yi":{"type":["null","string"]},"ks":{"type":["null","string"]},"ce":{"type":["null","string"]},"arz":{"type":["null","string"]},"br":{"type":["null","string"]},"oc":{"type":["null","string"]},"mg":{"type":["null","string"]},"zh-my":{"type":["null","string"]},"ps":{"type":["null","string"]},"de-ch":{"type":["null","string"]},"diq":{"type":["null","string"]},"olo":{"type":["null","string"]},"ig":{"type":["null","string"]},"ta":{"type":["null","string"]},"ky":{"type":["null","string"]},"yue":{"type":["null","string"]},"an":{"type":["null","string"]},"ht":{"type":["null","string"]},"lez":{"type":["null","string"]}},"required":["tt-cyrl","sr-ec","be-tarask","it","nb","pnb","zh-mo","nds","sco","zh-hant","ro","bs","ka","gl","tt","sq","hr","en-ca","nl","af","he","nn","ar","la","ia","sl","eu","my","ml","smn","pl","hy","lv","pa","pt","be","sv","sr-el","bg","ba","tr","dag","eo","uk","el","zh-sg","scn","or","zh-cn","frr","xmf","uz","is","da","pt-br","zh-hk","zh-tw","ast","az","te","es","ms","sms","lt","en-gb","vec","ko","mr","mk","hi","hsb","ms-arab","ca","gsw","en","cs","ur","tl","se","fi","cy","hu","ja","tg-cyrl","sr","fr","kk","bn","ilo","zh","zh-hans","kaa","id","nap","th","ga","ru","pfl","et","gu","vi","tg","de","lb","fa","mzn","sk","sh"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "properties": {
+    "nl": {
+      "type": "string"
+    },
+    "de": {
+...(95 lines omitted)...
+    "tt",
+    "tt-cyrl",
+    "uk"
+  ],
+  "type": "object"
+}
+  Schema 1: {"type":"integer"}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"nl":{"type":"string"},"de":{"type":"string"},"it":{"type":"string"},"ca":{"type":"string"},"gl":{"type":"string"},"uk":{"type":"string"},"be-tarask":{"type":"string"},"ja":{"type":"string"},"sr":{"type":"string"},"tt-cyrl":{"type":"string"},"tt":{"type":"string"},"pt":{"type":"string"},"sv":{"type":"string"},"da":{"type":"string"},"bn":{"type":"string"},"ms-arab":{"type":"string"},"cs":{"type":"string"},"nb":{"type":"string"},"ko":{"type":"string"},"en":{"type":"string"},"fr":{"type":"string"},"es":{"type":"string"},"ga":{"type":"string"},"sl":{"type":"string"},"sr-ec":{"type":"string"}},"required":["be-tarask","bn","ca","cs","da","de","en","es","fr","ga","gl","it","ja","ko","ms-arab","nb","nl","pt","sl","sr","sr-ec","sv","tt","tt-cyrl","uk"],"type":["null","object"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "labels" with 25 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "property-labels" with 127 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+...(41 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (2 total):
   Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
   Schema 1: {"type":"string"}
@@ -3143,6 +3399,91 @@ Schemas not homogeneous, attempting unification
   Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
 Not converting to map: no unified schema
 Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"properties":{"id":{"type":"string"},"labels":{"properties":{"en":{"type":"string"},"sv":{"type":"string"},"tt":{"type":"string"}},"required":["en","sv","tt"],"type":"object"}},"required":["id","labels"],"type":"object"}
+  Schema 1:
+{
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+    "sr-ec": {
+...(463 lines omitted)...
+    "zh-my",
+    "zh-sg",
+    "zh-tw"
+  ],
+  "type": "object"
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"id":{"type":"string"},"labels":{"properties":{"en":{"type":"string"},"sv":{"type":"string"},"tt":{"type":"string"}},"required":["en","sv","tt"],"type":"object"}},"required":["id","labels"],"type":"object"}
+  Schema 3 (NOT scalar): {"properties":{"tt-cyrl":{"type":"string"},"sr-ec":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"yi":{"type":"string"},"nb":{"type":"string"},"pnb":{"type":"string"},"ks":{"type":"string"},"zh-mo":{"type":"string"},"nds":{"type":"string"},"sco":{"type":"string"},"zh-hant":{"type":"string"},"ro":{"type":"string"},"bs":{"type":"string"},"ka":{"type":"string"},"gl":{"type":"string"},"tt":{"type":"string"},"ce":{"type":"string"},"sq":{"type":"string"},"hr":{"type":"string"},"en-ca":{"type":"string"},"arz":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"he":{"type":"string"},"nn":{"type":"string"},"ar":{"type":"string"},"la":{"type":"string"},"ia":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"ml":{"type":"string"},"smn":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"be":{"type":"string"},"sv":{"type":"string"},"sr-el":{"type":"string"},"bg":{"type":"string"},"ba":{"type":"string"},"tr":{"type":"string"},"dag":{"type":"string"},"br":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"zh-sg":{"type":"string"},"scn":{"type":"string"},"or":{"type":"string"},"zh-cn":{"type":"string"},"frr":{"type":"string"},"xmf":{"type":"string"},"uz":{"type":"string"},"is":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"zh-hk":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"oc":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"sms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"mg":{"type":"string"},"ko":{"type":"string"},"mr":{"type":"string"},"mk":{"type":"string"},"hi":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"gsw":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"se":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"zh-my":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"ilo":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"kaa":{"type":"string"},"id":{"type":"string"},"nap":{"type":"string"},"th":{"type":"string"},"ps":{"type":"string"},"ga":{"type":"string"},"ru":{"type":"string"},"pfl":{"type":"string"},"et":{"type":"string"},"gu":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"mzn":{"type":"string"},"sk":{"type":"string"},"sh":{"type":"string"}},"required":["af","ar","arz","ast","az","ba","be","be-tarask","bg","bn","br","bs","ca","ce","cs","cy","da","dag","de","el","en","en-ca","en-gb","eo","es","et","eu","fa","fi","fr","frr","ga","gl","gsw","gu","he","hi","hr","hsb","hu","hy","ia","id","ilo","is","it","ja","ka","kaa","kk","ko","ks","la","lb","lt","lv","mg","mk","ml","mr","ms","ms-arab","my","mzn","nap","nb","nds","nl","nn","oc","or","pa","pfl","pl","pnb","ps","pt","pt-br","ro","ru","scn","sco","se","sh","sk","sl","smn","sms","sq","sr","sr-ec","sr-el","sv","te","tg","tg-cyrl","th","tl","tr","tt","tt-cyrl","uk","ur","uz","vec","vi","xmf","yi","zh","zh-cn","zh-hans","zh-hant","zh-hk","zh-mo","zh-my","zh-sg","zh-tw"],"type":"object"}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"properties":{"en":{"type":"string"},"sv":{"type":"string"},"tt":{"type":"string"}},"required":["en","sv","tt"],"type":"object"}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"en":{"type":"string"},"sv":{"type":"string"},"tt":{"type":"string"}},"required":["en","sv","tt"],"type":"object"}
+Not converting to map: no unified schema
+Checking homogeneity for field "labels" with 3 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "property-labels" with 117 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (2 total):
   Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
   Schema 1: {"type":"string"}
@@ -3642,6 +3983,115 @@ Converting field "root" to map with schema:
     ]
   }
 }
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "object",
+  "properties": {
+    "id": [
+      "null",
+      {
+...(151 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+...(648 lines omitted)...
+    "ig",
+    "ta",
+    "ky",
+    "yue"
+  ]
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"id":["null",{"type":["null","string"]}],"labels":["null",{"properties":{"en":{"type":"string"},"ca":{"type":"string"},"nl":{"type":"string"},"de":{"type":"string"},"uk":{"type":"string"},"ar":{"type":"string"},"be-tarask":{"type":"string"},"ja":{"type":"string"},"bn":{"type":"string"},"en-gb":{"type":"string"},"nb":{"type":"string"},"fr":{"type":"string"},"es":{"type":"string"},"pt":{"type":"string"},"eu":{"type":"string"},"it":{"type":"string"},"vi":{"type":"string"},"sl":{"type":"string"},"ga":{"type":"string"}},"required":["ar","be-tarask","bn","ca","de","en","en-gb","es","eu","fr","ga","it","ja","nb","nl","pt","sl","uk","vi"],"type":["null","object"]}],"time":["null",{"type":["null","string"]}],"timezone":["null",{"type":["null","integer"]}],"before":["null",{"type":["null","integer"]}],"after":["null",{"type":["null","integer"]}],"precision":["null",{"type":["null","integer"]}],"calendarmodel":["null",{"type":["null","string"]}],"datavalue__string":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","properties":{"tt-cyrl":{"type":"string"},"sr-ec":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"nb":{"type":"string"},"pnb":{"type":"string"},"zh-mo":{"type":"string"},"nds":{"type":"string"},"sco":{"type":"string"},"zh-hant":{"type":"string"},"ro":{"type":"string"},"bs":{"type":"string"},"ka":{"type":"string"},"gl":{"type":"string"},"tt":{"type":"string"},"sq":{"type":"string"},"hr":{"type":"string"},"en-ca":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"he":{"type":"string"},"nn":{"type":"string"},"ar":{"type":"string"},"ia":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"ml":{"type":"string"},"smn":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"be":{"type":"string"},"sv":{"type":"string"},"sr-el":{"type":"string"},"bg":{"type":"string"},"ba":{"type":"string"},"tr":{"type":"string"},"dag":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"zh-sg":{"type":"string"},"scn":{"type":"string"},"or":{"type":"string"},"zh-cn":{"type":"string"},"frr":{"type":"string"},"xmf":{"type":"string"},"uz":{"type":"string"},"is":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"zh-hk":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"sms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"ko":{"type":"string"},"mr":{"type":"string"},"mk":{"type":"string"},"hi":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"gsw":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"se":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"ilo":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"kaa":{"type":"string"},"id":{"type":"string"},"nap":{"type":"string"},"th":{"type":"string"},"ga":{"type":"string"},"ru":{"type":"string"},"et":{"type":"string"},"gu":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"sk":{"type":"string"},"sh":{"type":"string"},"ks":{"type":["null","string"]},"ce":{"type":["null","string"]},"br":{"type":["null","string"]},"oc":{"type":["null","string"]},"zh-my":{"type":["null","string"]},"ps":{"type":["null","string"]},"de-ch":{"type":["null","string"]},"ig":{"type":["null","string"]},"ta":{"type":["null","string"]},"ky":{"type":["null","string"]},"yue":{"type":["null","string"]},"la":{"type":["null","string"]},"pfl":{"type":["null","string"]},"mzn":{"type":["null","string"]},"yi":["null",{"type":["null","string"]}],"arz":["null",{"type":["null","string"]}],"mg":["null",{"type":["null","string"]}],"diq":["null",{"type":["null","string"]}],"olo":["null",{"type":["null","string"]}],"an":["null",{"type":["null","string"]}],"ht":["null",{"type":["null","string"]}],"lez":["null",{"type":["null","string"]}],"de-at":{"type":["null","string"]},"ha":{"type":["null","string"]},"bho":{"type":["null","string"]},"sc":{"type":["null","string"]},"kl":{"type":["null","string"]},"ku":{"type":["null","string"]},"gpe":{"type":["null","string"]},"en-us":{"type":["null","string"]},"io":{"type":["null","string"]},"sw":{"type":["null","string"]},"fo":{"type":["null","string"]}},"required":["tt-cyrl","sr-ec","be-tarask","it","nb","pnb","zh-mo","nds","sco","zh-hant","ro","bs","ka","gl","tt","sq","hr","en-ca","nl","af","he","nn","ar","ia","sl","eu","my","ml","smn","pl","hy","lv","pa","pt","be","sv","sr-el","bg","ba","tr","dag","eo","uk","el","zh-sg","scn","or","zh-cn","frr","xmf","uz","is","da","pt-br","zh-hk","zh-tw","ast","az","te","es","ms","sms","lt","en-gb","vec","ko","mr","mk","hi","hsb","ms-arab","ca","gsw","en","cs","ur","tl","se","fi","cy","hu","ja","tg-cyrl","sr","fr","kk","bn","ilo","zh","zh-hans","kaa","id","nap","th","ga","ru","et","gu","vi","tg","de","lb","fa","sk","sh","ks","ce","br","oc","zh-my","ps","de-ch","ig","ta","ky","yue"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 9 schemas
+Found 4 unique normalised schemas (too many to display)
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): ["null",{"properties":{"en":{"type":"string"},"ca":{"type":"string"},"nl":{"type":"string"},"de":{"type":"string"},"uk":{"type":"string"},"ar":{"type":"string"},"be-tarask":{"type":"string"},"ja":{"type":"string"},"bn":{"type":"string"},"en-gb":{"type":"string"},"nb":{"type":"string"},"fr":{"type":"string"},"es":{"type":"string"},"pt":{"type":"string"},"eu":{"type":"string"},"it":{"type":"string"},"vi":{"type":"string"},"sl":{"type":"string"},"ga":{"type":"string"}},"required":["ar","be-tarask","bn","ca","de","en","en-gb","es","eu","fr","ga","it","ja","nb","nl","pt","sl","uk","vi"],"type":["null","object"]}]
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 19 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "property-labels" with 138 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"string"}
+  Schema 1: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+property-labels: All schemas are scalars, attempting scalar unification
+property-labels: Unified scalar schemas to nullable string
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": [
+    "null",
+    "string"
+  ]
+}
+Checking homogeneity for field "root" with 9 schemas
+Found 4 unique normalised schemas (too many to display)
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): ["null",{"type":"object","additionalProperties":{"type":"string"}}]
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":["null","string"]}}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "id": [
+      "null",
+      {
+...(71 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"id":["null",{"type":["null","string"]}],"labels":["null",{"type":"object","additionalProperties":{"type":"string"}}],"time":["null",{"type":["null","string"]}],"timezone":["null",{"type":["null","integer"]}],"before":["null",{"type":["null","integer"]}],"after":["null",{"type":["null","integer"]}],"precision":["null",{"type":["null","integer"]}],"calendarmodel":["null",{"type":["null","string"]}],"datavalue__string":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":["null","string"]}}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 9 schemas
+Found 4 unique normalised schemas (too many to display)
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): ["null",{"type":"object","additionalProperties":{"type":"string"}}]
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 9 schemas
+Found 4 unique normalised schemas (too many to display)
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): ["null",{"type":"object","additionalProperties":{"type":"string"}}]
+Not converting to map: no unified schema
 Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (3 total):
   Schema 0:
@@ -4569,6 +5019,117 @@ Schemas not homogeneous, attempting unification
 Not converting to map: no unified schema
 Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "labels": {
+...(511 lines omitted)...
+  "required": [
+    "id",
+    "labels"
+  ],
+  "type": "object"
+}
+  Schema 1:
+{
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+    "sr-ec": {
+...(527 lines omitted)...
+    "zh-sg",
+    "zh-tw",
+    "zu"
+  ],
+  "type": "object"
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"id":{"type":"string"},"labels":{"properties":{"tt-cyrl":{"type":"string"},"mni":{"type":"string"},"km":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"yi":{"type":"string"},"nb":{"type":"string"},"de-ch":{"type":"string"},"nds":{"type":"string"},"sco":{"type":"string"},"ro":{"type":"string"},"zh-hant":{"type":"string"},"gl":{"type":"string"},"ka":{"type":"string"},"tt":{"type":"string"},"diq":{"type":"string"},"bs":{"type":"string"},"hr":{"type":"string"},"ce":{"type":"string"},"as":{"type":"string"},"fur":{"type":"string"},"bxr":{"type":"string"},"map-bms":{"type":"string"},"en-ca":{"type":"string"},"arz":{"type":"string"},"af":{"type":"string"},"la":{"type":"string"},"ar":{"type":"string"},"he":{"type":"string"},"ext":{"type":"string"},"nl":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"sc":{"type":"string"},"sn":{"type":"string"},"ml":{"type":"string"},"mn":{"type":"string"},"vep":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"be":{"type":"string"},"sv":{"type":"string"},"tr":{"type":"string"},"bg":{"type":"string"},"br":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"or":{"type":"string"},"scn":{"type":"string"},"ta":{"type":"string"},"frr":{"type":"string"},"uz":{"type":"string"},"xmf":{"type":"string"},"ckb":{"type":"string"},"zh-cn":{"type":"string"},"ky":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"vo":{"type":"string"},"yue":{"type":"string"},"oc":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"wuu":{"type":"string"},"lt":{"type":"string"},"lrc":{"type":"string"},"en-gb":{"type":"string"},"mg":{"type":"string"},"ko":{"type":"string"},"ku":{"type":"string"},"mr":{"type":"string"},"lzh":{"type":"string"},"hi":{"type":"string"},"mk":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"bcl":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"sw":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"fo":{"type":"string"},"hak":{"type":"string"},"kn":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"fy":{"type":"string"},"sgs":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"id":{"type":"string"},"th":{"type":"string"},"cv":{"type":"string"},"ga":{"type":"string"},"tok":{"type":"string"},"ru":{"type":"string"},"nan":{"type":"string"},"et":{"type":"string"},"roa-tara":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"lij":{"type":"string"},"fa":{"type":"string"},"sh":{"type":"string"},"sk":{"type":"string"},"kab":{"type":"string"}},"required":["af","ar","arz","as","ast","az","bcl","be","be-tarask","bg","bn","br","bs","bxr","ca","ce","ckb","cs","cv","cy","da","de","de-ch","diq","el","en","en-ca","en-gb","eo","es","et","eu","ext","fa","fi","fo","fr","frr","fur","fy","ga","gl","hak","he","hi","hr","hsb","hu","hy","id","it","ja","ka","kab","kk","km","kn","ko","ku","ky","la","lb","lij","lrc","lt","lv","lzh","map-bms","mg","mk","ml","mn","mni","mr","ms","ms-arab","my","nan","nb","nds","nl","oc","or","pa","pl","pt","pt-br","ro","roa-tara","ru","sc","scn","sco","sgs","sh","sk","sl","sn","sr","sv","sw","ta","te","tg","tg-cyrl","th","tl","tok","tr","tt","tt-cyrl","uk","ur","uz","vep","vi","vo","wuu","xmf","yi","yue","zh","zh-cn","zh-hans","zh-hant","zh-tw"],"type":"object"}},"required":["id","labels"],"type":"object"}
+  Schema 3 (NOT scalar): {"properties":{"tt-cyrl":{"type":"string"},"sr-ec":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"ha":{"type":"string"},"yi":{"type":"string"},"nb":{"type":"string"},"pnb":{"type":"string"},"ks":{"type":"string"},"zh-mo":{"type":"string"},"nds":{"type":"string"},"sco":{"type":"string"},"zh-hant":{"type":"string"},"ro":{"type":"string"},"gl":{"type":"string"},"ka":{"type":"string"},"bs":{"type":"string"},"ce":{"type":"string"},"tt":{"type":"string"},"sq":{"type":"string"},"hr":{"type":"string"},"tcy":{"type":"string"},"as":{"type":"string"},"en-ca":{"type":"string"},"bho":{"type":"string"},"arz":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"he":{"type":"string"},"ar":{"type":"string"},"nn":{"type":"string"},"la":{"type":"string"},"ia":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"ml":{"type":"string"},"jv":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"ig":{"type":"string"},"be":{"type":"string"},"sv":{"type":"string"},"tr":{"type":"string"},"bg":{"type":"string"},"sr-el":{"type":"string"},"ba":{"type":"string"},"dag":{"type":"string"},"br":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"zh-sg":{"type":"string"},"scn":{"type":"string"},"or":{"type":"string"},"ta":{"type":"string"},"ary":{"type":"string"},"zh-cn":{"type":"string"},"xmf":{"type":"string"},"uz":{"type":"string"},"ckb":{"type":"string"},"nqo":{"type":"string"},"is":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"min":{"type":"string"},"zh-hk":{"type":"string"},"ast":{"type":"string"},"zh-tw":{"type":"string"},"oc":{"type":"string"},"yue":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"mg":{"type":"string"},"ko":{"type":"string"},"mr":{"type":"string"},"ne":{"type":"string"},"hi":{"type":"string"},"mk":{"type":"string"},"an":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"gsw":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"fi":{"type":"string"},"gpe":{"type":"string"},"cy":{"type":"string"},"udm":{"type":"string"},"io":{"type":"string"},"ja":{"type":"string"},"hu":{"type":"string"},"zh-my":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"nds-nl":{"type":"string"},"kn":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"ilo":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"kaa":{"type":"string"},"id":{"type":"string"},"th":{"type":"string"},"ps":{"type":"string"},"nap":{"type":"string"},"ga":{"type":"string"},"zu":{"type":"string"},"ru":{"type":"string"},"inh":{"type":"string"},"et":{"type":"string"},"gu":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"ksh":{"type":"string"},"mzn":{"type":"string"},"sk":{"type":"string"},"sh":{"type":"string"}},"required":["af","an","ar","ary","arz","as","ast","az","ba","be","be-tarask","bg","bho","bn","br","bs","ca","ce","ckb","cs","cy","da","dag","de","el","en","en-ca","en-gb","eo","es","et","eu","fa","fi","fr","ga","gl","gpe","gsw","gu","ha","he","hi","hr","hsb","hu","hy","ia","id","ig","ilo","inh","io","is","it","ja","jv","ka","kaa","kk","kn","ko","ks","ksh","la","lb","lt","lv","mg","min","mk","ml","mr","ms","ms-arab","my","mzn","nap","nb","nds","nds-nl","ne","nl","nn","nqo","oc","or","pa","pl","pnb","ps","pt","pt-br","ro","ru","scn","sco","sh","sk","sl","sq","sr","sr-ec","sr-el","sv","ta","tcy","te","tg","tg-cyrl","th","tr","tt","tt-cyrl","udm","uk","ur","uz","vec","vi","xmf","yi","yue","zh","zh-cn","zh-hans","zh-hant","zh-hk","zh-mo","zh-my","zh-sg","zh-tw","zu"],"type":"object"}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0:
+{
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+    "mni": {
+...(499 lines omitted)...
+    "zh-hans",
+    "zh-hant",
+    "zh-tw"
+  ],
+  "type": "object"
+}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"tt-cyrl":{"type":"string"},"mni":{"type":"string"},"km":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"yi":{"type":"string"},"nb":{"type":"string"},"de-ch":{"type":"string"},"nds":{"type":"string"},"sco":{"type":"string"},"ro":{"type":"string"},"zh-hant":{"type":"string"},"gl":{"type":"string"},"ka":{"type":"string"},"tt":{"type":"string"},"diq":{"type":"string"},"bs":{"type":"string"},"hr":{"type":"string"},"ce":{"type":"string"},"as":{"type":"string"},"fur":{"type":"string"},"bxr":{"type":"string"},"map-bms":{"type":"string"},"en-ca":{"type":"string"},"arz":{"type":"string"},"af":{"type":"string"},"la":{"type":"string"},"ar":{"type":"string"},"he":{"type":"string"},"ext":{"type":"string"},"nl":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"sc":{"type":"string"},"sn":{"type":"string"},"ml":{"type":"string"},"mn":{"type":"string"},"vep":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"be":{"type":"string"},"sv":{"type":"string"},"tr":{"type":"string"},"bg":{"type":"string"},"br":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"or":{"type":"string"},"scn":{"type":"string"},"ta":{"type":"string"},"frr":{"type":"string"},"uz":{"type":"string"},"xmf":{"type":"string"},"ckb":{"type":"string"},"zh-cn":{"type":"string"},"ky":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"vo":{"type":"string"},"yue":{"type":"string"},"oc":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"wuu":{"type":"string"},"lt":{"type":"string"},"lrc":{"type":"string"},"en-gb":{"type":"string"},"mg":{"type":"string"},"ko":{"type":"string"},"ku":{"type":"string"},"mr":{"type":"string"},"lzh":{"type":"string"},"hi":{"type":"string"},"mk":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"bcl":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"sw":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"fo":{"type":"string"},"hak":{"type":"string"},"kn":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"fy":{"type":"string"},"sgs":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"id":{"type":"string"},"th":{"type":"string"},"cv":{"type":"string"},"ga":{"type":"string"},"tok":{"type":"string"},"ru":{"type":"string"},"nan":{"type":"string"},"et":{"type":"string"},"roa-tara":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"lij":{"type":"string"},"fa":{"type":"string"},"sh":{"type":"string"},"sk":{"type":"string"},"kab":{"type":"string"}},"required":["af","ar","arz","as","ast","az","bcl","be","be-tarask","bg","bn","br","bs","bxr","ca","ce","ckb","cs","cv","cy","da","de","de-ch","diq","el","en","en-ca","en-gb","eo","es","et","eu","ext","fa","fi","fo","fr","frr","fur","fy","ga","gl","hak","he","hi","hr","hsb","hu","hy","id","it","ja","ka","kab","kk","km","kn","ko","ku","ky","la","lb","lij","lrc","lt","lv","lzh","map-bms","mg","mk","ml","mn","mni","mr","ms","ms-arab","my","nan","nb","nds","nl","oc","or","pa","pl","pt","pt-br","ro","roa-tara","ru","sc","scn","sco","sgs","sh","sk","sl","sn","sr","sv","sw","ta","te","tg","tg-cyrl","th","tl","tok","tr","tt","tt-cyrl","uk","ur","uz","vep","vi","vo","wuu","xmf","yi","yue","zh","zh-cn","zh-hans","zh-hant","zh-tw"],"type":"object"}
+Not converting to map: no unified schema
+Checking homogeneity for field "labels" with 126 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "property-labels" with 133 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
   Schema 0: {"properties":{"amount":{"type":"string"},"unit":{"type":"string"},"unit-labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["amount","unit","unit-labels"],"type":"object"}
   Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
   Schema 2: {"type":"string"}
@@ -5095,6 +5656,45 @@ Converting field "qualifiers" to map with schema:
 }
 Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (2 total):
+  Schema 0:
+{
+  "properties": {
+    "pt-br": {
+      "type": "string"
+    },
+    "tt-cyrl": {
+...(347 lines omitted)...
+    "zh-hant",
+    "zh-hk",
+    "zh-tw"
+  ],
+  "type": "object"
+}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 3 (NOT scalar): {"properties":{"pt-br":{"type":"string"},"tt-cyrl":{"type":"string"},"uz":{"type":"string"},"zh-hk":{"type":"string"},"ast":{"type":"string"},"zh-tw":{"type":"string"},"be-tarask":{"type":"string"},"az":{"type":"string"},"it":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"yi":{"type":"string"},"nb":{"type":"string"},"sms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"nds":{"type":"string"},"ko":{"type":"string"},"mk":{"type":"string"},"zh-hant":{"type":"string"},"gl":{"type":"string"},"ka":{"type":"string"},"ro":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"sq":{"type":"string"},"ca":{"type":"string"},"hr":{"type":"string"},"en":{"type":"string"},"hi":{"type":"string"},"gsw":{"type":"string"},"bs":{"type":"string"},"cs":{"type":"string"},"tt":{"type":"string"},"ur":{"type":"string"},"en-ca":{"type":"string"},"se":{"type":"string"},"fi":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"ar":{"type":"string"},"cy":{"type":"string"},"he":{"type":"string"},"nn":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"sw":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"smn":{"type":"string"},"bn":{"type":"string"},"pl":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"lv":{"type":"string"},"pt":{"type":"string"},"kaa":{"type":"string"},"be":{"type":"string"},"id":{"type":"string"},"sv":{"type":"string"},"tr":{"type":"string"},"th":{"type":"string"},"bg":{"type":"string"},"ga":{"type":"string"},"br":{"type":"string"},"eo":{"type":"string"},"dag":{"type":"string"},"ru":{"type":"string"},"uk":{"type":"string"},"ba":{"type":"string"},"el":{"type":"string"},"et":{"type":"string"},"ku-latn":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"zh-cn":{"type":"string"},"xmf":{"type":"string"},"ckb":{"type":"string"},"sk":{"type":"string"},"frr":{"type":"string"},"da":{"type":"string"}},"required":["af","ar","ast","az","ba","be","be-tarask","bg","bn","br","bs","ca","ckb","cs","cy","da","dag","de","el","en","en-ca","en-gb","eo","es","et","eu","fa","fi","fr","frr","ga","gl","gsw","he","hi","hr","hsb","hu","id","it","ja","ka","kaa","ko","ku-latn","lb","lt","lv","mk","ms","ms-arab","my","nb","nds","nl","nn","pl","pt","pt-br","ro","ru","se","sk","sl","smn","sms","sq","sr","sv","sw","tg","th","tr","tt","tt-cyrl","uk","ur","uz","vec","vi","xmf","yi","zh","zh-cn","zh-hans","zh-hant","zh-hk","zh-tw"],"type":"object"}
+Not converting to map: no unified schema
+Checking homogeneity for field "property-labels" with 88 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (2 total):
   Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
   Schema 1: {"type":"string"}
 Schemas not homogeneous, attempting unification
@@ -5520,6 +6120,117 @@ Converting field "root" to map with schema:
     ]
   }
 }
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "object",
+  "properties": {
+    "text": [
+      "null",
+      {
+...(56 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+...(940 lines omitted)...
+    "an",
+    "ht",
+    "pfl",
+    "mzn"
+  ]
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"text":["null",{"type":["null","string"]}],"language":["null",{"type":["null","string"]}],"datavalue__string":["null",{"type":["null","string"]}],"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","properties":{"tt-cyrl":{"type":"string"},"sr-ec":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"nb":{"type":"string"},"pnb":{"type":"string"},"nds":{"type":"string"},"zh-mo":{"type":"string"},"ro":{"type":"string"},"bs":{"type":"string"},"gl":{"type":"string"},"ka":{"type":"string"},"tt":{"type":"string"},"zh-hant":{"type":"string"},"sq":{"type":"string"},"hr":{"type":"string"},"en-ca":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"nn":{"type":"string"},"he":{"type":"string"},"ar":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"ml":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"ig":{"type":"string"},"sv":{"type":"string"},"sr-el":{"type":"string"},"be":{"type":"string"},"bg":{"type":"string"},"tr":{"type":"string"},"ba":{"type":"string"},"dag":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"zh-sg":{"type":"string"},"scn":{"type":"string"},"or":{"type":"string"},"ta":{"type":"string"},"zh-cn":{"type":"string"},"xmf":{"type":"string"},"uz":{"type":"string"},"ky":{"type":"string"},"is":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"frr":{"type":"string"},"zh-hk":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"yue":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"ko":{"type":"string"},"mr":{"type":"string"},"mk":{"type":"string"},"hi":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"gsw":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"ilo":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"kaa":{"type":"string"},"id":{"type":"string"},"th":{"type":"string"},"nap":{"type":"string"},"ga":{"type":"string"},"ru":{"type":"string"},"et":{"type":"string"},"gu":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"sk":{"type":"string"},"sh":{"type":"string"},"de-ch":{"type":["null","string"]},"sco":{"type":["null","string"]},"ia":{"type":["null","string"]},"smn":{"type":["null","string"]},"sms":{"type":["null","string"]},"se":{"type":["null","string"]},"diq":{"type":["null","string"]},"la":{"type":["null","string"]},"olo":{"type":["null","string"]},"an":{"type":["null","string"]},"ht":{"type":["null","string"]},"pfl":{"type":["null","string"]},"mzn":{"type":["null","string"]},"ha":{"type":["null","string"]},"ks":{"type":["null","string"]},"ce":{"type":["null","string"]},"br":{"type":["null","string"]},"oc":{"type":["null","string"]},"io":{"type":["null","string"]},"zh-my":{"type":["null","string"]},"fo":{"type":["null","string"]},"ps":{"type":["null","string"]},"de-at":["null",{"type":["null","string"]}],"bho":["null",{"type":["null","string"]}],"sc":["null",{"type":["null","string"]}],"kl":["null",{"type":["null","string"]}],"ku":["null",{"type":["null","string"]}],"gpe":["null",{"type":["null","string"]}],"en-us":["null",{"type":["null","string"]}],"sw":["null",{"type":["null","string"]}],"km":["null",{"type":["null","string"]}],"om":["null",{"type":["null","string"]}],"haw":["null",{"type":["null","string"]}],"yi":["null",{"type":["null","string"]}],"ban-bali":["null",{"type":["null","string"]}],"si":["null",{"type":["null","string"]}],"as":["null",{"type":["null","string"]}],"yo":["null",{"type":["null","string"]}],"ban":["null",{"type":["null","string"]}],"pap":["null",{"type":["null","string"]}],"ext":["null",{"type":["null","string"]}],"nod":["null",{"type":["null","string"]}],"mn":["null",{"type":["null","string"]}],"pcm":["null",{"type":["null","string"]}],"myv":["null",{"type":["null","string"]}],"lo":["null",{"type":["null","string"]}],"no":["null",{"type":["null","string"]}],"shi":["null",{"type":["null","string"]}],"szl":["null",{"type":["null","string"]}],"ku-latn":["null",{"type":["null","string"]}],"ckb":["null",{"type":["null","string"]}],"ne":["null",{"type":["null","string"]}],"wa":["null",{"type":["null","string"]}],"grc":["null",{"type":["null","string"]}],"kw":["null",{"type":["null","string"]}],"udm":["null",{"type":["null","string"]}],"lfn":["null",{"type":["null","string"]}],"kn":["null",{"type":["null","string"]}],"fy":["null",{"type":["null","string"]}],"gd":["null",{"type":["null","string"]}],"crh":["null",{"type":["null","string"]}],"zu":["null",{"type":["null","string"]}],"pap-aw":["null",{"type":["null","string"]}],"kab":["null",{"type":["null","string"]}],"lez":{"type":["null","string"]}},"required":["tt-cyrl","sr-ec","be-tarask","it","nb","pnb","nds","zh-mo","ro","bs","gl","ka","tt","zh-hant","sq","hr","en-ca","nl","af","nn","he","ar","sl","eu","my","ml","pl","hy","lv","pa","pt","ig","sv","sr-el","be","bg","tr","ba","dag","eo","uk","el","zh-sg","scn","or","ta","zh-cn","xmf","uz","ky","is","da","pt-br","frr","zh-hk","zh-tw","ast","yue","az","te","es","ms","lt","en-gb","vec","ko","mr","mk","hi","hsb","ms-arab","ca","gsw","en","cs","ur","tl","fi","cy","hu","ja","tg-cyrl","sr","fr","kk","bn","ilo","zh","zh-hans","kaa","id","th","nap","ga","ru","et","gu","vi","tg","de","lb","fa","sk","sh","de-ch","sco","ia","smn","sms","se","diq","la","olo","an","ht","pfl","mzn"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+datavalue: All schemas are scalars, attempting scalar unification
+datavalue: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
+Checking homogeneity for field "property-labels" with 169 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"string"}
+  Schema 1: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+property-labels: All schemas are scalars, attempting scalar unification
+property-labels: Unified scalar schemas to nullable string
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": [
+    "null",
+    "string"
+  ]
+}
+Checking homogeneity for field "root" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+: All schemas are scalars, attempting scalar unification
+: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":["null","string"]}}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "text": [
+      "null",
+      {
+...(56 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"text":["null",{"type":["null","string"]}],"language":["null",{"type":["null","string"]}],"datavalue__string":["null",{"type":["null","string"]}],"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":["null","string"]}}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+datavalue: All schemas are scalars, attempting scalar unification
+datavalue: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+: All schemas are scalars, attempting scalar unification
+: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
 Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (3 total):
   Schema 0:
@@ -6395,6 +7106,117 @@ Converting field "root" to map with schema:
     ]
   }
 }
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "object",
+  "properties": {
+    "text": [
+      "null",
+      {
+...(56 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "tt-cyrl": {
+      "type": "string"
+    },
+...(940 lines omitted)...
+    "an",
+    "ht",
+    "pfl",
+    "mzn"
+  ]
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"text":["null",{"type":["null","string"]}],"language":["null",{"type":["null","string"]}],"datavalue__string":["null",{"type":["null","string"]}],"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","properties":{"tt-cyrl":{"type":"string"},"sr-ec":{"type":"string"},"be-tarask":{"type":"string"},"it":{"type":"string"},"nb":{"type":"string"},"pnb":{"type":"string"},"nds":{"type":"string"},"zh-mo":{"type":"string"},"ro":{"type":"string"},"bs":{"type":"string"},"gl":{"type":"string"},"ka":{"type":"string"},"tt":{"type":"string"},"zh-hant":{"type":"string"},"sq":{"type":"string"},"hr":{"type":"string"},"en-ca":{"type":"string"},"nl":{"type":"string"},"af":{"type":"string"},"nn":{"type":"string"},"he":{"type":"string"},"ar":{"type":"string"},"sl":{"type":"string"},"eu":{"type":"string"},"my":{"type":"string"},"ml":{"type":"string"},"pl":{"type":"string"},"hy":{"type":"string"},"lv":{"type":"string"},"pa":{"type":"string"},"pt":{"type":"string"},"ig":{"type":"string"},"sv":{"type":"string"},"sr-el":{"type":"string"},"be":{"type":"string"},"bg":{"type":"string"},"tr":{"type":"string"},"ba":{"type":"string"},"dag":{"type":"string"},"eo":{"type":"string"},"uk":{"type":"string"},"el":{"type":"string"},"zh-sg":{"type":"string"},"scn":{"type":"string"},"or":{"type":"string"},"ta":{"type":"string"},"zh-cn":{"type":"string"},"xmf":{"type":"string"},"uz":{"type":"string"},"ky":{"type":"string"},"is":{"type":"string"},"da":{"type":"string"},"pt-br":{"type":"string"},"frr":{"type":"string"},"zh-hk":{"type":"string"},"zh-tw":{"type":"string"},"ast":{"type":"string"},"yue":{"type":"string"},"az":{"type":"string"},"te":{"type":"string"},"es":{"type":"string"},"ms":{"type":"string"},"lt":{"type":"string"},"en-gb":{"type":"string"},"vec":{"type":"string"},"ko":{"type":"string"},"mr":{"type":"string"},"mk":{"type":"string"},"hi":{"type":"string"},"hsb":{"type":"string"},"ms-arab":{"type":"string"},"ca":{"type":"string"},"gsw":{"type":"string"},"en":{"type":"string"},"cs":{"type":"string"},"ur":{"type":"string"},"tl":{"type":"string"},"fi":{"type":"string"},"cy":{"type":"string"},"hu":{"type":"string"},"ja":{"type":"string"},"tg-cyrl":{"type":"string"},"sr":{"type":"string"},"fr":{"type":"string"},"kk":{"type":"string"},"bn":{"type":"string"},"ilo":{"type":"string"},"zh":{"type":"string"},"zh-hans":{"type":"string"},"kaa":{"type":"string"},"id":{"type":"string"},"th":{"type":"string"},"nap":{"type":"string"},"ga":{"type":"string"},"ru":{"type":"string"},"et":{"type":"string"},"gu":{"type":"string"},"vi":{"type":"string"},"tg":{"type":"string"},"de":{"type":"string"},"lb":{"type":"string"},"fa":{"type":"string"},"sk":{"type":"string"},"sh":{"type":"string"},"de-ch":{"type":["null","string"]},"sco":{"type":["null","string"]},"ia":{"type":["null","string"]},"smn":{"type":["null","string"]},"sms":{"type":["null","string"]},"se":{"type":["null","string"]},"diq":{"type":["null","string"]},"la":{"type":["null","string"]},"olo":{"type":["null","string"]},"an":{"type":["null","string"]},"ht":{"type":["null","string"]},"pfl":{"type":["null","string"]},"mzn":{"type":["null","string"]},"ha":{"type":["null","string"]},"ks":{"type":["null","string"]},"ce":{"type":["null","string"]},"br":{"type":["null","string"]},"oc":{"type":["null","string"]},"io":{"type":["null","string"]},"zh-my":{"type":["null","string"]},"fo":{"type":["null","string"]},"ps":{"type":["null","string"]},"de-at":["null",{"type":["null","string"]}],"bho":["null",{"type":["null","string"]}],"sc":["null",{"type":["null","string"]}],"kl":["null",{"type":["null","string"]}],"ku":["null",{"type":["null","string"]}],"gpe":["null",{"type":["null","string"]}],"en-us":["null",{"type":["null","string"]}],"sw":["null",{"type":["null","string"]}],"km":["null",{"type":["null","string"]}],"om":["null",{"type":["null","string"]}],"haw":["null",{"type":["null","string"]}],"yi":["null",{"type":["null","string"]}],"ban-bali":["null",{"type":["null","string"]}],"si":["null",{"type":["null","string"]}],"as":["null",{"type":["null","string"]}],"yo":["null",{"type":["null","string"]}],"ban":["null",{"type":["null","string"]}],"pap":["null",{"type":["null","string"]}],"ext":["null",{"type":["null","string"]}],"nod":["null",{"type":["null","string"]}],"mn":["null",{"type":["null","string"]}],"pcm":["null",{"type":["null","string"]}],"myv":["null",{"type":["null","string"]}],"lo":["null",{"type":["null","string"]}],"no":["null",{"type":["null","string"]}],"shi":["null",{"type":["null","string"]}],"szl":["null",{"type":["null","string"]}],"ku-latn":["null",{"type":["null","string"]}],"ckb":["null",{"type":["null","string"]}],"ne":["null",{"type":["null","string"]}],"wa":["null",{"type":["null","string"]}],"grc":["null",{"type":["null","string"]}],"kw":["null",{"type":["null","string"]}],"udm":["null",{"type":["null","string"]}],"lfn":["null",{"type":["null","string"]}],"kn":["null",{"type":["null","string"]}],"fy":["null",{"type":["null","string"]}],"gd":["null",{"type":["null","string"]}],"crh":["null",{"type":["null","string"]}],"zu":["null",{"type":["null","string"]}],"pap-aw":["null",{"type":["null","string"]}],"kab":["null",{"type":["null","string"]}],"lez":{"type":["null","string"]}},"required":["tt-cyrl","sr-ec","be-tarask","it","nb","pnb","nds","zh-mo","ro","bs","gl","ka","tt","zh-hant","sq","hr","en-ca","nl","af","nn","he","ar","sl","eu","my","ml","pl","hy","lv","pa","pt","ig","sv","sr-el","be","bg","tr","ba","dag","eo","uk","el","zh-sg","scn","or","ta","zh-cn","xmf","uz","ky","is","da","pt-br","frr","zh-hk","zh-tw","ast","yue","az","te","es","ms","lt","en-gb","vec","ko","mr","mk","hi","hsb","ms-arab","ca","gsw","en","cs","ur","tl","fi","cy","hu","ja","tg-cyrl","sr","fr","kk","bn","ilo","zh","zh-hans","kaa","id","th","nap","ga","ru","et","gu","vi","tg","de","lb","fa","sk","sh","de-ch","sco","ia","smn","sms","se","diq","la","olo","an","ht","pfl","mzn"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+datavalue: All schemas are scalars, attempting scalar unification
+datavalue: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
+Checking homogeneity for field "property-labels" with 169 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"string"}
+  Schema 1: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+property-labels: All schemas are scalars, attempting scalar unification
+property-labels: Unified scalar schemas to nullable string
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "property-labels" to map with schema:
+{
+  "type": [
+    "null",
+    "string"
+  ]
+}
+Checking homogeneity for field "root" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+: All schemas are scalars, attempting scalar unification
+: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 4 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":["null","string"]}}
+  Schema 1:
+{
+  "type": "object",
+  "properties": {
+    "text": [
+      "null",
+      {
+...(56 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Not all schemas are scalars
+  Schema 1 (NOT scalar): {"type":"object","properties":{"text":["null",{"type":["null","string"]}],"language":["null",{"type":["null","string"]}],"datavalue__string":["null",{"type":["null","string"]}],"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}
+  Schema 3 (NOT scalar): {"type":"object","additionalProperties":{"type":["null","string"]}}
+Not converting to map: no unified schema
+Checking homogeneity for field "datavalue" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+datavalue: All schemas are scalars, attempting scalar unification
+datavalue: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 9 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"string"}
+  Schema 2: {"type":["null","string"]}
+Schemas not homogeneous, attempting unification
+: All schemas are scalars, attempting scalar unification
+: Cannot unify incompatible scalar types: ["integer", "string"]
+Not converting to map: no unified schema
 Checking homogeneity for field "root" with 4 schemas
 Unique normalised schemas (3 total):
   Schema 0:

@@ -40,6 +40,19 @@ fn extract_non_null_schema(schema: &Value) -> Value {
     schema.clone()
 }
 
+fn contains_anyof(value: &Value) -> bool {
+    match value {
+        Value::Object(obj) => {
+            if obj.contains_key("anyOf") {
+                return true;
+            }
+            obj.values().any(contains_anyof)
+        }
+        Value::Array(arr) => arr.iter().any(contains_anyof),
+        _ => false,
+    }
+}
+
 /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
 ///
 /// This mutates the schema in place, applying user overrides and heuristics.
@@ -87,6 +100,35 @@ pub(crate) fn rewrite_objects(
                         return;
                     }
                     _ => {}
+                }
+            }
+        }
+
+        // --- Handle anyOf unions ---
+        if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
+            if config.unify_maps {
+                debug!(
+                    config,
+                    "Found anyOf union with {} schemas, attempting unification",
+                    any_of_schemas.len()
+                );
+                if let Some(unified) =
+                    unify_anyof_schemas(any_of_schemas, field_name.unwrap_or(""), config)
+                {
+                    debug!(config, "Successfully unified anyOf schemas");
+                    // Replace the entire schema with the unified result
+                    *schema = unified;
+                    // Recurse into the unified schema to apply further processing
+                    rewrite_objects(schema, field_name, config, is_root);
+                    return;
+                } else {
+                    debug!(config, "Failed to unify anyOf schemas, leaving as-is");
+                }
+            }
+            // If unification disabled or failed, still recurse into each anyOf branch
+            if let Some(any_of_array) = obj.get_mut("anyOf").and_then(|a| a.as_array_mut()) {
+                for any_of_schema in any_of_array {
+                    rewrite_objects(any_of_schema, field_name, config, false);
                 }
             }
         }
@@ -245,12 +287,15 @@ pub(crate) fn rewrite_objects(
             let should_be_map = if above_threshold && unified_schema.is_some() {
                 debug!(
                     config,
-                    "Checking if should convert to map: above_threshold={}, unified_schema=Some",
-                    above_threshold
+                    "Checking if should convert to map: above_threshold=true, unified_schema=Some",
                 );
 
+                // Don't convert to map if the unified schema contains anyOf - let it be processed first
+                if unified_schema.as_ref().is_some_and(contains_anyof) {
+                    debug!(config, "Not converting to map: unified schema contains anyOf that needs processing");
+                    false
                 // Skip map inference if this is the root and no_root_map is enabled
-                if is_root && config.no_root_map {
+                } else if is_root && config.no_root_map {
                     debug!(
                         config,
                         "Skipping map conversion: is root and no_root_map=true"
@@ -308,7 +353,15 @@ pub(crate) fn rewrite_objects(
                     obj.remove("properties");
                     obj.remove("required");
                     obj.insert("type".to_string(), Value::String("object".to_string()));
+
+                    // Process the schema being moved to additionalProperties for nested anyOf
+                    let mut processed_schema = schema.clone();
+                    rewrite_objects(&mut processed_schema, None, config, false);
+                    // if processed_schema.to_string().contains("anyOf") {
+                    //     rewrite_objects(&mut processed_schema, None, config, false);
+                    // }
                     obj.insert("additionalProperties".to_string(), schema);
+
                     return;
                 }
             }
