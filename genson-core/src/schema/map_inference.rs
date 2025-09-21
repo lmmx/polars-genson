@@ -40,6 +40,19 @@ fn extract_non_null_schema(schema: &Value) -> Value {
     schema.clone()
 }
 
+fn contains_anyof(value: &Value) -> bool {
+    match value {
+        Value::Object(obj) => {
+            if obj.contains_key("anyOf") {
+                return true;
+            }
+            obj.values().any(contains_anyof)
+        }
+        Value::Array(arr) => arr.iter().any(contains_anyof),
+        _ => false,
+    }
+}
+
 /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
 ///
 /// This mutates the schema in place, applying user overrides and heuristics.
@@ -273,12 +286,7 @@ pub(crate) fn rewrite_objects(
             // Apply map inference logic
             let should_be_map = if above_threshold && unified_schema.is_some() {
                 // Don't convert to map if the unified schema contains anyOf - let it be processed first
-                if unified_schema
-                    .as_ref()
-                    .unwrap()
-                    .to_string()
-                    .contains("anyOf")
-                {
+                if contains_anyof(unified_schema.as_ref().unwrap()) {
                     debug!(config, "Not converting to map: unified schema contains anyOf that needs processing");
                     false
                 } else {
