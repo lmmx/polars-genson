@@ -184,3 +184,51 @@ fn test_anyof_rewrite_objects_nested() {
     assert!(inner_schema.get("anyOf").is_none(), "anyOf should be unified away");
     assert_eq!(inner_schema["type"], "object");
 }
+
+#[test]
+fn test_schema_inference_root_anyof() {
+    let test_data = vec![
+        json!({"datavalue": "string-value"}).to_string(),
+        json!({"datavalue": {"timezone": 0}}).to_string(),
+    ];
+
+    let config = SchemaInferenceConfig {
+        map_threshold: 1,
+        unify_maps: true,
+        wrap_scalars: true,
+        debug: true,
+        ..Default::default()
+    };
+
+    let result = infer_json_schema_from_strings(&test_data, config).unwrap();
+    println!("Root anyOf schema: {}", serde_json::to_string_pretty(&result.schema).unwrap());
+
+    let datavalue_schema = &result.schema["properties"]["datavalue"];
+    assert_eq!(datavalue_schema["type"], "object");
+    assert!(datavalue_schema.get("properties").is_some());
+    assert!(datavalue_schema["properties"].get("datavalue__string").is_some());
+}
+
+#[test]
+fn test_schema_inference_nested_anyof() {
+    let test_data = vec![
+        json!({"claims": {"P31": {"datavalue": "string-value"}}}).to_string(),
+        json!({"claims": {"P31": {"datavalue": {"timezone": 0}}}}).to_string(),
+    ];
+
+    let config = SchemaInferenceConfig {
+        map_threshold: 1,
+        unify_maps: true,
+        wrap_scalars: true,
+        debug: true,
+        ..Default::default()
+    };
+
+    let result = infer_json_schema_from_strings(&test_data, config).unwrap();
+    println!("Nested anyOf schema: {}", serde_json::to_string_pretty(&result.schema).unwrap());
+
+    let datavalue_schema = &result.schema["properties"]["claims"]["additionalProperties"]["additionalProperties"];
+    assert_eq!(datavalue_schema["type"], "object");
+    assert!(datavalue_schema.get("properties").is_some());
+    assert!(datavalue_schema["properties"].get("datavalue__string").is_some());
+}

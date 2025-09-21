@@ -38,54 +38,52 @@ info:
         "values": {
           "name": "claims_values",
           "type": "map",
-          "values": [
-            {
-              "type": "record",
-              "name": "claims_values_values",
-              "namespace": "genson.document_types",
-              "fields": [
-                {
-                  "name": "timezone",
-                  "type": [
-                    "null",
-                    "int"
-                  ]
-                },
-                {
-                  "name": "precision",
-                  "type": [
-                    "null",
-                    "int"
-                  ]
-                },
-                {
-                  "name": "id",
-                  "type": [
-                    "null",
-                    "string"
-                  ]
-                },
-                {
-                  "name": "labels",
-                  "type": [
-                    "null",
-                    {
-                      "type": "record",
-                      "name": "labels",
-                      "namespace": "genson.document_types.claims_values_values_types",
-                      "fields": [
-                        {
-                          "name": "en",
-                          "type": "string"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            "string"
-          ]
+          "values": {
+            "type": "record",
+            "name": "claims_values_values",
+            "namespace": "genson.document_types",
+            "fields": [
+              {
+                "name": "timezone",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "precision",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "id",
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              {
+                "name": "labels",
+                "type": [
+                  "null",
+                  {
+                    "name": "labels",
+                    "type": "map",
+                    "values": "string"
+                  }
+                ]
+              },
+              {
+                "name": "datavalue__string",
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            ]
+          }
         }
       }
     }

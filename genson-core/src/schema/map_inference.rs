@@ -272,35 +272,46 @@ pub(crate) fn rewrite_objects(
 
             // Apply map inference logic
             let should_be_map = if above_threshold && unified_schema.is_some() {
-                debug!(
-                    config,
-                    "Checking if should convert to map: above_threshold={}, unified_schema=Some",
-                    above_threshold
-                );
-
-                // Skip map inference if this is the root and no_root_map is enabled
-                if is_root && config.no_root_map {
-                    debug!(
-                        config,
-                        "Skipping map conversion: is root and no_root_map=true"
-                    );
+                // Don't convert to map if the unified schema contains anyOf - let it be processed first
+                if unified_schema
+                    .as_ref()
+                    .unwrap()
+                    .to_string()
+                    .contains("anyOf")
+                {
+                    debug!(config, "Not converting to map: unified schema contains anyOf that needs processing");
                     false
-                } else if let Some(max_required) = config.map_max_required_keys {
-                    let result = required_key_count <= max_required;
-                    debug!(
-                        config,
-                        "Map conversion decision: required_keys={} <= max_required={} = {}",
-                        required_key_count,
-                        max_required,
-                        result
-                    );
-                    result
                 } else {
                     debug!(
                         config,
-                        "Map conversion: no max_required_keys limit, converting to map"
+                        "Checking if should convert to map: above_threshold={}, unified_schema=Some",
+                        above_threshold
                     );
-                    true
+
+                    // Skip map inference if this is the root and no_root_map is enabled
+                    if is_root && config.no_root_map {
+                        debug!(
+                            config,
+                            "Skipping map conversion: is root and no_root_map=true"
+                        );
+                        false
+                    } else if let Some(max_required) = config.map_max_required_keys {
+                        let result = required_key_count <= max_required;
+                        debug!(
+                            config,
+                            "Map conversion decision: required_keys={} <= max_required={} = {}",
+                            required_key_count,
+                            max_required,
+                            result
+                        );
+                        result
+                    } else {
+                        debug!(
+                            config,
+                            "Map conversion: no max_required_keys limit, converting to map"
+                        );
+                        true
+                    }
                 }
             } else {
                 if !above_threshold {
@@ -337,7 +348,15 @@ pub(crate) fn rewrite_objects(
                     obj.remove("properties");
                     obj.remove("required");
                     obj.insert("type".to_string(), Value::String("object".to_string()));
+
+                    // Process the schema being moved to additionalProperties for nested anyOf
+                    let mut processed_schema = schema.clone();
+                    rewrite_objects(&mut processed_schema, None, config, false);
+                    // if processed_schema.to_string().contains("anyOf") {
+                    //     rewrite_objects(&mut processed_schema, None, config, false);
+                    // }
                     obj.insert("additionalProperties".to_string(), schema);
+
                     return;
                 }
             }

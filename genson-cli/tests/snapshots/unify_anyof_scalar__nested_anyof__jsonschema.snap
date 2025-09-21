@@ -32,36 +32,39 @@ info:
       "additionalProperties": {
         "type": "object",
         "additionalProperties": {
-          "anyOf": [
-            {
-              "properties": {
-                "timezone": {
-                  "type": "integer"
-                },
-                "precision": {
-                  "type": "integer"
-                },
-                "id": {
-                  "type": "string"
-                },
-                "labels": {
-                  "properties": {
-                    "en": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "en"
-                  ],
-                  "type": "object"
-                }
-              },
-              "type": "object"
+          "type": "object",
+          "properties": {
+            "timezone": {
+              "type": [
+                "null",
+                "integer"
+              ]
             },
-            {
-              "type": "string"
+            "precision": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "id": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "datavalue__string": {
+              "type": [
+                "null",
+                "string"
+              ]
             }
-          ]
+          }
         }
       }
     }
