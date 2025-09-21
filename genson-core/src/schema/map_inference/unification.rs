@@ -347,14 +347,14 @@ pub(crate) fn check_unifiable_schemas(
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
-    debug!(
+    debug_verbose!(
         config,
         "=== check_unifiable_schemas called with path='{}' and {} schemas:",
         path,
         schemas.len()
     );
     for (i, schema) in schemas.iter().enumerate() {
-        debug!(
+        debug_verbose!(
             config,
             "  Schema[{}]: {}",
             i,
