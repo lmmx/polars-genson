@@ -376,37 +376,6 @@ pub(crate) fn check_unifiable_schemas(
                 "{}: All schemas are scalars, attempting scalar unification", path
             );
             return unify_scalar_schemas(schemas, path, config);
-        // } else if config.wrap_scalars && schemas.iter().any(is_scalar_schema) && schemas.iter().any(is_object_schema) {
-        //     // Mixed scalar+object schemas with wrap_scalars enabled - promote scalars then proceed
-        //     debug!(config, "{}: Mixed scalar+object schemas, proceeding with scalar promotion", path);
-        //
-        //     let field_name = path.split('.').last().unwrap_or("");
-        //     let mut promoted_schemas = Vec::new();
-        //
-        //     for schema in schemas {
-        //         if is_scalar_schema(schema) {
-        //             if let Some(scalar_type) = get_scalar_type_name(schema) {
-        //                 let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
-        //                 let promoted = json!({
-        //                     "type": "object",
-        //                     "properties": {
-        //                         wrapped_key.clone(): schema.clone()
-        //                     }
-        //                 });
-        //                 debug!(config, "{}: Promoted scalar {} to object with key {}", path, scalar_type, wrapped_key);
-        //                 promoted_schemas.push(promoted);
-        //             } else {
-        //                 debug!(config, "{}: Failed to get scalar type for promotion", path);
-        //                 return None;
-        //             }
-        //         } else {
-        //             promoted_schemas.push(schema.clone());
-        //         }
-        //     }
-        //
-        //     // Recursively call with promoted schemas (now all objects)
-        //     debug!(config, "RECURSIVE: About to call check_unifiable_schemas recursively with {} promoted schemas", promoted_schemas.len());
-        //     return check_unifiable_schemas(&promoted_schemas, path, config);
         } else {
             debug!(config, "{}: Not all schemas are scalars", path);
             for (i, schema) in schemas.iter().enumerate() {
