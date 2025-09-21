@@ -5,9 +5,9 @@ use crate::infer_json_schema_from_strings;
 #[test]
 fn test_scalar_unification_ndjson_mixed_nullable_formats() {
     let ndjson_input = r#"
-{"colors": {"a": {"hex": {"r": "ff"}}, "b": {"hex": {"g": "00"}}}}
-{"colors": {"c": {"hex": {"b": "cc"}}, "a": {"hex": {"g": "aa"}}}}
-{"colors": {"b": {"rgb": 255}}}
+{"theme": {"red": {"colors": {"primary": "ff"}}, "blue": {"colors": {"secondary": "00"}}}}
+{"theme": {"green": {"colors": {"accent": "cc"}}, "red": {"colors": {"secondary": "aa"}}}}
+{"theme": {"blue": {"brightness": 255}}}
 "#;
 
     let config = SchemaInferenceConfig {
@@ -20,21 +20,22 @@ fn test_scalar_unification_ndjson_mixed_nullable_formats() {
 
     let result = infer_json_schema_from_strings(&[ndjson_input.to_string()], config)
         .expect("Should handle NDJSON with nested maps triggering scalar unification");
+    println!("Generated schema: {}", serde_json::to_string_pretty(&result.schema).unwrap());
 
-    // Navigate to the hex field that should have been unified
-    let colors_schema = &result.schema["properties"]["colors"];
-    assert!(colors_schema.get("additionalProperties").is_some());
+    // Navigate to the colors field that should have been unified
+    let themes_schema = &result.schema["properties"]["theme"];
+    assert!(themes_schema.get("additionalProperties").is_some());
 
-    let color_record = &colors_schema["additionalProperties"];
-    let hex_schema = &color_record["properties"]["hex"];
+    let theme_record = &themes_schema["additionalProperties"];
+    let colors_schema = &theme_record["properties"]["colors"];
 
     // Should be converted to map due to scalar unification
-    assert!(hex_schema.get("additionalProperties").is_some());
-    assert!(hex_schema.get("properties").is_none());
+    assert!(colors_schema.get("additionalProperties").is_some());
+    assert!(colors_schema.get("properties").is_none());
 
-    // The unified type should be nullable string (some hex components missing from some colors)
-    let hex_values = &hex_schema["additionalProperties"];
-    assert_eq!(hex_values["type"], json!(["null", "string"]));
+    // The unified type should be nullable string (some colors components missing from some themes)
+    let colors_values = &colors_schema["additionalProperties"];
+    assert_eq!(colors_values["type"], json!(["null", "string"]));
 }
 
 #[test]
@@ -71,4 +72,56 @@ fn test_is_scalar_schema_with_mixed_formats() {
     // Should reject object types
     assert!(!is_scalar_schema(&json!({"type": "object", "properties": {}})));
     assert!(!is_scalar_schema(&json!({"type": "array", "items": {}})));
+}
+
+#[ignore]
+#[test]
+fn test_check_unifiable_schemas_anyof_case() {
+    let schemas = vec![
+        json!({"type": "object", "properties": {"timezone": {"type": "integer"}}}),
+        json!({"type": "string"})
+    ];
+
+    let config = SchemaInferenceConfig {
+        map_threshold: 1,
+        unify_maps: true,
+        wrap_scalars: true,
+        debug: true,
+        ..Default::default()
+    };
+
+    let result = check_unifiable_schemas(&schemas, "datavalue", &config);
+    println!("Generated schema: {}", serde_json::to_string_pretty(&result).unwrap());
+
+    // Currently returns None, should return unified schema with scalar promotion
+    assert!(result.is_some(), "Should unify mixed scalar+object schemas with wrap_scalars");
+}
+
+#[ignore]
+#[test]
+fn test_scalar_vs_mixed_type_object_unification() {
+    let test_data = vec![
+        json!({"datavalue": "7139c051-8ea3-3f93-8bbc-6e7dff6d61a4"}).to_string(),
+        json!({"datavalue": {"timezone": 0, "precision": 11}}).to_string(),
+        json!({"datavalue": {"id": "Q1022293", "labels": {"ru": "до мажор"}}}).to_string(),
+    ];
+
+    let config = SchemaInferenceConfig {
+        map_threshold: 1,
+        unify_maps: true,
+        wrap_scalars: true,
+        debug: true,
+        ..Default::default()
+    };
+
+    let result = infer_json_schema_from_strings(&test_data, config)
+        .expect("Should succeed with scalar promotion and record unification");
+    println!("Generated schema: {}", serde_json::to_string_pretty(&result.schema).unwrap());
+
+    let datavalue_schema = &result.schema["properties"]["datavalue"];
+    assert_eq!(datavalue_schema["type"], "object");
+
+    // Should have properties (record) not additionalProperties (map) due to mixed value types
+    assert!(datavalue_schema.get("properties").is_some());
+    assert!(datavalue_schema.get("additionalProperties").is_none());
 }

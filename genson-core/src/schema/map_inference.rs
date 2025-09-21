@@ -91,6 +91,35 @@ pub(crate) fn rewrite_objects(
             }
         }
 
+        // --- Handle anyOf unions ---
+        if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
+            if config.unify_maps {
+                debug!(
+                    config,
+                    "Found anyOf union with {} schemas, attempting unification",
+                    any_of_schemas.len()
+                );
+                if let Some(unified) =
+                    check_unifiable_schemas(any_of_schemas, field_name.unwrap_or(""), config)
+                {
+                    debug!(config, "Successfully unified anyOf schemas");
+                    // Replace the entire schema with the unified result
+                    *schema = unified;
+                    // Recurse into the unified schema to apply further processing
+                    rewrite_objects(schema, field_name, config, is_root);
+                    return;
+                } else {
+                    debug!(config, "Failed to unify anyOf schemas, leaving as-is");
+                }
+            }
+            // If unification disabled or failed, still recurse into each anyOf branch
+            if let Some(any_of_array) = obj.get_mut("anyOf").and_then(|a| a.as_array_mut()) {
+                for any_of_schema in any_of_array {
+                    rewrite_objects(any_of_schema, field_name, config, false);
+                }
+            }
+        }
+
         // --- Heuristic rewrite ---
         if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
             let key_count = props.len(); // |UK| - total keys observed
