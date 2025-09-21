@@ -1,0 +1,24 @@
+---
+source: genson-cli/tests/unify_anyof_scalar.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "1"
+    - "--unify-maps"
+    - "--normalise"
+  input:
+    - datavalue: string-value
+    - datavalue:
+        timezone: 0
+        precision: 11
+    - datavalue:
+        id: X
+        labels:
+          en: thing
+---
+{"datavalue":{"timezone":null,"precision":null,"id":null,"labels":null,"datavalue__string":"string-value"}}
+{"datavalue":{"timezone":0,"precision":11,"id":null,"labels":null,"datavalue__string":null}}
+{"datavalue":{"timezone":null,"precision":null,"id":"X","labels":{"en":"thing"},"datavalue__string":null}}

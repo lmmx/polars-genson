@@ -1,0 +1,73 @@
+---
+source: genson-cli/tests/unify_anyof_scalar.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "1"
+    - "--unify-maps"
+  input:
+    - claims:
+        P31:
+          datavalue: string-value
+    - claims:
+        P31:
+          datavalue:
+            timezone: 0
+            precision: 11
+    - claims:
+        P31:
+          datavalue:
+            id: X
+            labels:
+              en: thing
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "claims": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "properties": {
+                "timezone": {
+                  "type": "integer"
+                },
+                "precision": {
+                  "type": "integer"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "labels": {
+                  "properties": {
+                    "en": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "en"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "claims"
+  ],
+  "type": "object"
+}

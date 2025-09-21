@@ -127,3 +127,60 @@ fn test_scalar_vs_mixed_type_object_unification() {
     assert!(datavalue_schema.get("properties").is_some());
     assert!(datavalue_schema.get("additionalProperties").is_none());
 }
+
+#[test]
+fn test_anyof_rewrite_objects_root() {
+    let mut nested_schema = json!({
+        "type": "object",
+        "properties": {
+            "claims": {
+                "type": "object",
+                "additionalProperties": {
+                    "anyOf": [
+                        {"type": "object", "properties": {"timezone": {"type": "integer"}}},
+                        {"type": "string"}
+                    ]
+                }
+            }
+        }
+    });
+
+    let config = SchemaInferenceConfig { unify_maps: true, wrap_scalars: true, ..Default::default() };
+    rewrite_objects(&mut nested_schema, None, &config, true);
+
+    println!("{}", nested_schema);
+
+    // Should not have anyOf anymore
+    assert!(nested_schema["properties"]["claims"]["additionalProperties"].get("anyOf").is_none());
+}
+
+#[test]
+fn test_anyof_rewrite_objects_nested() {
+    let mut nested_schema = json!({
+        "type": "object",
+        "properties": {
+            "claims": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "anyOf": [
+                            {"type": "object", "properties": {"timezone": {"type": "integer"}}},
+                            {"type": "string"}
+                        ]
+                    }
+                }
+            }
+        }
+    });
+
+    let config = SchemaInferenceConfig { unify_maps: true, wrap_scalars: true, ..Default::default() };
+    rewrite_objects(&mut nested_schema, None, &config, true);
+
+    println!("{}", nested_schema);
+
+    // This currently fails - anyOf is still there
+    let inner_schema = &nested_schema["properties"]["claims"]["additionalProperties"]["additionalProperties"];
+    assert!(inner_schema.get("anyOf").is_none(), "anyOf should be unified away");
+    assert_eq!(inner_schema["type"], "object");
+}
