@@ -285,41 +285,38 @@ pub(crate) fn rewrite_objects(
 
             // Apply map inference logic
             let should_be_map = if above_threshold && unified_schema.is_some() {
+                debug!(
+                    config,
+                    "Checking if should convert to map: above_threshold=true, unified_schema=Some",
+                );
+
                 // Don't convert to map if the unified schema contains anyOf - let it be processed first
                 if unified_schema.as_ref().is_some_and(contains_anyof) {
                     debug!(config, "Not converting to map: unified schema contains anyOf that needs processing");
                     false
+                // Skip map inference if this is the root and no_root_map is enabled
+                } else if is_root && config.no_root_map {
+                    debug!(
+                        config,
+                        "Skipping map conversion: is root and no_root_map=true"
+                    );
+                    false
+                } else if let Some(max_required) = config.map_max_required_keys {
+                    let result = required_key_count <= max_required;
+                    debug!(
+                        config,
+                        "Map conversion decision: required_keys={} <= max_required={} = {}",
+                        required_key_count,
+                        max_required,
+                        result
+                    );
+                    result
                 } else {
                     debug!(
                         config,
-                        "Checking if should convert to map: above_threshold={}, unified_schema=Some",
-                        above_threshold
+                        "Map conversion: no max_required_keys limit, converting to map"
                     );
-
-                    // Skip map inference if this is the root and no_root_map is enabled
-                    if is_root && config.no_root_map {
-                        debug!(
-                            config,
-                            "Skipping map conversion: is root and no_root_map=true"
-                        );
-                        false
-                    } else if let Some(max_required) = config.map_max_required_keys {
-                        let result = required_key_count <= max_required;
-                        debug!(
-                            config,
-                            "Map conversion decision: required_keys={} <= max_required={} = {}",
-                            required_key_count,
-                            max_required,
-                            result
-                        );
-                        result
-                    } else {
-                        debug!(
-                            config,
-                            "Map conversion: no max_required_keys limit, converting to map"
-                        );
-                        true
-                    }
+                    true
                 }
             } else {
                 if !above_threshold {
