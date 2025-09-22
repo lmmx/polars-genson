@@ -23,5 +23,5 @@ info:
                 - desk:
                     type: standing
 ---
-{"places":{"home":[{"rooms":[{"kitchen":[{"temp":{"celsius":22}}]}]}],"work":null}}
-{"places":{"home":null,"work":[{"rooms":[{"office":[{"desk":{"type":"standing"}}]}]}]}}
+{"places":{"home":[{"rooms":[{"kitchen":[{"temp":{"celsius":22,"type":null}}]}]}]}}
+{"places":{"work":[{"rooms":[{"office":[{"desk":{"celsius":null,"type":"standing"}}]}]}]}}

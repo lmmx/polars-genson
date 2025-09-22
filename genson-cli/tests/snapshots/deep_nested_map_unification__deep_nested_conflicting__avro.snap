@@ -31,75 +31,50 @@ info:
     {
       "name": "places",
       "type": {
-        "type": "record",
         "name": "places",
-        "namespace": "genson.document_types",
-        "fields": [
-          {
-            "name": "home",
-            "type": [
-              "null",
-              {
-                "type": "array",
-                "items": {
-                  "name": "home",
-                  "type": "map",
-                  "values": {
-                    "type": "array",
-                    "items": {
-                      "name": "home_values",
-                      "type": "map",
-                      "values": {
-                        "type": "array",
-                        "items": {
-                          "name": "home_values_values",
-                          "type": "map",
-                          "values": {
-                            "name": "home_values_values_values",
-                            "type": "map",
-                            "values": "int"
-                          }
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "name": "places_values",
+            "type": "map",
+            "values": {
+              "type": "array",
+              "items": {
+                "name": "places_values_values",
+                "type": "map",
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "name": "places_values_values_values",
+                    "type": "map",
+                    "values": {
+                      "type": "record",
+                      "name": "places_values_values_values_values",
+                      "namespace": "genson.document_types",
+                      "fields": [
+                        {
+                          "name": "celsius",
+                          "type": [
+                            "null",
+                            "int"
+                          ]
+                        },
+                        {
+                          "name": "type",
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
-                      }
+                      ]
                     }
                   }
                 }
               }
-            ]
-          },
-          {
-            "name": "work",
-            "type": [
-              "null",
-              {
-                "type": "array",
-                "items": {
-                  "name": "work",
-                  "type": "map",
-                  "values": {
-                    "type": "array",
-                    "items": {
-                      "name": "work_values",
-                      "type": "map",
-                      "values": {
-                        "type": "array",
-                        "items": {
-                          "name": "work_values_values",
-                          "type": "map",
-                          "values": {
-                            "name": "work_values_values_values",
-                            "type": "map",
-                            "values": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            ]
+            }
           }
-        ]
+        }
       }
     }
   ]

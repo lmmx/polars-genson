@@ -26,47 +26,33 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "places": {
-      "properties": {
-        "home": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
                     "type": "object",
-                    "additionalProperties": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "integer"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "work": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
+                    "properties": {
+                      "celsius": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "type": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
                       }
                     }
                   }
@@ -75,8 +61,7 @@ info:
             }
           }
         }
-      },
-      "type": "object"
+      }
     }
   },
   "required": [
