@@ -1,0 +1,106 @@
+---
+source: genson-cli/tests/deep_nested_map_unification.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - places
+    - "--avro"
+  input:
+    - home:
+        - rooms:
+            - kitchen:
+                - temp:
+                    celsius: 22
+    - work:
+        - rooms:
+            - office:
+                - desk:
+                    type: standing
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "places",
+      "type": {
+        "type": "record",
+        "name": "places",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "home",
+            "type": [
+              "null",
+              {
+                "type": "array",
+                "items": {
+                  "name": "home",
+                  "type": "map",
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "name": "home_values",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "name": "home_values_values",
+                          "type": "map",
+                          "values": {
+                            "name": "home_values_values_values",
+                            "type": "map",
+                            "values": "int"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "work",
+            "type": [
+              "null",
+              {
+                "type": "array",
+                "items": {
+                  "name": "work",
+                  "type": "map",
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "name": "work_values",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "name": "work_values_values",
+                          "type": "map",
+                          "values": {
+                            "name": "work_values_values_values",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
