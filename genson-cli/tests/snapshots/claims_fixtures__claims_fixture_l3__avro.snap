@@ -11,7 +11,7 @@ info:
     - "--wrap-root"
     - claims
     - "--avro"
-  fixture: tests/data/claims_fixture_x4_L2.jsonl
+  fixture: tests/data/claims_fixture_x4_L3.jsonl
 ---
 {
   "type": "record",
@@ -69,6 +69,31 @@ info:
                                 "values": "string"
                               }
                             ]
+                          },
+                          {
+                            "name": "amount",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "unit",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "unit-labels",
+                            "type": [
+                              "null",
+                              {
+                                "name": "unit-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            ]
                           }
                         ]
                       }
@@ -121,21 +146,15 @@ info:
                                 "fields": [
                                   {
                                     "name": "id",
-                                    "type": [
-                                      "null",
-                                      "string"
-                                    ]
+                                    "type": "string"
                                   },
                                   {
                                     "name": "labels",
-                                    "type": [
-                                      "null",
-                                      {
-                                        "name": "labels",
-                                        "type": "map",
-                                        "values": "string"
-                                      }
-                                    ]
+                                    "type": {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "string"
+                                    }
                                   },
                                   {
                                     "name": "time",
@@ -174,6 +193,27 @@ info:
                                   },
                                   {
                                     "name": "calendarmodel",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "datavalue__string",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "text",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "language",
                                     "type": [
                                       "null",
                                       "string"
@@ -221,25 +261,7 @@ info:
                           },
                           {
                             "name": "datavalue",
-                            "type": {
-                              "type": "record",
-                              "name": "datavalue",
-                              "namespace": "genson.document_types.claims_values_types.qualifiers_values_types",
-                              "fields": [
-                                {
-                                  "name": "id",
-                                  "type": "string"
-                                },
-                                {
-                                  "name": "labels",
-                                  "type": {
-                                    "name": "labels",
-                                    "type": "map",
-                                    "values": "string"
-                                  }
-                                }
-                              ]
-                            }
+                            "type": "string"
                           },
                           {
                             "name": "datatype",

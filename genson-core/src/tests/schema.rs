@@ -464,6 +464,8 @@ fn test_rewrite_objects_map_of_records() {
 
     rewrite_objects(&mut schema, None, &cfg, true);
 
+    println!("Generated schema:\n{}", schema);
+
     // After rewrite, we should have additionalProperties instead of fixed properties
     assert_eq!(schema["type"], "object");
     assert!(schema.get("properties").is_none());

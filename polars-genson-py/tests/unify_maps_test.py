@@ -141,24 +141,20 @@ def test_unify_maps_incompatible_field_types():
     field_names = {f["name"] for f in values_record["fields"]}
     assert field_names == {"a", "b"}
 
-    # Each field should have its original incompatible record type
+    # Get field types
     a_field = next(f for f in values_record["fields"] if f["name"] == "a")
     b_field = next(f for f in values_record["fields"] if f["name"] == "b")
 
-    # Both should be record types
+    # a should be record (mixed int/string fields)
     assert a_field["type"]["type"] == "record"
-    assert b_field["type"]["type"] == "record"
 
-    # Get the age fields from each record
+    # b should be map (homogeneous string fields with threshold=1)
+    assert b_field["type"]["type"] == "map"
+    assert b_field["type"]["values"] == "string"
+
+    # Verify unification failed by checking a has the original mixed types
     a_age_field = next(f for f in a_field["type"]["fields"] if f["name"] == "age")
-    b_age_field = next(f for f in b_field["type"]["fields"] if f["name"] == "age")
-
-    # Different types prove unification failed due to incompatible field types
     assert a_age_field["type"] == "int"
-    assert b_age_field["type"] == "string"
-    assert a_age_field["type"] != b_age_field["type"], (
-        "Age fields should have different types proving unification was correctly rejected"
-    )
 
 
 def test_unify_maps_below_threshold():

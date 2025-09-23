@@ -1,0 +1,93 @@
+---
+source: genson-cli/tests/deep_nested_map_unification.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - places
+    - "--avro"
+  input:
+    - Bedroom:
+        - device:
+            type: desktop
+          wired_from:
+            - Basement:
+                - type:
+                    location: north-wall
+    - Lounge:
+        - device:
+            type: router
+          wired_from:
+            - Basement:
+                - type:
+                    location: south-wall
+              Garage:
+                - type:
+                    connected: "2024-01-15T08:45:00Z"
+    - Study:
+        - device:
+            type: printer
+          wired_from:
+            - Basement:
+                - type:
+                    location: west-wall
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "places",
+      "type": {
+        "name": "places",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "places_values",
+            "namespace": "genson.document_types",
+            "fields": [
+              {
+                "name": "device",
+                "type": {
+                  "name": "device",
+                  "type": "map",
+                  "values": "string"
+                }
+              },
+              {
+                "name": "wired_from",
+                "type": {
+                  "type": "array",
+                  "items": {
+                    "name": "wired_from",
+                    "type": "map",
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "name": "wired_from_values",
+                        "type": "map",
+                        "values": {
+                          "name": "wired_from_values_values",
+                          "type": "map",
+                          "values": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

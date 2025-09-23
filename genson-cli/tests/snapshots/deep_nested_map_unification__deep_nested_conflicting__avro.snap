@@ -1,0 +1,81 @@
+---
+source: genson-cli/tests/deep_nested_map_unification.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - places
+    - "--avro"
+  input:
+    - home:
+        - rooms:
+            - kitchen:
+                - temp:
+                    celsius: 22
+    - work:
+        - rooms:
+            - office:
+                - desk:
+                    type: standing
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "places",
+      "type": {
+        "name": "places",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "name": "places_values",
+            "type": "map",
+            "values": {
+              "type": "array",
+              "items": {
+                "name": "places_values_values",
+                "type": "map",
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "name": "places_values_values_values",
+                    "type": "map",
+                    "values": {
+                      "type": "record",
+                      "name": "places_values_values_values_values",
+                      "namespace": "genson.document_types",
+                      "fields": [
+                        {
+                          "name": "celsius",
+                          "type": [
+                            "null",
+                            "int"
+                          ]
+                        },
+                        {
+                          "name": "type",
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

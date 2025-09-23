@@ -1,6 +1,5 @@
 use assert_cmd::Command;
 use insta::{assert_snapshot, with_settings};
-use serde_json::Value;
 use std::fs;
 
 /// Check if the current output matches the verified/blessed version
@@ -23,9 +22,6 @@ fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
 
 /// Run genson-cli with claims fixture from disk
 fn run_genson_claims_fixture_from_disk(fixture_path: &str, name: &str, extra_args: &[&str]) {
-    let fixture_content = fs::read_to_string(fixture_path)
-        .unwrap_or_else(|_| panic!("Failed to read fixture file: {}", fixture_path));
-
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
     let mut args = vec![
         "--ndjson",
@@ -50,25 +46,44 @@ fn run_genson_claims_fixture_from_disk(fixture_path: &str, name: &str, extra_arg
         eprintln!("stderr from {}: {}", name, stderr_str);
     }
 
-    // Parse the NDJSON input for metadata
-    let input_json: Vec<Value> = fixture_content
-        .lines()
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| serde_json::from_str::<Value>(line).unwrap())
-        .collect();
-
     let approved = is_output_approved(name, &stdout_str);
 
     with_settings!({
         info => &serde_json::json!({
             "approved": approved,
             "args": args_for_metadata[..args_for_metadata.len()-1], // exclude file path
-            "input": input_json,
             "fixture": fixture_path
         })
     }, {
         assert_snapshot!(name, stdout_str);
     });
+}
+
+#[test]
+fn test_claims_fixture_l1_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1.jsonl",
+        "claims_fixture_l1__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l1_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1.jsonl",
+        "claims_fixture_l1__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l1_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1.jsonl",
+        "claims_fixture_l1__normalize",
+        &["--normalise"],
+    );
 }
 
 #[test]
@@ -94,6 +109,60 @@ fn test_claims_fixture_l2_normalize() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims_fixture_x4_L2.jsonl",
         "claims_fixture_l2__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l3_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L3.jsonl",
+        "claims_fixture_l3__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l3_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L3.jsonl",
+        "claims_fixture_l3__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l3_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L3.jsonl",
+        "claims_fixture_l3__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l4_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L4.jsonl",
+        "claims_fixture_l4__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l4_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L4.jsonl",
+        "claims_fixture_l4__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l4_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L4.jsonl",
+        "claims_fixture_l4__normalize",
         &["--normalise"],
     );
 }

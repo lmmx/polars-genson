@@ -1,3 +1,18 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--avro"
+  fixture: tests/data/claims_fixture_x4_L1.jsonl
+---
 {
   "type": "record",
   "name": "document",
@@ -27,38 +42,6 @@
                       "type": "string"
                     },
                     {
-                      "name": "datavalue",
-                      "type": {
-                        "type": "record",
-                        "name": "datavalue",
-                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
-                        "fields": [
-                          {
-                            "name": "datavalue__string",
-                            "type": "string"
-                          },
-                          {
-                            "name": "id",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "labels",
-                            "type": [
-                              "null",
-                              {
-                                "name": "labels",
-                                "type": "map",
-                                "values": "string"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    },
-                    {
                       "name": "datatype",
                       "type": "string"
                     },
@@ -68,6 +51,91 @@
                         "name": "property-labels",
                         "type": "map",
                         "values": "string"
+                      }
+                    },
+                    {
+                      "name": "datavalue",
+                      "type": {
+                        "type": "record",
+                        "name": "datavalue",
+                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
+                        "fields": [
+                          {
+                            "name": "id",
+                            "type": "string"
+                          },
+                          {
+                            "name": "labels",
+                            "type": {
+                              "name": "labels",
+                              "type": "map",
+                              "values": "string"
+                            }
+                          },
+                          {
+                            "name": "datavalue__string",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "time",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "timezone",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "before",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "after",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "precision",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "calendarmodel",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "text",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "language",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          }
+                        ]
                       }
                     }
                   ]
@@ -106,21 +174,15 @@
                                 "fields": [
                                   {
                                     "name": "id",
-                                    "type": [
-                                      "null",
-                                      "string"
-                                    ]
+                                    "type": "string"
                                   },
                                   {
                                     "name": "labels",
-                                    "type": [
-                                      "null",
-                                      {
-                                        "name": "labels",
-                                        "type": "map",
-                                        "values": "string"
-                                      }
-                                    ]
+                                    "type": {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "string"
+                                    }
                                   },
                                   {
                                     "name": "time",
@@ -159,6 +221,13 @@
                                   },
                                   {
                                     "name": "calendarmodel",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "datavalue__string",
                                     "type": [
                                       "null",
                                       "string"
@@ -222,6 +291,13 @@
                                     "type": "map",
                                     "values": "string"
                                   }
+                                },
+                                {
+                                  "name": "datavalue__string",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
                                 }
                               ]
                             }

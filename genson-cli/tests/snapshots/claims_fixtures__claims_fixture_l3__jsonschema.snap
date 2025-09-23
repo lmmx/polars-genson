@@ -10,7 +10,7 @@ info:
     - "--unify-maps"
     - "--wrap-root"
     - claims
-  fixture: tests/data/claims_fixture_x4_L2.jsonl
+  fixture: tests/data/claims_fixture_x4_L3.jsonl
 ---
 {
   "$schema": "http://json-schema.org/schema#",
@@ -47,6 +47,33 @@ info:
                       }
                     ],
                     "labels": [
+                      "null",
+                      {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    ],
+                    "amount": [
+                      "null",
+                      {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      }
+                    ],
+                    "unit": [
+                      "null",
+                      {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      }
+                    ],
+                    "unit-labels": [
                       "null",
                       {
                         "type": "object",
@@ -110,46 +137,98 @@ info:
                           "labels": {
                             "type": "object",
                             "additionalProperties": {
-                              "type": "string"
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             }
                           },
-                          "time": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "timezone": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "before": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "after": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "precision": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "calendarmodel": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        }
+                          "time": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            }
+                          ],
+                          "timezone": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "integer"
+                              ]
+                            }
+                          ],
+                          "before": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "integer"
+                              ]
+                            }
+                          ],
+                          "after": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "integer"
+                              ]
+                            }
+                          ],
+                          "precision": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "integer"
+                              ]
+                            }
+                          ],
+                          "calendarmodel": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            }
+                          ],
+                          "datavalue__string": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            }
+                          ],
+                          "text": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            }
+                          ],
+                          "language": [
+                            "null",
+                            {
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            }
+                          ]
+                        },
+                        "required": [
+                          "id",
+                          "labels"
+                        ]
                       },
                       "datatype": {
                         "type": "string"
@@ -157,7 +236,10 @@ info:
                       "property-labels": {
                         "type": "object",
                         "additionalProperties": {
-                          "type": "string"
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
                       }
                     },
@@ -181,22 +263,7 @@ info:
                       "type": "string"
                     },
                     "datavalue": {
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "labels": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
+                      "type": "string"
                     },
                     "datatype": {
                       "type": "string"

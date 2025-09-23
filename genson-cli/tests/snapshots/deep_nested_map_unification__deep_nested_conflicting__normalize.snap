@@ -1,0 +1,27 @@
+---
+source: genson-cli/tests/deep_nested_map_unification.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - places
+    - "--normalise"
+  input:
+    - home:
+        - rooms:
+            - kitchen:
+                - temp:
+                    celsius: 22
+    - work:
+        - rooms:
+            - office:
+                - desk:
+                    type: standing
+---
+{"places":{"home":[{"rooms":[{"kitchen":[{"temp":{"celsius":22,"type":null}}]}]}]}}
+{"places":{"work":[{"rooms":[{"office":[{"desk":{"celsius":null,"type":"standing"}}]}]}]}}

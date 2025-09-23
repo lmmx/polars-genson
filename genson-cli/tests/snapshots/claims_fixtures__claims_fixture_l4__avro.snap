@@ -11,7 +11,7 @@ info:
     - "--wrap-root"
     - claims
     - "--avro"
-  fixture: tests/data/claims_fixture_x4_L2.jsonl
+  fixture: tests/data/claims_fixture_x4_L4.jsonl
 ---
 {
   "type": "record",
@@ -42,38 +42,6 @@ info:
                       "type": "string"
                     },
                     {
-                      "name": "datavalue",
-                      "type": {
-                        "type": "record",
-                        "name": "datavalue",
-                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
-                        "fields": [
-                          {
-                            "name": "datavalue__string",
-                            "type": "string"
-                          },
-                          {
-                            "name": "id",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "labels",
-                            "type": [
-                              "null",
-                              {
-                                "name": "labels",
-                                "type": "map",
-                                "values": "string"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    },
-                    {
                       "name": "datatype",
                       "type": "string"
                     },
@@ -83,6 +51,77 @@ info:
                         "name": "property-labels",
                         "type": "map",
                         "values": "string"
+                      }
+                    },
+                    {
+                      "name": "datavalue",
+                      "type": {
+                        "type": "record",
+                        "name": "datavalue",
+                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
+                        "fields": [
+                          {
+                            "name": "id",
+                            "type": "string"
+                          },
+                          {
+                            "name": "labels",
+                            "type": {
+                              "name": "labels",
+                              "type": "map",
+                              "values": "string"
+                            }
+                          },
+                          {
+                            "name": "datavalue__string",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "time",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "timezone",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "before",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "after",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "precision",
+                            "type": [
+                              "null",
+                              "int"
+                            ]
+                          },
+                          {
+                            "name": "calendarmodel",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          }
+                        ]
                       }
                     }
                   ]
@@ -178,6 +217,13 @@ info:
                                       "null",
                                       "string"
                                     ]
+                                  },
+                                  {
+                                    "name": "datavalue__string",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
                                   }
                                 ]
                               }
@@ -220,28 +266,6 @@ info:
                             "type": "string"
                           },
                           {
-                            "name": "datavalue",
-                            "type": {
-                              "type": "record",
-                              "name": "datavalue",
-                              "namespace": "genson.document_types.claims_values_types.qualifiers_values_types",
-                              "fields": [
-                                {
-                                  "name": "id",
-                                  "type": "string"
-                                },
-                                {
-                                  "name": "labels",
-                                  "type": {
-                                    "name": "labels",
-                                    "type": "map",
-                                    "values": "string"
-                                  }
-                                }
-                              ]
-                            }
-                          },
-                          {
                             "name": "datatype",
                             "type": "string"
                           },
@@ -252,6 +276,44 @@ info:
                               "type": "map",
                               "values": "string"
                             }
+                          },
+                          {
+                            "name": "datavalue",
+                            "type": [
+                              "null",
+                              {
+                                "type": "record",
+                                "name": "datavalue",
+                                "namespace": "genson.document_types.claims_values_types.qualifiers_values_types",
+                                "fields": [
+                                  {
+                                    "name": "id",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "labels",
+                                    "type": [
+                                      "null",
+                                      {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "datavalue__string",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
                           }
                         ]
                       }

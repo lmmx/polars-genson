@@ -274,11 +274,15 @@ pub(crate) fn rewrite_objects(
                             }
                         }
                     } else {
-                        unified_schema = check_unifiable_schemas(
-                            &child_schemas,
-                            field_name.unwrap_or(""),
-                            config,
-                        );
+                        // NEW: Only try record unification if unify_maps is enabled and above threshold
+                        // This ensures we only do expensive unification when it would result in map conversion
+                        if above_threshold {
+                            unified_schema = check_unifiable_schemas(
+                                &child_schemas,
+                                field_name.unwrap_or(""),
+                                config,
+                            );
+                        }
                     }
                 }
             }
@@ -357,10 +361,7 @@ pub(crate) fn rewrite_objects(
                     // Process the schema being moved to additionalProperties for nested anyOf
                     let mut processed_schema = schema.clone();
                     rewrite_objects(&mut processed_schema, None, config, false);
-                    // if processed_schema.to_string().contains("anyOf") {
-                    //     rewrite_objects(&mut processed_schema, None, config, false);
-                    // }
-                    obj.insert("additionalProperties".to_string(), schema);
+                    obj.insert("additionalProperties".to_string(), processed_schema);
 
                     return;
                 }
