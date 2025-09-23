@@ -72,6 +72,33 @@ fn run_genson_claims_fixture_from_disk(fixture_path: &str, name: &str, extra_arg
 }
 
 #[test]
+fn test_claims_fixture_l1_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1.jsonl",
+        "claims_fixture_l1__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l1_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1.jsonl",
+        "claims_fixture_l1__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l1_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1.jsonl",
+        "claims_fixture_l1__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
 fn test_claims_fixture_l2_avro() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims_fixture_x4_L2.jsonl",
@@ -94,6 +121,60 @@ fn test_claims_fixture_l2_normalize() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims_fixture_x4_L2.jsonl",
         "claims_fixture_l2__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l3_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L3.jsonl",
+        "claims_fixture_l3__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l3_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L3.jsonl",
+        "claims_fixture_l3__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l3_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L3.jsonl",
+        "claims_fixture_l3__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l4_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L4.jsonl",
+        "claims_fixture_l4__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l4_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L4.jsonl",
+        "claims_fixture_l4__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_l4_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L4.jsonl",
+        "claims_fixture_l4__normalize",
         &["--normalise"],
     );
 }
