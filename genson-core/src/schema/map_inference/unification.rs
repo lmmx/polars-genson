@@ -171,6 +171,17 @@ fn is_map_schema(schema: &Value) -> bool {
 
 /// Check if a schema represents an array type
 fn is_array_schema(schema: &Value) -> bool {
+    // Handle old legacy format first: ["null", {"type": "array"}]
+    if let Value::Array(arr) = schema {
+        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
+            let inner_schema = arr
+                .iter()
+                .find(|v| *v != &Value::String("null".to_string()))
+                .unwrap();
+            return is_array_schema(inner_schema); // Recursive call to handle nested nullability
+        }
+    }
+
     // Check direct type field
     if let Some(type_val) = schema.get("type") {
         if let Some(type_str) = type_val.as_str() {
@@ -261,6 +272,37 @@ fn try_scalar_promotion(
     )
 }
 
+/// Recursively unwrap nullable schema wrappers and extract a specific field.
+///
+/// Handles both legacy format `["null", {...}]` and modern format `{"type": ["null", "..."]}`.
+/// Recursively unwraps multiple layers of nullable wrapping to find the inner schema,
+/// then extracts the specified field from it.
+fn extract_field_from_nullable_schema<'a>(
+    schema: &'a Value,
+    field_name: &str,
+) -> Option<&'a Value> {
+    // Handle legacy format: ["null", {...}]
+    if let Value::Array(arr) = schema {
+        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
+            let inner_schema = arr
+                .iter()
+                .find(|v| *v != &Value::String("null".to_string()))?;
+            return extract_field_from_nullable_schema(inner_schema, field_name);
+        }
+    }
+
+    // Handle modern nullable format: {"type": ["null", "array"]}
+    if let Some(Value::Array(type_arr)) = schema.get("type") {
+        if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
+            // For modern nullable, the field should be directly on this schema
+            return schema.get(field_name);
+        }
+    }
+
+    // Direct field extraction
+    schema.get(field_name)
+}
+
 /// Unify array schemas by unifying their items
 fn unify_array_schemas(
     schemas: &[Value],
@@ -281,7 +323,7 @@ fn unify_array_schemas(
     // Extract all items schemas
     let mut items_schemas = Vec::new();
     for (i, schema) in schemas.iter().enumerate() {
-        if let Some(items) = schema.get("items") {
+        if let Some(items) = extract_field_from_nullable_schema(schema, "items") {
             debug_verbose!(
                 config,
                 "{}: Array schema[{}] items: {}",
@@ -387,7 +429,9 @@ fn unify_map_schemas(
     // Extract all additionalProperties schemas
     let mut additional_props_schemas = Vec::new();
     for (i, schema) in schemas.iter().enumerate() {
-        if let Some(additional_props) = schema.get("additionalProperties") {
+        if let Some(additional_props) =
+            extract_field_from_nullable_schema(schema, "additionalProperties")
+        {
             debug_verbose!(
                 config,
                 "{}: Map schema[{}] additionalProperties: {}",
@@ -443,7 +487,8 @@ fn unify_record_schemas(
 
     // Collect all field types and count occurrences
     for (i, schema) in schemas.iter().enumerate() {
-        if let Some(Value::Object(props)) = schema.get("properties") {
+        if let Some(Value::Object(props)) = extract_field_from_nullable_schema(schema, "properties")
+        {
             for (field_name, field_schema) in props {
                 *field_counts.entry(field_name.clone()).or_insert(0) += 1;
 

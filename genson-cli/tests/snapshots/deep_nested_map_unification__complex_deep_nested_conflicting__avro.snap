@@ -67,44 +67,20 @@ info:
                 "type": {
                   "type": "array",
                   "items": {
-                    "type": "record",
                     "name": "wired_from",
-                    "namespace": "genson.document_types.places_values_types",
-                    "fields": [
-                      {
-                        "name": "Basement",
-                        "type": {
-                          "type": "array",
-                          "items": {
-                            "name": "Basement",
-                            "type": "map",
-                            "values": {
-                              "name": "Basement_values",
-                              "type": "map",
-                              "values": "string"
-                            }
-                          }
+                    "type": "map",
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "name": "wired_from_values",
+                        "type": "map",
+                        "values": {
+                          "name": "wired_from_values_values",
+                          "type": "map",
+                          "values": "string"
                         }
-                      },
-                      {
-                        "name": "Garage",
-                        "type": [
-                          "null",
-                          {
-                            "type": "array",
-                            "items": {
-                              "name": "Garage",
-                              "type": "map",
-                              "values": {
-                                "name": "Garage_values",
-                                "type": "map",
-                                "values": "string"
-                              }
-                            }
-                          }
-                        ]
                       }
-                    ]
+                    }
                   }
                 }
               }

@@ -56,41 +56,18 @@ info:
               "type": "array",
               "items": {
                 "type": "object",
-                "properties": {
-                  "Basement": {
-                    "type": "array",
-                    "items": {
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": {
                       "type": "object",
                       "additionalProperties": {
-                        "type": "object",
-                        "additionalProperties": {
-                          "type": "string"
-                        }
+                        "type": "string"
                       }
                     }
-                  },
-                  "Garage": [
-                    "null",
-                    {
-                      "type": [
-                        "null",
-                        "array"
-                      ],
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  ]
-                },
-                "required": [
-                  "Basement"
-                ]
+                  }
+                }
               }
             }
           },

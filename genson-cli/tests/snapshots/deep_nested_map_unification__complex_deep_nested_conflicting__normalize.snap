@@ -37,6 +37,6 @@ info:
                 - type:
                     location: west-wall
 ---
-{"places":{"Bedroom":[{"device":{"type":"desktop"},"wired_from":[{"Basement":[{"type":{"location":"north-wall"}}],"Garage":null}]}]}}
+{"places":{"Bedroom":[{"device":{"type":"desktop"},"wired_from":[{"Basement":[{"type":{"location":"north-wall"}}]}]}]}}
 {"places":{"Lounge":[{"device":{"type":"router"},"wired_from":[{"Basement":[{"type":{"location":"south-wall"}}],"Garage":[{"type":{"connected":"2024-01-15T08:45:00Z"}}]}]}]}}
-{"places":{"Study":[{"device":{"type":"printer"},"wired_from":[{"Basement":[{"type":{"location":"west-wall"}}],"Garage":null}]}]}}
+{"places":{"Study":[{"device":{"type":"printer"},"wired_from":[{"Basement":[{"type":{"location":"west-wall"}}]}]}]}}
