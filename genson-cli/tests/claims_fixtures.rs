@@ -166,3 +166,5 @@ fn test_claims_fixture_l4_normalize() {
         &["--normalise"],
     );
 }
+
+// Following are from the x1818 fixture
