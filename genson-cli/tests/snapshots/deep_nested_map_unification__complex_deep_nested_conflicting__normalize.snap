@@ -1,0 +1,42 @@
+---
+source: genson-cli/tests/deep_nested_map_unification.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--ndjson"
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - places
+    - "--normalise"
+  input:
+    - Bedroom:
+        - device:
+            type: desktop
+          wired_from:
+            - Basement:
+                - type:
+                    location: north-wall
+    - Lounge:
+        - device:
+            type: router
+          wired_from:
+            - Basement:
+                - type:
+                    location: south-wall
+              Garage:
+                - type:
+                    connected: "2024-01-15T08:45:00Z"
+    - Study:
+        - device:
+            type: printer
+          wired_from:
+            - Basement:
+                - type:
+                    location: west-wall
+---
+{"places":{"Bedroom":[{"device":{"type":"desktop"},"wired_from":[{"Basement":[{"type":{"location":"north-wall"}}],"Garage":null}]}]}}
+{"places":{"Lounge":[{"device":{"type":"router"},"wired_from":[{"Basement":[{"type":{"location":"south-wall"}}],"Garage":[{"type":{"connected":"2024-01-15T08:45:00Z"}}]}]}]}}
+{"places":{"Study":[{"device":{"type":"printer"},"wired_from":[{"Basement":[{"type":{"location":"west-wall"}}],"Garage":null}]}]}}

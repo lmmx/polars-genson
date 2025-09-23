@@ -71,6 +71,9 @@ fn run_genson_deep_nested(name: &str, rows: Vec<&str>, extra_args: &[&str]) {
     });
 }
 
+// This version came from row 4 of the wikidata claims fixture, which was then 'domain transferred'
+// to be about rooms in a house (rather than claims in wikidata)
+
 /// Deep nested structure with int vs string leaf conflict
 /// Structure: array -> map -> array -> map -> array -> map -> int/string
 fn deep_nested_conflicting_rows() -> Vec<&'static str> {
@@ -103,6 +106,50 @@ fn test_deep_nested_conflicting_normalize() {
     run_genson_deep_nested(
         "deep_nested_conflicting__normalize",
         deep_nested_conflicting_rows(),
+        &["--normalise"],
+    );
+}
+
+// This version came from row 3 of the wikidata claims fixture and remained unsolved after row 4
+// successfully unified into a map of fully unified map/records
+
+/// Complex deep nested structure with wiring connections in Basement/Garage rooms
+/// Structure: More complex than the simple deep nested case, NB rooms are capitalised
+///
+/// The "wired_from" field serves as a 'reference'-like field (whose keys are rooms)
+/// so as to more easily confirm the absence of room names in the schema (they should always be
+/// eliminated as map keys in the schemas, so you should not see any capitalised schema field names)
+fn complex_deep_nested_conflicting_rows() -> Vec<&'static str> {
+    vec![
+        r#"{"Bedroom":[{"device":{"type":"desktop"},"wired_from":[{"Basement":[{"type":{"location":"north-wall"}}]}]}]}"#,
+        r#"{"Lounge":[{"device":{"type":"router"},"wired_from":[{"Basement":[{"type":{"location":"south-wall"}}],"Garage":[{"type":{"connected":"2024-01-15T08:45:00Z"}}]}]}]}"#,
+        r#"{"Study":[{"device":{"type":"printer"},"wired_from":[{"Basement":[{"type":{"location":"west-wall"}}]}]}]}"#,
+    ]
+}
+
+#[test]
+fn test_complex_deep_nested_conflicting_jsonschema() {
+    run_genson_deep_nested(
+        "complex_deep_nested_conflicting__jsonschema",
+        complex_deep_nested_conflicting_rows(),
+        &[],
+    );
+}
+
+#[test]
+fn test_complex_deep_nested_conflicting_avro() {
+    run_genson_deep_nested(
+        "complex_deep_nested_conflicting__avro",
+        complex_deep_nested_conflicting_rows(),
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_complex_deep_nested_conflicting_normalize() {
+    run_genson_deep_nested(
+        "complex_deep_nested_conflicting__normalize",
+        complex_deep_nested_conflicting_rows(),
         &["--normalise"],
     );
 }
