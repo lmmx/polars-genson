@@ -10,7 +10,7 @@ info:
     - "--unify-maps"
     - "--wrap-root"
     - claims
-  fixture: tests/data/claims_fixture_x1818_L26.jsonl
+  fixture: tests/data/claims/x1818_L26.jsonl
 ---
 {
   "$schema": "http://json-schema.org/schema#",

@@ -11,7 +11,7 @@ info:
     - "--wrap-root"
     - claims
     - "--avro"
-  fixture: tests/data/claims_fixture_x1818_L26.jsonl
+  fixture: tests/data/claims/x1818_L26.jsonl
 ---
 {
   "type": "record",
