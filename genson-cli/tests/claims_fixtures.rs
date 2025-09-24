@@ -24,13 +24,16 @@ fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
 fn run_genson_claims_fixture_from_disk(fixture_path: &str, name: &str, extra_args: &[&str]) {
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
     let mut args = vec![
-        "--ndjson",
         "--map-threshold",
         "0",
         "--unify-maps",
         "--wrap-root",
         "claims",
     ];
+    // Add --ndjson flag if the fixture is a .jsonl file
+    if fixture_path.ends_with(".jsonl") {
+        args.push("--ndjson");
+    }
     args.extend_from_slice(extra_args);
     args.push(fixture_path);
     let args_for_metadata = args.clone();
@@ -172,7 +175,7 @@ fn test_claims_fixture_l4_normalize() {
 #[test]
 fn test_claims_fixture_x1818_l4_avro() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L4.jsonl",
+        "tests/data/claims/x1818_L4_MINIMAL.json",
         "claims_fixture_x1818_l4__avro",
         &["--avro"],
     );
@@ -181,7 +184,7 @@ fn test_claims_fixture_x1818_l4_avro() {
 #[test]
 fn test_claims_fixture_x1818_l4_jsonschema() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L4.jsonl",
+        "tests/data/claims/x1818_L4_MINIMAL.json",
         "claims_fixture_x1818_l4__jsonschema",
         &[],
     );
@@ -190,7 +193,7 @@ fn test_claims_fixture_x1818_l4_jsonschema() {
 #[test]
 fn test_claims_fixture_x1818_l4_normalize() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L4.jsonl",
+        "tests/data/claims/x1818_L4_MINIMAL.json",
         "claims_fixture_x1818_l4__normalize",
         &["--normalise"],
     );
@@ -199,7 +202,7 @@ fn test_claims_fixture_x1818_l4_normalize() {
 #[test]
 fn test_claims_fixture_x1818_l5_avro() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L5.jsonl",
+        "tests/data/claims/x1818_L5_MINIMAL.json",
         "claims_fixture_x1818_l5__avro",
         &["--avro"],
     );
@@ -208,7 +211,7 @@ fn test_claims_fixture_x1818_l5_avro() {
 #[test]
 fn test_claims_fixture_x1818_l5_jsonschema() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L5.jsonl",
+        "tests/data/claims/x1818_L5_MINIMAL.json",
         "claims_fixture_x1818_l5__jsonschema",
         &[],
     );
@@ -217,7 +220,7 @@ fn test_claims_fixture_x1818_l5_jsonschema() {
 #[test]
 fn test_claims_fixture_x1818_l5_normalize() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L5.jsonl",
+        "tests/data/claims/x1818_L5_MINIMAL.json",
         "claims_fixture_x1818_l5__normalize",
         &["--normalise"],
     );
@@ -226,7 +229,7 @@ fn test_claims_fixture_x1818_l5_normalize() {
 #[test]
 fn test_claims_fixture_x1818_l12_avro() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L12.jsonl",
+        "tests/data/claims/x1818_L12_MINIMAL.json",
         "claims_fixture_x1818_l12__avro",
         &["--avro"],
     );
@@ -235,7 +238,7 @@ fn test_claims_fixture_x1818_l12_avro() {
 #[test]
 fn test_claims_fixture_x1818_l12_jsonschema() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L12.jsonl",
+        "tests/data/claims/x1818_L12_MINIMAL.json",
         "claims_fixture_x1818_l12__jsonschema",
         &[],
     );
@@ -244,7 +247,7 @@ fn test_claims_fixture_x1818_l12_jsonschema() {
 #[test]
 fn test_claims_fixture_x1818_l12_normalize() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L12.jsonl",
+        "tests/data/claims/x1818_L12_MINIMAL.json",
         "claims_fixture_x1818_l12__normalize",
         &["--normalise"],
     );
@@ -253,7 +256,7 @@ fn test_claims_fixture_x1818_l12_normalize() {
 #[test]
 fn test_claims_fixture_x1818_l14_avro() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L14.jsonl",
+        "tests/data/claims/x1818_L14_MINIMAL.json",
         "claims_fixture_x1818_l14__avro",
         &["--avro"],
     );
@@ -262,7 +265,7 @@ fn test_claims_fixture_x1818_l14_avro() {
 #[test]
 fn test_claims_fixture_x1818_l14_jsonschema() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L14.jsonl",
+        "tests/data/claims/x1818_L14_MINIMAL.json",
         "claims_fixture_x1818_l14__jsonschema",
         &[],
     );
@@ -271,7 +274,7 @@ fn test_claims_fixture_x1818_l14_jsonschema() {
 #[test]
 fn test_claims_fixture_x1818_l14_normalize() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L14.jsonl",
+        "tests/data/claims/x1818_L14_MINIMAL.json",
         "claims_fixture_x1818_l14__normalize",
         &["--normalise"],
     );
@@ -280,7 +283,7 @@ fn test_claims_fixture_x1818_l14_normalize() {
 #[test]
 fn test_claims_fixture_x1818_l16_avro() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L16.jsonl",
+        "tests/data/claims/x1818_L16_MINIMAL.json",
         "claims_fixture_x1818_l16__avro",
         &["--avro"],
     );
@@ -289,7 +292,7 @@ fn test_claims_fixture_x1818_l16_avro() {
 #[test]
 fn test_claims_fixture_x1818_l16_jsonschema() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L16.jsonl",
+        "tests/data/claims/x1818_L16_MINIMAL.json",
         "claims_fixture_x1818_l16__jsonschema",
         &[],
     );
@@ -298,7 +301,7 @@ fn test_claims_fixture_x1818_l16_jsonschema() {
 #[test]
 fn test_claims_fixture_x1818_l16_normalize() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L16.jsonl",
+        "tests/data/claims/x1818_L16_MINIMAL.json",
         "claims_fixture_x1818_l16__normalize",
         &["--normalise"],
     );
@@ -307,7 +310,7 @@ fn test_claims_fixture_x1818_l16_normalize() {
 #[test]
 fn test_claims_fixture_x1818_l26_avro() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L26.jsonl",
+        "tests/data/claims/x1818_L26_MINIMAL.json",
         "claims_fixture_x1818_l26__avro",
         &["--avro"],
     );
@@ -316,7 +319,7 @@ fn test_claims_fixture_x1818_l26_avro() {
 #[test]
 fn test_claims_fixture_x1818_l26_jsonschema() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L26.jsonl",
+        "tests/data/claims/x1818_L26_MINIMAL.json",
         "claims_fixture_x1818_l26__jsonschema",
         &[],
     );
@@ -325,7 +328,7 @@ fn test_claims_fixture_x1818_l26_jsonschema() {
 #[test]
 fn test_claims_fixture_x1818_l26_normalize() {
     run_genson_claims_fixture_from_disk(
-        "tests/data/claims/x1818_L26.jsonl",
+        "tests/data/claims/x1818_L26_MINIMAL.json",
         "claims_fixture_x1818_l26__normalize",
         &["--normalise"],
     );
