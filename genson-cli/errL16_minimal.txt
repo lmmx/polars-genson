@@ -1,0 +1,2171 @@
+Schema inference config: SchemaInferenceConfig {
+    ignore_outer_array: true,
+    delimiter: None,
+    schema_uri: Some(
+        "AUTO",
+    ),
+    map_threshold: 0,
+    map_max_required_keys: None,
+    unify_maps: true,
+    force_field_types: {},
+    wrap_scalars: true,
+    wrap_root: Some(
+        "claims",
+    ),
+    no_root_map: true,
+    avro: true,
+    debug: true,
+    verbosity: Normal,
+}
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0:
+{
+  "properties": {
+    "P1343": {
+      "type": "array",
+      "items": {
+        "properties": {
+...(246 lines omitted)...
+    "P1343",
+    "P5019",
+    "P5055"
+  ],
+  "type": "object"
+}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Not converting to map: unified schema contains anyOf that needs processing
+Checking homogeneity for field "claims" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "mainsnak": {
+        "properties": {
+...(80 lines omitted)...
+      "mainsnak",
+      "qualifiers"
+    ],
+    "type": "object"
+  }
+}
+  Schema 1:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "mainsnak": {
+        "properties": {
+...(122 lines omitted)...
+      "qualifiers",
+      "references"
+    ],
+    "type": "object"
+  }
+}
+  Schema 2: {"type":"array","items":{"properties":{"mainsnak":{"properties":{"datavalue":{"type":"string"}},"required":["datavalue"],"type":"object"}},"required":["mainsnak"],"type":"object"}}
+Schemas not homogeneous, attempting unification
+claims: All schemas are records, attempting record unification
+claims: Attempting to unify 3 record schemas
+Field `mainsnak` has conflicting object schemas, attempting recursive unify
+claims.mainsnak: All schemas are records, attempting record unification
+claims.mainsnak: Attempting to unify 2 record schemas
+Promoting scalar on new side: wrapping string into object under key `datavalue__string`
+claims.mainsnak.datavalue: All schemas are records, attempting record unification
+claims.mainsnak.datavalue: Attempting to unify 2 record schemas
+claims.mainsnak.datavalue: Record schemas unified successfully
+Field `datavalue` unified successfully after scalar promotion
+claims.mainsnak: Record schemas unified successfully
+Field `mainsnak` unified successfully after recursion
+Field `mainsnak` has conflicting object schemas, attempting recursive unify
+claims.mainsnak: All schemas are records, attempting record unification
+claims.mainsnak: Attempting to unify 2 record schemas
+Promoting scalar on new side: wrapping string into object under key `datavalue__string`
+claims.mainsnak.datavalue: All schemas are records, attempting record unification
+claims.mainsnak.datavalue: Attempting to unify 2 record schemas
+claims.mainsnak.datavalue: Record schemas unified successfully
+Field `datavalue` unified successfully after scalar promotion
+claims.mainsnak: Record schemas unified successfully
+Field `mainsnak` unified successfully after recursion
+Field `qualifiers` has conflicting object schemas, attempting recursive unify
+claims.qualifiers: All schemas are records, attempting record unification
+claims.qualifiers: Attempting to unify 2 record schemas
+claims.qualifiers: Record schemas unified successfully
+Field `qualifiers` unified successfully after recursion
+claims: Record schemas unified successfully
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Not converting to map: unified schema contains anyOf that needs processing
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0:
+{
+  "properties": {
+    "P805": {
+      "type": "array",
+      "items": {
+        "properties": {
+...(37 lines omitted)...
+  },
+  "required": [
+    "P805"
+  ],
+  "type": "object"
+}
+  Schema 1: {"properties":{"datavalue":{"properties":{"id":{"type":"string"},"labels":{"properties":{"lb":{"type":"string"},"ru":{"type":"string"}},"type":"object"}},"required":["id","labels"],"type":"object"}},"required":["datavalue"],"type":"object"}
+Schemas not homogeneous, attempting unification
+: All schemas are records, attempting record unification
+: Attempting to unify 2 record schemas
+: Record schemas unified successfully
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Not converting to map: unified schema contains anyOf that needs processing
+Checking homogeneity for field "mainsnak" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"properties":{"id":{"type":"string"},"labels":{"properties":{"lb":{"type":"string"},"ru":{"type":"string"}},"type":"object"}},"required":["id","labels"],"type":"object"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "mainsnak" to map with schema:
+{
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "labels": {
+...(11 lines omitted)...
+  "required": [
+    "id",
+    "labels"
+  ],
+  "type": "object"
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"properties":{"lb":{"type":"string"},"ru":{"type":"string"}},"type":"object"}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: record - {"properties":{"lb":{"type":"string"},"ru":{"type":"string"}},"type":"object"}
+Not converting to map: no unified schema
+Checking homogeneity for field "labels" with 2 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "qualifiers" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"array","items":{"properties":{"datavalue":{"properties":{"id":{"type":"string"},"labels":{"anyOf":[{"properties":{"de":{"type":"string"}},"required":["de"],"type":"object"},{"type":"string"}]}},"required":["id","labels"],"type":"object"}},"required":["datavalue"],"type":"object"}}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Not converting to map: unified schema contains anyOf that needs processing
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"properties":{"id":{"type":"string"},"labels":{"anyOf":[{"properties":{"de":{"type":"string"}},"required":["de"],"type":"object"},{"type":"string"}]}},"required":["id","labels"],"type":"object"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Not converting to map: unified schema contains anyOf that needs processing
+Checking homogeneity for field "datavalue" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"anyOf":[{"properties":{"de":{"type":"string"}},"required":["de"],"type":"object"},{"type":"string"}]}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+datavalue: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: unknown - {"anyOf":[{"properties":{"de":{"type":"string"}},"required":["de"],"type":"object"},{"type":"string"}]}
+Not converting to map: no unified schema
+Found anyOf union with 2 schemas, attempting unification
+anyOf unification: promoting scalars for field 'labels'
+labels: All schemas are records, attempting record unification
+labels: Attempting to unify 2 record schemas
+labels: Record schemas unified successfully
+Successfully unified anyOf schemas
+Checking homogeneity for field "labels" with 2 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "labels": {
+...(6 lines omitted)...
+  "required": [
+    "id",
+    "labels"
+  ],
+  "type": "object"
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "properties": {
+...(12 lines omitted)...
+        "labels"
+      ],
+      "type": "object"
+    }
+  }
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"properties":{"datavalue":{"type":"string"}},"required":["datavalue"],"type":"object"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "properties": {
+    "datavalue": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "datavalue"
+  ],
+  "type": "object"
+}
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"properties":{"P1810":{"type":"array","items":{"properties":{"datavalue":{"type":"string"}},"required":["datavalue"],"type":"object"}}},"required":["P1810"],"type":"object"}
+  Schema 1: {"properties":{"datavalue":{"type":"string"}},"required":["datavalue"],"type":"object"}
+  Schema 2:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "P248": {
+        "type": "array",
+...(76 lines omitted)...
+      "P248",
+      "P813"
+    ],
+    "type": "object"
+  }
+}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"datavalue":{"type":"string"}},"required":["datavalue"],"type":"object"}
+  Schema[1] type: record - {"properties":{"P1810":{"type":"array","items":{"properties":{"datavalue":{"type":"string"}},"required":["datavalue"],"type":"object"}}},"required":["P1810"],"type":"object"}
+  Schema[2] type: array - {"type":"array","items":{"properties":{"P248":{"type":"array","items":{"properties":{"datavalue":{"properties":{"id":{"type":"string"},"labels":{"properties":{"de":{"type":"string"}},"required":["de"],"type":"object"}},"required":["id","labels"],"type":"object"}},"required":["datavalue"],"type":"object"}},"P813":{"type":"array","items":{"properties":{"datavalue":{"properties":{"time":{"type":"string"},"timezone":{"type":"integer"},"before":{"type":"integer"},"after":{"type":"integer"},"precision":{"type":"integer"},"calendarmodel":{"type":"string"}},"required":["after","before","calendarmodel","precision","time","timezone"],"type":"object"}},"required":["datavalue"],"type":"object"}}},"required":["P248","P813"],"type":"object"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "mainsnak" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "mainsnak" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "qualifiers" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"array","items":{"properties":{"datavalue":{"type":"string"}},"required":["datavalue"],"type":"object"}}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "qualifiers" to map with schema:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "datavalue": {
+        "type": "string"
+...(2 lines omitted)...
+    "required": [
+      "datavalue"
+    ],
+    "type": "object"
+  }
+}
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"array","items":{"properties":{"datavalue":{"properties":{"id":{"type":"string"},"labels":{"properties":{"de":{"type":"string"}},"required":["de"],"type":"object"}},"required":["id","labels"],"type":"object"}},"required":["datavalue"],"type":"object"}}
+  Schema 1:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "datavalue": {
+        "properties": {
+...(30 lines omitted)...
+    "required": [
+      "datavalue"
+    ],
+    "type": "object"
+  }
+}
+Schemas not homogeneous, attempting unification
+: All schemas are records, attempting record unification
+: Attempting to unify 2 record schemas
+Field `datavalue` has conflicting object schemas, attempting recursive unify
+.datavalue: All schemas are records, attempting record unification
+.datavalue: Attempting to unify 2 record schemas
+.datavalue: Record schemas unified successfully
+Field `datavalue` unified successfully after recursion
+: Record schemas unified successfully
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "datavalue": {
+...(60 lines omitted)...
+    },
+    "required": [
+      "datavalue"
+    ]
+  }
+}
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0:
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+...(49 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+...(49 lines omitted)...
+        "null",
+        "string"
+      ]
+    }
+  }
+}
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"properties":{"de":{"type":"string"}},"required":["de"],"type":"object"}
+  Schema 1: {"type":"integer"}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: record - {"properties":{"de":{"type":"string"}},"required":["de"],"type":["null","object"]}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "labels" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "labels" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "array",
+...(53 lines omitted)...
+          }
+        }
+      }
+    }
+  }
+}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema 2: {"type":"object","additionalProperties":{"type":"string"}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema[2] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "array",
+...(53 lines omitted)...
+          }
+        }
+      }
+    }
+  }
+}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema 2: {"type":"object","additionalProperties":{"type":"string"}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema[2] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "array",
+...(53 lines omitted)...
+          }
+        }
+      }
+    }
+  }
+}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema 2: {"type":"object","additionalProperties":{"type":"string"}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema[2] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "mainsnak": {
+        "type": "object",
+...(48 lines omitted)...
+      "mainsnak",
+      "qualifiers"
+    ],
+    "type": "object"
+  }
+}
+  Schema 1:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "mainsnak": {
+        "type": "object",
+...(84 lines omitted)...
+      "qualifiers",
+      "references"
+    ],
+    "type": "object"
+  }
+}
+  Schema 2: {"type":"array","items":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{"type":"string"}}}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"mainsnak":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}},"qualifiers":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}},"required":["mainsnak","qualifiers"],"type":"object"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"object","additionalProperties":{"type":"string"}}}
+  Schema[2] type: record - {"properties":{"mainsnak":{"type":"object","additionalProperties":{"type":"string"}},"qualifiers":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}},"references":{"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}},"required":["mainsnak","qualifiers","references"],"type":"object"}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "array",
+...(53 lines omitted)...
+          }
+        }
+      }
+    }
+  }
+}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema 2: {"type":"object","additionalProperties":{"type":"string"}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema[2] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "array",
+...(53 lines omitted)...
+          }
+        }
+      }
+    }
+  }
+}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema 2: {"type":"object","additionalProperties":{"type":"string"}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema[2] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: record - {"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"properties":{"id":{"type":"string"},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"required":["id","labels"],"type":"object"}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 1: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":"string"}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "array",
+...(53 lines omitted)...
+          }
+        }
+      }
+    }
+  }
+}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema 2: {"type":"object","additionalProperties":{"type":"string"}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema[2] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 3 schemas
+Unique normalised schemas (3 total):
+  Schema 0:
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "array",
+...(53 lines omitted)...
+          }
+        }
+      }
+    }
+  }
+}
+  Schema 1: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema 2: {"type":"object","additionalProperties":{"type":"string"}}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}
+  Schema[2] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","properties":{"id":{"type":["null","string"]},"labels":{"type":"object","additionalProperties":{"type":"string"}},"time":{"type":["null","string"]},"timezone":{"type":["null","integer"]},"before":{"type":["null","integer"]},"after":{"type":["null","integer"]},"precision":{"type":["null","integer"]},"calendarmodel":{"type":["null","string"]}}}}}}}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Checking homogeneity for field "root" with 8 schemas
+Unique normalised schemas (3 total):
+  Schema 0: {"type":"integer"}
+  Schema 1: {"type":"object","additionalProperties":{"type":"string"}}
+  Schema 2: {"type":"string"}
+Schemas not homogeneous, attempting unification
+: Mixed schema types not supported for unification
+  Schema[0] type: scalar - {"type":["null","string"]}
+  Schema[1] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[2] type: scalar - {"type":["null","string"]}
+  Schema[3] type: scalar - {"type":["null","integer"]}
+  Schema[4] type: scalar - {"type":["null","integer"]}
+  Schema[5] type: scalar - {"type":["null","integer"]}
+  Schema[6] type: scalar - {"type":["null","integer"]}
+  Schema[7] type: scalar - {"type":["null","string"]}
+Not converting to map: no unified schema
+Processed 1 JSON object(s)
