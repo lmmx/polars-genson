@@ -42,18 +42,22 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     let extract_nullable_info = |schema: &Value| -> (bool, Value) {
         if let Some(Value::Array(type_arr)) = schema.get("type") {
             if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-                let non_null_type = type_arr
+                if let Some(non_null_type) = type_arr
                     .iter()
                     .find(|t| *t != &Value::String("null".into()))
-                    .unwrap();
-
-                // Create a new schema with the non-null type, preserving other properties
-                let mut non_null_schema = schema.clone();
-                non_null_schema
-                    .as_object_mut()
-                    .unwrap()
-                    .insert("type".to_string(), non_null_type.clone());
-                (true, non_null_schema)
+                {
+                    // Create a new schema with the non-null type, preserving other properties
+                    let mut non_null_schema = schema.clone();
+                    if let Some(obj) = non_null_schema.as_object_mut() {
+                        obj.insert("type".to_string(), non_null_type.clone());
+                        (true, non_null_schema)
+                    } else {
+                        (false, schema.clone())
+                    }
+                } else {
+                    // Malformed nullable schema (e.g., ["null", "null"])
+                    (false, schema.clone())
+                }
             } else {
                 (false, schema.clone())
             }
@@ -71,10 +75,9 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
             // Create the nullable version by taking the non-nullable schema and making the type nullable
             let mut nullable_schema = existing_inner.clone();
             if let Some(inner_type) = existing_inner.get("type") {
-                nullable_schema
-                    .as_object_mut()
-                    .unwrap()
-                    .insert("type".to_string(), json!(["null", inner_type]));
+                if let Some(obj) = nullable_schema.as_object_mut() {
+                    obj.insert("type".to_string(), json!(["null", inner_type]));
+                }
             }
             return Some(nullable_schema);
         } else {
