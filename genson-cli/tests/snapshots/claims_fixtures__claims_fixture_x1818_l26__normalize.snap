@@ -1,0 +1,197 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--normalise"
+  fixture: tests/data/claims/x1818_L26_MINIMAL.json
+---
+[
+  {
+    "claims": {
+      "P1333": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "latitude": -33.75,
+              "longitude": -53.390277777778,
+              "altitude": null,
+              "precision": 0.00027777777777778,
+              "globe": "http://www.wikidata.org/entity/Q2"
+            }
+          }
+        }
+      ],
+      "P3221": [
+        {
+          "mainsnak": {
+            "datavalue": "destination/brazil"
+          }
+        }
+      ],
+      "P1792": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q6993761",
+              "labels": {
+                "de": "Kategorie:Brasilianer"
+              }
+            }
+          },
+          "references": [
+            {
+              "P143": [
+                {
+                  "datavalue": {
+                    "id": "Q328",
+                    "labels": {
+                      "en": "English Wikipedia"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P3238": [
+        {
+          "mainsnak": {}
+        }
+      ],
+      "P5337": [
+        {
+          "mainsnak": {
+            "datavalue": "CAAqJQgKIh9DQkFTRVFvSUwyMHZNREUxWm5JU0JYQjBMVUpTS0FBUAE"
+          }
+        }
+      ],
+      "P2959": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q21286972",
+              "labels": {
+                "ru": "Бразилия"
+              }
+            }
+          }
+        }
+      ],
+      "P1552": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q3174312",
+              "labels": {
+                "pt": "país livre"
+              }
+            }
+          },
+          "qualifiers": {
+            "P3680": [
+              {
+                "datavalue": {
+                  "id": "Q1417780",
+                  "labels": {
+                    "en": "Freedom in the World"
+                  }
+                }
+              }
+            ]
+          },
+          "references": [
+            {
+              "P854": [
+                {
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": "https://freedomhouse.org/report/freedom-world/freedom-world-2017"
+                  }
+                }
+              ],
+              "P1065": [
+                {
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": "https://web.archive.org/web/20170505040003/https://freedomhouse.org/report/freedom-world/freedom-world-2017"
+                  }
+                }
+              ],
+              "P2960": [
+                {
+                  "datavalue": {
+                    "time": "+2017-05-05T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
+                    "datavalue__string": null
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P571": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "time": "+1822-09-07T00:00:00Z",
+              "timezone": 0,
+              "before": 0,
+              "after": 0,
+              "precision": 11,
+              "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+            }
+          },
+          "qualifiers": {
+            "P518": [
+              {
+                "datavalue": {
+                  "id": "Q217230",
+                  "labels": {
+                    "zh-hans": "巴西帝国"
+                  }
+                }
+              }
+            ]
+          },
+          "references": [
+            {
+              "P143": [
+                {
+                  "datavalue": {
+                    "id": "Q328",
+                    "labels": {
+                      "en": "English Wikipedia"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,200 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+  fixture: tests/data/claims/x1818_L16_MINIMAL.json
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "claims": {
+      "properties": {
+        "P1343": {
+          "type": "array",
+          "items": {
+            "properties": {
+              "mainsnak": {
+                "type": "object",
+                "additionalProperties": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "qualifiers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "labels": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "labels"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "mainsnak",
+              "qualifiers"
+            ],
+            "type": "object"
+          }
+        },
+        "P5019": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "P5055": {
+          "type": "array",
+          "items": {
+            "properties": {
+              "mainsnak": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "qualifiers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "references": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "labels": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "time": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "timezone": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "before": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "after": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "precision": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "calendarmodel": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "mainsnak",
+              "qualifiers",
+              "references"
+            ],
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "P1343",
+        "P5019",
+        "P5055"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "claims"
+  ],
+  "type": "object"
+}

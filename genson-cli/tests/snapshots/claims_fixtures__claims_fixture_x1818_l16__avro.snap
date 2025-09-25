@@ -1,0 +1,238 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--avro"
+  fixture: tests/data/claims/x1818_L16_MINIMAL.json
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "claims",
+      "type": {
+        "type": "record",
+        "name": "claims",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "P1343",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P1343",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "name": "mainsnak",
+                      "type": "map",
+                      "values": {
+                        "type": "record",
+                        "name": "mainsnak_values",
+                        "namespace": "genson.document_types.claims_types.P1343_types",
+                        "fields": [
+                          {
+                            "name": "id",
+                            "type": "string"
+                          },
+                          {
+                            "name": "labels",
+                            "type": {
+                              "name": "labels",
+                              "type": "map",
+                              "values": "string"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "name": "qualifiers",
+                    "type": {
+                      "name": "qualifiers",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "name": "qualifiers_values",
+                          "type": "map",
+                          "values": {
+                            "type": "record",
+                            "name": "qualifiers_values_values",
+                            "namespace": "genson.document_types.claims_types.P1343_types",
+                            "fields": [
+                              {
+                                "name": "id",
+                                "type": "string"
+                              },
+                              {
+                                "name": "labels",
+                                "type": {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "P5019",
+            "type": {
+              "type": "array",
+              "items": {
+                "name": "P5019",
+                "type": "map",
+                "values": {
+                  "name": "P5019_values",
+                  "type": "map",
+                  "values": "string"
+                }
+              }
+            }
+          },
+          {
+            "name": "P5055",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "P5055",
+                "namespace": "genson.document_types.claims_types",
+                "fields": [
+                  {
+                    "name": "mainsnak",
+                    "type": {
+                      "name": "mainsnak",
+                      "type": "map",
+                      "values": "string"
+                    }
+                  },
+                  {
+                    "name": "qualifiers",
+                    "type": {
+                      "name": "qualifiers",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "name": "qualifiers_values",
+                          "type": "map",
+                          "values": "string"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "name": "references",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "references",
+                        "type": "map",
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "name": "references_values",
+                            "type": "map",
+                            "values": {
+                              "type": "record",
+                              "name": "references_values_values",
+                              "namespace": "genson.document_types.claims_types.P5055_types",
+                              "fields": [
+                                {
+                                  "name": "id",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
+                                },
+                                {
+                                  "name": "labels",
+                                  "type": [
+                                    "null",
+                                    {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "string"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "time",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
+                                },
+                                {
+                                  "name": "timezone",
+                                  "type": [
+                                    "null",
+                                    "int"
+                                  ]
+                                },
+                                {
+                                  "name": "before",
+                                  "type": [
+                                    "null",
+                                    "int"
+                                  ]
+                                },
+                                {
+                                  "name": "after",
+                                  "type": [
+                                    "null",
+                                    "int"
+                                  ]
+                                },
+                                {
+                                  "name": "precision",
+                                  "type": [
+                                    "null",
+                                    "int"
+                                  ]
+                                },
+                                {
+                                  "name": "calendarmodel",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

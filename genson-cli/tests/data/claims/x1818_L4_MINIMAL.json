@@ -1,0 +1,231 @@
+{
+  "P119": [
+    {
+      "mainsnak": {
+        "datavalue": {
+          "id": "Q533697",
+          "labels": {
+            "it": "cimitero di Highgate"
+          }
+        }
+      },
+      "qualifiers": {
+        "P625": [
+          {
+            "datavalue": {
+              "latitude": 51.56652777777778,
+              "longitude": -0.14544444444444443,
+              "altitude": null,
+              "precision": 0.00002777777777777778,
+              "globe": "http://www.wikidata.org/entity/Q2"
+            }
+          }
+        ]
+      },
+      "references": [
+        {
+          "P854": [
+            {
+              "datavalue": "http://highgatecemetery.org/visit/who"
+            }
+          ],
+          "P407": [
+            {
+              "datavalue": {
+                "id": "Q1860",
+                "labels": {
+                  "tg": "ингилисӣ"
+                }
+              }
+            }
+          ],
+          "P813": [
+            {
+              "datavalue": {
+                "time": "+2013-12-07T00:00:00Z",
+                "timezone": 0,
+                "before": 0,
+                "after": 0,
+                "precision": 11,
+                "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+              }
+            }
+          ],
+          "P1476": [
+            {
+              "datavalue": {
+                "text": "Who’s here",
+                "language": "en"
+              }
+            }
+          ],
+          "P248": [
+            {
+              "datavalue": {
+                "id": "Q533697",
+                "labels": {
+                  "it": "cimitero di Highgate"
+                }
+              }
+            }
+          ],
+          "P1065": [
+            {
+              "datavalue": "https://web.archive.org/web/20131203025040/http://highgatecemetery.org/visit/who"
+            }
+          ],
+          "P2960": [
+            {
+              "datavalue": {
+                "time": "+2013-12-03T00:00:00Z",
+                "timezone": 0,
+                "before": 0,
+                "after": 0,
+                "precision": 11,
+                "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "P1015": [
+    {
+      "mainsnak": {
+        "datavalue": "90196888"
+      }
+    }
+  ],
+  "P734": [
+    {
+      "mainsnak": {
+        "datavalue": {
+          "id": "Q351735",
+          "labels": {
+            "ar": "آدامز"
+          }
+        }
+      },
+      "references": [
+        {
+          "P248": [
+            {
+              "datavalue": {
+                "id": "Q36578",
+                "labels": {
+                  "de": "Gemeinsame Normdatei"
+                }
+              }
+            }
+          ],
+          "P227": [
+            {
+              "datavalue": "119033364"
+            }
+          ],
+          "P407": [
+            {
+              "datavalue": {
+                "id": "Q188",
+                "labels": {
+                  "tg": "забони олмонӣ"
+                }
+              }
+            }
+          ],
+          "P813": [
+            {
+              "datavalue": {
+                "time": "+2022-10-09T00:00:00Z",
+                "timezone": 0,
+                "before": 0,
+                "after": 0,
+                "precision": 11,
+                "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "P551": [
+    {
+      "mainsnak": {
+        "datavalue": {
+          "id": "Q159288",
+          "labels": {
+            "zh-hans": "圣巴巴拉"
+          }
+        }
+      },
+      "qualifiers": {
+        "P582": [
+          {
+            "datavalue": {
+              "time": "+2001-05-11T00:00:00Z",
+              "timezone": 0,
+              "before": 0,
+              "after": 0,
+              "precision": 11,
+              "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+            }
+          }
+        ]
+      },
+      "references": [
+        {
+          "P143": [
+            {
+              "datavalue": {
+                "id": "Q328",
+                "labels": {
+                  "en": "English Wikipedia"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mainsnak": {
+        "datavalue": {
+          "id": "Q84",
+          "labels": {
+            "en": "London"
+          }
+        }
+      },
+      "qualifiers": {
+        "P580": [
+          {
+            "datavalue": {
+              "time": "+1952-09-00T00:00:00Z",
+              "timezone": 0,
+              "before": 0,
+              "after": 0,
+              "precision": 10,
+              "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+            }
+          }
+        ]
+      },
+      "references": [
+        {
+          "P143": [
+            {
+              "datavalue": {
+                "id": "Q328",
+                "labels": {
+                  "en": "English Wikipedia"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

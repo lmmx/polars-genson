@@ -1,0 +1,307 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--normalise"
+  fixture: tests/data/claims/x1818_L14_MINIMAL.json
+---
+[
+  {
+    "claims": {
+      "P1343": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q2041543",
+              "labels": {
+                "sk": "Ottův slovník naučný"
+              }
+            }
+          },
+          "qualifiers": {
+            "P805": [
+              {
+                "datavalue": {
+                  "id": "Q23864606",
+                  "labels": {
+                    "ru": "Отто / собака"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q602358",
+              "labels": {
+                "it": "Dizionario Enciclopedico Brockhaus ed Efron"
+              }
+            }
+          },
+          "qualifiers": {
+            "P805": [
+              {
+                "datavalue": {
+                  "id": "Q24484874",
+                  "labels": {
+                    "labels__string": "ЭСБЕ / Собаки"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "P349": [
+        {
+          "mainsnak": {
+            "datavalue": "00564180"
+          }
+        }
+      ],
+      "P3221": [
+        {
+          "mainsnak": {
+            "datavalue": "subject/dogs"
+          }
+        }
+      ],
+      "P3417": [
+        {
+          "mainsnak": {
+            "datavalue": "Dogs-pets-1"
+          }
+        }
+      ],
+      "P3479": [
+        {
+          "mainsnak": {
+            "datavalue": "b2d0ab32-ad92-486a-8ff3-c85fc06bdb01"
+          }
+        }
+      ],
+      "P3465": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "amount": "+45000",
+              "unit": "http://www.wikidata.org/entity/Q39369",
+              "unit-labels": {
+                "lb": "Hertz",
+                "zh": "赫兹",
+                "bo": "ཧེར་ཚི།",
+                "jv": "hertz",
+                "eu": "hertz",
+                "pl": "herc",
+                "bs": "herc",
+                "es": "hercio",
+                "ta": "ஏர்ட்சு",
+                "hu": "hertz",
+                "ms": "Hertz",
+                "et": "Herts",
+                "sq": "Herci",
+                "br": "Hertz",
+                "el": "Χερτζ",
+                "ia": "Hertz",
+                "ga": "heirts",
+                "pnb": "ہرٹز",
+                "nl": "hertz",
+                "ar": "هرتز",
+                "sv": "hertz",
+                "pt": "hertz",
+                "eo": "herco",
+                "su": "Hertz",
+                "ru": "герц",
+                "ast": "Herciu",
+                "sr": "херц",
+                "tr": "Hertz",
+                "hak": "Het-tsṳ̂",
+                "mk": "херц",
+                "fi": "hertsi",
+                "uk": "герц",
+                "be-tarask": "гэрц",
+                "nn": "hertz",
+                "rue": "Гертз",
+                "hr": "herc",
+                "da": "Hertz",
+                "kk": "Герц",
+                "nan": "Hz",
+                "pms": "Hertz",
+                "fr": "hertz",
+                "be": "герц",
+                "ko": "헤르츠",
+                "he": "הרץ",
+                "lv": "hercs",
+                "it": "hertz",
+                "gl": "Hertz",
+                "id": "hertz",
+                "de": "Hertz",
+                "ja": "ヘルツ",
+                "ml": "ഹെർട്സ്",
+                "vi": "Hertz",
+                "en": "hertz",
+                "yue": "赫茲",
+                "sh": "Herc",
+                "hi": "हर्ट्ज़",
+                "tg": "Ҳертс",
+                "sk": "Hertz",
+                "tt": "Герц",
+                "hy": "Հերց",
+                "fy": "hertz",
+                "th": "เฮิรตซ์",
+                "ro": "Hertz",
+                "ca": "hertz",
+                "cy": "hertz",
+                "war": "Hertz",
+                "sl": "herc",
+                "cs": "hertz",
+                "mhr": "Герц",
+                "mr": "हर्ट्झ",
+                "fa": "هرتز",
+                "bg": "Херц",
+                "ur": "ہرٹز",
+                "lt": "Hercas",
+                "nb": "hertz",
+                "af": "Hertz",
+                "la": "Hertz",
+                "oc": "Hertz",
+                "az": "Hers",
+                "is": "Herts",
+                "mn": "Герц",
+                "sw": "Hertz",
+                "bn": "হার্জ",
+                "pt-br": "hertz",
+                "frr": "Hertz",
+                "en-ca": "hertz",
+                "en-gb": "hertz",
+                "ne": "हर्ज",
+                "mt": "hertz",
+                "ka": "ჰერცი",
+                "lfn": "herze",
+                "rm": "Hz",
+                "scn": "Hertz",
+                "ps": "هرټز",
+                "te": "హెర్ట్జ్",
+                "ky": "Герц",
+                "zh-hant": "赫茲",
+                "my": "ဟက်ဇ်",
+                "uz": "Gers",
+                "wuu": "赫兹",
+                "szl": "Hertz",
+                "cv": "Герц (виçев пĕрчи)",
+                "ckb": "ھێرتز",
+                "zh-tw": "赫茲",
+                "sr-ec": "Херц"
+              }
+            }
+          },
+          "references": [
+            {
+              "P248": [
+                {
+                  "datavalue": {
+                    "id": "Q28537348",
+                    "labels": {
+                      "fr": "How Well Do Dogs and Other Animals Hear?"
+                    },
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null
+                  }
+                }
+              ],
+              "P813": [
+                {
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "time": "+2017-01-28T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P2888": [
+        {
+          "mainsnak": {
+            "datavalue": "http://wordnet-rdf.princeton.edu/wn30/02084071-n"
+          }
+        },
+        {
+          "mainsnak": {
+            "datavalue": "http://odwn-rdf.vu.nl/odwn13/02084071-n"
+          }
+        }
+      ],
+      "P31": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q55983715",
+              "labels": {
+                "en": "organisms known by a particular common name"
+              }
+            },
+            "P642": null
+          },
+          "qualifiers": {
+            "datavalue": null,
+            "P642": [
+              {
+                "datavalue": {
+                  "id": "Q20717272",
+                  "labels": {
+                    "de": "Canis familiaris"
+                  }
+                }
+              },
+              {
+                "datavalue": {
+                  "id": "Q26972265",
+                  "labels": {
+                    "ru": "Canis lupus familiaris"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "P2924": [
+        {
+          "mainsnak": {
+            "datavalue": "3588376",
+            "P1810": null
+          },
+          "qualifiers": {
+            "datavalue": null,
+            "P1810": [
+              {
+                "datavalue": "СОБАКА"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+]

@@ -24,13 +24,16 @@ fn is_output_approved(snapshot_name: &str, output: &str) -> bool {
 fn run_genson_claims_fixture_from_disk(fixture_path: &str, name: &str, extra_args: &[&str]) {
     let mut cmd = Command::cargo_bin("genson-cli").unwrap();
     let mut args = vec![
-        "--ndjson",
         "--map-threshold",
         "0",
         "--unify-maps",
         "--wrap-root",
         "claims",
     ];
+    // Add --ndjson flag if the fixture is a .jsonl file
+    if fixture_path.ends_with(".jsonl") {
+        args.push("--ndjson");
+    }
     args.extend_from_slice(extra_args);
     args.push(fixture_path);
     let args_for_metadata = args.clone();
@@ -163,6 +166,170 @@ fn test_claims_fixture_l4_normalize() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims_fixture_x4_L4.jsonl",
         "claims_fixture_l4__normalize",
+        &["--normalise"],
+    );
+}
+
+// Following are numbered from the full x1818 fixture
+
+#[test]
+fn test_claims_fixture_x1818_l4_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L4_MINIMAL.json",
+        "claims_fixture_x1818_l4__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l4_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L4_MINIMAL.json",
+        "claims_fixture_x1818_l4__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l4_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L4_MINIMAL.json",
+        "claims_fixture_x1818_l4__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l5_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L5_MINIMAL.json",
+        "claims_fixture_x1818_l5__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l5_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L5_MINIMAL.json",
+        "claims_fixture_x1818_l5__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l5_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L5_MINIMAL.json",
+        "claims_fixture_x1818_l5__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l12_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L12_MINIMAL.json",
+        "claims_fixture_x1818_l12__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l12_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L12_MINIMAL.json",
+        "claims_fixture_x1818_l12__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l12_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L12_MINIMAL.json",
+        "claims_fixture_x1818_l12__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l14_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L14_MINIMAL.json",
+        "claims_fixture_x1818_l14__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l14_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L14_MINIMAL.json",
+        "claims_fixture_x1818_l14__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l14_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L14_MINIMAL.json",
+        "claims_fixture_x1818_l14__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l16_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L16_MINIMAL.json",
+        "claims_fixture_x1818_l16__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l16_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L16_MINIMAL.json",
+        "claims_fixture_x1818_l16__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l16_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L16_MINIMAL.json",
+        "claims_fixture_x1818_l16__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l26_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L26_MINIMAL.json",
+        "claims_fixture_x1818_l26__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l26_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L26_MINIMAL.json",
+        "claims_fixture_x1818_l26__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l26_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L26_MINIMAL.json",
+        "claims_fixture_x1818_l26__normalize",
         &["--normalise"],
     );
 }

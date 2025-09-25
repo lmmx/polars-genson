@@ -1,0 +1,121 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--normalise"
+  fixture: tests/data/claims/x1818_L16_MINIMAL.json
+---
+[
+  {
+    "claims": {
+      "P1343": [
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q1138524",
+              "labels": {
+                "lb": "Der Neue Pauly"
+              }
+            }
+          },
+          "qualifiers": {
+            "P805": [
+              {
+                "datavalue": {
+                  "id": "Q19997008",
+                  "labels": {
+                    "de": "Löwe (Pauly-Wissowa)"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "mainsnak": {
+            "datavalue": {
+              "id": "Q4086271",
+              "labels": {
+                "ru": "Библейская энциклопедия архимандрита Никифора"
+              }
+            }
+          },
+          "qualifiers": {
+            "P805": [
+              {
+                "datavalue": {
+                  "id": "Q25295952",
+                  "labels": {
+                    "labels__string": "БЭАН / Лев"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "P5019": [
+        {
+          "mainsnak": {
+            "datavalue": "löwe"
+          }
+        }
+      ],
+      "P5055": [
+        {
+          "mainsnak": {
+            "datavalue": "10196306"
+          },
+          "qualifiers": {
+            "P1810": [
+              {
+                "datavalue": "Panthera leo"
+              }
+            ]
+          },
+          "references": [
+            {
+              "P248": [
+                {
+                  "datavalue": {
+                    "id": "Q51885189",
+                    "labels": {
+                      "de": "Interim Register of Marine and Nonmarine Genera"
+                    },
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null
+                  }
+                }
+              ],
+              "P813": [
+                {
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "time": "+2018-06-07T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

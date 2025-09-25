@@ -422,3 +422,8 @@ def test_wrap_scalars_promotes_scalar_to_map_normalisation():
             ]
         },
     ]
+
+
+# def test_claims_fixture_parquet_placeholder():
+#     df = pl.read_parquet("tests/data/claims_x4.parquet")
+#     ...

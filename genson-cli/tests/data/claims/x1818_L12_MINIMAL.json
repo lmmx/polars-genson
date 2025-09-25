@@ -1,0 +1,89 @@
+{
+  "P3365": [
+    {
+      "mainsnak": {
+        "datavalue": "internet"
+      },
+      "qualifiers": {
+        "P1810": [
+          {
+            "datavalue": "Internet"
+          }
+        ]
+      },
+      "references": [
+        {
+          "P143": [
+            {
+              "datavalue": {
+                "id": "Q11920",
+                "labels": {
+                  "fr": "Wikipédia en italien"
+                }
+              }
+            }
+          ],
+          "P4656": [
+            {
+              "datavalue": "https://it.wikipedia.org/w/index.php?title=Internet&oldid=99520850"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "P1343": [
+    {
+      "mainsnak": {
+        "datavalue": {
+          "id": "Q4208106",
+          "labels": {
+            "ru": "Казахстан. Национальная энциклопедия"
+          }
+        }
+      }
+    },
+    {
+      "mainsnak": {
+        "datavalue": {
+          "id": "Q47470796",
+          "labels": {}
+        }
+      }
+    },
+    {
+      "mainsnak": {
+        "datavalue": {
+          "id": "Q47484682",
+          "labels": "RFC 3271: The Internet is for Everyone"
+        }
+      }
+    }
+  ],
+  "P1014": [
+    {
+      "mainsnak": {
+        "datavalue": "300265429"
+      }
+    }
+  ],
+  "P1150": [
+    {
+      "mainsnak": {
+        "datavalue": "AP 18420"
+      },
+      "qualifiers": {
+        "P4390": [
+          {
+            "datavalue": {
+              "id": "Q39893449",
+              "labels": {
+                "en": "exact match"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
