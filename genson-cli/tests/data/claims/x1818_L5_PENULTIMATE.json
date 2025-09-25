@@ -1,0 +1,163 @@
+{
+  "P625": [
+    {
+      "mainsnak": {
+        "property": "P625",
+        "datavalue": {
+          "latitude": -90,
+          "longitude": 0,
+          "altitude": null,
+          "precision": 10,
+          "globe": "http://www.wikidata.org/entity/Q2"
+        },
+        "datatype": "globe-coordinate",
+        "property-labels": {
+          "en": "coordinate location",
+          "fr": "coordonnées géographiques"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P901": [
+    {
+      "mainsnak": {
+        "property": "P901",
+        "datavalue": "AY",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "FIPS 10-4 (countries and regions)",
+          "ru": "FIPS 10-4 (страны и регионы)"
+        }
+      },
+      "rank": "normal",
+      "references": [
+        {
+          "P248": [
+            {
+              "property": "P248",
+              "datavalue": {
+                "id": "Q3063249",
+                "labels": {
+                  "vi": "FIPS 10-4",
+                  "fr": "FIPS 10-4"
+                }
+              },
+              "datatype": "wikibase-item",
+              "property-labels": {
+                "fr": "affirmé dans",
+                "ca": "afirmat a"
+              }
+            }
+          ],
+          "P1065": [
+            {
+              "property": "P1065",
+              "datavalue": "https://web.archive.org/web/20010208080459/http://www.itl.nist.gov:80/fipspubs/fip10-4.htm",
+              "datatype": "url",
+              "property-labels": {
+                "it": "URL di archivio",
+                "en": "archive URL"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "P5008": [
+    {
+      "mainsnak": {
+        "property": "P5008",
+        "datavalue": {
+          "id": "Q5460604",
+          "labels": {
+            "xh": "Wikipedia:Vital articles",
+            "af": "Wikipedia:Kernartikels"
+          }
+        },
+        "datatype": "wikibase-item",
+        "property-labels": {
+          "en": "on focus list of Wikimedia project",
+          "de": "auf der Arbeitsliste des Wikimedia-Projektes"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P1343": [
+    {
+      "mainsnak": {
+        "property": "P1343",
+        "datavalue": {
+          "id": "Q19180675",
+          "labels": {
+            "ru": "Малый энциклопедический словарь Брокгауза и Ефрона",
+            "en": "Small Brockhaus and Efron Encyclopedic Dictionary"
+          }
+        },
+        "datatype": "wikibase-item",
+        "property-labels": {
+          "en": "described by source",
+          "ru": "описывается в источниках"
+        }
+      },
+      "qualifiers": {
+        "P805": [
+          {
+            "property": "P805",
+            "datavalue": {
+              "id": "Q24734052",
+              "labels": "МЭСБЕ / Антарктический"
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "statement is subject of",
+              "ca": "afirmació detallada a"
+            }
+          }
+        ]
+      },
+      "rank": "normal"
+    }
+  ],
+  "P1332": [
+    {
+      "mainsnak": {
+        "property": "P1332",
+        "datavalue": {
+          "latitude": -63.213305555556,
+          "longitude": -57.302194444444,
+          "altitude": null,
+          "precision": 0.000027777777777778,
+          "globe": "http://www.wikidata.org/entity/Q2"
+        },
+        "datatype": "globe-coordinate",
+        "property-labels": {
+          "en": "coordinates of northernmost point",
+          "ru": "самая северная точка"
+        }
+      },
+      "qualifiers": {
+        "P805": [
+          {
+            "property": "P805",
+            "datavalue": {
+              "id": "Q984853",
+              "labels": {
+                "nn": "Prime Head",
+                "en": "Prime Head"
+              }
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "statement is subject of",
+              "ca": "afirmació detallada a"
+            }
+          }
+        ]
+      },
+      "rank": "normal"
+    }
+  ]
+}

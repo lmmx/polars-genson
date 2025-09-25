@@ -1,0 +1,383 @@
+{
+  "P2347": [
+    {
+      "mainsnak": {
+        "property": "P2347",
+        "datavalue": "20405",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "YSO ID",
+          "fi": "YSO-tunniste"
+        }
+      },
+      "qualifiers": {
+        "P1810": [
+          {
+            "property": "P1810",
+            "datavalue": "Internet",
+            "datatype": "string",
+            "property-labels": {
+              "en": "subject named as",
+              "ru": "назван как"
+            }
+          },
+          {
+            "property": "P1810",
+            "datavalue": "internet",
+            "datatype": "string",
+            "property-labels": {
+              "en": "subject named as",
+              "ru": "назван как"
+            }
+          }
+        ]
+      },
+      "rank": "normal",
+      "references": [
+        {
+          "P248": [
+            {
+              "property": "P248",
+              "datavalue": {
+                "id": "Q89345680",
+                "labels": {
+                  "fi": "YSOn ja Wikidatan linkitys",
+                  "en": "YSO-Wikidata mapping project"
+                }
+              },
+              "datatype": "wikibase-item",
+              "property-labels": {
+                "fr": "affirmé dans",
+                "ca": "afirmat a"
+              }
+            }
+          ],
+          "P813": [
+            {
+              "property": "P813",
+              "datavalue": {
+                "time": "+2022-07-22T00:00:00Z",
+                "timezone": 0,
+                "before": 0,
+                "after": 0,
+                "precision": 11,
+                "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+              },
+              "datatype": "time",
+              "property-labels": {
+                "en": "retrieved",
+                "en-ca": "retrieved"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "P6385": [
+    {
+      "mainsnak": {
+        "property": "P6385",
+        "datavalue": "nauka_i_tehnika/tehnologiya_i_promyshlennost/INTERNET.html",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "Krugosvet article",
+          "ru": "статья в энциклопедии «Кругосвет»"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P8168": [
+    {
+      "mainsnak": {
+        "property": "P8168",
+        "datavalue": "Q399025",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "FactGrid item ID",
+          "es": "identificador de elemento en FactGrid"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P7502": [
+    {
+      "mainsnak": {
+        "property": "P7502",
+        "datavalue": "Internet-36DJ",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "Golden ID",
+          "de": "Golden-Kennung"
+        }
+      },
+      "rank": "normal",
+      "references": [
+        {
+          "P813": [
+            {
+              "property": "P813",
+              "datavalue": {
+                "time": "+2022-09-10T00:00:00Z",
+                "timezone": 0,
+                "before": 0,
+                "after": 0,
+                "precision": 11,
+                "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+              },
+              "datatype": "time",
+              "property-labels": {
+                "en": "retrieved",
+                "en-ca": "retrieved"
+              }
+            }
+          ],
+          "P854": [
+            {
+              "property": "P854",
+              "datavalue": "https://golden.com/wiki/Internet-36DJ",
+              "datatype": "url",
+              "property-labels": {
+                "ko": "참고한 URL",
+                "es": "dirección web de la referencia"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "P5555": [
+    {
+      "mainsnak": {
+        "property": "P5555",
+        "datavalue": "Internet map 1024 - transparent, inverted.png",
+        "datatype": "commonsMedia",
+        "property-labels": {
+          "en": "schematic",
+          "fr": "représentation schématique"
+        }
+      },
+      "qualifiers": {
+        "P8798": [
+          {
+            "property": "P8798",
+            "datavalue": {
+              "id": "Q101608434",
+              "labels": {
+                "en": "dark-on-light color scheme",
+                "nl": "donker-op-licht-kleurenschema"
+              }
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "for color scheme",
+              "es": "esquema de color"
+            }
+          }
+        ]
+      },
+      "rank": "preferred"
+    },
+    {
+      "mainsnak": {
+        "property": "P5555",
+        "datavalue": "Internet map 1024.jpg",
+        "datatype": "commonsMedia",
+        "property-labels": {
+          "en": "schematic",
+          "fr": "représentation schématique"
+        }
+      },
+      "qualifiers": {
+        "P8798": [
+          {
+            "property": "P8798",
+            "datavalue": {
+              "id": "Q6545942",
+              "labels": {
+                "en": "light-on-dark color scheme",
+                "fa": "رنگ‌بندی روشن روی تاریک"
+              }
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "for color scheme",
+              "es": "esquema de color"
+            }
+          }
+        ]
+      },
+      "rank": "normal"
+    }
+  ],
+  "P7783": [
+    {
+      "mainsnak": {
+        "property": "P7783",
+        "datavalue": "200906048434948362",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "J-GLOBAL ID",
+          "ar": "معرف مركز تكنولوجيا المعلومات للعلوم والتكنولوجيا"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P11567": [
+    {
+      "mainsnak": {
+        "property": "P11567",
+        "datavalue": "internet",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "Dictionary of Archives Terminology ID",
+          "it": "identificativo Dictionary of Archives Terminology"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P3984": [
+    {
+      "mainsnak": {
+        "property": "P3984",
+        "datavalue": "Internet",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "subreddit",
+          "de": "Subreddit"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P9497": [
+    {
+      "mainsnak": {
+        "property": "P9497",
+        "datavalue": "3069",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "Australian Thesaurus of Education Descriptors ID",
+          "nl": "Australian Thesaurus of Education Descriptors-identificatiecode"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P7870": [
+    {
+      "mainsnak": {
+        "property": "P7870",
+        "datavalue": "20225",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "Analysis & Policy Observatory term ID",
+          "ca": "identificador Analysis & Policy Observatory de terme"
+        }
+      },
+      "rank": "normal"
+    }
+  ],
+  "P2892": [
+    {
+      "mainsnak": {
+        "property": "P2892",
+        "datavalue": "C4505478",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "UMLS CUI",
+          "ru": "код UMLS CUI"
+        }
+      },
+      "rank": "normal",
+      "references": [
+        {
+          "P248": [
+            {
+              "property": "P248",
+              "datavalue": {
+                "id": "Q105870539",
+                "labels": {
+                  "en": "WikiUMLS: Aligning UMLS to Wikipedia via Cross-lingual Neural Ranking",
+                  "nl": "WikiUMLS: Aligning UMLS to Wikipedia via Cross-lingual Neural Ranking"
+                }
+              },
+              "datatype": "wikibase-item",
+              "property-labels": {
+                "fr": "affirmé dans",
+                "ca": "afirmat a"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mainsnak": {
+        "property": "P2892",
+        "datavalue": "C0282111",
+        "datatype": "external-id",
+        "property-labels": {
+          "en": "UMLS CUI",
+          "ru": "код UMLS CUI"
+        }
+      },
+      "rank": "normal",
+      "references": [
+        {
+          "P887": [
+            {
+              "property": "P887",
+              "datavalue": {
+                "id": "Q118645058",
+                "labels": "inferred by common MeSH mappings on source and on Wikidata"
+              },
+              "datatype": "wikibase-item",
+              "property-labels": {
+                "en": "based on heuristic",
+                "pt": "baseado na heurística"
+              }
+            }
+          ],
+          "P248": [
+            {
+              "property": "P248",
+              "datavalue": {
+                "id": "Q118645236",
+                "labels": "UMLS 2023"
+              },
+              "datatype": "wikibase-item",
+              "property-labels": {
+                "fr": "affirmé dans",
+                "ca": "afirmat a"
+              }
+            }
+          ],
+          "P813": [
+            {
+              "property": "P813",
+              "datavalue": {
+                "time": "+2023-05-25T00:00:00Z",
+                "timezone": 0,
+                "before": 0,
+                "after": 0,
+                "precision": 11,
+                "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+              },
+              "datatype": "time",
+              "property-labels": {
+                "en": "retrieved",
+                "en-ca": "retrieved"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
