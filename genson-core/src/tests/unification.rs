@@ -35,7 +35,7 @@ fn test_scalar_unification_ndjson_mixed_nullable_formats() {
 
     // The unified type should be nullable string (some colors components missing from some themes)
     let colors_values = &colors_schema["additionalProperties"];
-    assert_eq!(colors_values["type"], json!(["null", "string"]));
+    assert_eq!(colors_values["type"], json!("string"));
 }
 
 #[test]

@@ -633,11 +633,27 @@ fn unify_record_schemas(
 
             // Create proper JSON Schema nullable syntax
             if let Some(type_str) = field_type.get("type").and_then(|t| t.as_str()) {
-                let mut nullable_field = field_type.clone();
-                nullable_field["type"] = json!(["null", type_str]);
-                unified_properties.insert(field_name.clone(), nullable_field);
+                if type_str == "null" {
+                    // Already null - don't double-wrap
+                    unified_properties.insert(field_name.clone(), field_type.clone());
+                } else {
+                    // Make non-null type nullable
+                    let mut nullable_field = field_type.clone();
+                    nullable_field["type"] = json!(["null", type_str]);
+                    unified_properties.insert(field_name.clone(), nullable_field);
+                }
+            } else if let Some(_type_arr) = field_type.get("type").and_then(|t| t.as_array()) {
+                // Already nullable - use as is
+                unified_properties.insert(field_name.clone(), field_type.clone());
             } else {
-                unified_properties.insert(field_name.clone(), json!(["null", field_type]));
+                // Complex schema - create proper anyOf union
+                let nullable_schema = json!({
+                    "anyOf": [
+                        {"type": "null"},
+                        field_type
+                    ]
+                });
+                unified_properties.insert(field_name.clone(), nullable_schema);
             }
         }
     }

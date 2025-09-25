@@ -38,10 +38,7 @@ info:
           "hex": {
             "type": "object",
             "additionalProperties": {
-              "type": [
-                "null",
-                "string"
-              ]
+              "type": "string"
             }
           },
           "rgb": {

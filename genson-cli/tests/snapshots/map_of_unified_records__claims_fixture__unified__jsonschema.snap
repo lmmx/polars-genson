@@ -203,96 +203,66 @@ info:
                             "string"
                           ]
                         },
-                        "id": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
+                        "id": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
                           }
-                        ],
-                        "labels": [
-                          "null",
-                          {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          }
-                        ],
-                        "time": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        ],
-                        "timezone": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          }
-                        ],
-                        "before": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          }
-                        ],
-                        "after": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          }
-                        ],
-                        "precision": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          }
-                        ],
-                        "calendarmodel": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        ],
-                        "text": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        ],
-                        "language": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        ]
+                        },
+                        "time": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "timezone": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "before": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "after": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "precision": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "calendarmodel": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "text": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "language": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        }
                       },
                       "required": [
                         "value__string"

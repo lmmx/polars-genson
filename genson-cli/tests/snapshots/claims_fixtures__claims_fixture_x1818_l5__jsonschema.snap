@@ -15,322 +15,208 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "claims": {
-      "properties": {
-        "P244": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "datavalue": {
-                  "type": [
-                    "null",
-                    "string"
-                  ]
-                },
-                "P1810": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "P625": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
               "type": "object",
               "additionalProperties": {
+                "type": "object",
                 "properties": {
                   "latitude": {
-                    "type": "integer"
+                    "type": "object",
+                    "properties": {
+                      "latitude__integer": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "latitude__number": {
+                        "type": "number"
+                      }
+                    }
                   },
                   "longitude": {
-                    "type": "integer"
+                    "type": "object",
+                    "properties": {
+                      "longitude__integer": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "longitude__number": {
+                        "type": "number"
+                      }
+                    }
                   },
                   "altitude": {
                     "type": "null"
                   },
                   "precision": {
-                    "type": "integer"
+                    "type": "object",
+                    "properties": {
+                      "precision__integer": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "precision__number": {
+                        "type": "number"
+                      }
+                    }
                   },
                   "globe": {
-                    "type": "string"
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "id": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "datavalue__string": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
                   }
                 },
                 "required": [
-                  "altitude",
-                  "globe",
                   "latitude",
                   "longitude",
-                  "precision"
-                ],
-                "type": "object"
+                  "altitude",
+                  "precision",
+                  "globe"
+                ]
               }
-            }
-          }
-        },
-        "P901": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "references": {
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      "labels": {
                         "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "labels": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          },
-                          "datavalue__string": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
+                        "additionalProperties": {
+                          "type": "string"
                         }
+                      },
+                      "datavalue__string": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      "time": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      "timezone": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "before": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "after": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "precision": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "calendarmodel": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
                       }
                     }
                   }
                 }
               }
             },
-            "required": [
-              "mainsnak",
-              "references"
-            ],
-            "type": "object"
-          }
-        },
-        "P5008": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "datavalue": {
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "labels": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ],
-                  "type": [
-                    "null",
-                    "object"
-                  ]
-                },
-                "P585": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "properties": {
-                        "time": {
-                          "type": "string"
-                        },
-                        "timezone": {
-                          "type": "integer"
-                        },
-                        "before": {
-                          "type": "integer"
-                        },
-                        "after": {
-                          "type": "integer"
-                        },
-                        "precision": {
-                          "type": "integer"
-                        },
-                        "calendarmodel": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "after",
-                        "before",
-                        "calendarmodel",
-                        "precision",
-                        "time",
-                        "timezone"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "P1343": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "datavalue": {
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "labels": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ],
-                  "type": [
-                    "null",
-                    "object"
-                  ]
-                },
-                "P805": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
                   "items": {
                     "type": "object",
                     "additionalProperties": {
                       "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "P1332": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "datavalue": {
-                  "properties": {
-                    "latitude": {
-                      "type": "number"
-                    },
-                    "longitude": {
-                      "type": "number"
-                    },
-                    "altitude": {
-                      "type": "null"
-                    },
-                    "precision": {
-                      "type": "number"
-                    },
-                    "globe": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "altitude",
-                    "globe",
-                    "latitude",
-                    "longitude",
-                    "precision"
-                  ],
-                  "type": [
-                    "null",
-                    "object"
-                  ]
-                },
-                "P805": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         },
                         "labels": {
                           "type": "object",
                           "additionalProperties": {
                             "type": "string"
                           }
+                        },
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
+                      }
                     }
                   }
                 }
               }
             }
-          }
+          },
+          "required": [
+            "mainsnak"
+          ]
         }
-      },
-      "required": [
-        "P1332",
-        "P1343",
-        "P244",
-        "P5008",
-        "P625",
-        "P901"
-      ],
-      "type": "object"
+      }
     }
   },
   "required": [

@@ -4,12 +4,12 @@ expression: stdout_str
 info:
   approved: false
   args:
-    - "--ndjson"
     - "--map-threshold"
     - "0"
     - "--unify-maps"
     - "--wrap-root"
     - claims
+    - "--ndjson"
   fixture: tests/data/claims_fixture_x4_L1.jsonl
 ---
 {
@@ -34,10 +34,7 @@ info:
                 "property-labels": {
                   "type": "object",
                   "additionalProperties": {
-                    "type": [
-                      "null",
-                      "string"
-                    ]
+                    "type": "string"
                   }
                 },
                 "datavalue": {
@@ -52,93 +49,63 @@ info:
                     "labels": {
                       "type": "object",
                       "additionalProperties": {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
+                        "type": "string"
                       }
                     },
-                    "datavalue__string": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ],
-                    "time": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ],
-                    "timezone": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "integer"
-                        ]
-                      }
-                    ],
-                    "before": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "integer"
-                        ]
-                      }
-                    ],
-                    "after": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "integer"
-                        ]
-                      }
-                    ],
-                    "precision": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "integer"
-                        ]
-                      }
-                    ],
-                    "calendarmodel": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ],
-                    "text": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ],
-                    "language": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
-                      }
-                    ]
+                    "datavalue__string": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "time": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "timezone": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "before": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "after": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "precision": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "calendarmodel": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "text": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "language": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
                   },
                   "required": [
                     "id",
@@ -183,75 +150,51 @@ info:
                           "labels": {
                             "type": "object",
                             "additionalProperties": {
-                              "type": [
-                                "null",
-                                "string"
-                              ]
+                              "type": "string"
                             }
                           },
-                          "time": [
-                            "null",
-                            {
-                              "type": [
-                                "null",
-                                "string"
-                              ]
-                            }
-                          ],
-                          "timezone": [
-                            "null",
-                            {
-                              "type": [
-                                "null",
-                                "integer"
-                              ]
-                            }
-                          ],
-                          "before": [
-                            "null",
-                            {
-                              "type": [
-                                "null",
-                                "integer"
-                              ]
-                            }
-                          ],
-                          "after": [
-                            "null",
-                            {
-                              "type": [
-                                "null",
-                                "integer"
-                              ]
-                            }
-                          ],
-                          "precision": [
-                            "null",
-                            {
-                              "type": [
-                                "null",
-                                "integer"
-                              ]
-                            }
-                          ],
-                          "calendarmodel": [
-                            "null",
-                            {
-                              "type": [
-                                "null",
-                                "string"
-                              ]
-                            }
-                          ],
-                          "datavalue__string": [
-                            "null",
-                            {
-                              "type": [
-                                "null",
-                                "string"
-                              ]
-                            }
-                          ]
+                          "time": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "timezone": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "before": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "after": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "precision": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "calendarmodel": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "datavalue__string": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          }
                         },
                         "required": [
                           "id",
@@ -264,10 +207,7 @@ info:
                       "property-labels": {
                         "type": "object",
                         "additionalProperties": {
-                          "type": [
-                            "null",
-                            "string"
-                          ]
+                          "type": "string"
                         }
                       }
                     },
@@ -303,21 +243,15 @@ info:
                         "labels": {
                           "type": "object",
                           "additionalProperties": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
+                            "type": "string"
                           }
                         },
-                        "datavalue__string": [
-                          "null",
-                          {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        ]
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        }
                       },
                       "required": [
                         "id",
@@ -330,10 +264,7 @@ info:
                     "property-labels": {
                       "type": "object",
                       "additionalProperties": {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
+                        "type": "string"
                       }
                     }
                   },

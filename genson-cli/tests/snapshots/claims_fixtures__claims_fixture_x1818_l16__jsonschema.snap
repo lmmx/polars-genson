@@ -32,24 +32,18 @@ info:
                       "string"
                     ]
                   },
-                  "id": [
-                    "null",
-                    {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
+                  "id": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
                     }
-                  ],
-                  "labels": [
-                    "null",
-                    {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  ]
+                  }
                 },
                 "required": [
                   "datavalue__string"

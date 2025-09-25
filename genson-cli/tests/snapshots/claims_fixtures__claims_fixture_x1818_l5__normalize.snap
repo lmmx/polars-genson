@@ -18,37 +18,97 @@ info:
       "P244": [
         {
           "mainsnak": {
-            "datavalue": "sh85005490",
-            "P1810": null
+            "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
+              "id": null,
+              "labels": null,
+              "datavalue__string": "sh85005490"
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P1810": [
               {
-                "datavalue": "Antarctica"
+                "datavalue": {
+                  "id": null,
+                  "labels": null,
+                  "datavalue__string": "Antarctica",
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "precision": null,
+                  "calendarmodel": null
+                }
               }
             ]
-          }
+          },
+          "references": null
         }
       ],
       "P625": [
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": -90,
-              "longitude": 0,
+              "latitude": {
+                "latitude__integer": -90,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": 0,
+                "longitude__number": null
+              },
               "altitude": null,
-              "precision": 10,
-              "globe": "http://www.wikidata.org/entity/Q2"
+              "precision": {
+                "precision__integer": 10,
+                "precision__number": null
+              },
+              "globe": "http://www.wikidata.org/entity/Q2",
+              "id": null,
+              "labels": null,
+              "datavalue__string": null
             }
-          }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P901": [
         {
           "mainsnak": {
-            "datavalue": "AY"
+            "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
+              "id": null,
+              "labels": null,
+              "datavalue__string": "AY"
+            }
           },
+          "qualifiers": null,
           "references": [
             {
               "P248": [
@@ -79,29 +139,61 @@ info:
         {
           "mainsnak": {
             "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
               "id": "Q5460604",
               "labels": {
                 "xh": "Wikipedia:Vital articles"
-              }
-            },
-            "P585": null
-          }
+              },
+              "datavalue__string": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         },
         {
           "mainsnak": {
             "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
               "id": "Q6173448",
               "labels": {
                 "fa": "ویکی‌پدیا:مقاله‌های حیاتی/سطح/۴"
-              }
-            },
-            "P585": null
+              },
+              "datavalue__string": null
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P585": [
               {
                 "datavalue": {
+                  "id": null,
+                  "labels": null,
+                  "datavalue__string": null,
                   "time": "+2022-10-31T00:00:00Z",
                   "timezone": 0,
                   "before": 0,
@@ -111,80 +203,145 @@ info:
                 }
               }
             ]
-          }
+          },
+          "references": null
         }
       ],
       "P1343": [
         {
           "mainsnak": {
             "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
               "id": "Q19180675",
               "labels": {
                 "ru": "Малый энциклопедический словарь Брокгауза и Ефрона"
-              }
-            },
-            "P805": null
+              },
+              "datavalue__string": null
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P805": [
               {
                 "datavalue": {
                   "id": "Q24734052",
-                  "labels": "МЭСБЕ / Антарктический"
+                  "labels": {
+                    "labels__string": "МЭСБЕ / Антарктический"
+                  },
+                  "datavalue__string": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "precision": null,
+                  "calendarmodel": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         },
         {
           "mainsnak": {
             "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
               "id": "Q602358",
               "labels": {
                 "it": "Dizionario Enciclopedico Brockhaus ed Efron"
-              }
-            },
-            "P805": null
+              },
+              "datavalue__string": null
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P805": [
               {
                 "datavalue": {
                   "id": "Q24507898",
-                  "labels": "ЭСБЕ / Эндербилэнд"
+                  "labels": {
+                    "labels__string": "ЭСБЕ / Эндербилэнд"
+                  },
+                  "datavalue__string": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "precision": null,
+                  "calendarmodel": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         }
       ],
       "P1332": [
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": -63.213305555556,
-              "longitude": -57.302194444444,
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": -63.213305555556
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": -57.302194444444
+              },
               "altitude": null,
-              "precision": 0.000027777777777778,
-              "globe": "http://www.wikidata.org/entity/Q2"
-            },
-            "P805": null
+              "precision": {
+                "precision__integer": null,
+                "precision__number": 0.000027777777777778
+              },
+              "globe": "http://www.wikidata.org/entity/Q2",
+              "id": null,
+              "labels": null,
+              "datavalue__string": null
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P805": [
               {
                 "datavalue": {
                   "id": "Q984853",
                   "labels": {
                     "nn": "Prime Head"
-                  }
+                  },
+                  "datavalue__string": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "precision": null,
+                  "calendarmodel": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         }
       ]
     }
