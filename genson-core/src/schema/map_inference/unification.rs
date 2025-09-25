@@ -396,7 +396,67 @@ fn unify_scalar_schemas(
         return Some(json!({"type": ["null", base_type]}));
     }
 
-    // Multiple incompatible scalar types
+    // Handle mixed numeric types (integer + number) with scalar promotion
+    if config.wrap_scalars
+        && base_types.len() == 2
+        && base_types.contains("integer")
+        && base_types.contains("number")
+    {
+        debug!(
+            config,
+            "{}: Mixed numeric scalars detected, promoting to objects", path
+        );
+
+        // Extract the field name from the path (last component after the last dot)
+        let field_name = path.split('.').next_back().unwrap_or("value");
+
+        // Create promoted schemas for each original schema
+        let mut promoted_schemas = Vec::new();
+
+        for schema in schemas {
+            if let Some(scalar_type) = get_scalar_type_name(schema) {
+                let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
+
+                // Create an object with the scalar under the promoted key
+                let mut properties = Map::new();
+                properties.insert(wrapped_key.clone(), schema.clone());
+
+                let promoted = json!({
+                    "type": "object",
+                    "properties": properties,
+                    "required": [wrapped_key]
+                });
+
+                promoted_schemas.push(promoted);
+
+                debug!(
+                    config,
+                    "{}: Promoted {} scalar to object with key '{}'",
+                    path,
+                    scalar_type,
+                    wrapped_key
+                );
+            } else {
+                debug!(
+                    config,
+                    "{}: Failed to extract scalar type from schema", path
+                );
+                return None;
+            }
+        }
+
+        // Now unify the promoted object schemas
+        debug!(
+            config,
+            "{}: Attempting to unify {} promoted object schemas",
+            path,
+            promoted_schemas.len()
+        );
+
+        return unify_record_schemas(&promoted_schemas, path, config);
+    }
+
+    // Multiple incompatible scalar types (not the numeric case)
     if config.debug {
         // Avoid the sort if not debugging this at all
         let mut sorted_types: Vec<_> = base_types.into_iter().collect();
