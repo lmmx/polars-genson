@@ -19,10 +19,14 @@ info:
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q2041543",
               "labels": {
                 "sk": "Ottův slovník naučný"
-              }
+              },
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
             }
           },
           "qualifiers": {
@@ -32,19 +36,25 @@ info:
                   "id": "Q23864606",
                   "labels": {
                     "ru": "Отто / собака"
-                  }
+                  },
+                  "datavalue__string": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         },
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q602358",
               "labels": {
                 "it": "Dizionario Enciclopedico Brockhaus ed Efron"
-              }
+              },
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
             }
           },
           "qualifiers": {
@@ -54,45 +64,86 @@ info:
                   "id": "Q24484874",
                   "labels": {
                     "labels__string": "ЭСБЕ / Собаки"
-                  }
+                  },
+                  "datavalue__string": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         }
       ],
       "P349": [
         {
           "mainsnak": {
-            "datavalue": "00564180"
-          }
+            "datavalue": {
+              "datavalue__string": "00564180",
+              "id": null,
+              "labels": null,
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P3221": [
         {
           "mainsnak": {
-            "datavalue": "subject/dogs"
-          }
+            "datavalue": {
+              "datavalue__string": "subject/dogs",
+              "id": null,
+              "labels": null,
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P3417": [
         {
           "mainsnak": {
-            "datavalue": "Dogs-pets-1"
-          }
+            "datavalue": {
+              "datavalue__string": "Dogs-pets-1",
+              "id": null,
+              "labels": null,
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P3479": [
         {
           "mainsnak": {
-            "datavalue": "b2d0ab32-ad92-486a-8ff3-c85fc06bdb01"
-          }
+            "datavalue": {
+              "datavalue__string": "b2d0ab32-ad92-486a-8ff3-c85fc06bdb01",
+              "id": null,
+              "labels": null,
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P3465": [
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
+              "id": null,
+              "labels": null,
               "amount": "+45000",
               "unit": "http://www.wikidata.org/entity/Q39369",
               "unit-labels": {
@@ -204,6 +255,7 @@ info:
               }
             }
           },
+          "qualifiers": null,
           "references": [
             {
               "P248": [
@@ -243,35 +295,56 @@ info:
       "P2888": [
         {
           "mainsnak": {
-            "datavalue": "http://wordnet-rdf.princeton.edu/wn30/02084071-n"
-          }
+            "datavalue": {
+              "datavalue__string": "http://wordnet-rdf.princeton.edu/wn30/02084071-n",
+              "id": null,
+              "labels": null,
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         },
         {
           "mainsnak": {
-            "datavalue": "http://odwn-rdf.vu.nl/odwn13/02084071-n"
-          }
+            "datavalue": {
+              "datavalue__string": "http://odwn-rdf.vu.nl/odwn13/02084071-n",
+              "id": null,
+              "labels": null,
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P31": [
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q55983715",
               "labels": {
                 "en": "organisms known by a particular common name"
-              }
-            },
-            "P642": null
+              },
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P642": [
               {
                 "datavalue": {
                   "id": "Q20717272",
                   "labels": {
                     "de": "Canis familiaris"
-                  }
+                  },
+                  "datavalue__string": null
                 }
               },
               {
@@ -279,27 +352,39 @@ info:
                   "id": "Q26972265",
                   "labels": {
                     "ru": "Canis lupus familiaris"
-                  }
+                  },
+                  "datavalue__string": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         }
       ],
       "P2924": [
         {
           "mainsnak": {
-            "datavalue": "3588376",
-            "P1810": null
+            "datavalue": {
+              "datavalue__string": "3588376",
+              "id": null,
+              "labels": null,
+              "amount": null,
+              "unit": null,
+              "unit-labels": null
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P1810": [
               {
-                "datavalue": "СОБАКА"
+                "datavalue": {
+                  "id": null,
+                  "labels": null,
+                  "datavalue__string": "СОБАКА"
+                }
               }
             ]
-          }
+          },
+          "references": null
         }
       ]
     }

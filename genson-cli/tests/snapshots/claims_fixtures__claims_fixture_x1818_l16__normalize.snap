@@ -19,6 +19,7 @@ info:
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q1138524",
               "labels": {
                 "lb": "Der Neue Pauly"
@@ -32,15 +33,18 @@ info:
                   "id": "Q19997008",
                   "labels": {
                     "de": "Löwe (Pauly-Wissowa)"
-                  }
+                  },
+                  "datavalue__string": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         },
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q4086271",
               "labels": {
                 "ru": "Библейская энциклопедия архимандрита Никифора"
@@ -54,29 +58,45 @@ info:
                   "id": "Q25295952",
                   "labels": {
                     "labels__string": "БЭАН / Лев"
-                  }
+                  },
+                  "datavalue__string": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         }
       ],
       "P5019": [
         {
           "mainsnak": {
-            "datavalue": "löwe"
-          }
+            "datavalue": {
+              "datavalue__string": "löwe",
+              "id": null,
+              "labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P5055": [
         {
           "mainsnak": {
-            "datavalue": "10196306"
+            "datavalue": {
+              "datavalue__string": "10196306",
+              "id": null,
+              "labels": null
+            }
           },
           "qualifiers": {
             "P1810": [
               {
-                "datavalue": "Panthera leo"
+                "datavalue": {
+                  "id": null,
+                  "labels": null,
+                  "datavalue__string": "Panthera leo"
+                }
               }
             ]
           },
