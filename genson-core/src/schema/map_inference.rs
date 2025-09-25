@@ -54,7 +54,11 @@ fn contains_anyof(value: &Value) -> bool {
 }
 
 /// Process anyOf unions in a schema recursively
-fn process_anyof_unions(schema: &mut Value, config: &SchemaInferenceConfig) -> bool {
+fn process_anyof_unions(
+    schema: &mut Value,
+    field_name: &str,
+    config: &SchemaInferenceConfig,
+) -> bool {
     let mut made_changes = false;
 
     match schema {
@@ -62,12 +66,12 @@ fn process_anyof_unions(schema: &mut Value, config: &SchemaInferenceConfig) -> b
             // Handle direct anyOf at this level
             if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
                 if config.unify_maps {
-                    if let Some(unified) = unify_anyof_schemas(any_of_schemas, "", config) {
+                    if let Some(unified) = unify_anyof_schemas(any_of_schemas, field_name, config) {
                         debug!(config, "Successfully unified anyOf schemas");
                         *schema = unified;
                         made_changes = true;
                         // Recursively process the newly unified schema
-                        if process_anyof_unions(schema, config) {
+                        if process_anyof_unions(schema, field_name, config) {
                             made_changes = true;
                         }
                         return made_changes;
@@ -75,16 +79,27 @@ fn process_anyof_unions(schema: &mut Value, config: &SchemaInferenceConfig) -> b
                 }
             }
 
-            // Recursively process all nested values
-            for v in obj.values_mut() {
-                if process_anyof_unions(v, config) {
-                    made_changes = true;
+            // Recursively process all nested values - pass field names for known properties
+            if let Some(props) = obj.get_mut("properties") {
+                if let Some(props_obj) = props.as_object_mut() {
+                    for (k, v) in props_obj {
+                        if process_anyof_unions(v, k, config) {
+                            made_changes = true;
+                        }
+                    }
+                }
+            } else {
+                // For other nested values, use the current field name
+                for v in obj.values_mut() {
+                    if process_anyof_unions(v, field_name, config) {
+                        made_changes = true;
+                    }
                 }
             }
         }
         Value::Array(arr) => {
             for v in arr {
-                if process_anyof_unions(v, config) {
+                if process_anyof_unions(v, field_name, config) {
                     made_changes = true;
                 }
             }
@@ -336,7 +351,7 @@ pub(crate) fn rewrite_objects(
                         config,
                         "Unified schema contains anyOf, processing unions first"
                     );
-                    process_anyof_unions(schema, config);
+                    process_anyof_unions(schema, field_name.unwrap_or(""), config);
                 }
             }
 
