@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.3.0...genson-cli-v0.3.1) - 2025-09-25
+
+### <!-- 9 -->Other
+
+- exclude development files from crate release
+- Resolve `anyOf` unions before map inference ([#108](https://github.com/lmmx/polars-genson/pull/108))
+- add minimal fixtures to reproduce map inference failures ([#107](https://github.com/lmmx/polars-genson/pull/107))
+
 ## [0.2.8](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.2.7...genson-cli-v0.2.8) - 2025-09-20
 
 ### <!-- 6 -->Testing
