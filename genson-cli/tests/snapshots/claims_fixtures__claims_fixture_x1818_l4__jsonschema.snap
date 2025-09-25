@@ -58,125 +58,106 @@ info:
               }
             },
             "qualifiers": {
-              "type": [
-                "null",
-                "object"
-              ],
-              "properties": {
-                "P625": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
                     "type": "object",
-                    "additionalProperties": {
-                      "properties": {
-                        "latitude": {
-                          "type": "number"
+                    "properties": {
+                      "precision": {
+                        "type": "object",
+                        "properties": {
+                          "precision__integer": {
+                            "type": "integer"
+                          },
+                          "precision__number": {
+                            "type": [
+                              "null",
+                              "number"
+                            ]
+                          }
                         },
-                        "longitude": {
-                          "type": "number"
-                        },
-                        "altitude": {
-                          "type": "null"
-                        },
-                        "precision": {
-                          "type": "number"
-                        },
-                        "globe": {
-                          "type": "string"
-                        }
+                        "required": [
+                          "precision__integer"
+                        ]
                       },
-                      "required": [
-                        "altitude",
-                        "globe",
-                        "latitude",
-                        "longitude",
-                        "precision"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                },
-                "P582": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "properties": {
-                        "time": {
-                          "type": "string"
-                        },
-                        "timezone": {
-                          "type": "integer"
-                        },
-                        "before": {
-                          "type": "integer"
-                        },
-                        "after": {
-                          "type": "integer"
-                        },
-                        "precision": {
-                          "type": "integer"
-                        },
-                        "calendarmodel": {
-                          "type": "string"
-                        }
+                      "time": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
                       },
-                      "required": [
-                        "after",
-                        "before",
-                        "calendarmodel",
-                        "precision",
-                        "time",
-                        "timezone"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                },
-                "P580": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "properties": {
-                        "time": {
-                          "type": "string"
-                        },
-                        "timezone": {
-                          "type": "integer"
-                        },
-                        "before": {
-                          "type": "integer"
-                        },
-                        "after": {
-                          "type": "integer"
-                        },
-                        "precision": {
-                          "type": "integer"
-                        },
-                        "calendarmodel": {
-                          "type": "string"
-                        }
+                      "timezone": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
                       },
-                      "required": [
-                        "after",
-                        "before",
-                        "calendarmodel",
-                        "precision",
-                        "time",
-                        "timezone"
+                      "before": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "after": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ]
+                      },
+                      "calendarmodel": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      "latitude": [
+                        "null",
+                        {
+                          "type": [
+                            "null",
+                            "number"
+                          ]
+                        }
                       ],
-                      "type": "object"
-                    }
+                      "longitude": [
+                        "null",
+                        {
+                          "type": [
+                            "null",
+                            "number"
+                          ]
+                        }
+                      ],
+                      "altitude": [
+                        "null",
+                        {
+                          "type": [
+                            "null",
+                            "null"
+                          ]
+                        }
+                      ],
+                      "globe": [
+                        "null",
+                        {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "precision",
+                      "time",
+                      "timezone",
+                      "before",
+                      "after",
+                      "calendarmodel"
+                    ]
                   }
                 }
               }

@@ -2,13 +2,13 @@
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
+  approved: false
   args:
     - "--ndjson"
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "1"
+    - "0"
     - "--unify-maps"
   input:
     - letters:
@@ -24,45 +24,41 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "letters": {
-      "properties": {
-        "a": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "index": {
-                "type": "integer"
-              },
-              "vowel": {
-                "type": "integer"
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "index": {
+              "type": "object",
+              "properties": {
+                "index__integer": {
+                  "type": "integer"
+                },
+                "index__string": {
+                  "type": "string"
+                }
               }
             },
-            "required": [
-              "index",
-              "vowel"
-            ],
-            "type": "object"
-          }
-        },
-        "b": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "index": {
-                "type": "string"
-              },
-              "consonant": {
-                "type": "integer"
-              }
+            "vowel": {
+              "type": [
+                "null",
+                "integer"
+              ]
             },
-            "required": [
-              "consonant",
-              "index"
-            ],
-            "type": "object"
-          }
+            "consonant": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            }
+          },
+          "required": [
+            "index"
+          ]
         }
-      },
-      "type": "object"
+      }
     }
   },
   "required": [

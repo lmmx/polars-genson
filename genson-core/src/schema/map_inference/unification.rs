@@ -396,78 +396,7 @@ fn unify_scalar_schemas(
         return Some(json!({"type": ["null", base_type]}));
     }
 
-    // Handle mixed numeric types (integer + number) with scalar promotion
-    if config.wrap_scalars
-        && base_types.len() == 2
-        && base_types.contains("integer")
-        && base_types.contains("number")
-    {
-        // Extract the field name from the path (last component after the last dot)
-        let field_name = path.split('.').last().unwrap_or("");
-
-        // Only apply scalar promotion if we have a meaningful field name
-        // This prevents promotion in wrong contexts (like map value unification)
-        if !field_name.is_empty() && field_name != "additionalProperties" && field_name != "items" {
-            debug!(
-                config,
-                "{}: Mixed numeric scalars detected for field '{}', promoting to objects",
-                path,
-                field_name
-            );
-
-            // Create promoted schemas for each original schema
-            let mut promoted_schemas = Vec::new();
-
-            for schema in schemas {
-                if let Some(scalar_type) = get_scalar_type_name(schema) {
-                    let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
-
-                    // Create an object with the scalar under the promoted key
-                    let mut properties = Map::new();
-                    properties.insert(wrapped_key.clone(), schema.clone());
-
-                    let promoted = json!({
-                        "type": "object",
-                        "properties": properties,
-                        "required": [wrapped_key]
-                    });
-
-                    promoted_schemas.push(promoted);
-
-                    debug!(
-                        config,
-                        "{}: Promoted {} scalar to object with key '{}'",
-                        path,
-                        scalar_type,
-                        wrapped_key
-                    );
-                } else {
-                    debug!(
-                        config,
-                        "{}: Failed to extract scalar type from schema", path
-                    );
-                    return None;
-                }
-            }
-
-            // Now unify the promoted object schemas
-            debug!(
-                config,
-                "{}: Attempting to unify {} promoted object schemas",
-                path,
-                promoted_schemas.len()
-            );
-
-            return unify_record_schemas(&promoted_schemas, path, config);
-        } else {
-            debug!(
-                config,
-                "{}: Skipping scalar promotion - no meaningful field name ('{}')", path, field_name
-            );
-        }
-    }
-
-    // Multiple incompatible scalar types (not the numeric case or promotion was skipped)
+    // Multiple incompatible scalar types
     if config.debug {
         let mut sorted_types: Vec<_> = base_types.into_iter().collect();
         sorted_types.sort();
@@ -614,7 +543,6 @@ fn unify_record_schemas(
                                 return None;
                             }
                         } else if config.wrap_scalars {
-                            // Try scalar promotion only if one is truly a scalar and the other is an object
                             let existing_is_obj = is_object_schema(&existing);
                             let existing_is_scalar = is_scalar_schema(&existing);
                             let new_is_obj = is_object_schema(&new);
@@ -636,11 +564,22 @@ fn unify_record_schemas(
                                     e.insert(unified);
                                     continue;
                                 }
+                            } else if existing_is_scalar && new_is_scalar {
+                                // NEW: Handle scalar vs scalar conflicts with mixed types
+                                debug!(config, "Field `{field_name}` has scalar vs scalar conflict, attempting promotion");
+
+                                if let Some(unified) = try_mixed_scalar_promotion(
+                                    &existing, &new, field_name, path, config,
+                                ) {
+                                    debug!(config, "Field `{field_name}` unified successfully after mixed scalar promotion");
+                                    e.insert(unified);
+                                    continue;
+                                }
                             }
 
-                            // If we reach here, it's not a valid scalar/object promotion case
+                            // If we reach here, it's not a valid promotion case
                             debug!(config,
-                                "{path}.{field_name}: incompatible types (not scalar/object promotion):\n  existing={:#?}\n  new={:#?}",
+                                "{path}.{field_name}: incompatible types (promotion failed):\n  existing={:#?}\n  new={:#?}",
                                 existing, new
                             );
                             return None;
@@ -714,6 +653,49 @@ fn unify_record_schemas(
     }
 
     Some(result)
+}
+
+/// Handle mixed scalar promotion when the same field has different scalar types
+fn try_mixed_scalar_promotion(
+    existing: &Value,
+    new: &Value,
+    field_name: &str,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    // Get scalar types from both schemas
+    let existing_type = get_scalar_type_name(existing)?;
+    let new_type = get_scalar_type_name(new)?;
+
+    // Only promote if they're different scalar types
+    if existing_type == new_type {
+        return None;
+    }
+
+    debug!(
+        config,
+        "{}: Promoting mixed scalars {} and {} for field '{}'",
+        path,
+        existing_type,
+        new_type,
+        field_name
+    );
+
+    // Create promoted schemas
+    let existing_key = make_promoted_scalar_key(field_name, &existing_type);
+    let new_key = make_promoted_scalar_key(field_name, &new_type);
+
+    let mut properties = Map::new();
+    properties.insert(existing_key.clone(), existing.clone());
+    properties.insert(new_key.clone(), new.clone());
+
+    let promoted = json!({
+        "type": "object",
+        "properties": properties
+        // No required array - all promoted fields should be nullable
+    });
+
+    Some(promoted)
 }
 
 pub(crate) fn unify_anyof_schemas(
