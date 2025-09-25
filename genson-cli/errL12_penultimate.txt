@@ -173,7 +173,7 @@ claims.references.items.P248.items: Attempting to unify 2 record schemas
 Field `datavalue` has conflicting object schemas, attempting recursive unify
 claims.references.items.P248.items.datavalue: All schemas are records, attempting record unification
 claims.references.items.P248.items.datavalue: Attempting to unify 2 record schemas
-claims.references.items.P248.items.datavalue.labels: incompatible types (not scalar/object promotion):
+claims.references.items.P248.items.datavalue.labels: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "fi": Object {
@@ -3343,7 +3343,7 @@ Schemas not homogeneous, attempting unification
 Field `datavalue` has conflicting object schemas, attempting recursive unify
 .datavalue: All schemas are records, attempting record unification
 .datavalue: Attempting to unify 2 record schemas
-.datavalue.labels: incompatible types (not scalar/object promotion):
+.datavalue.labels: incompatible types (promotion failed):
   existing=Object {
     "anyOf": Array [
         Object {
@@ -3742,7 +3742,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -4094,7 +4094,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -4435,7 +4435,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -4811,7 +4811,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -5152,7 +5152,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -5504,7 +5504,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -5845,7 +5845,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -8797,7 +8797,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -9138,7 +9138,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -9490,7 +9490,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -9831,7 +9831,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -10207,7 +10207,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -10548,7 +10548,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -10900,7 +10900,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -11241,7 +11241,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -11559,7 +11559,7 @@ Field `datavalue` unified successfully after recursion
 .references.items: Successfully unified map additionalProperties
 .references: Successfully unified array items
 Field `references` unified successfully after array recursion
-.qualifiers: incompatible types (not scalar/object promotion):
+.qualifiers: incompatible types (promotion failed):
   existing=Object {
     "type": String("object"),
     "additionalProperties": Object {
@@ -14235,7 +14235,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -14576,7 +14576,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -14928,7 +14928,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -15269,7 +15269,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -15645,7 +15645,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -15986,7 +15986,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -16338,7 +16338,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -16679,7 +16679,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -19631,7 +19631,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -19972,7 +19972,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -20324,7 +20324,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -20665,7 +20665,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -21041,7 +21041,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -21382,7 +21382,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -21734,7 +21734,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {
@@ -22075,7 +22075,7 @@ Unique normalised schemas (3 total):
 Schemas not homogeneous, attempting unification
 : All schemas are records, attempting record unification
 : Attempting to unify 3 record schemas
-.datavalue: incompatible types (not scalar/object promotion):
+.datavalue: incompatible types (promotion failed):
   existing=Object {
     "properties": Object {
         "id": Object {

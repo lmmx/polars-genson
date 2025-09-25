@@ -1,0 +1,517 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--normalise"
+  fixture: tests/data/claims/x1818_L4_PENULTIMATE.json
+---
+[
+  {
+    "claims": {
+      "P119": [
+        {
+          "mainsnak": {
+            "property": "P119",
+            "datavalue": {
+              "id": "Q533697",
+              "labels": {
+                "it": "cimitero di Highgate",
+                "br": "bered Highgate"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "place of burial",
+              "de": "Begräbnisort"
+            }
+          },
+          "qualifiers": {
+            "P625": [
+              {
+                "property": "P625",
+                "datavalue": {
+                  "precision": {
+                    "precision__number": 0.00002777777777777778,
+                    "precision__integer": null
+                  },
+                  "latitude": 51.56652777777778,
+                  "longitude": -0.14544444444444443,
+                  "altitude": null,
+                  "globe": "http://www.wikidata.org/entity/Q2",
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": null,
+                  "language": null
+                },
+                "datatype": "globe-coordinate",
+                "property-labels": {
+                  "en": "coordinate location",
+                  "fr": "coordonnées géographiques"
+                }
+              }
+            ]
+          },
+          "rank": "normal",
+          "references": [
+            {
+              "P854": [
+                {
+                  "property": "P854",
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": "http://highgatecemetery.org/visit/who",
+                    "text": null,
+                    "language": null
+                  },
+                  "datatype": "url",
+                  "property-labels": {
+                    "ko": "참고한 URL",
+                    "es": "dirección web de la referencia"
+                  }
+                }
+              ],
+              "P407": [
+                {
+                  "property": "P407",
+                  "datavalue": {
+                    "id": "Q1860",
+                    "labels": {
+                      "tg": "ингилисӣ",
+                      "ay": "Inlish aru"
+                    },
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": null,
+                    "text": null,
+                    "language": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "es": "idioma de la obra o del nombre",
+                    "pt": "língua da obra ou do nome"
+                  }
+                }
+              ],
+              "P813": [
+                {
+                  "property": "P813",
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "time": "+2013-12-07T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
+                    "datavalue__string": null,
+                    "text": null,
+                    "language": null
+                  },
+                  "datatype": "time",
+                  "property-labels": {
+                    "en": "retrieved",
+                    "en-ca": "retrieved"
+                  }
+                }
+              ],
+              "P1476": [
+                {
+                  "property": "P1476",
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": null,
+                    "text": "Who’s here",
+                    "language": "en"
+                  },
+                  "datatype": "monolingualtext",
+                  "property-labels": {
+                    "en": "title",
+                    "fr": "titre"
+                  }
+                }
+              ],
+              "P248": [
+                {
+                  "property": "P248",
+                  "datavalue": {
+                    "id": "Q533697",
+                    "labels": {
+                      "it": "cimitero di Highgate",
+                      "br": "bered Highgate"
+                    },
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": null,
+                    "text": null,
+                    "language": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "fr": "affirmé dans",
+                    "ca": "afirmat a"
+                  }
+                }
+              ],
+              "P1065": [
+                {
+                  "property": "P1065",
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": "https://web.archive.org/web/20131203025040/http://highgatecemetery.org/visit/who",
+                    "text": null,
+                    "language": null
+                  },
+                  "datatype": "url",
+                  "property-labels": {
+                    "it": "URL di archivio",
+                    "en": "archive URL"
+                  }
+                }
+              ],
+              "P2960": [
+                {
+                  "property": "P2960",
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "time": "+2013-12-03T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
+                    "datavalue__string": null,
+                    "text": null,
+                    "language": null
+                  },
+                  "datatype": "time",
+                  "property-labels": {
+                    "en": "archive date",
+                    "sv": "arkiveringsdatum"
+                  }
+                }
+              ]
+            },
+            {
+              "P143": [
+                {
+                  "property": "P143",
+                  "datavalue": {
+                    "id": "Q565",
+                    "labels": {
+                      "en": "Wikimedia Commons",
+                      "ru": "Викисклад"
+                    },
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "datavalue__string": null,
+                    "text": null,
+                    "language": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "nl": "geïmporteerd uit Wikimedia-project",
+                    "de": "importiert aus Wikimedia-Projekt"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P1442": [
+        {
+          "mainsnak": {
+            "property": "P1442",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "Douglas Adams' gravestone.jpg"
+            },
+            "datatype": "commonsMedia",
+            "property-labels": {
+              "en": "image of grave",
+              "nl": "foto van graf"
+            }
+          },
+          "qualifiers": {
+            "P585": [
+              {
+                "property": "P585",
+                "datavalue": {
+                  "precision": {
+                    "precision__number": null,
+                    "precision__integer": 11
+                  },
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": "+2008-10-24T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
+                  "text": null,
+                  "language": null
+                },
+                "datatype": "time",
+                "property-labels": {
+                  "de": "Zeitpunkt/Stand",
+                  "ru": "момент времени"
+                }
+              }
+            ],
+            "P2096": [
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "Douglas Adams' gravestone",
+                  "language": "en"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "Grabstein von Douglas Adams",
+                  "language": "de"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "Douglas Adams'ın mezar taşı",
+                  "language": "tr"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "Batu nisan Douglas Adams",
+                  "language": "ms"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "باتو نيسن دݢلس ايدمﺯ",
+                  "language": "ms-arab"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "náhrobek Douglase Adamse",
+                  "language": "cs"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "道格拉斯·亞當斯的墓碑",
+                  "language": "zh-hant"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "道格拉斯·亚当斯的墓碑",
+                  "language": "zh-hans"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              },
+              {
+                "property": "P2096",
+                "datavalue": {
+                  "precision": null,
+                  "latitude": null,
+                  "longitude": null,
+                  "altitude": null,
+                  "globe": null,
+                  "time": null,
+                  "timezone": null,
+                  "before": null,
+                  "after": null,
+                  "calendarmodel": null,
+                  "text": "Douglas Adams gravsten",
+                  "language": "sv"
+                },
+                "datatype": "monolingualtext",
+                "property-labels": {
+                  "fr": "légende de média",
+                  "hu": "képaláírás"
+                }
+              }
+            ]
+          },
+          "rank": "normal",
+          "references": null
+        }
+      ]
+    }
+  }
+]

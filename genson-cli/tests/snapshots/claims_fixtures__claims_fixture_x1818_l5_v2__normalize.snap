@@ -1,0 +1,267 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--normalise"
+  fixture: tests/data/claims/x1818_L5_PENULTIMATE.json
+---
+[
+  {
+    "claims": {
+      "P625": [
+        {
+          "mainsnak": {
+            "property": "P625",
+            "datavalue": {
+              "latitude": {
+                "latitude__integer": -90,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": 0,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": 10,
+                "precision__number": null
+              },
+              "globe": "http://www.wikidata.org/entity/Q2",
+              "id": null,
+              "labels": null,
+              "datavalue__string": null
+            },
+            "datatype": "globe-coordinate",
+            "property-labels": {
+              "en": "coordinate location",
+              "fr": "coordonnées géographiques"
+            }
+          },
+          "rank": "normal",
+          "references": null,
+          "qualifiers": null
+        }
+      ],
+      "P901": [
+        {
+          "mainsnak": {
+            "property": "P901",
+            "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
+              "id": null,
+              "labels": null,
+              "datavalue__string": "AY"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "FIPS 10-4 (countries and regions)",
+              "ru": "FIPS 10-4 (страны и регионы)"
+            }
+          },
+          "rank": "normal",
+          "references": [
+            {
+              "P248": [
+                {
+                  "property": "P248",
+                  "datavalue": {
+                    "id": "Q3063249",
+                    "labels": {
+                      "vi": "FIPS 10-4",
+                      "fr": "FIPS 10-4"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "fr": "affirmé dans",
+                    "ca": "afirmat a"
+                  }
+                }
+              ],
+              "P1065": [
+                {
+                  "property": "P1065",
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "datavalue__string": "https://web.archive.org/web/20010208080459/http://www.itl.nist.gov:80/fipspubs/fip10-4.htm"
+                  },
+                  "datatype": "url",
+                  "property-labels": {
+                    "it": "URL di archivio",
+                    "en": "archive URL"
+                  }
+                }
+              ]
+            }
+          ],
+          "qualifiers": null
+        }
+      ],
+      "P5008": [
+        {
+          "mainsnak": {
+            "property": "P5008",
+            "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
+              "id": "Q5460604",
+              "labels": {
+                "xh": "Wikipedia:Vital articles",
+                "af": "Wikipedia:Kernartikels"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "on focus list of Wikimedia project",
+              "de": "auf der Arbeitsliste des Wikimedia-Projektes"
+            }
+          },
+          "rank": "normal",
+          "references": null,
+          "qualifiers": null
+        }
+      ],
+      "P1343": [
+        {
+          "mainsnak": {
+            "property": "P1343",
+            "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": null
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": null
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": null
+              },
+              "globe": null,
+              "id": "Q19180675",
+              "labels": {
+                "ru": "Малый энциклопедический словарь Брокгауза и Ефрона",
+                "en": "Small Brockhaus and Efron Encyclopedic Dictionary"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "described by source",
+              "ru": "описывается в источниках"
+            }
+          },
+          "rank": "normal",
+          "references": null,
+          "qualifiers": {
+            "P805": [
+              {
+                "property": "P805",
+                "datavalue": {
+                  "id": "Q24734052",
+                  "labels": {
+                    "labels__string": "МЭСБЕ / Антарктический"
+                  }
+                },
+                "datatype": "wikibase-item",
+                "property-labels": {
+                  "en": "statement is subject of",
+                  "ca": "afirmació detallada a"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "P1332": [
+        {
+          "mainsnak": {
+            "property": "P1332",
+            "datavalue": {
+              "latitude": {
+                "latitude__integer": null,
+                "latitude__number": -63.213305555556
+              },
+              "longitude": {
+                "longitude__integer": null,
+                "longitude__number": -57.302194444444
+              },
+              "altitude": null,
+              "precision": {
+                "precision__integer": null,
+                "precision__number": 0.000027777777777778
+              },
+              "globe": "http://www.wikidata.org/entity/Q2",
+              "id": null,
+              "labels": null,
+              "datavalue__string": null
+            },
+            "datatype": "globe-coordinate",
+            "property-labels": {
+              "en": "coordinates of northernmost point",
+              "ru": "самая северная точка"
+            }
+          },
+          "rank": "normal",
+          "references": null,
+          "qualifiers": {
+            "P805": [
+              {
+                "property": "P805",
+                "datavalue": {
+                  "id": "Q984853",
+                  "labels": {
+                    "nn": "Prime Head",
+                    "en": "Prime Head"
+                  }
+                },
+                "datatype": "wikibase-item",
+                "property-labels": {
+                  "en": "statement is subject of",
+                  "ca": "afirmació detallada a"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+]

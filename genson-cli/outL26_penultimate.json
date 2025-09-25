@@ -5478,9 +5478,57 @@
                             {
                               "name": "datavalue",
                               "type": {
+                                "type": "record",
                                 "name": "datavalue",
-                                "type": "map",
-                                "values": "string"
+                                "namespace": "genson.document_types.claims_types.P8687_types.qualifiers_values_types",
+                                "fields": [
+                                  {
+                                    "name": "datavalue__string",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "name": "time",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "timezone",
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
+                                  },
+                                  {
+                                    "name": "before",
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
+                                  },
+                                  {
+                                    "name": "after",
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
+                                  },
+                                  {
+                                    "name": "precision",
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
+                                  },
+                                  {
+                                    "name": "calendarmodel",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  }
+                                ]
                               }
                             },
                             {
@@ -12153,9 +12201,74 @@
                               {
                                 "name": "datavalue",
                                 "type": {
+                                  "type": "record",
                                   "name": "datavalue",
-                                  "type": "map",
-                                  "values": "string"
+                                  "namespace": "genson.document_types.claims_types.P92_types.references_values_types",
+                                  "fields": [
+                                    {
+                                      "name": "time",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    },
+                                    {
+                                      "name": "timezone",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "before",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "after",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "precision",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    },
+                                    {
+                                      "name": "calendarmodel",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    },
+                                    {
+                                      "name": "text",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    },
+                                    {
+                                      "name": "language",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    },
+                                    {
+                                      "name": "datavalue__string",
+                                      "type": [
+                                        "null",
+                                        "string"
+                                      ]
+                                    }
+                                  ]
                                 }
                               },
                               {
@@ -14553,6 +14666,9 @@
                                       "string"
                                     ]
                                   }
+                                ],
+                                "dependencies": [
+                                  "null"
                                 ]
                               }
                             },
