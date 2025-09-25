@@ -1,5 +1,6 @@
 import ".just/commit.just"
 import ".just/bless.just"
+import ".just/find_optimal_reductions.just"
 
 default: clippy
 
