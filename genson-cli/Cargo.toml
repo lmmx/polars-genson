@@ -8,6 +8,7 @@ categories = ["command-line-utilities", "data-structures", "parsing"]
 description = "Command-line interface for JSON schema inference"
 documentation = "https://docs.rs/genson-cli/"
 edition.workspace = true
+exclude = ["/err*.txt", "/out*.json", "/tests/*"]
 homepage.workspace = true
 keywords = ["cli", "command-line", "inference", "json", "schema"]
 license.workspace = true
