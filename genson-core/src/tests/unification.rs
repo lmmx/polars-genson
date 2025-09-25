@@ -232,3 +232,32 @@ fn test_schema_inference_nested_anyof() {
     assert!(datavalue_schema.get("properties").is_some());
     assert!(datavalue_schema["properties"].get("datavalue__string").is_some());
 }
+
+#[test]
+fn test_scalar_unification_integer_vs_number() {
+    let schemas = vec![
+        json!({"type": "integer"}),
+        json!({"type": "number"}),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = check_unifiable_schemas(&schemas, "foo", &config);
+
+    assert!(result.is_some(), "Should unify integer vs number with scalar promotion");
+    let unified = result.unwrap();
+
+    // The result should be an object schema with both promoted keys
+    assert_eq!(unified["type"], "object");
+    let props = unified["properties"].as_object().expect("Should have properties");
+
+    assert!(props.contains_key("foo__integer"), "Missing promoted integer field");
+    assert!(props.contains_key("foo__number"), "Missing promoted number field");
+
+    // Each promoted field should be nullable of its own type
+    assert_eq!(props["foo__integer"]["type"], json!(["null", "integer"]));
+    assert_eq!(props["foo__number"]["type"], json!(["null", "number"]));
+}
