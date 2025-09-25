@@ -129,6 +129,23 @@ skip_last_pcodes() {
     fi
 }
 
+reduce_labels() {
+    local line=$1
+    local suffix=$2
+    
+    # Reduce labels and property-labels to 2 keys each (only if they're objects)
+    jq 'walk(
+        if type == "object" and has("property-labels") and (."property-labels" | type == "object") then
+            ."property-labels" = (."property-labels" | to_entries | .[0:2] | from_entries)
+        else . end
+    ) | walk(
+        if type == "object" and has("labels") and (.labels | type == "object") then
+            .labels = (.labels | to_entries | .[0:2] | from_entries)
+        else . end
+    )' "tests/data/claims/x1818_L${line}_${suffix}.json" > temp.json && \
+        mv temp.json "tests/data/claims/x1818_L${line}_${suffix}.json"
+}
+
 # Load or initialize results
 load_results() {
     declare -gA PCODE_LIMITS CLAIMS_LIMITS SKIP_FIRST_LIMITS SKIP_LAST_LIMITS
@@ -302,6 +319,20 @@ for line in "${WORKING_LINES[@]}"; do
     reduce_claims_per_pcode "$line" "${CLAIMS_LIMITS[$line]}" "PENULTIMATE"
     skip_first_pcodes "$line" "${SKIP_FIRST_LIMITS[$line]}" "PENULTIMATE"
     skip_last_pcodes "$line" "${SKIP_LAST_LIMITS[$line]}" "PENULTIMATE"
+    
+    # Try reducing labels/property-labels to 2 keys each
+    echo "  Reducing labels/property-labels to 2 keys for L$line..."
+    cp "tests/data/claims/x1818_L${line}_PENULTIMATE.json" "tests/data/claims/x1818_L${line}_PENULTIMATE_backup.json"
+    
+    reduce_labels "$line" "PENULTIMATE"
+    if test_configuration "$line" "PENULTIMATE"; then
+        echo "    L$line: labels/property-labels reduced to 2 keys successfully"
+        rm "tests/data/claims/x1818_L${line}_PENULTIMATE_backup.json"
+    else
+        echo "    L$line: reducing labels to 2 keys broke the bug, keeping original"
+        cp "tests/data/claims/x1818_L${line}_PENULTIMATE_backup.json" "tests/data/claims/x1818_L${line}_PENULTIMATE.json"
+        rm "tests/data/claims/x1818_L${line}_PENULTIMATE_backup.json"
+    fi
 done
 
 # Cleanup temp files
