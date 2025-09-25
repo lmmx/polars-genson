@@ -32,24 +32,39 @@ info:
                       "string"
                     ]
                   },
-                  "id": [
-                    "null",
-                    {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    }
-                  ],
-                  "labels": [
-                    "null",
-                    {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
+                  "id": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              }
+                            ]
+                          }
+                        ]
                       }
-                    }
-                  ]
+                    ]
+                  }
                 },
                 "required": [
                   "datavalue__string"

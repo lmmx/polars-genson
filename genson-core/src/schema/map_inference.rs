@@ -10,29 +10,33 @@ fn extract_non_null_schema(schema: &Value) -> Value {
     // Handle new format: {"type": ["null", "string"]}
     if let Some(Value::Array(type_arr)) = schema.get("type") {
         if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-            let non_null_type = type_arr
+            if let Some(non_null_type) = type_arr
                 .iter()
                 .find(|t| *t != &Value::String("null".into()))
-                .unwrap();
-
-            // Create a new schema with the non-null type, preserving other properties
-            let mut non_null_schema = schema.clone();
-            non_null_schema
-                .as_object_mut()
-                .unwrap()
-                .insert("type".to_string(), non_null_type.clone());
-            return non_null_schema;
+            {
+                // Create a new schema with the non-null type, preserving other properties
+                let mut non_null_schema = schema.clone();
+                if let Some(obj) = non_null_schema.as_object_mut() {
+                    obj.insert("type".to_string(), non_null_type.clone());
+                    return non_null_schema;
+                }
+            }
+            // Malformed nullable schema - return as-is
+            return schema.clone();
         }
     }
 
     // Handle old legacy format: ["null", {"type": "string"}]
     if let Value::Array(arr) = schema {
         if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
-            let non_null_schema = arr
+            if let Some(non_null_schema) = arr
                 .iter()
                 .find(|v| *v != &Value::String("null".to_string()))
-                .unwrap();
-            return non_null_schema.clone();
+            {
+                return non_null_schema.clone();
+            }
+            // Malformed legacy format - return as-is
+            return schema.clone();
         }
     }
 

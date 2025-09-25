@@ -35,7 +35,7 @@ fn test_scalar_unification_ndjson_mixed_nullable_formats() {
 
     // The unified type should be nullable string (some colors components missing from some themes)
     let colors_values = &colors_schema["additionalProperties"];
-    assert_eq!(colors_values["type"], json!(["null", "string"]));
+    assert_eq!(colors_values["type"], json!("string"));
 }
 
 #[test]
@@ -231,4 +231,314 @@ fn test_schema_inference_nested_anyof() {
     assert_eq!(datavalue_schema["type"], "object");
     assert!(datavalue_schema.get("properties").is_some());
     assert!(datavalue_schema["properties"].get("datavalue__string").is_some());
+}
+
+#[test]
+fn test_scalar_promotion_integer_vs_number() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "foo": {"type": "integer"}
+            },
+            "required": ["foo"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "foo": {"type": "number"}
+            },
+            "required": ["foo"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    assert_eq!(unified["type"], "object");
+
+    let props = unified["properties"].as_object().expect("Should have properties");
+    assert!(props.contains_key("foo"), "Should have foo field");
+
+    let foo_schema = &props["foo"];
+    assert_eq!(foo_schema["type"], "object");
+
+    let foo_props = foo_schema["properties"].as_object().expect("Foo should have properties");
+    assert!(foo_props.contains_key("foo__integer"), "Missing promoted integer field");
+    assert!(foo_props.contains_key("foo__number"), "Missing promoted number field");
+}
+
+#[test]
+fn test_scalar_promotion_string_vs_boolean() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "bar": {"type": "string"}
+            },
+            "required": ["bar"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "bar": {"type": "boolean"}
+            },
+            "required": ["bar"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    let props = unified["properties"].as_object().expect("Should have properties");
+    let bar_props = props["bar"]["properties"].as_object().expect("Bar should have properties");
+
+    assert!(bar_props.contains_key("bar__string"), "Missing promoted string field");
+    assert!(bar_props.contains_key("bar__boolean"), "Missing promoted boolean field");
+}
+
+#[test]
+fn test_scalar_promotion_string_vs_number() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "baz": {"type": "string"}
+            },
+            "required": ["baz"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "baz": {"type": "number"}
+            },
+            "required": ["baz"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    let props = unified["properties"].as_object().expect("Should have properties");
+    let baz_props = props["baz"]["properties"].as_object().expect("Baz should have properties");
+
+    assert!(baz_props.contains_key("baz__string"), "Missing promoted string field");
+    assert!(baz_props.contains_key("baz__number"), "Missing promoted number field");
+}
+
+#[test]
+fn test_scalar_promotion_string_vs_integer() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "qux": {"type": "string"}
+            },
+            "required": ["qux"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "qux": {"type": "integer"}
+            },
+            "required": ["qux"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    let props = unified["properties"].as_object().expect("Should have properties");
+    let qux_props = props["qux"]["properties"].as_object().expect("Qux should have properties");
+
+    assert!(qux_props.contains_key("qux__string"), "Missing promoted string field");
+    assert!(qux_props.contains_key("qux__integer"), "Missing promoted integer field");
+}
+
+#[test]
+fn test_scalar_promotion_boolean_vs_number() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "xyz": {"type": "boolean"}
+            },
+            "required": ["xyz"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "xyz": {"type": "number"}
+            },
+            "required": ["xyz"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    let props = unified["properties"].as_object().expect("Should have properties");
+    let xyz_props = props["xyz"]["properties"].as_object().expect("Xyz should have properties");
+
+    assert!(xyz_props.contains_key("xyz__boolean"), "Missing promoted boolean field");
+    assert!(xyz_props.contains_key("xyz__number"), "Missing promoted number field");
+}
+
+#[test]
+fn test_scalar_promotion_boolean_vs_integer() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "abc": {"type": "boolean"}
+            },
+            "required": ["abc"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "abc": {"type": "integer"}
+            },
+            "required": ["abc"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    let props = unified["properties"].as_object().expect("Should have properties");
+    let abc_props = props["abc"]["properties"].as_object().expect("Abc should have properties");
+
+    assert!(abc_props.contains_key("abc__boolean"), "Missing promoted boolean field");
+    assert!(abc_props.contains_key("abc__integer"), "Missing promoted integer field");
+}
+
+#[test]
+fn test_scalar_promotion_three_types() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "multi": {"type": "string"}
+            },
+            "required": ["multi"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "multi": {"type": "number"}
+            },
+            "required": ["multi"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "multi": {"type": "boolean"}
+            },
+            "required": ["multi"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    let props = unified["properties"].as_object().expect("Should have properties");
+    let multi_props = props["multi"]["properties"].as_object().expect("Multi should have properties");
+
+    assert!(multi_props.contains_key("multi__string"), "Missing promoted string field");
+    assert!(multi_props.contains_key("multi__number"), "Missing promoted number field");
+    assert!(multi_props.contains_key("multi__boolean"), "Missing promoted boolean field");
+}
+
+#[test]
+fn test_scalar_promotion_all_four_types() {
+    let schemas = vec![
+        json!({
+            "type": "object",
+            "properties": {
+                "all": {"type": "string"}
+            },
+            "required": ["all"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "all": {"type": "number"}
+            },
+            "required": ["all"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "all": {"type": "integer"}
+            },
+            "required": ["all"]
+        }),
+        json!({
+            "type": "object",
+            "properties": {
+                "all": {"type": "boolean"}
+            },
+            "required": ["all"]
+        }),
+    ];
+
+    let config = SchemaInferenceConfig {
+        wrap_scalars: true,
+        ..Default::default()
+    };
+
+    let result = unify_record_schemas(&schemas, "root", &config);
+    assert!(result.is_some(), "Should unify records with scalar promotion");
+
+    let unified = result.unwrap();
+    let props = unified["properties"].as_object().expect("Should have properties");
+    let all_props = props["all"]["properties"].as_object().expect("All should have properties");
+
+    assert!(all_props.contains_key("all__string"), "Missing promoted string field");
+    assert!(all_props.contains_key("all__number"), "Missing promoted number field");
+    assert!(all_props.contains_key("all__integer"), "Missing promoted integer field");
+    assert!(all_props.contains_key("all__boolean"), "Missing promoted boolean field");
 }

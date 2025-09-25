@@ -2,13 +2,13 @@
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
+  approved: false
   args:
     - "--ndjson"
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "1"
+    - "0"
     - "--unify-maps"
   input:
     - letter:
@@ -26,47 +26,42 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "letter": {
-      "properties": {
-        "a": {
-          "properties": {
-            "alphabet": {
-              "type": "integer"
-            },
-            "vowel": {
-              "type": "integer"
-            },
-            "frequency": {
-              "type": "number"
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "alphabet": {
+            "type": "object",
+            "properties": {
+              "alphabet__integer": {
+                "type": "integer"
+              },
+              "alphabet__string": {
+                "type": "string"
+              }
             }
           },
-          "required": [
-            "alphabet",
-            "frequency",
-            "vowel"
-          ],
-          "type": "object"
+          "frequency": {
+            "type": "number"
+          },
+          "vowel": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "consonant": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          }
         },
-        "b": {
-          "properties": {
-            "alphabet": {
-              "type": "string"
-            },
-            "consonant": {
-              "type": "integer"
-            },
-            "frequency": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "alphabet",
-            "consonant",
-            "frequency"
-          ],
-          "type": "object"
-        }
-      },
-      "type": "object"
+        "required": [
+          "alphabet",
+          "frequency"
+        ]
+      }
     }
   },
   "required": [

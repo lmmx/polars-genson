@@ -42,18 +42,22 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     let extract_nullable_info = |schema: &Value| -> (bool, Value) {
         if let Some(Value::Array(type_arr)) = schema.get("type") {
             if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-                let non_null_type = type_arr
+                if let Some(non_null_type) = type_arr
                     .iter()
                     .find(|t| *t != &Value::String("null".into()))
-                    .unwrap();
-
-                // Create a new schema with the non-null type, preserving other properties
-                let mut non_null_schema = schema.clone();
-                non_null_schema
-                    .as_object_mut()
-                    .unwrap()
-                    .insert("type".to_string(), non_null_type.clone());
-                (true, non_null_schema)
+                {
+                    // Create a new schema with the non-null type, preserving other properties
+                    let mut non_null_schema = schema.clone();
+                    if let Some(obj) = non_null_schema.as_object_mut() {
+                        obj.insert("type".to_string(), non_null_type.clone());
+                        (true, non_null_schema)
+                    } else {
+                        (false, schema.clone())
+                    }
+                } else {
+                    // Malformed nullable schema (e.g., ["null", "null"])
+                    (false, schema.clone())
+                }
             } else {
                 (false, schema.clone())
             }
@@ -71,10 +75,9 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
             // Create the nullable version by taking the non-nullable schema and making the type nullable
             let mut nullable_schema = existing_inner.clone();
             if let Some(inner_type) = existing_inner.get("type") {
-                nullable_schema
-                    .as_object_mut()
-                    .unwrap()
-                    .insert("type".to_string(), json!(["null", inner_type]));
+                if let Some(obj) = nullable_schema.as_object_mut() {
+                    obj.insert("type".to_string(), json!(["null", inner_type]));
+                }
             }
             return Some(nullable_schema);
         } else {
@@ -398,7 +401,6 @@ fn unify_scalar_schemas(
 
     // Multiple incompatible scalar types
     if config.debug {
-        // Avoid the sort if not debugging this at all
         let mut sorted_types: Vec<_> = base_types.into_iter().collect();
         sorted_types.sort();
         debug!(
@@ -544,7 +546,6 @@ fn unify_record_schemas(
                                 return None;
                             }
                         } else if config.wrap_scalars {
-                            // Try scalar promotion only if one is truly a scalar and the other is an object
                             let existing_is_obj = is_object_schema(&existing);
                             let existing_is_scalar = is_scalar_schema(&existing);
                             let new_is_obj = is_object_schema(&new);
@@ -566,11 +567,22 @@ fn unify_record_schemas(
                                     e.insert(unified);
                                     continue;
                                 }
+                            } else if existing_is_scalar && new_is_scalar {
+                                // NEW: Handle scalar vs scalar conflicts with mixed types
+                                debug!(config, "Field `{field_name}` has scalar vs scalar conflict, attempting promotion");
+
+                                if let Some(unified) = try_mixed_scalar_promotion(
+                                    &existing, &new, field_name, path, config,
+                                ) {
+                                    debug!(config, "Field `{field_name}` unified successfully after mixed scalar promotion");
+                                    e.insert(unified);
+                                    continue;
+                                }
                             }
 
-                            // If we reach here, it's not a valid scalar/object promotion case
+                            // If we reach here, it's not a valid promotion case
                             debug!(config,
-                                "{path}.{field_name}: incompatible types (not scalar/object promotion):\n  existing={:#?}\n  new={:#?}",
+                                "{path}.{field_name}: incompatible types (promotion failed):\n  existing={:#?}\n  new={:#?}",
                                 existing, new
                             );
                             return None;
@@ -621,11 +633,27 @@ fn unify_record_schemas(
 
             // Create proper JSON Schema nullable syntax
             if let Some(type_str) = field_type.get("type").and_then(|t| t.as_str()) {
-                let mut nullable_field = field_type.clone();
-                nullable_field["type"] = json!(["null", type_str]);
-                unified_properties.insert(field_name.clone(), nullable_field);
+                if type_str == "null" {
+                    // Already null - don't double-wrap
+                    unified_properties.insert(field_name.clone(), field_type.clone());
+                } else {
+                    // Make non-null type nullable
+                    let mut nullable_field = field_type.clone();
+                    nullable_field["type"] = json!(["null", type_str]);
+                    unified_properties.insert(field_name.clone(), nullable_field);
+                }
+            } else if let Some(_type_arr) = field_type.get("type").and_then(|t| t.as_array()) {
+                // Already nullable - use as is
+                unified_properties.insert(field_name.clone(), field_type.clone());
             } else {
-                unified_properties.insert(field_name.clone(), json!(["null", field_type]));
+                // Complex schema - create proper anyOf union
+                let nullable_schema = json!({
+                    "anyOf": [
+                        {"type": "null"},
+                        field_type
+                    ]
+                });
+                unified_properties.insert(field_name.clone(), nullable_schema);
             }
         }
     }
@@ -644,6 +672,49 @@ fn unify_record_schemas(
     }
 
     Some(result)
+}
+
+/// Handle mixed scalar promotion when the same field has different scalar types
+fn try_mixed_scalar_promotion(
+    existing: &Value,
+    new: &Value,
+    field_name: &str,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    // Get scalar types from both schemas
+    let existing_type = get_scalar_type_name(existing)?;
+    let new_type = get_scalar_type_name(new)?;
+
+    // Only promote if they're different scalar types
+    if existing_type == new_type {
+        return None;
+    }
+
+    debug!(
+        config,
+        "{}: Promoting mixed scalars {} and {} for field '{}'",
+        path,
+        existing_type,
+        new_type,
+        field_name
+    );
+
+    // Create promoted schemas
+    let existing_key = make_promoted_scalar_key(field_name, &existing_type);
+    let new_key = make_promoted_scalar_key(field_name, &new_type);
+
+    let mut properties = Map::new();
+    properties.insert(existing_key.clone(), existing.clone());
+    properties.insert(new_key.clone(), new.clone());
+
+    let promoted = json!({
+        "type": "object",
+        "properties": properties
+        // No required array - all promoted fields should be nullable
+    });
+
+    Some(promoted)
 }
 
 pub(crate) fn unify_anyof_schemas(

@@ -4,12 +4,12 @@ expression: stdout_str
 info:
   approved: false
   args:
-    - "--ndjson"
     - "--map-threshold"
     - "0"
     - "--unify-maps"
     - "--wrap-root"
     - claims
+    - "--ndjson"
   fixture: tests/data/claims_fixture_x4_L2.jsonl
 ---
 {
@@ -37,24 +37,18 @@ info:
                         "string"
                       ]
                     },
-                    "id": [
-                      "null",
-                      {
-                        "type": [
-                          "null",
-                          "string"
-                        ]
+                    "id": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
                       }
-                    ],
-                    "labels": [
-                      "null",
-                      {
-                        "type": "object",
-                        "additionalProperties": {
-                          "type": "string"
-                        }
-                      }
-                    ]
+                    }
                   },
                   "required": [
                     "datavalue__string"
@@ -66,10 +60,7 @@ info:
                 "property-labels": {
                   "type": "object",
                   "additionalProperties": {
-                    "type": [
-                      "null",
-                      "string"
-                    ]
+                    "type": "string"
                   }
                 }
               },

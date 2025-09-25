@@ -67,142 +67,93 @@ info:
                 "type": [
                   "null",
                   {
-                    "type": "record",
                     "name": "qualifiers",
-                    "namespace": "genson.document_types.claims_values_types",
-                    "fields": [
-                      {
-                        "name": "P625",
-                        "type": [
-                          "null",
-                          {
-                            "type": "array",
-                            "items": {
-                              "name": "P625",
-                              "type": "map",
-                              "values": {
+                    "type": "map",
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "name": "qualifiers_values",
+                        "type": "map",
+                        "values": {
+                          "type": "record",
+                          "name": "qualifiers_values_values",
+                          "namespace": "genson.document_types.claims_values_types",
+                          "fields": [
+                            {
+                              "name": "precision",
+                              "type": {
                                 "type": "record",
-                                "name": "P625_values",
-                                "namespace": "genson.document_types.claims_values_types.qualifiers_types",
+                                "name": "precision",
+                                "namespace": "genson.document_types.claims_values_types.qualifiers_values_values_types",
                                 "fields": [
                                   {
-                                    "name": "latitude",
-                                    "type": "float"
-                                  },
-                                  {
-                                    "name": "longitude",
-                                    "type": "float"
-                                  },
-                                  {
-                                    "name": "altitude",
-                                    "type": "null"
-                                  },
-                                  {
-                                    "name": "precision",
-                                    "type": "float"
-                                  },
-                                  {
-                                    "name": "globe",
-                                    "type": "string"
-                                  }
-                                ],
-                                "dependencies": [
-                                  "null"
-                                ]
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "name": "P582",
-                        "type": [
-                          "null",
-                          {
-                            "type": "array",
-                            "items": {
-                              "name": "P582",
-                              "type": "map",
-                              "values": {
-                                "type": "record",
-                                "name": "P582_values",
-                                "namespace": "genson.document_types.claims_values_types.qualifiers_types",
-                                "fields": [
-                                  {
-                                    "name": "time",
-                                    "type": "string"
-                                  },
-                                  {
-                                    "name": "timezone",
+                                    "name": "precision__integer",
                                     "type": "int"
                                   },
                                   {
-                                    "name": "before",
-                                    "type": "int"
-                                  },
-                                  {
-                                    "name": "after",
-                                    "type": "int"
-                                  },
-                                  {
-                                    "name": "precision",
-                                    "type": "int"
-                                  },
-                                  {
-                                    "name": "calendarmodel",
-                                    "type": "string"
+                                    "name": "precision__number",
+                                    "type": [
+                                      "null",
+                                      "float"
+                                    ]
                                   }
                                 ]
                               }
+                            },
+                            {
+                              "name": "time",
+                              "type": "string"
+                            },
+                            {
+                              "name": "timezone",
+                              "type": "int"
+                            },
+                            {
+                              "name": "before",
+                              "type": "int"
+                            },
+                            {
+                              "name": "after",
+                              "type": "int"
+                            },
+                            {
+                              "name": "calendarmodel",
+                              "type": "string"
+                            },
+                            {
+                              "name": "latitude",
+                              "type": [
+                                "null",
+                                "float"
+                              ]
+                            },
+                            {
+                              "name": "longitude",
+                              "type": [
+                                "null",
+                                "float"
+                              ]
+                            },
+                            {
+                              "name": "altitude",
+                              "type": [
+                                "null"
+                              ]
+                            },
+                            {
+                              "name": "globe",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             }
-                          }
-                        ]
-                      },
-                      {
-                        "name": "P580",
-                        "type": [
-                          "null",
-                          {
-                            "type": "array",
-                            "items": {
-                              "name": "P580",
-                              "type": "map",
-                              "values": {
-                                "type": "record",
-                                "name": "P580_values",
-                                "namespace": "genson.document_types.claims_values_types.qualifiers_types",
-                                "fields": [
-                                  {
-                                    "name": "time",
-                                    "type": "string"
-                                  },
-                                  {
-                                    "name": "timezone",
-                                    "type": "int"
-                                  },
-                                  {
-                                    "name": "before",
-                                    "type": "int"
-                                  },
-                                  {
-                                    "name": "after",
-                                    "type": "int"
-                                  },
-                                  {
-                                    "name": "precision",
-                                    "type": "int"
-                                  },
-                                  {
-                                    "name": "calendarmodel",
-                                    "type": "string"
-                                  }
-                                ]
-                              }
-                            }
-                          }
-                        ]
+                          ],
+                          "dependencies": [
+                            "null"
+                          ]
+                        }
                       }
-                    ]
+                    }
                   }
                 ]
               },

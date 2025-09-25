@@ -109,8 +109,8 @@ def test_unify_maps_normalisation():
     ]
 
 
-def test_unify_maps_incompatible_field_types():
-    """Records with conflicting field types should not be unified."""
+def test_unify_maps_with_scalar_promotion():
+    """Records with conflicting field types can now be unified via scalar promotion."""
     df = pl.DataFrame(
         {
             "json_data": [
@@ -133,28 +133,40 @@ def test_unify_maps_incompatible_field_types():
     # Document becomes a map (due to threshold being met)
     assert document_field["type"]["type"] == "map"
 
-    # But the values should be a record with separate fields a, b (unification failed)
-    values_record = document_field["type"]["values"]
-    assert values_record["type"] == "record"
+    # Now the values should be unified into a map (unification succeeded due to scalar promotion)
+    data_map = document_field["type"]["values"]
+    assert data_map["type"] == "map"
 
-    # Should have separate fields for a and b (not unified due to type conflict)
-    field_names = {f["name"] for f in values_record["fields"]}
-    assert field_names == {"a", "b"}
+    # The unified record should have name (string) and age (promoted scalar)
+    unified_record = data_map["values"]
+    assert unified_record["type"] == "record"
+
+    field_names = {f["name"] for f in unified_record["fields"]}
+    assert field_names == {"name", "age"}
 
     # Get field types
-    a_field = next(f for f in values_record["fields"] if f["name"] == "a")
-    b_field = next(f for f in values_record["fields"] if f["name"] == "b")
+    name_field = next(f for f in unified_record["fields"] if f["name"] == "name")
+    age_field = next(f for f in unified_record["fields"] if f["name"] == "age")
 
-    # a should be record (mixed int/string fields)
-    assert a_field["type"]["type"] == "record"
+    # name should be simple string
+    assert name_field["type"] == "string"
 
-    # b should be map (homogeneous string fields with threshold=1)
-    assert b_field["type"]["type"] == "map"
-    assert b_field["type"]["values"] == "string"
+    # age should be promoted scalar record with age__integer and age__string
+    assert age_field["type"]["type"] == "record"
 
-    # Verify unification failed by checking a has the original mixed types
-    a_age_field = next(f for f in a_field["type"]["fields"] if f["name"] == "age")
-    assert a_age_field["type"] == "int"
+    age_field_names = {f["name"] for f in age_field["type"]["fields"]}
+    assert age_field_names == {"age__integer", "age__string"}
+
+    # Verify the promoted fields are nullable
+    age_int_field = next(
+        f for f in age_field["type"]["fields"] if f["name"] == "age__integer"
+    )
+    age_str_field = next(
+        f for f in age_field["type"]["fields"] if f["name"] == "age__string"
+    )
+
+    assert age_int_field["type"] == ["null", "int"]
+    assert age_str_field["type"] == ["null", "string"]
 
 
 def test_unify_maps_below_threshold():

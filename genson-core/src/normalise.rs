@@ -200,7 +200,12 @@ pub fn normalise_value(
                                         (Value::String(_), "string")
                                             | (
                                                 Value::Number(_),
-                                                "int" | "long" | "float" | "double",
+                                                "int"
+                                                    | "integer"
+                                                    | "long"
+                                                    | "float"
+                                                    | "double"
+                                                    | "number",
                                             )
                                             | (Value::Bool(_), "boolean")
                                     );

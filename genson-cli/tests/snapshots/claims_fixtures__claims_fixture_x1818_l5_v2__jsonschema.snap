@@ -1,0 +1,249 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+  fixture: tests/data/claims/x1818_L5_PENULTIMATE.json
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "claims": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
+              "type": "object",
+              "properties": {
+                "property": {
+                  "type": "string"
+                },
+                "datavalue": {
+                  "type": "object",
+                  "properties": {
+                    "latitude": {
+                      "type": "object",
+                      "properties": {
+                        "latitude__integer": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "latitude__number": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "longitude": {
+                      "type": "object",
+                      "properties": {
+                        "longitude__integer": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "longitude__number": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "altitude": {
+                      "type": "null"
+                    },
+                    "precision": {
+                      "type": "object",
+                      "properties": {
+                        "precision__integer": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "precision__number": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "globe": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "id": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "datavalue__string": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "latitude",
+                    "longitude",
+                    "altitude",
+                    "precision",
+                    "globe"
+                  ]
+                },
+                "datatype": {
+                  "type": "string"
+                },
+                "property-labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "property",
+                "datavalue",
+                "datatype",
+                "property-labels"
+              ]
+            },
+            "rank": {
+              "type": "string"
+            },
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "property": {
+                        "type": "string"
+                      },
+                      "datavalue": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "labels": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "datavalue__string": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          }
+                        }
+                      },
+                      "datatype": {
+                        "type": "string"
+                      },
+                      "property-labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "property",
+                      "datavalue",
+                      "datatype",
+                      "property-labels"
+                    ]
+                  }
+                }
+              }
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "type": "string"
+                    },
+                    "datavalue": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "labels": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "labels"
+                      ]
+                    },
+                    "datatype": {
+                      "type": "string"
+                    },
+                    "property-labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "property",
+                    "datavalue",
+                    "datatype",
+                    "property-labels"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "mainsnak",
+            "rank"
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "claims"
+  ],
+  "type": "object"
+}

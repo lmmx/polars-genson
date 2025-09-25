@@ -2,13 +2,13 @@
 source: genson-cli/tests/map_of_unified_records.rs
 expression: stdout_str
 info:
-  approved: true
+  approved: false
   args:
     - "--ndjson"
     - "--map-threshold"
     - "2"
     - "--map-max-rk"
-    - "1"
+    - "0"
     - "--unify-maps"
     - "--avro"
   input:
@@ -29,59 +29,56 @@ info:
     {
       "name": "letters",
       "type": {
-        "type": "record",
         "name": "letters",
-        "namespace": "genson.document_types",
-        "fields": [
-          {
-            "name": "a",
-            "type": [
-              "null",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "letters_values",
+            "namespace": "genson.document_types",
+            "fields": [
               {
-                "type": "array",
-                "items": {
+                "name": "index",
+                "type": {
                   "type": "record",
-                  "name": "a",
-                  "namespace": "genson.document_types.letters_types",
+                  "name": "index",
+                  "namespace": "genson.document_types.letters_values_types",
                   "fields": [
                     {
-                      "name": "index",
-                      "type": "int"
+                      "name": "index__integer",
+                      "type": [
+                        "null",
+                        "int"
+                      ]
                     },
                     {
-                      "name": "vowel",
-                      "type": "int"
+                      "name": "index__string",
+                      "type": [
+                        "null",
+                        "string"
+                      ]
                     }
                   ]
                 }
-              }
-            ]
-          },
-          {
-            "name": "b",
-            "type": [
-              "null",
+              },
               {
-                "type": "array",
-                "items": {
-                  "type": "record",
-                  "name": "b",
-                  "namespace": "genson.document_types.letters_types",
-                  "fields": [
-                    {
-                      "name": "index",
-                      "type": "string"
-                    },
-                    {
-                      "name": "consonant",
-                      "type": "int"
-                    }
-                  ]
-                }
+                "name": "vowel",
+                "type": [
+                  "null",
+                  "int"
+                ]
+              },
+              {
+                "name": "consonant",
+                "type": [
+                  "null",
+                  "int"
+                ]
               }
             ]
           }
-        ]
+        }
       }
     }
   ]

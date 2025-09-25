@@ -32,48 +32,36 @@ info:
                       "string"
                     ]
                   },
-                  "id": [
-                    "null",
-                    {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    }
-                  ],
+                  "id": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
                   "labels": {
                     "type": "object",
                     "additionalProperties": {
                       "type": "string"
                     }
                   },
-                  "amount": [
-                    "null",
-                    {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
+                  "amount": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "unit": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "unit-labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
                     }
-                  ],
-                  "unit": [
-                    "null",
-                    {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    }
-                  ],
-                  "unit-labels": [
-                    "null",
-                    {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  ]
+                  }
                 },
                 "required": [
                   "datavalue__string"
@@ -98,10 +86,7 @@ info:
                       "labels": {
                         "type": "object",
                         "additionalProperties": {
-                          "type": [
-                            "null",
-                            "string"
-                          ]
+                          "type": "string"
                         }
                       },
                       "datavalue__string": {

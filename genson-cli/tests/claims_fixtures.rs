@@ -333,3 +333,61 @@ fn test_claims_fixture_x1818_l26_normalize() {
         &["--normalise"],
     );
 }
+
+// Penultimates
+
+#[test]
+fn test_claims_fixture_x1818_l4_v2_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L4_PENULTIMATE.json",
+        "claims_fixture_x1818_l4_v2__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l4_v2_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L4_PENULTIMATE.json",
+        "claims_fixture_x1818_l4_v2__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l4_v2_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L4_PENULTIMATE.json",
+        "claims_fixture_x1818_l4_v2__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l5_v2_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L5_PENULTIMATE.json",
+        "claims_fixture_x1818_l5_v2__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l5_v2_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L5_PENULTIMATE.json",
+        "claims_fixture_x1818_l5_v2__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l5_v2_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L5_PENULTIMATE.json",
+        "claims_fixture_x1818_l5_v2__normalize",
+        &["--normalise"],
+    );
+}
+
+// TODO: L12, L14, L26
