@@ -294,6 +294,16 @@ for line in "${WORKING_LINES[@]}"; do
     echo "SKIP_LAST_LIMITS[$line]=${SKIP_LAST_LIMITS[$line]}"
 done
 
+echo -e "\n=== APPLYING FINAL REDUCTIONS ==="
+
+for line in "${WORKING_LINES[@]}"; do
+    echo "Overwriting x1818_L${line}_PENULTIMATE.json with reduced version..."
+    reduce_pcodes "$line" "${PCODE_LIMITS[$line]}" "PENULTIMATE"
+    reduce_claims_per_pcode "$line" "${CLAIMS_LIMITS[$line]}" "PENULTIMATE"
+    skip_first_pcodes "$line" "${SKIP_FIRST_LIMITS[$line]}" "PENULTIMATE"
+    skip_last_pcodes "$line" "${SKIP_LAST_LIMITS[$line]}" "PENULTIMATE"
+done
+
 # Cleanup temp files
 rm -f tests/data/claims/x1818_L*_temp*.json
 rm -f outL*_temp*.json errL*_temp*.txt
