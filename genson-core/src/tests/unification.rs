@@ -250,6 +250,8 @@ fn test_scalar_unification_integer_vs_number() {
     assert!(result.is_some(), "Should unify integer vs number with scalar promotion");
     let unified = result.unwrap();
 
+    println!("Schema: {}", serde_json::to_string_pretty(&unified).unwrap());
+
     // The result should be an object schema with both promoted keys
     assert_eq!(unified["type"], "object");
     let props = unified["properties"].as_object().expect("Should have properties");
