@@ -15,330 +15,180 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "claims": {
-      "properties": {
-        "P1343": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
+              "type": "object",
+              "additionalProperties": {
                 "type": "object",
-                "additionalProperties": {
-                  "properties": {
-                    "id": {
+                "properties": {
+                  "datavalue__string": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "id": [
+                    "null",
+                    {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  ],
+                  "labels": {
+                    "type": "object",
+                    "additionalProperties": {
                       "type": "string"
-                    },
-                    "labels": {
+                    }
+                  },
+                  "amount": [
+                    "null",
+                    {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  ],
+                  "unit": [
+                    "null",
+                    {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  ],
+                  "unit-labels": [
+                    "null",
+                    {
                       "type": "object",
                       "additionalProperties": {
                         "type": "string"
                       }
                     }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ],
-                  "type": "object"
+                  ]
+                },
+                "required": [
+                  "datavalue__string"
+                ]
+              }
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      "labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        }
+                      },
+                      "datavalue__string": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      }
+                    }
+                  }
                 }
-              },
-              "qualifiers": {
+              }
+            },
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
                 "type": "object",
                 "additionalProperties": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "additionalProperties": {
+                      "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         },
                         "labels": {
                           "type": "object",
                           "additionalProperties": {
                             "type": "string"
                           }
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "mainsnak",
-              "qualifiers"
-            ],
-            "type": "object"
-          }
-        },
-        "P349": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P3221": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P3417": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P3479": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P3465": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
-                "type": "object",
-                "additionalProperties": {
-                  "properties": {
-                    "amount": {
-                      "type": "string"
-                    },
-                    "unit": {
-                      "type": "string"
-                    },
-                    "unit-labels": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "amount",
-                    "unit",
-                    "unit-labels"
-                  ],
-                  "type": "object"
-                }
-              },
-              "references": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "labels": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          },
-                          "time": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "timezone": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "before": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "after": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "precision": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "calendarmodel": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "mainsnak",
-              "references"
-            ],
-            "type": "object"
-          }
-        },
-        "P2888": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P31": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "datavalue": {
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "labels": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ],
-                  "type": [
-                    "null",
-                    "object"
-                  ]
-                },
-                "P642": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "properties": {
-                        "id": {
-                          "type": "string"
                         },
-                        "labels": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          }
+                        "time": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "timezone": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "before": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "after": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "precision": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "calendarmodel": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
+                      }
                     }
                   }
                 }
               }
             }
-          }
-        },
-        "P2924": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "datavalue": {
-                  "type": [
-                    "null",
-                    "string"
-                  ]
-                },
-                "P1810": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
+          },
+          "required": [
+            "mainsnak"
+          ]
         }
-      },
-      "required": [
-        "P1343",
-        "P2888",
-        "P2924",
-        "P31",
-        "P3221",
-        "P3417",
-        "P3465",
-        "P3479",
-        "P349"
-      ],
-      "type": "object"
+      }
     }
   },
   "required": [

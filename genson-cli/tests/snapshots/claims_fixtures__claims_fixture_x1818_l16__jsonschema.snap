@@ -15,182 +15,153 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "claims": {
-      "properties": {
-        "P1343": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
+              "type": "object",
+              "additionalProperties": {
                 "type": "object",
-                "additionalProperties": {
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "labels": {
+                "properties": {
+                  "datavalue__string": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "id": [
+                    "null",
+                    {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  ],
+                  "labels": [
+                    "null",
+                    {
                       "type": "object",
                       "additionalProperties": {
                         "type": "string"
                       }
                     }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ],
-                  "type": "object"
+                  ]
+                },
+                "required": [
+                  "datavalue__string"
+                ]
+              }
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      "labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "datavalue__string": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      }
+                    }
+                  }
                 }
-              },
-              "qualifiers": {
+              }
+            },
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
                 "type": "object",
                 "additionalProperties": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "additionalProperties": {
+                      "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         },
                         "labels": {
                           "type": "object",
                           "additionalProperties": {
                             "type": "string"
                           }
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "mainsnak",
-              "qualifiers"
-            ],
-            "type": "object"
-          }
-        },
-        "P5019": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P5055": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "qualifiers": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  }
-                }
-              },
-              "references": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "labels": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          },
-                          "time": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "timezone": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "before": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "after": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "precision": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "calendarmodel": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
+                        },
+                        "time": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "timezone": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "before": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "after": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "precision": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "calendarmodel": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
                       }
                     }
                   }
                 }
               }
-            },
-            "required": [
-              "mainsnak",
-              "qualifiers",
-              "references"
-            ],
-            "type": "object"
-          }
+            }
+          },
+          "required": [
+            "mainsnak"
+          ]
         }
-      },
-      "required": [
-        "P1343",
-        "P5019",
-        "P5055"
-      ],
-      "type": "object"
+      }
     }
   },
   "required": [

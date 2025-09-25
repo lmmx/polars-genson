@@ -18,12 +18,20 @@ info:
       "P3365": [
         {
           "mainsnak": {
-            "datavalue": "internet"
+            "datavalue": {
+              "datavalue__string": "internet",
+              "id": null,
+              "labels": null
+            }
           },
           "qualifiers": {
             "P1810": [
               {
-                "datavalue": "Internet"
+                "datavalue": {
+                  "id": null,
+                  "labels": null,
+                  "datavalue__string": "Internet"
+                }
               }
             ]
           },
@@ -57,58 +65,77 @@ info:
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q4208106",
               "labels": {
                 "ru": "Казахстан. Национальная энциклопедия"
               }
             }
-          }
+          },
+          "qualifiers": null,
+          "references": null
         },
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q47470796",
               "labels": null
             }
-          }
+          },
+          "qualifiers": null,
+          "references": null
         },
         {
           "mainsnak": {
             "datavalue": {
+              "datavalue__string": null,
               "id": "Q47484682",
               "labels": {
                 "labels__string": "RFC 3271: The Internet is for Everyone"
               }
             }
-          }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P1014": [
         {
           "mainsnak": {
-            "datavalue": "300265429"
-          }
+            "datavalue": {
+              "datavalue__string": "300265429",
+              "id": null,
+              "labels": null
+            }
+          },
+          "qualifiers": null,
+          "references": null
         }
       ],
       "P1150": [
         {
           "mainsnak": {
-            "datavalue": "AP 18420",
-            "P4390": null
+            "datavalue": {
+              "datavalue__string": "AP 18420",
+              "id": null,
+              "labels": null
+            }
           },
           "qualifiers": {
-            "datavalue": null,
             "P4390": [
               {
                 "datavalue": {
                   "id": "Q39893449",
                   "labels": {
                     "en": "exact match"
-                  }
+                  },
+                  "datavalue__string": null
                 }
               }
             ]
-          }
+          },
+          "references": null
         }
       ]
     }

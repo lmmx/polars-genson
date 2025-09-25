@@ -15,164 +15,123 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "claims": {
-      "properties": {
-        "P3365": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
+              "type": "object",
+              "additionalProperties": {
                 "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "qualifiers": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
+                "properties": {
+                  "datavalue__string": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "id": [
+                    "null",
+                    {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
                     }
-                  }
-                }
-              },
-              "references": {
+                  ],
+                  "labels": [
+                    "null",
+                    {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                },
+                "required": [
+                  "datavalue__string"
+                ]
+              }
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      },
+                      "labels": {
                         "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "labels": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          },
-                          "datavalue__string": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
+                        "additionalProperties": {
+                          "type": "string"
                         }
+                      },
+                      "datavalue__string": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
                       }
                     }
                   }
                 }
               }
             },
-            "required": [
-              "mainsnak",
-              "qualifiers",
-              "references"
-            ],
-            "type": "object"
-          }
-        },
-        "P1343": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "required": [
-                  "id",
-                  "labels"
-                ],
-                "type": "object"
-              }
-            }
-          }
-        },
-        "P1014": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P1150": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "datavalue": {
-                  "type": [
-                    "null",
-                    "string"
-                  ]
-                },
-                "P4390": {
-                  "type": [
-                    "null",
-                    "array"
-                  ],
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
                   "items": {
                     "type": "object",
                     "additionalProperties": {
+                      "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string"
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         },
                         "labels": {
                           "type": "object",
                           "additionalProperties": {
                             "type": "string"
                           }
+                        },
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
+                      }
                     }
                   }
                 }
               }
             }
-          }
+          },
+          "required": [
+            "mainsnak"
+          ]
         }
-      },
-      "required": [
-        "P1014",
-        "P1150",
-        "P1343",
-        "P3365"
-      ],
-      "type": "object"
+      }
     }
   },
   "required": [

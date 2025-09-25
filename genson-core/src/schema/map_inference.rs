@@ -53,6 +53,63 @@ fn contains_anyof(value: &Value) -> bool {
     }
 }
 
+/// Process anyOf unions in a schema recursively
+fn process_anyof_unions(
+    schema: &mut Value,
+    field_name: &str,
+    config: &SchemaInferenceConfig,
+) -> bool {
+    let mut made_changes = false;
+
+    match schema {
+        Value::Object(obj) => {
+            // Handle direct anyOf at this level
+            if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
+                if config.unify_maps {
+                    if let Some(unified) = unify_anyof_schemas(any_of_schemas, field_name, config) {
+                        debug!(config, "Successfully unified anyOf schemas");
+                        *schema = unified;
+                        made_changes = true;
+                        // Recursively process the newly unified schema
+                        if process_anyof_unions(schema, field_name, config) {
+                            made_changes = true;
+                        }
+                        return made_changes;
+                    }
+                }
+            }
+
+            // Recursively process all nested values - pass field names for known properties
+            if let Some(props) = obj.get_mut("properties") {
+                if let Some(props_obj) = props.as_object_mut() {
+                    for (k, v) in props_obj {
+                        if process_anyof_unions(v, k, config) {
+                            made_changes = true;
+                        }
+                    }
+                }
+            } else {
+                // For other nested values, use the current field name
+                for v in obj.values_mut() {
+                    if process_anyof_unions(v, field_name, config) {
+                        made_changes = true;
+                    }
+                }
+            }
+        }
+        Value::Array(arr) => {
+            for v in arr {
+                if process_anyof_unions(v, field_name, config) {
+                    made_changes = true;
+                }
+            }
+        }
+        _ => {}
+    }
+
+    made_changes
+}
+
 /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
 ///
 /// This mutates the schema in place, applying user overrides and heuristics.
@@ -274,7 +331,7 @@ pub(crate) fn rewrite_objects(
                             }
                         }
                     } else {
-                        // NEW: Only try record unification if unify_maps is enabled and above threshold
+                        // Only try record unification if unify_maps is enabled and above threshold
                         // This ensures we only do expensive unification when it would result in map conversion
                         if above_threshold {
                             unified_schema = check_unifiable_schemas(
@@ -287,6 +344,17 @@ pub(crate) fn rewrite_objects(
                 }
             }
 
+            // Process anyOf unions in the unified schema before checking for map conversion
+            if let Some(ref mut schema) = unified_schema {
+                if contains_anyof(schema) {
+                    debug!(
+                        config,
+                        "Unified schema contains anyOf, processing unions first"
+                    );
+                    process_anyof_unions(schema, field_name.unwrap_or(""), config);
+                }
+            }
+
             // Apply map inference logic
             let should_be_map = if above_threshold && unified_schema.is_some() {
                 debug!(
@@ -294,12 +362,8 @@ pub(crate) fn rewrite_objects(
                     "Checking if should convert to map: above_threshold=true, unified_schema=Some",
                 );
 
-                // Don't convert to map if the unified schema contains anyOf - let it be processed first
-                if unified_schema.as_ref().is_some_and(contains_anyof) {
-                    debug!(config, "Not converting to map: unified schema contains anyOf that needs processing");
-                    false
                 // Skip map inference if this is the root and no_root_map is enabled
-                } else if is_root && config.no_root_map {
+                if is_root && config.no_root_map {
                     debug!(
                         config,
                         "Skipping map conversion: is root and no_root_map=true"
