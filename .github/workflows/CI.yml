@@ -219,7 +219,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - runner: macos-13
+          - runner: macos-14
             target: x86_64
             skip: false
           - runner: macos-14
