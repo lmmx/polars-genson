@@ -11,7 +11,7 @@ DATA_DIR := "tests/data/claims"
 # Test if a file preserves the bug reproduction
 [working-directory: 'genson-cli']
 test-repro line suffix="PENULTIMATE":
-    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "outL{{line}}_{{suffix}}.json" 2> "errL{{line}}_{{suffix}}.txt"
+    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "outL{{line}}_{{suffix}}.json" 2> "errL{{line}}_{{suffix}}.txt"
     @if rg -q 'name": "P' "outL{{line}}_{{suffix}}.json"; then \
         echo "    ✓ L{{line}} repro preserved"; \
     else \
@@ -31,7 +31,7 @@ reduce-pcodes line count suffix:
     fi
     
     # Test temp file first
-    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
+    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
     
     if rg -q 'name": "P' "outL{{line}}_{{suffix}}_test.json"; then
         mv "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json"
@@ -55,7 +55,7 @@ reduce-claims line count suffix:
     fi
     
     # Test temp file first
-    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
+    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
     
     if rg -q 'name": "P' "outL{{line}}_{{suffix}}_test.json"; then
         mv "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json"
@@ -80,7 +80,7 @@ skip-first-pcodes line count suffix:
     jq "to_entries[{{count}}:] | from_entries" "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json"
     
     # Test temp file first
-    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
+    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
     
     if rg -q 'name": "P' "outL{{line}}_{{suffix}}_test.json"; then
         mv "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json"
@@ -105,7 +105,7 @@ skip-last-pcodes line count suffix:
     jq "to_entries[:-{{count}}] | from_entries" "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json"
     
     # Test temp file first
-    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
+    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
     
     if rg -q 'name": "P' "outL{{line}}_{{suffix}}_test.json"; then
         mv "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json"
@@ -125,7 +125,7 @@ reduce-labels line count suffix:
     jq --argjson count {{count}} 'walk(if type == "object" and has("property-labels") and (."property-labels" | type == "object") then ."property-labels" = (."property-labels" | to_entries | .[0:$count] | from_entries) else . end) | walk(if type == "object" and has("labels") and (.labels | type == "object") then .labels = (.labels | to_entries | .[0:$count] | from_entries) else . end)' "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json"
     
     # Test temp file first
-    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
+    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" > "outL{{line}}_{{suffix}}_test.json" 2> "errL{{line}}_{{suffix}}_test.txt"
     
     if rg -q 'name": "P' "outL{{line}}_{{suffix}}_test.json"; then
         mv "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}_temp.json" "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json"
