@@ -1,0 +1,62 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--normalise"
+    - "--force-type"
+    - "mainsnak:record"
+    - "--no-unify"
+    - qualifiers
+  fixture: tests/data/claims/x1818_L14_PENULTIMATE.json
+---
+[
+  {
+    "claims": {
+      "P487": [
+        {
+          "mainsnak": {
+            "property-labels": {
+              "en": "Unicode character",
+              "de": "Unicodezeichen"
+            }
+          },
+          "qualifiers": {
+            "P805": [
+              {
+                "property-labels": {
+                  "en": "statement is subject of",
+                  "ca": "afirmació detallada a"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "mainsnak": {
+            "property-labels": {
+              "en": "Unicode character",
+              "de": "Unicodezeichen"
+            }
+          },
+          "qualifiers": {
+            "P805": [
+              {
+                "property-labels": {
+                  "en": "statement is subject of",
+                  "ca": "afirmació detallada a"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+]

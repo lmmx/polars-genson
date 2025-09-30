@@ -133,10 +133,17 @@ pub(crate) fn rewrite_objects(
     config: &SchemaInferenceConfig,
     is_root: bool,
 ) {
+    debug!(
+        config,
+        "rewrite_objects(field_name={:?}, schema={})",
+        field_name,
+        serde_json::to_string(schema).unwrap_or_default()
+    );
     if let Value::Object(obj) = schema {
         // --- Forced overrides by field name ---
         if let Some(name) = field_name {
             if let Some(forced) = config.force_field_types.get(name) {
+                debug!(config, "Hit force field: {}={}", name, forced);
                 match forced.as_str() {
                     "map" => {
                         obj.remove("properties");
@@ -152,10 +159,12 @@ pub(crate) fn rewrite_objects(
                             obj.get_mut("properties").and_then(|p| p.as_object_mut())
                         {
                             for (k, v) in props {
+                                debug!(config, "Force field induced recursion: {}", k);
                                 rewrite_objects(v, Some(k), config, false);
                             }
                         }
                         if let Some(items) = obj.get_mut("items") {
+                            debug!(config, "Force field induced recursion: items");
                             rewrite_objects(items, None, config, false);
                         }
                         return;
@@ -196,6 +205,34 @@ pub(crate) fn rewrite_objects(
 
         // --- Heuristic rewrite ---
         if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
+            // GUARD: Skip re-processing of already converted map schemas
+            if obj.get("additionalProperties").is_some() {
+                if props.is_empty() {
+                    debug!(
+                        config,
+                        "Skipping re-processing of already converted map schema at field {:?}",
+                        field_name.unwrap_or("root")
+                    );
+                    // Just recurse into the additionalProperties value and return
+                    if let Some(additional_props) = obj.get_mut("additionalProperties") {
+                        debug!(
+                            config,
+                            "Rewriting already converted map schema at field {:?}",
+                            field_name.unwrap_or("root")
+                        );
+                        // Hmm: shouldn't this be `field_name` not None?
+                        rewrite_objects(additional_props, None, config, false);
+                    }
+                    return;
+                } else {
+                    // This shouldn't happen - schema shouldn't have both props + additionalProperties
+                    debug!(
+                        config,
+                        "Warning: schema has both properties and additionalProperties at field {:?}",
+                        field_name.unwrap_or("root")
+                    );
+                }
+            }
             let key_count = props.len(); // |UK| - total keys observed
             let above_threshold = key_count >= config.map_threshold;
 
@@ -306,43 +343,57 @@ pub(crate) fn rewrite_objects(
                 } else if config.unify_maps {
                     debug!(config, "Schemas not homogeneous, attempting unification");
 
-                    // Detect if these are all arrays of records
-                    if child_schemas
-                        .iter()
-                        .all(|s| s.get("type") == Some(&Value::String("array".into())))
-                    {
-                        // Collect item schemas, short-circuit if any missing
-                        let mut item_schemas = Vec::with_capacity(child_schemas.len());
-                        let mut all_items_ok = true;
-                        for s in &child_schemas {
-                            if let Some(items) = s.get("items") {
-                                item_schemas.push(items.clone());
-                            } else {
-                                all_items_ok = false;
-                                break;
-                            }
-                        }
-                        if all_items_ok {
-                            if let Some(unified_items) = check_unifiable_schemas(
-                                &item_schemas,
-                                field_name.unwrap_or(""),
-                                config,
-                            ) {
-                                unified_schema = Some(serde_json::json!({
-                                    "type": "array",
-                                    "items": unified_items
-                                }));
-                            }
-                        }
+                    // Check if any of the property keys are in no_unify
+                    let has_excluded_field =
+                        props.keys().any(|k| config.no_unify.contains(k.as_str()));
+                    if has_excluded_field {
+                        debug!(
+                            config,
+                            "Not unifying: one or more fields in no_unify: {:?}",
+                            props
+                                .keys()
+                                .filter(|k| config.no_unify.contains(k.as_str()))
+                                .collect::<Vec<_>>()
+                        );
                     } else {
-                        // Only try record unification if unify_maps is enabled and above threshold
-                        // This ensures we only do expensive unification when it would result in map conversion
-                        if above_threshold {
-                            unified_schema = check_unifiable_schemas(
-                                &child_schemas,
-                                field_name.unwrap_or(""),
-                                config,
-                            );
+                        // Detect if these are all arrays of records
+                        if child_schemas
+                            .iter()
+                            .all(|s| s.get("type") == Some(&Value::String("array".into())))
+                        {
+                            // Collect item schemas, short-circuit if any missing
+                            let mut item_schemas = Vec::with_capacity(child_schemas.len());
+                            let mut all_items_ok = true;
+                            for s in &child_schemas {
+                                if let Some(items) = s.get("items") {
+                                    item_schemas.push(items.clone());
+                                } else {
+                                    all_items_ok = false;
+                                    break;
+                                }
+                            }
+                            if all_items_ok {
+                                if let Some(unified_items) = check_unifiable_schemas(
+                                    &item_schemas,
+                                    field_name.unwrap_or(""),
+                                    config,
+                                ) {
+                                    unified_schema = Some(serde_json::json!({
+                                        "type": "array",
+                                        "items": unified_items
+                                    }));
+                                }
+                            }
+                        } else {
+                            // Only try record unification if unify_maps is enabled and above threshold
+                            // This ensures we only do expensive unification when it would result in map conversion
+                            if above_threshold {
+                                unified_schema = check_unifiable_schemas(
+                                    &child_schemas,
+                                    field_name.unwrap_or(""),
+                                    config,
+                                );
+                            }
                         }
                     }
                 }
@@ -436,20 +487,35 @@ pub(crate) fn rewrite_objects(
             }
         }
 
-        // --- Recurse into nested values ---
-        if let Some(props) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
-            for (k, v) in props {
-                rewrite_objects(v, Some(k), config, false);
+        // Skip recursion if we have a field name that's in the force types map
+        if !matches!(field_name, Some(name) if config.force_field_types.contains_key(name)) {
+            // --- Recurse into nested values ---
+            if let Some(props) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
+                for (k, v) in props {
+                    debug!(config, "Nested value recursion: {}", k);
+                    rewrite_objects(v, Some(k), config, false);
+                }
             }
-        }
-        if let Some(items) = obj.get_mut("items") {
-            rewrite_objects(items, None, config, false);
-        }
-        for v in obj.values_mut() {
-            rewrite_objects(v, None, config, false);
+            if let Some(items) = obj.get_mut("items") {
+                debug!(config, "Nested value recursion: items");
+                rewrite_objects(items, None, config, false);
+            }
+            for (k, v) in obj.iter_mut() {
+                if matches!(
+                    k.as_str(),
+                    "items" | "type" | "required" | "$schema" | "namespace" | "name"
+                ) {
+                    continue;
+                }
+                if let Value::Object(_) = v {
+                    debug!(config, "Other value recursion: {}", k);
+                    rewrite_objects(v, Some(k), config, false);
+                }
+            }
         }
     } else if let Value::Array(arr) = schema {
         for v in arr {
+            debug!(config, "Array value recursion");
             rewrite_objects(v, None, config, false);
         }
     }

@@ -1,0 +1,48 @@
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "books",
+      "type": {
+        "type": "record",
+        "name": "books",
+        "namespace": "genson.document_types",
+        "fields": [
+          {
+            "name": "book_info",
+            "type": {
+              "name": "book_info",
+              "type": "map",
+              "values": {
+                "name": "book_info_values",
+                "type": "map",
+                "values": "string"
+              }
+            }
+          },
+          {
+            "name": "related",
+            "type": {
+              "name": "related",
+              "type": "map",
+              "values": {
+                "type": "array",
+                "items": {
+                  "name": "related_values",
+                  "type": "map",
+                  "values": {
+                    "name": "related_values_values",
+                    "type": "map",
+                    "values": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
