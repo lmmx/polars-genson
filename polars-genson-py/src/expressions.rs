@@ -42,6 +42,9 @@ pub struct GensonKwargs {
     pub unify_maps: bool,
 
     #[serde(default)]
+    pub no_unify: Vec<String>,
+
+    #[serde(default)]
     pub force_field_types: std::collections::HashMap<String, String>,
 
     #[serde(default = "default_wrap_scalars")]
@@ -175,6 +178,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 map_threshold: kwargs.map_threshold,
                 map_max_required_keys: kwargs.map_max_required_keys,
                 unify_maps: kwargs.unify_maps,
+                no_unify: kwargs.no_unify.iter().cloned().collect(),
                 force_field_types: kwargs.force_field_types.clone(),
                 wrap_scalars: kwargs.wrap_scalars,
                 avro: kwargs.avro,
@@ -217,6 +221,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     map_threshold: kwargs.map_threshold,
                     map_max_required_keys: kwargs.map_max_required_keys,
                     unify_maps: kwargs.unify_maps,
+                    no_unify: kwargs.no_unify.iter().cloned().collect(),
                     force_field_types: kwargs.force_field_types.clone(),
                     wrap_scalars: kwargs.wrap_scalars,
                     avro: kwargs.avro,
@@ -302,6 +307,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             map_threshold: kwargs.map_threshold,
             map_max_required_keys: kwargs.map_max_required_keys,
             unify_maps: kwargs.unify_maps,
+            no_unify: kwargs.no_unify.iter().cloned().collect(),
             force_field_types: kwargs.force_field_types.clone(),
             wrap_scalars: kwargs.wrap_scalars,
             avro: kwargs.avro,
@@ -440,6 +446,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         map_threshold: kwargs.map_threshold,
         map_max_required_keys: kwargs.map_max_required_keys,
         unify_maps: kwargs.unify_maps,
+        no_unify: kwargs.no_unify.iter().cloned().collect(),
         force_field_types: kwargs.force_field_types.clone(),
         wrap_scalars: kwargs.wrap_scalars,
         avro: true, // normalisation implies Avro
