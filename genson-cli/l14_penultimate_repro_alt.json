@@ -1,0 +1,16 @@
+{
+  "book_info": {
+    "descriptions": {
+      "en": "dictionary"
+    }
+  },
+  "related": {
+    "B456": [
+      {
+        "descriptions": {
+          "en": "thesaurus"
+        }
+      }
+    ]
+  }
+}

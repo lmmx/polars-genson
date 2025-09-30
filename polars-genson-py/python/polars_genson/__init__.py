@@ -94,6 +94,7 @@ def infer_json_schema(
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
     unify_maps: bool = False,
+    no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
@@ -129,6 +130,8 @@ def infer_json_schema(
         Enable unification of compatible but non-homogeneous record schemas into maps.
         When True, record schemas with compatible field types can be merged into a single
         map schema with selective nullable fields.
+    no_unify: set[str] | None, default None
+        Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
@@ -160,6 +163,7 @@ def infer_json_schema(
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
+        "no_unify": list(no_unify) if no_unify else [],
         "wrap_scalars": wrap_scalars,
         "avro": avro,
         "wrap_root": wrap_root,
@@ -184,6 +188,7 @@ def infer_polars_schema(
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
     unify_maps: bool = False,
+    no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
@@ -217,6 +222,8 @@ def infer_polars_schema(
         Enable unification of compatible but non-homogeneous record schemas into maps.
         When True, record schemas with compatible field types can be merged into a single
         map schema with selective nullable fields.
+    no_unify: set[str] | None, default None
+        Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
@@ -248,6 +255,7 @@ def infer_polars_schema(
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
+        "no_unify": list(no_unify) if no_unify else [],
         "wrap_scalars": wrap_scalars,
         "avro": avro,
         "wrap_root": wrap_root,
@@ -273,6 +281,7 @@ def normalise_json(
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
     unify_maps: bool = False,
+    no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
     wrap_scalars: bool = True,
     wrap_root: str | None = None,
@@ -314,6 +323,8 @@ def normalise_json(
         Enable unification of compatible but non-homogeneous record schemas into maps.
         When True, record schemas with compatible field types can be merged into a single
         map schema with selective nullable fields.
+    no_unify: set[str] | None, default None
+        Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Override the inferred type for specific fields. Keys are field names,
         values must be either ``"map"`` or ``"record"``.
@@ -363,6 +374,7 @@ def normalise_json(
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
+        "no_unify": list(no_unify) if no_unify else [],
         "wrap_scalars": wrap_scalars,
         "wrap_root": wrap_root,
         "no_root_map": no_root_map,
@@ -402,6 +414,7 @@ class GensonNamespace:
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
         unify_maps: bool = False,
+        no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = False,
@@ -436,6 +449,8 @@ class GensonNamespace:
             Enable unification of compatible but non-homogeneous record schemas into maps.
             When True, record schemas with compatible field types can be merged into a single
             map schema with selective nullable fields.
+        no_unify: set[str] | None, default None
+            Prevent unification of keys under these field names with their sibling record fields.
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
@@ -508,6 +523,7 @@ class GensonNamespace:
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
         unify_maps: bool = False,
+        no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = False,
@@ -543,6 +559,8 @@ class GensonNamespace:
             Enable unification of compatible but non-homogeneous record schemas into maps.
             When True, record schemas with compatible field types can be merged into a single
             map schema with selective nullable fields.
+        no_unify: set[str] | None, default None
+            Prevent unification of keys under these field names with their sibling record fields.
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
@@ -611,6 +629,7 @@ class GensonNamespace:
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
         unify_maps: bool = False,
+        no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
         wrap_scalars: bool = True,
         wrap_root: bool | str | None = None,
@@ -665,6 +684,8 @@ class GensonNamespace:
             Enable unification of compatible but non-homogeneous record schemas into maps.
             When True, record schemas with compatible field types can be merged into a single
             map schema with selective nullable fields.
+        no_unify: set[str] | None, default None
+            Prevent unification of keys under these field names with their sibling record fields.
         force_field_types : dict[str, str], optional
             Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
         wrap_scalars : bool, default True

@@ -1,0 +1,79 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--avro"
+    - "--force-type"
+    - "mainsnak:record"
+    - "--no-unify"
+    - qualifiers
+  fixture: tests/data/claims/x1818_L14_PENULTIMATE.json
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "claims",
+      "type": {
+        "name": "claims",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "claims_values",
+            "namespace": "genson.document_types",
+            "fields": [
+              {
+                "name": "mainsnak",
+                "type": {
+                  "type": "record",
+                  "name": "mainsnak",
+                  "namespace": "genson.document_types.claims_values_types",
+                  "fields": [
+                    {
+                      "name": "property-labels",
+                      "type": {
+                        "name": "property-labels",
+                        "type": "map",
+                        "values": "string"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "qualifiers",
+                "type": {
+                  "name": "qualifiers",
+                  "type": "map",
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "name": "qualifiers_values",
+                      "type": "map",
+                      "values": {
+                        "name": "qualifiers_values_values",
+                        "type": "map",
+                        "values": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

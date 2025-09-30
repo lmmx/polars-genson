@@ -77,6 +77,16 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             "--unify-maps" => {
                 config.unify_maps = true;
             }
+            "--no-unify" => {
+                if i + 1 < args.len() {
+                    for field in args[i + 1].split(',') {
+                        config.no_unify.insert(field.to_string());
+                    }
+                    i += 1;
+                } else {
+                    return Err("Missing value for --no-unify".into());
+                }
+            }
             "--force-type" => {
                 if i + 1 < args.len() {
                     for pair in args[i + 1].split(',') {
@@ -218,6 +228,8 @@ fn print_help() {
     println!("    --map-max-required-keys <N>");
     println!("    --unify-maps          Enable unification of compatible record schemas into maps");
     println!("                          Same as --map-max-rk");
+    println!("    --no-unify <fields>   Exclude fields from record unification (comma-separated)");
+    println!("                          Example: --no-unify qualifiers,references");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     println!("                          Example: --force-type labels:map,claims:record");
     println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");

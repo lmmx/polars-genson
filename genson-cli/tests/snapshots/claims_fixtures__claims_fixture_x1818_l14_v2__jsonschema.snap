@@ -1,0 +1,70 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--force-type"
+    - "mainsnak:record"
+    - "--no-unify"
+    - qualifiers
+  fixture: tests/data/claims/x1818_L14_PENULTIMATE.json
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "claims": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "mainsnak": {
+              "properties": {
+                "property-labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "property-labels"
+              ],
+              "type": "object"
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "mainsnak",
+            "qualifiers"
+          ],
+          "type": "object"
+        }
+      }
+    }
+  },
+  "required": [
+    "claims"
+  ],
+  "type": "object"
+}

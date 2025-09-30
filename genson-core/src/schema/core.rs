@@ -17,6 +17,8 @@ pub struct SchemaInferenceConfig {
     pub map_max_required_keys: Option<usize>,
     /// Enable unification of compatible but non-homogeneous record schemas into maps
     pub unify_maps: bool,
+    /// Fields whose keys should not be merged during record unification
+    pub no_unify: std::collections::HashSet<String>,
     /// Force override of field treatment, e.g. {"labels": "map"}
     pub force_field_types: HashMap<String, String>,
     /// Whether to promote scalar values to wrapped objects when they collide with record values
@@ -99,6 +101,7 @@ impl Default for SchemaInferenceConfig {
             map_threshold: 20,
             map_max_required_keys: None,
             unify_maps: false,
+            no_unify: std::collections::HashSet::new(),
             force_field_types: std::collections::HashMap::new(),
             wrap_scalars: true,
             wrap_root: None,

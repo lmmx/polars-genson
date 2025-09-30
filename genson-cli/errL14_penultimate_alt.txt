@@ -1,0 +1,125 @@
+Schema inference config: SchemaInferenceConfig {
+    ignore_outer_array: true,
+    delimiter: None,
+    schema_uri: Some(
+        "AUTO",
+    ),
+    map_threshold: 0,
+    map_max_required_keys: None,
+    unify_maps: true,
+    force_field_types: {
+... (6 lines truncated) ...
+    no_root_map: true,
+    avro: true,
+    debug: true,
+    verbosity: Normal,
+}
+
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0:
+{
+  "properties": {
+    "book_info": {
+      "properties": {
+        "descriptions": {
+          "properties": {
+...(46 lines omitted)...
+  "required": [
+    "book_info",
+    "related"
+  ],
+  "type": "object"
+}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Skipping map conversion: is root and no_root_map=true
+Checking homogeneity for field "book_info" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"properties":{"en":{"type":"string"}},"required":["en"],"type":"object"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "book_info" to map with schema:
+{
+  "properties": {
+    "en": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "en"
+  ],
+  "type": "object"
+}
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "related" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"array","items":{"properties":{"descriptions":{"properties":{"en":{"type":"string"}},"required":["en"],"type":"object"}},"required":["descriptions"],"type":"object"}}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "related" to map with schema:
+{
+  "type": "array",
+  "items": {
+    "properties": {
+      "descriptions": {
+        "properties": {
+...(10 lines omitted)...
+    "required": [
+      "descriptions"
+    ],
+    "type": "object"
+  }
+}
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"properties":{"en":{"type":"string"}},"required":["en"],"type":"object"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "properties": {
+    "en": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "en"
+  ],
+  "type": "object"
+}
+Checking homogeneity for field "root" with 1 schemas
+Unique normalised schemas (1 total):
+  Schema 0: {"type":"string"}
+Schemas are homogeneous after normalisation
+Checking if should convert to map: above_threshold=true, unified_schema=Some
+Map conversion: no max_required_keys limit, converting to map
+Converting field "root" to map with schema:
+{
+  "type": "string"
+}
+Checking homogeneity for field "root" with 2 schemas
+Unique normalised schemas (2 total):
+  Schema 0: {"type":"object","additionalProperties":{"type":"array","items":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{"type":"string"}}}}}
+  Schema 1: {"type":"object","additionalProperties":{"type":"object","additionalProperties":{"type":"string"}}}
+Schemas not homogeneous, attempting unification
+: All schemas are maps, attempting map unification
+: Attempting to unify 2 map schemas
+.additionalProperties: Mixed schema types not supported for unification
+  Schema[0] type: map - {"type":"object","additionalProperties":{"type":"string"}}
+  Schema[1] type: array - {"type":"array","items":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{"type":"string"}}}}
+: Failed to unify map additionalProperties
+Not converting to map: no unified schema
+Processed 1 JSON object(s)

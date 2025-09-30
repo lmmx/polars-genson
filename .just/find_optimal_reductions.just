@@ -5,10 +5,11 @@
 
 # Configuration
 CLI := "genson-cli"
-WORKING_LINES := "4 5 12 14 26"
+WORKING_LINES := "12 14 26"
 DATA_DIR := "tests/data/claims"
 
 # Test if a file preserves the bug reproduction
+[working-directory: 'genson-cli']
 test-repro line suffix="PENULTIMATE":
     {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "outL{{line}}_{{suffix}}.json" 2> "errL{{line}}_{{suffix}}.txt"
     @if rg -q 'name": "P' "outL{{line}}_{{suffix}}.json"; then \
@@ -19,6 +20,7 @@ test-repro line suffix="PENULTIMATE":
     fi
 
 # Apply P-code reduction with safety check
+[working-directory: 'genson-cli']
 reduce-pcodes line count suffix:
     #!/bin/bash
     set -euo pipefail
@@ -42,6 +44,7 @@ reduce-pcodes line count suffix:
     fi
 
 # Apply claims reduction with safety check  
+[working-directory: 'genson-cli']
 reduce-claims line count suffix:
     #!/bin/bash
     set -euo pipefail
@@ -65,6 +68,7 @@ reduce-claims line count suffix:
     fi
 
 # Apply skip-first reduction with safety check
+[working-directory: 'genson-cli']
 skip-first-pcodes line count suffix:
     #!/bin/bash
     set -euo pipefail
@@ -89,6 +93,7 @@ skip-first-pcodes line count suffix:
     fi
 
 # Apply skip-last reduction with safety check
+[working-directory: 'genson-cli']
 skip-last-pcodes line count suffix:
     #!/bin/bash
     set -euo pipefail
@@ -113,6 +118,7 @@ skip-last-pcodes line count suffix:
     fi
 
 # Apply label reduction with safety check
+[working-directory: 'genson-cli']
 reduce-labels line count suffix:
     #!/bin/bash
     set -euo pipefail
@@ -132,6 +138,7 @@ reduce-labels line count suffix:
     fi
 
 # Binary search for maximum P-codes that preserve the bug
+[working-directory: 'genson-cli']
 find-pcode-limit line:
     #!/bin/bash
     set -euo pipefail
@@ -169,6 +176,7 @@ find-pcode-limit line:
     fi
 
 # Binary search for maximum claims per P-code
+[working-directory: 'genson-cli']
 find-claims-limit line pcode_limit:
     #!/bin/bash
     set -euo pipefail
@@ -206,6 +214,7 @@ find-claims-limit line pcode_limit:
     fi
 
 # Binary search for skip-first limit
+[working-directory: 'genson-cli']
 find-skip-first-limit line pcode_limit claims_limit:
     #!/bin/bash
     set -euo pipefail
@@ -242,6 +251,7 @@ find-skip-first-limit line pcode_limit claims_limit:
     fi
 
 # Binary search for skip-last limit (works on current cumulative state)
+[working-directory: 'genson-cli']
 find-skip-last-limit line pcode_limit claims_limit skip_first_limit:
     #!/bin/bash
     set -euo pipefail
@@ -297,6 +307,7 @@ find-skip-last-limit line pcode_limit claims_limit skip_first_limit:
     fi
 
 # Find label reduction limit
+[working-directory: 'genson-cli']
 find-label-limit line pcode_limit claims_limit skip_first_limit skip_last_limit:
     #!/bin/bash
     set -euo pipefail
@@ -326,6 +337,7 @@ find-label-limit line pcode_limit claims_limit skip_first_limit skip_last_limit:
     echo "L{{line}} label limit: NONE"
 
 # Test all final files
+[working-directory: 'genson-cli']
 test-all:
     #!/bin/bash
     set -euo pipefail
@@ -336,12 +348,14 @@ test-all:
     done
 
 # Clean temporary files
+[working-directory: 'genson-cli']
 clean-tmp:
     rm -f {{DATA_DIR}}/x1818_L*_temp*.json
     rm -f outL*_temp*.json errL*_temp*.txt
     rm -f outL*_test.json errL*_test.txt
 
 # Restore original files
+[working-directory: 'genson-cli']
 restore:
     #!/bin/bash
     set -euo pipefail
@@ -351,6 +365,7 @@ restore:
     done
 
 # Main workflow - find all limits and apply them cumulatively
+[working-directory: 'genson-cli']
 find-all-limits:
     #!/bin/bash
     set -euo pipefail
@@ -405,6 +420,7 @@ find-all-limits:
     echo -e "\nAll limits found and applied successfully!"
 
 # Show current limits
+[working-directory: 'genson-cli']
 show-limits:
     @echo "Current limits:"
     @echo "P-code limits:"; cat pcode_limits.txt 2>/dev/null || echo "  None found"
