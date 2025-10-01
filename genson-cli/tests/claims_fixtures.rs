@@ -461,4 +461,4 @@ fn test_claims_fixture_x1818_l14_v2_normalize() {
     );
 }
 
-// TODO: L26
+// Do not use L26 penult., it was not reduced very much
