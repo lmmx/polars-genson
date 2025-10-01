@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.4.3...genson-cli-v0.4.4) - 2025-10-01
+
+### <!-- 2 -->Bug Fixes
+
+- fix anyOf resolution in map inference unification ([#115](https://github.com/lmmx/polars-genson/pull/115))
+
 ## [0.4.3](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.4.2...genson-cli-v0.4.3) - 2025-09-30
 
 ### <!-- 9 -->Other
