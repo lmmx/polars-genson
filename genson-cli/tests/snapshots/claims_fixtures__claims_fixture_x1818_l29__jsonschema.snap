@@ -1,0 +1,143 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+  fixture: tests/data/claims/x1818_L29_MINIMAL.json
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "claims": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
+              "type": "object",
+              "properties": {
+                "property": {
+                  "type": "string"
+                },
+                "datavalue": {
+                  "type": "object",
+                  "properties": {
+                    "precision": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "latitude": {
+                      "type": [
+                        "null",
+                        "number"
+                      ]
+                    },
+                    "longitude": {
+                      "type": [
+                        "null",
+                        "number"
+                      ]
+                    },
+                    "altitude": {
+                      "type": "null"
+                    },
+                    "globe": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "time": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "precision"
+                  ]
+                },
+                "datatype": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "property",
+                "datavalue",
+                "datatype"
+              ]
+            },
+            "rank": {
+              "type": "string"
+            },
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "property": {
+                        "type": "string"
+                      },
+                      "datavalue": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "labels": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "labels"
+                        ],
+                        "type": "object"
+                      },
+                      "datatype": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "datatype",
+                      "datavalue",
+                      "property"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "mainsnak",
+            "rank"
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "claims"
+  ],
+  "type": "object"
+}

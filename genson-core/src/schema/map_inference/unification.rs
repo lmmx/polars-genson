@@ -32,10 +32,33 @@ fn normalise_nullable(v: &Value) -> &Value {
     }
 }
 
+/// Try to make a nullable union from a null type and a typed schema
+fn try_make_nullable_union(a: &Value, b: &Value) -> Option<Value> {
+    if a.get("type") == Some(&Value::String("null".into())) {
+        if let Some(other_type) = b.get("type") {
+            if other_type != &Value::String("null".into()) {
+                let mut result = b.clone();
+                result
+                    .as_object_mut()?
+                    .insert("type".to_string(), json!(["null", other_type]));
+                return Some(result);
+            }
+        }
+    }
+    None
+}
+
 /// Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
 fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     if existing == new {
         return Some(existing.clone());
+    }
+
+    // Handle null vs non-null type: create union
+    if let Some(result) =
+        try_make_nullable_union(existing, new).or_else(|| try_make_nullable_union(new, existing))
+    {
+        return Some(result);
     }
 
     // Handle new JSON Schema nullable format: {"type": ["null", "string"]}
