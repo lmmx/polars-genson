@@ -23,9 +23,44 @@ info:
       "additionalProperties": {
         "type": "array",
         "items": {
+          "type": "object",
           "properties": {
             "mainsnak": {
+              "type": "object",
               "properties": {
+                "property": {
+                  "type": "string"
+                },
+                "datavalue": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "datavalue__string": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "labels"
+                  ]
+                },
+                "datatype": {
+                  "type": "string"
+                },
                 "property-labels": {
                   "type": "object",
                   "additionalProperties": {
@@ -34,9 +69,14 @@ info:
                 }
               },
               "required": [
+                "property",
+                "datavalue",
+                "datatype",
                 "property-labels"
-              ],
-              "type": "object"
+              ]
+            },
+            "rank": {
+              "type": "string"
             },
             "qualifiers": {
               "type": "object",
@@ -44,11 +84,153 @@ info:
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "additionalProperties": {
-                    "type": "object",
-                    "additionalProperties": {
+                  "properties": {
+                    "property": {
                       "type": "string"
+                    },
+                    "datavalue": {
+                      "type": "object",
+                      "properties": {
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "id": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "datavalue__string"
+                      ]
+                    },
+                    "datatype": {
+                      "type": "string"
+                    },
+                    "property-labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
+                  },
+                  "required": [
+                    "property",
+                    "datavalue",
+                    "datatype",
+                    "property-labels"
+                  ]
+                }
+              }
+            },
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "property": {
+                        "type": "string"
+                      },
+                      "datavalue": {
+                        "type": "object",
+                        "properties": {
+                          "time": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "timezone": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "before": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "after": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "precision": {
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
+                          },
+                          "calendarmodel": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "id": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          "labels": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "datavalue__string": {
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "time",
+                          "timezone",
+                          "before",
+                          "after",
+                          "precision",
+                          "calendarmodel"
+                        ]
+                      },
+                      "datatype": {
+                        "type": "string"
+                      },
+                      "property-labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "property",
+                      "datavalue",
+                      "datatype",
+                      "property-labels"
+                    ]
                   }
                 }
               }
@@ -56,9 +238,8 @@ info:
           },
           "required": [
             "mainsnak",
-            "qualifiers"
-          ],
-          "type": "object"
+            "rank"
+          ]
         }
       }
     }
