@@ -542,3 +542,39 @@ fn test_scalar_promotion_all_four_types() {
     assert!(all_props.contains_key("all__integer"), "Missing promoted integer field");
     assert!(all_props.contains_key("all__boolean"), "Missing promoted boolean field");
 }
+
+#[test]
+fn test_nullable_union_from_null_and_typed() {
+    // Test null + integer -> nullable integer
+    let null_schema = json!({"type": "null"});
+    let int_schema = json!({"type": "integer"});
+
+    let result = try_make_nullable_union(&null_schema, &int_schema);
+    assert_eq!(result, Some(json!({"type": ["null", "integer"]})));
+
+    // Test in reverse order
+    let result = try_make_nullable_union(&int_schema, &null_schema);
+    assert_eq!(result, None); // Should return None when first arg is not null
+
+    // Test null + string -> nullable string
+    let string_schema = json!({"type": "string"});
+    let result = try_make_nullable_union(&null_schema, &string_schema);
+    assert_eq!(result, Some(json!({"type": ["null", "string"]})));
+
+    // Test with schema that has additional properties
+    let complex_schema = json!({
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 100
+    });
+    let result = try_make_nullable_union(&null_schema, &complex_schema);
+    assert_eq!(result, Some(json!({
+        "type": ["null", "integer"],
+        "minimum": 0,
+        "maximum": 100
+    })));
+
+    // Test null + null -> None
+    let result = try_make_nullable_union(&null_schema, &null_schema);
+    assert_eq!(result, None);
+}

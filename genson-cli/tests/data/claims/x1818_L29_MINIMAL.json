@@ -1,0 +1,48 @@
+{
+  "P625": [
+    {
+      "mainsnak": {
+        "property": "P625",
+        "datavalue": {
+          "latitude": 57.302777777778,
+          "longitude": -6.3561111111111,
+          "altitude": null,
+          "precision": null,
+          "globe": "http://www.wikidata.org/entity/Q2"
+        },
+        "datatype": "globe-coordinate"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P571": [
+    {
+      "mainsnak": {
+        "property": "P571",
+        "datavalue": {
+          "time": "+1830-00-00T00:00:00Z",
+          "precision": 9
+        },
+        "datatype": "time"
+      },
+      "rank": "normal",
+      "references": [
+        {
+          "P143": [
+            {
+              "property": "P143",
+              "datavalue": {
+                "id": "Q48183",
+                "labels": {
+                  "zh": "德語維基百科",
+                  "pl": "Wikipedia niemieckojęzyczna"
+                }
+              },
+              "datatype": "wikibase-item"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
