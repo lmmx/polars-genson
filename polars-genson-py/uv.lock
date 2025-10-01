@@ -1400,7 +1400,7 @@ wheels = [
 
 [[package]]
 name = "polars-genson"
-version = "0.4.3"
+version = "0.4.4"
 source = { editable = "." }
 dependencies = [
     { name = "orjson" },
