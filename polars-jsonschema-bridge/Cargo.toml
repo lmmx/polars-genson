@@ -10,7 +10,7 @@ license.workspace = true
 name = "polars-jsonschema-bridge"
 readme = "README.md"
 repository.workspace = true
-version = "0.4.0"
+version = "0.4.1"
 
 [dependencies]
 polars.workspace = true
