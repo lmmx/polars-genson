@@ -9,11 +9,7 @@ info:
     - "--unify-maps"
     - "--wrap-root"
     - claims
-    - "--force-type"
-    - "mainsnak:record"
-    - "--no-unify"
-    - qualifiers
-  fixture: tests/data/claims/x1818_L14_PENULTIMATE.json
+  fixture: tests/data/claims/x1818_L12_PENULTIMATE.json
 ---
 {
   "$schema": "http://json-schema.org/schema#",
@@ -91,12 +87,6 @@ info:
                     "datavalue": {
                       "type": "object",
                       "properties": {
-                        "datavalue__string": {
-                          "type": [
-                            "null",
-                            "string"
-                          ]
-                        },
                         "id": {
                           "type": [
                             "null",
@@ -108,11 +98,14 @@ info:
                           "additionalProperties": {
                             "type": "string"
                           }
+                        },
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
-                      },
-                      "required": [
-                        "datavalue__string"
-                      ]
+                      }
                     },
                     "datatype": {
                       "type": "string"
@@ -151,42 +144,6 @@ info:
                       "datavalue": {
                         "type": "object",
                         "properties": {
-                          "time": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "timezone": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "before": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "after": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "precision": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "calendarmodel": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
                           "id": {
                             "type": [
                               "null",
@@ -205,15 +162,7 @@ info:
                               "string"
                             ]
                           }
-                        },
-                        "required": [
-                          "time",
-                          "timezone",
-                          "before",
-                          "after",
-                          "precision",
-                          "calendarmodel"
-                        ]
+                        }
                       },
                       "datatype": {
                         "type": "string"

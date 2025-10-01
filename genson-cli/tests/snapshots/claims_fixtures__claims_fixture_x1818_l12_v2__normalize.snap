@@ -1,0 +1,215 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--normalise"
+  fixture: tests/data/claims/x1818_L12_PENULTIMATE.json
+---
+[
+  {
+    "claims": {
+      "P279": [
+        {
+          "mainsnak": {
+            "property": "P279",
+            "datavalue": {
+              "id": "Q1068715",
+              "labels": {
+                "pt": "rede de telecomunicações",
+                "pl": "sieć telekomunikacyjna"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "subclass of",
+              "ca": "subclasse de"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P3365": [
+        {
+          "mainsnak": {
+            "property": "P3365",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "internet"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "Treccani ID",
+              "it": "identificativo Treccani"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": {
+            "P1810": [
+              {
+                "property": "P1810",
+                "datavalue": {
+                  "id": null,
+                  "labels": null,
+                  "datavalue__string": "Internet"
+                },
+                "datatype": "string",
+                "property-labels": {
+                  "en": "subject named as",
+                  "ru": "назван как"
+                }
+              }
+            ]
+          },
+          "references": [
+            {
+              "P143": [
+                {
+                  "property": "P143",
+                  "datavalue": {
+                    "id": "Q11920",
+                    "labels": {
+                      "fr": "Wikipédia en italien",
+                      "eo": "itallingva Vikipedio"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "nl": "geïmporteerd uit Wikimedia-project",
+                    "de": "importiert aus Wikimedia-Projekt"
+                  }
+                }
+              ],
+              "P4656": [
+                {
+                  "property": "P4656",
+                  "datavalue": {
+                    "id": null,
+                    "labels": null,
+                    "datavalue__string": "https://it.wikipedia.org/w/index.php?title=Internet&oldid=99520850"
+                  },
+                  "datatype": "url",
+                  "property-labels": {
+                    "en": "Wikimedia import URL",
+                    "ca": "URL importada de Wikimedia"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P3911": [
+        {
+          "mainsnak": {
+            "property": "P3911",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "18659-2"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "STW Thesaurus for Economics ID",
+              "es": "identificador del tesauro STW de economía"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": {
+            "P4390": [
+              {
+                "property": "P4390",
+                "datavalue": {
+                  "id": "Q39893449",
+                  "labels": {
+                    "en": "exact match",
+                    "ru": "точное соответствие"
+                  },
+                  "datavalue__string": null
+                },
+                "datatype": "wikibase-item",
+                "property-labels": {
+                  "en": "mapping relation type",
+                  "ru": "тип отношения отображения"
+                }
+              }
+            ]
+          },
+          "references": null
+        }
+      ],
+      "P1343": [
+        {
+          "mainsnak": {
+            "property": "P1343",
+            "datavalue": {
+              "id": "Q4208106",
+              "labels": {
+                "ru": "Казахстан. Национальная энциклопедия",
+                "uk": "Казахстан. Національна енциклопедія"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "described by source",
+              "ru": "описывается в источниках"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        },
+        {
+          "mainsnak": {
+            "property": "P1343",
+            "datavalue": {
+              "id": "Q47470796",
+              "labels": null,
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "described by source",
+              "ru": "описывается в источниках"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        },
+        {
+          "mainsnak": {
+            "property": "P1343",
+            "datavalue": {
+              "id": "Q47484682",
+              "labels": {
+                "labels__string": "RFC 3271: The Internet is for Everyone"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "described by source",
+              "ru": "описывается в источниках"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ]
+    }
+  }
+]

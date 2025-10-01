@@ -22,39 +22,801 @@ info:
       "P487": [
         {
           "mainsnak": {
+            "property": "P487",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "🐕"
+            },
+            "datatype": "string",
             "property-labels": {
               "en": "Unicode character",
               "de": "Unicodezeichen"
             }
           },
+          "rank": "normal",
           "qualifiers": {
             "P805": [
               {
+                "property": "P805",
+                "datavalue": {
+                  "datavalue__string": null,
+                  "id": "Q87577372",
+                  "labels": {
+                    "egl": "🐕",
+                    "ase": "🐕"
+                  }
+                },
+                "datatype": "wikibase-item",
                 "property-labels": {
                   "en": "statement is subject of",
                   "ca": "afirmació detallada a"
                 }
               }
             ]
-          }
+          },
+          "references": null
         },
         {
           "mainsnak": {
+            "property": "P487",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "🐶"
+            },
+            "datatype": "string",
             "property-labels": {
               "en": "Unicode character",
               "de": "Unicodezeichen"
             }
           },
+          "rank": "normal",
           "qualifiers": {
             "P805": [
               {
+                "property": "P805",
+                "datavalue": {
+                  "datavalue__string": null,
+                  "id": "Q87577442",
+                  "labels": {
+                    "egl": "🐶",
+                    "ase": "🐶"
+                  }
+                },
+                "datatype": "wikibase-item",
                 "property-labels": {
                   "en": "statement is subject of",
                   "ca": "afirmació detallada a"
                 }
               }
             ]
-          }
+          },
+          "references": null
+        }
+      ],
+      "P1245": [
+        {
+          "mainsnak": {
+            "property": "P1245",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "966"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "OmegaWiki Defined Meaning",
+              "de": "OmegaWiki-Bedeutungskennung"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P1036": [
+        {
+          "mainsnak": {
+            "property": "P1036",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "636.7"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "Dewey Decimal Classification",
+              "de": "Dewey-Dezimalklassifikation"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": [
+            {
+              "P248": [
+                {
+                  "property": "P248",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": "Q36578",
+                    "labels": {
+                      "de": "Gemeinsame Normdatei",
+                      "en": "Integrated Authority File"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "fr": "affirmé dans",
+                    "ca": "afirmat a"
+                  }
+                }
+              ],
+              "P227": [
+                {
+                  "property": "P227",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": null,
+                    "labels": null,
+                    "datavalue__string": "4026181-5"
+                  },
+                  "datatype": "external-id",
+                  "property-labels": {
+                    "en": "GND ID",
+                    "de": "GND-Kennung"
+                  }
+                }
+              ],
+              "P407": [
+                {
+                  "property": "P407",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": "Q188",
+                    "labels": {
+                      "tg": "забони олмонӣ",
+                      "ay": "Aliman aru"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "es": "idioma de la obra o del nombre",
+                    "pt": "língua da obra ou do nome"
+                  }
+                }
+              ],
+              "P813": [
+                {
+                  "property": "P813",
+                  "datavalue": {
+                    "time": "+2021-08-29T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
+                    "id": null,
+                    "labels": null,
+                    "datavalue__string": null
+                  },
+                  "datatype": "time",
+                  "property-labels": {
+                    "en": "retrieved",
+                    "en-ca": "retrieved"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "mainsnak": {
+            "property": "P1036",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "599.772"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "Dewey Decimal Classification",
+              "de": "Dewey-Dezimalklassifikation"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": [
+            {
+              "P248": [
+                {
+                  "property": "P248",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": "Q36578",
+                    "labels": {
+                      "de": "Gemeinsame Normdatei",
+                      "en": "Integrated Authority File"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "fr": "affirmé dans",
+                    "ca": "afirmat a"
+                  }
+                }
+              ],
+              "P227": [
+                {
+                  "property": "P227",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": null,
+                    "labels": null,
+                    "datavalue__string": "4026181-5"
+                  },
+                  "datatype": "external-id",
+                  "property-labels": {
+                    "en": "GND ID",
+                    "de": "GND-Kennung"
+                  }
+                }
+              ],
+              "P407": [
+                {
+                  "property": "P407",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": "Q188",
+                    "labels": {
+                      "tg": "забони олмонӣ",
+                      "ay": "Aliman aru"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "es": "idioma de la obra o del nombre",
+                    "pt": "língua da obra ou do nome"
+                  }
+                }
+              ],
+              "P813": [
+                {
+                  "property": "P813",
+                  "datavalue": {
+                    "time": "+2021-08-29T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
+                    "id": null,
+                    "labels": null,
+                    "datavalue__string": null
+                  },
+                  "datatype": "time",
+                  "property-labels": {
+                    "en": "retrieved",
+                    "en-ca": "retrieved"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P373": [
+        {
+          "mainsnak": {
+            "property": "P373",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "Dogs"
+            },
+            "datatype": "string",
+            "property-labels": {
+              "or": "କମନ୍ସ ଶ୍ରେଣୀ",
+              "oc": "categoria Commons"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": [
+            {
+              "P143": [
+                {
+                  "property": "P143",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": "Q8449",
+                    "labels": {
+                      "fr": "Wikipédia en espagnol",
+                      "en": "Spanish Wikipedia"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "nl": "geïmporteerd uit Wikimedia-project",
+                    "de": "importiert aus Wikimedia-Projekt"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P508": [
+        {
+          "mainsnak": {
+            "property": "P508",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "285"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "it": "identificativo Thesaurus BNCF",
+              "en": "BNCF Thesaurus ID"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": {
+            "P1810": [
+              {
+                "property": "P1810",
+                "datavalue": {
+                  "datavalue__string": "Cani",
+                  "id": null,
+                  "labels": null
+                },
+                "datatype": "string",
+                "property-labels": {
+                  "en": "subject named as",
+                  "ru": "назван как"
+                }
+              }
+            ]
+          },
+          "references": null
+        }
+      ],
+      "P910": [
+        {
+          "mainsnak": {
+            "property": "P910",
+            "datavalue": {
+              "id": "Q6830323",
+              "labels": {
+                "el": "Κατηγορία:Σκύλος",
+                "en": "Category:Dogs"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "topic's main category",
+              "pt": "categoria principal do tópico"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P646": [
+        {
+          "mainsnak": {
+            "property": "P646",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "/m/0bt9lr"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "Freebase ID",
+              "fa": "شناسهٔ فری‌بیس"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": [
+            {
+              "P248": [
+                {
+                  "property": "P248",
+                  "datavalue": {
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null,
+                    "id": "Q15241312",
+                    "labels": {
+                      "en": "Freebase Data Dumps",
+                      "de": "Freebase-Datendump"
+                    },
+                    "datavalue__string": null
+                  },
+                  "datatype": "wikibase-item",
+                  "property-labels": {
+                    "fr": "affirmé dans",
+                    "ca": "afirmat a"
+                  }
+                }
+              ],
+              "P577": [
+                {
+                  "property": "P577",
+                  "datavalue": {
+                    "time": "+2013-10-28T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
+                    "id": null,
+                    "labels": null,
+                    "datavalue__string": null
+                  },
+                  "datatype": "time",
+                  "property-labels": {
+                    "fr": "date de publication",
+                    "it": "data di pubblicazione"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "P227": [
+        {
+          "mainsnak": {
+            "property": "P227",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "4026181-5"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "GND ID",
+              "de": "GND-Kennung"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": {
+            "P1810": [
+              {
+                "property": "P1810",
+                "datavalue": {
+                  "datavalue__string": "Hund",
+                  "id": null,
+                  "labels": null
+                },
+                "datatype": "string",
+                "property-labels": {
+                  "en": "subject named as",
+                  "ru": "назван как"
+                }
+              }
+            ],
+            "P4970": [
+              {
+                "property": "P4970",
+                "datavalue": {
+                  "datavalue__string": "Canis familiaris",
+                  "id": null,
+                  "labels": null
+                },
+                "datatype": "string",
+                "property-labels": {
+                  "en": "alternative name",
+                  "pt": "nomes alternativos"
+                }
+              },
+              {
+                "property": "P4970",
+                "datavalue": {
+                  "datavalue__string": "Canis lupus familiaris",
+                  "id": null,
+                  "labels": null
+                },
+                "datatype": "string",
+                "property-labels": {
+                  "en": "alternative name",
+                  "pt": "nomes alternativos"
+                }
+              },
+              {
+                "property": "P4970",
+                "datavalue": {
+                  "datavalue__string": "Haushund",
+                  "id": null,
+                  "labels": null
+                },
+                "datatype": "string",
+                "property-labels": {
+                  "en": "alternative name",
+                  "pt": "nomes alternativos"
+                }
+              }
+            ]
+          },
+          "references": null
+        }
+      ],
+      "P417": [
+        {
+          "mainsnak": {
+            "property": "P417",
+            "datavalue": {
+              "id": "Q152457",
+              "labels": {
+                "lb": "Rochus vu Montpellier",
+                "vec": "San Roco"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "patron saint",
+              "es": "santo patrón"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        },
+        {
+          "mainsnak": {
+            "property": "P417",
+            "datavalue": {
+              "id": "Q159834",
+              "labels": {
+                "pl": "Hubert z Liège",
+                "he": "הוברטוס"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "patron saint",
+              "es": "santo patrón"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P1051": [
+        {
+          "mainsnak": {
+            "property": "P1051",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "886"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "hu": "PSH-azonosító",
+              "fr": "identifiant Polytematický strukturovaný heslář"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P279": [
+        {
+          "mainsnak": {
+            "property": "P279",
+            "datavalue": {
+              "id": "Q57814795",
+              "labels": {
+                "en": "domesticated mammal",
+                "hu": "háziasított emlős"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "subclass of",
+              "ca": "subclasse de"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        },
+        {
+          "mainsnak": {
+            "property": "P279",
+            "datavalue": {
+              "id": "Q39201",
+              "labels": {
+                "nan": "Thióng-bu̍t",
+                "zh": "宠物"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "subclass of",
+              "ca": "subclasse de"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P935": [
+        {
+          "mainsnak": {
+            "property": "P935",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "Dog"
+            },
+            "datatype": "string",
+            "property-labels": {
+              "en": "Commons gallery",
+              "pl": "galeria Commons"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P2167": [
+        {
+          "mainsnak": {
+            "property": "P2167",
+            "datavalue": {
+              "id": null,
+              "labels": null,
+              "datavalue__string": "10101502"
+            },
+            "datatype": "external-id",
+            "property-labels": {
+              "en": "UNSPSC Code",
+              "ru": "UNSPSC"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": null,
+          "references": null
+        }
+      ],
+      "P1343": [
+        {
+          "mainsnak": {
+            "property": "P1343",
+            "datavalue": {
+              "id": "Q2041543",
+              "labels": {
+                "sk": "Ottův slovník naučný",
+                "ru": "Научная энциклопедия Отто"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "described by source",
+              "ru": "описывается в источниках"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": {
+            "P805": [
+              {
+                "property": "P805",
+                "datavalue": {
+                  "datavalue__string": null,
+                  "id": "Q23864606",
+                  "labels": {
+                    "ru": "Отто / собака",
+                    "cs": "Pes"
+                  }
+                },
+                "datatype": "wikibase-item",
+                "property-labels": {
+                  "en": "statement is subject of",
+                  "ca": "afirmació detallada a"
+                }
+              }
+            ]
+          },
+          "references": null
+        },
+        {
+          "mainsnak": {
+            "property": "P1343",
+            "datavalue": {
+              "id": "Q602358",
+              "labels": {
+                "it": "Dizionario Enciclopedico Brockhaus ed Efron",
+                "az": "Brokhauz və Efronun ensiklopedik lüğəti"
+              },
+              "datavalue__string": null
+            },
+            "datatype": "wikibase-item",
+            "property-labels": {
+              "en": "described by source",
+              "ru": "описывается в источниках"
+            }
+          },
+          "rank": "normal",
+          "qualifiers": {
+            "P805": [
+              {
+                "property": "P805",
+                "datavalue": {
+                  "datavalue__string": null,
+                  "id": "Q24484874",
+                  "labels": {
+                    "labels__string": "ЭСБЕ / Собаки"
+                  }
+                },
+                "datatype": "wikibase-item",
+                "property-labels": {
+                  "en": "statement is subject of",
+                  "ca": "afirmació detallada a"
+                }
+              }
+            ]
+          },
+          "references": null
         }
       ]
     }

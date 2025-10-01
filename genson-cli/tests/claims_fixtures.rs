@@ -391,6 +391,33 @@ fn test_claims_fixture_x1818_l5_v2_normalize() {
 }
 
 #[test]
+fn test_claims_fixture_x1818_l12_v2_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L12_PENULTIMATE.json",
+        "claims_fixture_x1818_l12_v2__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l12_v2_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L12_PENULTIMATE.json",
+        "claims_fixture_x1818_l12_v2__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_fixture_x1818_l12_v2_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/x1818_L12_PENULTIMATE.json",
+        "claims_fixture_x1818_l12_v2__normalize",
+        &["--normalise"],
+    );
+}
+
+#[test]
 fn test_claims_fixture_x1818_l14_v2_avro() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims/x1818_L14_PENULTIMATE.json",
@@ -434,4 +461,4 @@ fn test_claims_fixture_x1818_l14_v2_normalize() {
     );
 }
 
-// TODO: L12, L26
+// TODO: L26

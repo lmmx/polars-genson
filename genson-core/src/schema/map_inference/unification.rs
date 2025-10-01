@@ -503,6 +503,39 @@ fn unify_record_schemas(
                         let existing = normalise_nullable(e.get()).clone();
                         let new = normalise_nullable(field_schema).clone();
 
+                        // Handle anyOf in either schema before attempting unification
+                        let existing = if existing.get("anyOf").is_some() {
+                            if let Some(Value::Array(any_of_schemas)) = existing.get("anyOf") {
+                                if let Some(unified) =
+                                    unify_anyof_schemas(any_of_schemas, field_name, config)
+                                {
+                                    unified
+                                } else {
+                                    existing
+                                }
+                            } else {
+                                existing
+                            }
+                        } else {
+                            existing
+                        };
+
+                        let new = if new.get("anyOf").is_some() {
+                            if let Some(Value::Array(any_of_schemas)) = new.get("anyOf") {
+                                if let Some(unified) =
+                                    unify_anyof_schemas(any_of_schemas, field_name, config)
+                                {
+                                    unified
+                                } else {
+                                    new
+                                }
+                            } else {
+                                new
+                            }
+                        } else {
+                            new
+                        };
+
                         // First try the compatibility check for nullable/non-nullable
                         if let Some(compatible_schema) = schemas_compatible(&existing, &new) {
                             debug_verbose!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
