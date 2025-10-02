@@ -1,9 +1,45 @@
 // genson-core/src/schema/map_inference.rs
 use crate::debug;
 use crate::schema::core::SchemaInferenceConfig;
+use rayon::prelude::*;
 use serde_json::Value;
 mod unification;
+use super::current_time_hms;
 use unification::*;
+
+const PARALLEL_PROP_THRESHOLD: usize = 3;
+
+/// Process properties in parallel when beneficial
+fn process_properties_parallel<F>(
+    props_obj: &mut serde_json::Map<String, Value>,
+    _config: &SchemaInferenceConfig,
+    processor: F,
+) where
+    F: Fn(&str, &mut Value) + Send + Sync,
+{
+    if props_obj.len() >= PARALLEL_PROP_THRESHOLD {
+        eprintln!(
+            "Parallelising: {} properties ({})",
+            props_obj.len(),
+            current_time_hms()
+        );
+        // Extract entries, process in parallel, reconstruct map
+        let entries: Vec<_> = std::mem::take(props_obj).into_iter().collect();
+        let processed: Vec<(String, Value)> = entries
+            .into_par_iter()
+            .map(|(k, mut v)| {
+                processor(&k, &mut v);
+                (k, v)
+            })
+            .collect();
+        *props_obj = processed.into_iter().collect();
+    } else {
+        // Sequential for small property sets
+        for (k, v) in props_obj.iter_mut() {
+            processor(k, v);
+        }
+    }
+}
 
 /// Extract the non-null schema from a nullable schema, handling both old and new formats
 fn extract_non_null_schema(schema: &Value) -> Value {
@@ -162,12 +198,12 @@ pub(crate) fn rewrite_objects(
                         if let Some(props) =
                             obj.get_mut("properties").and_then(|p| p.as_object_mut())
                         {
-                            for (k, v) in props {
+                            process_properties_parallel(props, config, |k, v| {
                                 if config.debug {
                                     debug!(config, "Force field induced recursion: {}", k);
                                 }
                                 rewrite_objects(v, Some(k), config, false);
-                            }
+                            });
                         }
                         if let Some(items) = obj.get_mut("items") {
                             debug!(config, "Force field induced recursion: items");
@@ -205,8 +241,14 @@ pub(crate) fn rewrite_objects(
             }
             // If unification disabled or failed, still recurse into each anyOf branch
             if let Some(any_of_array) = obj.get_mut("anyOf").and_then(|a| a.as_array_mut()) {
-                for any_of_schema in any_of_array {
-                    rewrite_objects(any_of_schema, field_name, config, false);
+                if any_of_array.len() >= 3 {
+                    any_of_array.par_iter_mut().for_each(|any_of_schema| {
+                        rewrite_objects(any_of_schema, field_name, config, false);
+                    });
+                } else {
+                    for any_of_schema in any_of_array {
+                        rewrite_objects(any_of_schema, field_name, config, false);
+                    }
                 }
             }
         }
@@ -251,7 +293,27 @@ pub(crate) fn rewrite_objects(
             let above_threshold = key_count >= config.map_threshold;
 
             // Copy out child schema shapes
-            let child_schemas: Vec<Value> = props.values().cloned().collect();
+            let clone_start = std::time::Instant::now();
+            let child_schemas: Vec<Value> = if props.len() >= 100 {
+                if config.profile && props.len() > 50 {
+                    eprintln!(
+                        "Parallel cloning {} props ({})",
+                        props.len(),
+                        current_time_hms()
+                    );
+                }
+                let props_vec: Vec<_> = props.iter().collect();
+                props_vec.par_iter().map(|(_, v)| (*v).clone()).collect()
+            } else {
+                props.values().cloned().collect()
+            };
+            if config.profile && child_schemas.len() > 50 {
+                eprintln!(
+                    "Cloning {} schemas took {:?}",
+                    child_schemas.len(),
+                    clone_start.elapsed()
+                );
+            }
 
             // Detect map-of-records only if:
             // - all children are identical
@@ -262,7 +324,7 @@ pub(crate) fn rewrite_objects(
                         && first.get("properties").is_some()
                         && child_schemas.len() > 1
                     {
-                        let all_same = child_schemas.iter().all(|other| other == first);
+                        let all_same = child_schemas.par_iter().all(|other| other == first);
                         if all_same {
                             obj.remove("properties");
                             obj.remove("required");
@@ -284,8 +346,15 @@ pub(crate) fn rewrite_objects(
             let mut unified_schema: Option<Value> = None;
             if let Some(first_schema) = props.values().next() {
                 // Normalise all schemas for comparison
-                let normalised_schemas: Vec<Value> =
-                    props.values().map(extract_non_null_schema).collect();
+                let normalised_schemas: Vec<Value> = if props.len() >= 100 {
+                    let props_vec: Vec<_> = props.iter().collect();
+                    props_vec
+                        .par_iter()
+                        .map(|(_, v)| extract_non_null_schema(v))
+                        .collect()
+                } else {
+                    props.values().map(extract_non_null_schema).collect()
+                };
                 let first_normalised = extract_non_null_schema(first_schema);
 
                 // Debug output to diagnose the issue
@@ -347,8 +416,9 @@ pub(crate) fn rewrite_objects(
                     }
                 }
 
+                let homog_start = std::time::Instant::now();
                 if normalised_schemas
-                    .iter()
+                    .par_iter()
                     .all(|schema| schema == &first_normalised)
                 {
                     // All schemas are homogeneous after normalisation
@@ -356,6 +426,12 @@ pub(crate) fn rewrite_objects(
                     unified_schema = Some(first_normalised);
                 } else if config.unify_maps {
                     debug!(config, "Schemas not homogeneous, attempting unification");
+                    if config.profile && normalised_schemas.len() > 50 {
+                        eprintln!(
+                            "Unification of {} heterogeneous schemas beginning...",
+                            normalised_schemas.len()
+                        );
+                    }
 
                     // Check if any of the property keys are in no_unify
                     let has_excluded_field =
@@ -374,7 +450,7 @@ pub(crate) fn rewrite_objects(
                     } else {
                         // Detect if these are all arrays of records
                         if child_schemas
-                            .iter()
+                            .par_iter()
                             .all(|s| s.get("type") == Some(&Value::String("array".into())))
                         {
                             // Collect item schemas, short-circuit if any missing
@@ -389,6 +465,7 @@ pub(crate) fn rewrite_objects(
                                 }
                             }
                             if all_items_ok {
+                                let unify_start = std::time::Instant::now();
                                 if let Some(unified_items) = check_unifiable_schemas(
                                     &item_schemas,
                                     field_name.unwrap_or(""),
@@ -399,19 +476,41 @@ pub(crate) fn rewrite_objects(
                                         "items": unified_items
                                     }));
                                 }
+                                if config.profile && child_schemas.len() > 50 {
+                                    eprintln!(
+                                        "Unification of {} item schemas took {:?}",
+                                        child_schemas.len(),
+                                        unify_start.elapsed()
+                                    );
+                                }
                             }
                         } else {
                             // Only try record unification if unify_maps is enabled and above threshold
                             // This ensures we only do expensive unification when it would result in map conversion
                             if above_threshold {
+                                let unify_start = std::time::Instant::now();
                                 unified_schema = check_unifiable_schemas(
                                     &child_schemas,
                                     field_name.unwrap_or(""),
                                     config,
                                 );
+                                if config.profile && child_schemas.len() > 50 {
+                                    eprintln!(
+                                        "Unification of {} child schemas took {:?}",
+                                        child_schemas.len(),
+                                        unify_start.elapsed()
+                                    );
+                                }
                             }
                         }
                     }
+                }
+                if config.profile && normalised_schemas.len() > 50 {
+                    eprintln!(
+                        "Homogeneity check on {} schemas took {:?}",
+                        normalised_schemas.len(),
+                        homog_start.elapsed()
+                    );
                 }
             }
 
@@ -514,12 +613,12 @@ pub(crate) fn rewrite_objects(
         if !matches!(field_name, Some(name) if config.force_field_types.contains_key(name)) {
             // --- Recurse into nested values ---
             if let Some(props) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
-                for (k, v) in props {
+                process_properties_parallel(props, config, |k, v| {
                     if config.debug {
                         debug!(config, "Nested value recursion: {}", k);
                     }
                     rewrite_objects(v, Some(k), config, false);
-                }
+                });
             }
             if let Some(items) = obj.get_mut("items") {
                 debug!(config, "Nested value recursion: items");
