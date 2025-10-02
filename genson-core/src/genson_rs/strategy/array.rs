@@ -110,6 +110,30 @@ impl SchemaStrategy for ListStrategy {
             }
         }
     }
+
+    /// Optimized batch schema merging for arrays
+    fn add_schemas(&mut self, schemas: &[&Value]) {
+        // Collect all item schemas from all array schemas
+        let mut all_item_schemas: Vec<&Value> = Vec::new();
+
+        for schema in schemas {
+            if let Value::Object(obj) = schema {
+                if let Some(items) = obj.get("items") {
+                    all_item_schemas.push(items);
+                }
+            }
+        }
+
+        // Batch merge all item schemas at once into the single items node
+        if !all_item_schemas.is_empty() {
+            let items = self.get_items_mut();
+            for node in items {
+                let schema_values: Vec<Value> =
+                    all_item_schemas.iter().map(|&s| s.clone()).collect();
+                node.add_schemas(&schema_values);
+            }
+        }
+    }
 }
 
 impl ListSchemaStrategy for ListStrategy {

@@ -135,6 +135,20 @@ impl BasicSchemaStrategy {
         }
     }
 
+    /// Add multiple schemas at once - delegates to strategy-specific implementation
+    pub fn add_schemas(&mut self, schemas: &[&Value]) {
+        match self {
+            BasicSchemaStrategy::Object(strategy) => strategy.add_schemas(schemas),
+            BasicSchemaStrategy::List(strategy) => strategy.add_schemas(schemas),
+            BasicSchemaStrategy::Tuple(strategy) => strategy.add_schemas(schemas),
+            BasicSchemaStrategy::Boolean(strategy) => strategy.add_schemas(schemas),
+            BasicSchemaStrategy::Number(strategy) => strategy.add_schemas(schemas),
+            BasicSchemaStrategy::String(strategy) => strategy.add_schemas(schemas),
+            BasicSchemaStrategy::Null(strategy) => strategy.add_schemas(schemas),
+            BasicSchemaStrategy::Typeless(strategy) => strategy.add_schemas(schemas),
+        }
+    }
+
     pub fn add_object(&mut self, object: &simd_json::BorrowedValue) {
         match self {
             BasicSchemaStrategy::Object(strategy) => strategy.add_object(object),

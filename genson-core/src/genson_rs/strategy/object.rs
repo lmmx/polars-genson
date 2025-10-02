@@ -2,6 +2,7 @@ use ordermap::OrderMap;
 use regex::Regex;
 use std::collections::hash_set::HashSet;
 
+use rayon::prelude::*;
 use serde_json::{json, Map, Value};
 use simd_json;
 use simd_json::prelude::TypedContainerValue;
@@ -141,6 +142,106 @@ impl SchemaStrategy for ObjectStrategy {
             }
         } else {
             panic!("Invalid schema type - must be a valid JSON object")
+        }
+    }
+
+    /// Optimized batch schema merging for objects
+    /// Collects all properties from all schemas first, then merges each property once
+    fn add_schemas(&mut self, schemas: &[&Value]) {
+        // Phase 1: Collect all properties and required sets from all schemas
+        let mut property_groups: OrderMap<String, Vec<&Value>> = OrderMap::new();
+        let mut pattern_property_groups: OrderMap<String, Vec<&Value>> = OrderMap::new();
+        let mut all_required_sets: Vec<HashSet<String>> = Vec::new();
+
+        for schema in schemas {
+            if let Value::Object(schema_obj) = schema {
+                self.add_extra_keywords(schema);
+
+                // Collect regular properties
+                if let Some(Value::Object(props)) = schema_obj.get("properties") {
+                    for (prop_name, sub_schema) in props {
+                        property_groups
+                            .entry(prop_name.clone())
+                            .or_default()
+                            .push(sub_schema);
+                    }
+                }
+
+                // Collect pattern properties
+                if let Some(Value::Object(patterns)) = schema_obj.get("patternProperties") {
+                    for (pattern, sub_schema) in patterns {
+                        pattern_property_groups
+                            .entry(pattern.clone())
+                            .or_default()
+                            .push(sub_schema);
+                    }
+                }
+
+                // Collect required fields
+                if let Some(Value::Array(required)) = schema_obj.get("required") {
+                    if required.is_empty() {
+                        self.include_empty_required = true;
+                    }
+                    let required_set: HashSet<String> = required
+                        .iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect();
+                    all_required_sets.push(required_set);
+                }
+            }
+        }
+
+        // Phase 2: Merge properties in parallel if there are enough properties
+        if property_groups.len() > 3 {
+            let merged_properties: Vec<(String, SchemaNode)> = property_groups
+                .into_par_iter()
+                .map(|(prop_name, sub_schemas)| {
+                    let mut node = SchemaNode::new();
+                    // Batch add all schemas for this property
+                    let schema_values: Vec<Value> =
+                        sub_schemas.iter().map(|&s| s.clone()).collect();
+                    node.add_schemas(&schema_values);
+                    (prop_name, node)
+                })
+                .collect();
+
+            // Insert merged properties back
+            for (prop_name, node) in merged_properties {
+                self.properties.insert(prop_name, node);
+            }
+        } else {
+            // Sequential for small property counts
+            for (prop_name, sub_schemas) in property_groups {
+                let node = self.properties.entry(prop_name).or_default();
+
+                let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
+                node.add_schemas(&schema_values);
+            }
+        }
+
+        // Phase 3: Merge pattern properties (usually few, so sequential is fine)
+        for (pattern, sub_schemas) in pattern_property_groups {
+            let node = self.pattern_properties.entry(pattern).or_default();
+
+            let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
+            node.add_schemas(&schema_values);
+        }
+
+        // Phase 4: Merge required fields (intersection of all sets)
+        if !all_required_sets.is_empty() {
+            let final_required = all_required_sets
+                .into_iter()
+                .reduce(|acc, set| acc.intersection(&set).cloned().collect())
+                .unwrap_or_default();
+
+            if self.required_properties.is_none() {
+                self.required_properties = Some(final_required);
+            } else {
+                self.required_properties
+                    .as_mut()
+                    .unwrap()
+                    .retain(|p| final_required.contains(p));
+            }
         }
     }
 

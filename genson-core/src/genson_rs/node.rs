@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use crate::genson_rs::strategy::base::SchemaStrategy;
 use crate::genson_rs::strategy::scalar::TypelessStrategy;
 use crate::genson_rs::strategy::BasicSchemaStrategy;
+use ordermap::OrderMap;
 use serde_json::{json, Value};
 
 /// Basic schema generator class. SchemaNode objects can be loaded
@@ -53,6 +54,56 @@ impl SchemaNode {
                 DataType::Schema(&subschema),
             );
         }
+        self
+    }
+
+    /// Add multiple schemas at once with optimized batch processing
+    pub fn add_schemas(&mut self, schemas: &[Value]) -> &mut Self {
+        // Store owned subschemas to avoid lifetime issues
+        let mut all_subschemas: Vec<Value> = Vec::new();
+        // Map strategy index to indices into all_subschemas
+        let mut schema_groups: OrderMap<usize, Vec<usize>> = OrderMap::new();
+
+        for schema in schemas {
+            // Get all subschemas (handles anyOf, type arrays, etc.)
+            for subschema in SchemaNode::get_subschemas(schema) {
+                // Find or create strategy for this subschema
+                let strategy_idx =
+                    if let Some(idx) = self.get_strategy_for_kind(DataType::Schema(&subschema)) {
+                        idx
+                    } else {
+                        // Create new strategy
+                        if let Some(_strategy) =
+                            self.create_strategy_for_kind(DataType::Schema(&subschema))
+                        {
+                            self.active_strategies.len() - 1
+                        } else {
+                            continue; // Skip if can't create strategy
+                        }
+                    };
+
+                let subschema_idx = all_subschemas.len();
+                all_subschemas.push(subschema);
+
+                schema_groups
+                    .entry(strategy_idx)
+                    .or_default()
+                    .push(subschema_idx);
+            }
+        }
+
+        // Batch process schemas for each strategy
+        for (strategy_idx, subschema_indices) in schema_groups {
+            if let Some(strategy) = self.active_strategies.get_mut(strategy_idx) {
+                // Gather references to the subschemas for this strategy
+                let schema_refs: Vec<&Value> = subschema_indices
+                    .iter()
+                    .map(|&idx| &all_subschemas[idx])
+                    .collect();
+                strategy.add_schemas(&schema_refs);
+            }
+        }
+
         self
     }
 

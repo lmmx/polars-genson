@@ -28,9 +28,9 @@ fn current_time_hms() -> String {
     let total_seconds = now.as_secs() % 86_400; // seconds in a day
     let hours = total_seconds / 3600;
     let minutes = (total_seconds % 3600) / 60;
-    let seconds = total_seconds % 60;
+    let seconds = (total_seconds % 60) as f64 + now.subsec_millis() as f64 / 1000.0; // add fractional part
 
-    format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+    format!("{:02}:{:02}:{:04.1}", hours, minutes, seconds)
 }
 
 fn validate_json(s: &str) -> Result<(), serde_json::Error> {
@@ -295,38 +295,35 @@ fn process_json_strings_parallel(
         )
         .collect::<Result<Vec<_>, String>>()?;
 
-    profile!(
-        config,
-        "Merging schemas sequentially in order ({})",
-        current_time_hms()
-    );
+    profile!(config, "Merging schemas in batch ({})", current_time_hms());
 
-    // Merge sequentially in the original order, only counting non-empty
+    // Collect unique schemas first (dedup by hash)
     let mut processed_count = 0;
     let mut seen_hashes = HashSet::new();
-    for (i, individual_builder, was_non_empty) in individual_builders.into_iter() {
+    let mut schemas_to_merge: Vec<Value> = Vec::new();
+
+    for (_i, individual_builder, was_non_empty) in individual_builders.into_iter() {
         if was_non_empty {
             let schema = individual_builder.to_schema();
-            // Quick hash check
             let schema_str = schema.to_string();
             let hash = xxh64(schema_str.as_bytes(), 0);
-            // Only add the schema if we haven't seen an identical one before
+
             if seen_hashes.insert(hash) {
-                builder.add_schema(schema);
-                profile!(config, "  Merged schema {} ({})", i, current_time_hms());
-            } else {
-                profile!(
-                    config,
-                    "  Schema {} already merged ({})",
-                    i,
-                    current_time_hms()
-                );
+                schemas_to_merge.push(schema);
             }
             processed_count += 1;
         }
     }
 
-    profile!(config, "Sequential merge complete ({})", current_time_hms());
+    // Batch merge all collected schemas at once
+    profile!(
+        config,
+        "Merging {} unique schemas in batch ({})",
+        schemas_to_merge.len(),
+        current_time_hms()
+    );
+    builder.add_schemas(&schemas_to_merge);
+    profile!(config, "Batch merge complete ({})", current_time_hms());
 
     Ok(processed_count)
 }
