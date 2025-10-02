@@ -133,17 +133,21 @@ pub(crate) fn rewrite_objects(
     config: &SchemaInferenceConfig,
     is_root: bool,
 ) {
-    debug!(
-        config,
-        "rewrite_objects(field_name={:?}, schema={})",
-        field_name,
-        serde_json::to_string(schema).unwrap_or_default()
-    );
+    if config.debug {
+        debug!(
+            config,
+            "rewrite_objects(field_name={:?}, schema={})",
+            field_name,
+            serde_json::to_string(schema).unwrap_or_default()
+        );
+    }
     if let Value::Object(obj) = schema {
         // --- Forced overrides by field name ---
         if let Some(name) = field_name {
             if let Some(forced) = config.force_field_types.get(name) {
-                debug!(config, "Hit force field: {}={}", name, forced);
+                if config.debug {
+                    debug!(config, "Hit force field: {}={}", name, forced);
+                }
                 match forced.as_str() {
                     "map" => {
                         obj.remove("properties");
@@ -159,7 +163,9 @@ pub(crate) fn rewrite_objects(
                             obj.get_mut("properties").and_then(|p| p.as_object_mut())
                         {
                             for (k, v) in props {
-                                debug!(config, "Force field induced recursion: {}", k);
+                                if config.debug {
+                                    debug!(config, "Force field induced recursion: {}", k);
+                                }
                                 rewrite_objects(v, Some(k), config, false);
                             }
                         }
@@ -177,11 +183,13 @@ pub(crate) fn rewrite_objects(
         // --- Handle anyOf unions ---
         if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
             if config.unify_maps {
-                debug!(
-                    config,
-                    "Found anyOf union with {} schemas, attempting unification",
-                    any_of_schemas.len()
-                );
+                if config.debug {
+                    debug!(
+                        config,
+                        "Found anyOf union with {} schemas, attempting unification",
+                        any_of_schemas.len()
+                    );
+                }
                 if let Some(unified) =
                     unify_anyof_schemas(any_of_schemas, field_name.unwrap_or(""), config)
                 {
@@ -208,29 +216,35 @@ pub(crate) fn rewrite_objects(
             // GUARD: Skip re-processing of already converted map schemas
             if obj.get("additionalProperties").is_some() {
                 if props.is_empty() {
-                    debug!(
-                        config,
-                        "Skipping re-processing of already converted map schema at field {:?}",
-                        field_name.unwrap_or("root")
-                    );
-                    // Just recurse into the additionalProperties value and return
-                    if let Some(additional_props) = obj.get_mut("additionalProperties") {
+                    if config.debug {
                         debug!(
                             config,
-                            "Rewriting already converted map schema at field {:?}",
+                            "Skipping re-processing of already converted map schema at field {:?}",
                             field_name.unwrap_or("root")
                         );
+                    }
+                    // Just recurse into the additionalProperties value and return
+                    if let Some(additional_props) = obj.get_mut("additionalProperties") {
+                        if config.debug {
+                            debug!(
+                                config,
+                                "Rewriting already converted map schema at field {:?}",
+                                field_name.unwrap_or("root")
+                            );
+                        }
                         // Hmm: shouldn't this be `field_name` not None?
                         rewrite_objects(additional_props, None, config, false);
                     }
                     return;
                 } else {
                     // This shouldn't happen - schema shouldn't have both props + additionalProperties
-                    debug!(
-                        config,
-                        "Warning: schema has both properties and additionalProperties at field {:?}",
-                        field_name.unwrap_or("root")
-                    );
+                    if config.debug {
+                        debug!(
+                            config,
+                            "Warning: schema has both properties and additionalProperties at field {:?}",
+                            field_name.unwrap_or("root")
+                        );
+                    }
                 }
             }
             let key_count = props.len(); // |UK| - total keys observed
@@ -347,14 +361,16 @@ pub(crate) fn rewrite_objects(
                     let has_excluded_field =
                         props.keys().any(|k| config.no_unify.contains(k.as_str()));
                     if has_excluded_field {
-                        debug!(
-                            config,
-                            "Not unifying: one or more fields in no_unify: {:?}",
-                            props
-                                .keys()
-                                .filter(|k| config.no_unify.contains(k.as_str()))
-                                .collect::<Vec<_>>()
-                        );
+                        if config.debug {
+                            debug!(
+                                config,
+                                "Not unifying: one or more fields in no_unify: {:?}",
+                                props
+                                    .keys()
+                                    .filter(|k| config.no_unify.contains(k.as_str()))
+                                    .collect::<Vec<_>>()
+                            );
+                        }
                     } else {
                         // Detect if these are all arrays of records
                         if child_schemas
@@ -426,13 +442,15 @@ pub(crate) fn rewrite_objects(
                     false
                 } else if let Some(max_required) = config.map_max_required_keys {
                     let result = required_key_count <= max_required;
-                    debug!(
-                        config,
-                        "Map conversion decision: required_keys={} <= max_required={} = {}",
-                        required_key_count,
-                        max_required,
-                        result
-                    );
+                    if config.debug {
+                        debug!(
+                            config,
+                            "Map conversion decision: required_keys={} <= max_required={} = {}",
+                            required_key_count,
+                            max_required,
+                            result
+                        );
+                    }
                     result
                 } else {
                     debug!(
@@ -443,12 +461,14 @@ pub(crate) fn rewrite_objects(
                 }
             } else {
                 if !above_threshold {
-                    debug!(
-                        config,
-                        "Not converting to map: below threshold ({} < {})",
-                        key_count,
-                        config.map_threshold
-                    );
+                    if config.debug {
+                        debug!(
+                            config,
+                            "Not converting to map: below threshold ({} < {})",
+                            key_count,
+                            config.map_threshold
+                        );
+                    }
                 } else if unified_schema.is_none() {
                     debug!(config, "Not converting to map: no unified schema");
                 }
@@ -457,20 +477,23 @@ pub(crate) fn rewrite_objects(
 
             if should_be_map {
                 if let Some(schema) = unified_schema {
-                    let pretty_schema = serde_json::to_string_pretty(&schema).unwrap_or_default();
-                    let lines: Vec<&str> = pretty_schema.lines().collect();
-                    if lines.len() > 12 {
-                        let first_6 = lines[..6].join("\n");
-                        let last_6 = lines[lines.len() - 6..].join("\n");
-                        debug!(config, "Converting field {:?} to map with schema:\n{}\n...({} lines omitted)...\n{}", 
-                               field_name.unwrap_or("root"), first_6, lines.len() - 12, last_6);
-                    } else {
-                        debug!(
-                            config,
-                            "Converting field {:?} to map with schema:\n{}",
-                            field_name.unwrap_or("root"),
-                            pretty_schema
-                        );
+                    if config.debug {
+                        let pretty_schema =
+                            serde_json::to_string_pretty(&schema).unwrap_or_default();
+                        let lines: Vec<&str> = pretty_schema.lines().collect();
+                        if lines.len() > 12 {
+                            let first_6 = lines[..6].join("\n");
+                            let last_6 = lines[lines.len() - 6..].join("\n");
+                            debug!(config, "Converting field {:?} to map with schema:\n{}\n...({} lines omitted)...\n{}", 
+                                   field_name.unwrap_or("root"), first_6, lines.len() - 12, last_6);
+                        } else {
+                            debug!(
+                                config,
+                                "Converting field {:?} to map with schema:\n{}",
+                                field_name.unwrap_or("root"),
+                                pretty_schema
+                            );
+                        }
                     }
 
                     obj.remove("properties");
@@ -492,7 +515,9 @@ pub(crate) fn rewrite_objects(
             // --- Recurse into nested values ---
             if let Some(props) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
                 for (k, v) in props {
-                    debug!(config, "Nested value recursion: {}", k);
+                    if config.debug {
+                        debug!(config, "Nested value recursion: {}", k);
+                    }
                     rewrite_objects(v, Some(k), config, false);
                 }
             }
@@ -508,7 +533,9 @@ pub(crate) fn rewrite_objects(
                     continue;
                 }
                 if let Value::Object(_) = v {
-                    debug!(config, "Other value recursion: {}", k);
+                    if config.debug {
+                        debug!(config, "Other value recursion: {}", k);
+                    }
                     rewrite_objects(v, Some(k), config, false);
                 }
             }
