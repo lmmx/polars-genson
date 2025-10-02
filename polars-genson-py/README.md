@@ -601,6 +601,7 @@ Infers a JSON Schema (or Avro, if requested) from a string column.
 * `schema_uri`: Schema URI to embed in the output (default: `"http://json-schema.org/schema#"`). *Ignored by some consumers when `avro=True`.*
 * `merge_schemas`: Merge schemas from all rows (default: `True`). If `False`, returns one schema **per row** as a list.
 * `debug`: Print debug information (default: `False`)
+* `profile`: Print profiling information on the duration of each step (default: `False`)
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
 * `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`. Example: `{"labels": "map", "claims": "record"}`
@@ -627,6 +628,7 @@ Infers a native Polars schema from a string column.
 * `ndjson`: Treat input as newline-delimited JSON (default: `False`)
 * `merge_schemas`: Merge schemas from all rows (default: `True`). *(Currently the only supported mode.)*
 * `debug`: Print debug information (default: `False`)
+* `profile`: Print profiling information on the duration of each step (default: `False`)
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
 * `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`

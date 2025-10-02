@@ -36,6 +36,7 @@ fn main() {
         wrap_root: Some("claims".to_string()),
         no_root_map: true,
         debug: false,
+        profile: true,
         verbosity: genson_core::DebugVerbosity::Normal,
     };
 

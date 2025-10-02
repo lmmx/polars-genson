@@ -37,6 +37,8 @@ pub struct SchemaInferenceConfig {
     /// Enable debug output. When `true`, prints detailed information about schema inference
     /// processes including field unification, map detection, and scalar wrapping decisions.
     pub debug: bool,
+    /// Enable profiling output. When `true`, prints detailed information about timing.
+    pub profile: bool,
     /// Controls the verbosity level of debug output
     pub verbosity: DebugVerbosity,
 }
@@ -51,6 +53,13 @@ pub enum DebugVerbosity {
 }
 
 impl SchemaInferenceConfig {
+    pub(crate) fn profile(&self, args: std::fmt::Arguments) {
+        if self.profile {
+            let message = format!("{}", args);
+            eprintln!("{}", message);
+        }
+    }
+
     pub(crate) fn debug(&self, args: std::fmt::Arguments) {
         if self.debug {
             let message = format!("{}", args);
@@ -109,9 +118,17 @@ impl Default for SchemaInferenceConfig {
             #[cfg(feature = "avro")]
             avro: false,
             debug: false,
+            profile: false,
             verbosity: DebugVerbosity::default(),
         }
     }
+}
+
+#[macro_export]
+macro_rules! profile {
+    ($cfg:expr, $($arg:tt)*) => {
+        $cfg.profile(format_args!($($arg)*))
+    };
 }
 
 #[macro_export]

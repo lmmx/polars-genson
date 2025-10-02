@@ -137,6 +137,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             "--debug" => {
                 config.debug = true;
             }
+            "--profile" => {
+                config.profile = true;
+            }
             "--verbose" => {
                 config.verbosity = DebugVerbosity::Verbose;
             }
@@ -240,6 +243,7 @@ fn print_help() {
     println!("    --wrap-root <field>   Wrap top-level schema under this required field");
     println!("    --root-map            Allow document root to become a map");
     println!("    --debug               Enable debug output during schema inference");
+    println!("    --profile             Enable profiling output during schema inference");
     println!();
     println!("EXAMPLES:");
     println!("    genson-cli data.json");
