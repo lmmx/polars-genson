@@ -33,6 +33,7 @@ polars-jsonschema-bridge = { path = "polars-jsonschema-bridge", version = "0.4.2
 # Core dependencies
 serde = { features = ["derive"], version = "1.0" }
 serde_json = { features = ["preserve_order"], version = "1.0" }
+xxhash-rust = { features = ["xxh64"], version = "0.8.15" }
 # Polars integration dependencies  
 polars = { default-features = false, features = [
   "dtype-full",
