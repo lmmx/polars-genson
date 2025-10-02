@@ -22,6 +22,9 @@ pub struct GensonKwargs {
     pub debug: bool,
 
     #[serde(default)]
+    pub profile: bool,
+
+    #[serde(default)]
     pub verbosity: DebugVerbosity,
 
     #[serde(default = "default_merge_schemas")]
@@ -185,6 +188,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 wrap_root: wrap_root_field.clone(),
                 no_root_map: kwargs.no_root_map,
                 debug: kwargs.debug,
+                profile: kwargs.profile,
                 verbosity: kwargs.verbosity,
             };
 
@@ -228,6 +232,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     wrap_root: wrap_root_field.clone(),
                     no_root_map: kwargs.no_root_map,
                     debug: kwargs.debug,
+                    profile: kwargs.profile,
                     verbosity: kwargs.verbosity,
                 };
 
@@ -314,6 +319,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             wrap_root: wrap_root_field,
             no_root_map: kwargs.no_root_map,
             debug: kwargs.debug,
+            profile: kwargs.profile,
             verbosity: kwargs.verbosity,
         };
 
@@ -453,6 +459,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         wrap_root: wrap_root_field.clone(),
         no_root_map: kwargs.no_root_map,
         debug: kwargs.debug,
+        profile: kwargs.profile,
         verbosity: kwargs.verbosity,
     };
 

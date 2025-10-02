@@ -90,6 +90,7 @@ def infer_json_schema(
     schema_uri: str | None = "http://json-schema.org/schema#",
     merge_schemas: bool = True,
     debug: bool = False,
+    profile: bool = False,
     verbosity: Literal["Normal", "Verbose"] = "Normal",
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
@@ -117,6 +118,8 @@ def infer_json_schema(
         Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
         Whether to print debug information
+    profile : bool, default False
+        Whether to print profiling information
     verbosity : str, default "Normal"
         Whether to print verbose debug information
     map_threshold : int, default 20
@@ -159,6 +162,7 @@ def infer_json_schema(
         "ndjson": ndjson,
         "merge_schemas": merge_schemas,
         "debug": debug,
+        "profile": profile,
         "verbosity": verbosity,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
@@ -184,6 +188,7 @@ def infer_polars_schema(
     ndjson: bool = False,
     merge_schemas: bool = True,
     debug: bool = False,
+    profile: bool = False,
     verbosity: Literal["Normal", "Verbose"] = "Normal",
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
@@ -209,6 +214,8 @@ def infer_polars_schema(
         Whether to merge schemas from all rows (True) or return individual schemas (False)
     debug : bool, default False
         Whether to print debug information
+    profile : bool, default False
+        Whether to print profiling information
     verbosity : str, default "Normal"
         Whether to print verbose debug information
     map_threshold : int, default 20
@@ -251,6 +258,7 @@ def infer_polars_schema(
         "ndjson": ndjson,
         "merge_schemas": merge_schemas,
         "debug": debug,
+        "profile": profile,
         "verbosity": verbosity,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
@@ -410,6 +418,7 @@ class GensonNamespace:
         ndjson: bool = False,
         merge_schemas: bool = True,
         debug: bool = False,
+        profile: bool = False,
         verbosity: Literal["Normal", "Verbose"] = "Normal",
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
@@ -436,6 +445,8 @@ class GensonNamespace:
             Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False
             Whether to print debug information
+        profile : bool, default False
+            Whether to print profiling information
         verbosity : str, default "Normal"
             Whether to print verbose debug information
         map_threshold : int, default 20
@@ -489,6 +500,7 @@ class GensonNamespace:
                 ndjson=ndjson,
                 merge_schemas=merge_schemas,
                 debug=debug,
+                profile=profile,
                 verbosity=verbosity,
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
@@ -519,6 +531,7 @@ class GensonNamespace:
         schema_uri: str | None = "http://json-schema.org/schema#",
         merge_schemas: bool = True,
         debug: bool = False,
+        profile: bool = False,
         verbosity: Literal["Normal", "Verbose"] = "Normal",
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
@@ -546,6 +559,8 @@ class GensonNamespace:
             Whether to merge schemas from all rows (True) or return individual schemas (False)
         debug : bool, default False
             Whether to print debug information
+        profile : bool, default False
+            Whether to print profiling information
         verbosity : str, default "Normal"
             Whether to print verbose debug information
         map_threshold : int, default 20
@@ -593,6 +608,7 @@ class GensonNamespace:
                 schema_uri=schema_uri,
                 merge_schemas=merge_schemas,
                 debug=debug,
+                profile=profile,
                 verbosity=verbosity,
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
