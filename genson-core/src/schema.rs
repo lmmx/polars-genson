@@ -1,6 +1,6 @@
 use crate::debug;
 use crate::genson_rs::{build_json_schema, get_builder, BuildConfig};
-use rayon::prelude::*;
+// use rayon::prelude::*;
 use serde::de::Error as DeError;
 use serde::Deserialize;
 use serde_json::Value;
