@@ -10,6 +10,14 @@ pub trait SchemaStrategy {
         self.add_extra_keywords(schema)
     }
 
+    /// Add multiple schemas at once
+    /// Default implementation: sequential fallback for backward compatibility
+    fn add_schemas(&mut self, schemas: &[&Value]) {
+        for schema in schemas {
+            self.add_schema(schema);
+        }
+    }
+
     fn add_object(&mut self, _object: &simd_json::BorrowedValue);
 
     fn to_schema(&self) -> Value {

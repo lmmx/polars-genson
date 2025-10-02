@@ -53,6 +53,11 @@ impl SchemaBuilder {
         }
     }
 
+    /// Merge multiple raw JSON schema objects at once
+    pub fn add_schemas(&mut self, schemas: &[Value]) {
+        self.root_node.add_schemas(schemas);
+    }
+
     /// Merge in another SchemaNode object
     pub fn add_schema_node(&mut self, node: SchemaNode) {
         self.root_node.add_schema(DataType::SchemaNode(&node));
