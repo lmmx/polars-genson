@@ -1,5 +1,5 @@
-use crate::debug;
 use crate::genson_rs::{build_json_schema, get_builder, BuildConfig};
+use crate::{debug, profile};
 use rayon::prelude::*;
 use serde::de::Error as DeError;
 use serde::Deserialize;
@@ -208,12 +208,12 @@ fn process_json_strings_sequential(
 
     // Process each JSON string
     for (i, json_str) in json_strings.iter().enumerate() {
-        eprintln!("PROCESSING JSON STRING {}", i);
+        profile!(config, "PROCESSING JSON STRING {}", i);
 
         let prep_start = std::time::Instant::now();
         let prepared_json = prepare_json_string(json_str, i, config)?;
         let prep_elapsed = prep_start.elapsed();
-        eprintln!("  Preparation took: {:?}", prep_elapsed);
+        profile!(config, "  Preparation took: {:?}", prep_elapsed);
 
         if prepared_json.is_empty() {
             continue;
@@ -225,7 +225,7 @@ fn process_json_strings_sequential(
         let build_start = std::time::Instant::now();
         let _schema = build_json_schema(builder, &mut bytes, &build_config);
         let build_elapsed = build_start.elapsed();
-        eprintln!("  Schema building took: {:?}", build_elapsed);
+        profile!(config, "  Schema building took: {:?}", build_elapsed);
 
         processed_count += 1;
     }
@@ -239,7 +239,8 @@ fn process_json_strings_parallel(
     config: &SchemaInferenceConfig,
     builder: &mut SchemaBuilder,
 ) -> Result<usize, String> {
-    eprintln!(
+    profile!(
+        config,
         "Starting parallel preparation and building ({})",
         current_time_hms()
     );
@@ -250,12 +251,17 @@ fn process_json_strings_parallel(
         .enumerate()
         .map(
             |(i, json_str)| -> Result<(usize, SchemaBuilder, bool), String> {
-                eprintln!("Thread processing JSON STRING {}", i);
+                profile!(config, "Thread processing JSON STRING {}", i);
 
                 let prep_start = std::time::Instant::now();
                 let prepared = prepare_json_string(json_str, i, config)?;
                 let prep_elapsed = prep_start.elapsed();
-                eprintln!("  String {} preparation took: {:?}", i, prep_elapsed);
+                profile!(
+                    config,
+                    "  String {} preparation took: {:?}",
+                    i,
+                    prep_elapsed
+                );
 
                 if prepared.is_empty() {
                     return Ok((i, get_builder(config.schema_uri.as_deref()), false));
@@ -272,14 +278,20 @@ fn process_json_strings_parallel(
                 let build_start = std::time::Instant::now();
                 build_json_schema(&mut chunk_builder, &mut bytes, &chunk_build_config);
                 let build_elapsed = build_start.elapsed();
-                eprintln!("  String {} schema building took: {:?}", i, build_elapsed);
+                profile!(
+                    config,
+                    "  String {} schema building took: {:?}",
+                    i,
+                    build_elapsed
+                );
 
                 Ok((i, chunk_builder, true)) // Mark as non-empty
             },
         )
         .collect::<Result<Vec<_>, String>>()?;
 
-    eprintln!(
+    profile!(
+        config,
         "Merging schemas sequentially in order ({})",
         current_time_hms()
     );
@@ -296,15 +308,20 @@ fn process_json_strings_parallel(
             // Only add the schema if we haven't seen an identical one before
             if seen_hashes.insert(hash) {
                 builder.add_schema(schema);
-                eprintln!("  Merged schema {} ({})", i, current_time_hms());
+                profile!(config, "  Merged schema {} ({})", i, current_time_hms());
             } else {
-                eprintln!("  Schema {} already merged ({})", i, current_time_hms());
+                profile!(
+                    config,
+                    "  Schema {} already merged ({})",
+                    i,
+                    current_time_hms()
+                );
             }
             processed_count += 1;
         }
     }
 
-    eprintln!("Sequential merge complete ({})", current_time_hms());
+    profile!(config, "Sequential merge complete ({})", current_time_hms());
 
     Ok(processed_count)
 }
@@ -314,7 +331,8 @@ pub fn infer_json_schema_from_strings(
     json_strings: &[String],
     config: SchemaInferenceConfig,
 ) -> Result<SchemaInferenceResult, String> {
-    eprintln!(
+    profile!(
+        config,
         "Processing {} strings ({})",
         json_strings.len(),
         current_time_hms()
@@ -330,7 +348,7 @@ pub fn infer_json_schema_from_strings(
             // Create schema builder
             let mut builder = get_builder(config.schema_uri.as_deref());
 
-            eprintln!("Starting preparation loop ({})", current_time_hms());
+            profile!(config, "Starting preparation loop ({})", current_time_hms());
 
             let use_parallel = std::env::var("GENSON_PARALLEL")
                 .map(|v| v == "1" || v.to_lowercase() == "true")
@@ -344,9 +362,9 @@ pub fn infer_json_schema_from_strings(
 
             // Get final schema
             let mut final_schema = builder.to_schema();
-            eprintln!("Rewriting objects ({})", current_time_hms());
+            profile!(config, "Rewriting objects ({})", current_time_hms());
             rewrite_objects(&mut final_schema, None, &config, true);
-            eprintln!("Reordering unions ({})", current_time_hms());
+            profile!(config, "Reordering unions ({})", current_time_hms());
             reorder_unions(&mut final_schema);
 
             #[cfg(feature = "avro")]
