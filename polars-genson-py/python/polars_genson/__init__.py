@@ -286,6 +286,7 @@ def normalise_json(
     empty_as_null: bool = True,
     coerce_strings: bool = False,
     map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+    profile: bool = False,
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
     unify_maps: bool = False,
@@ -320,6 +321,8 @@ def normalise_json(
         - "mapping": plain JSON object ({"en":"Hello"})
         - "entries": list of single-entry objects ([{"en":"Hello"}])
         - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
+    profile : bool, default False
+        Whether to show timing profile output
     map_threshold : int, default 20
         Maximum number of keys before an object is treated as a map
         (unless overridden).
@@ -379,6 +382,7 @@ def normalise_json(
         "empty_as_null": empty_as_null,
         "coerce_string": coerce_strings,
         "map_encoding": map_encoding,
+        "profile": profile,
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
@@ -642,6 +646,7 @@ class GensonNamespace:
         empty_as_null: bool = True,
         coerce_strings: bool = False,
         map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+        profile: bool = False,
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
         unify_maps: bool = False,
@@ -689,6 +694,8 @@ class GensonNamespace:
             - "mapping": plain JSON object ({"en":"Hello"})
             - "entries": list of single-entry objects ([{"en":"Hello"}])
             - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
+        profile : bool, default False
+            Whether to display timing profile information
         map_threshold : int, default 20
             Threshold above which objects with many varying keys are normalised
             as Avro maps instead of records.
@@ -732,6 +739,7 @@ class GensonNamespace:
             empty_as_null=empty_as_null,
             coerce_strings=coerce_strings,
             map_encoding=map_encoding,
+            profile=profile,
             map_threshold=map_threshold,
             map_max_required_keys=map_max_required_keys,
             unify_maps=unify_maps,
@@ -753,6 +761,7 @@ class GensonNamespace:
                     ignore_outer_array=ignore_outer_array,
                     ndjson=ndjson,
                     merge_schemas=True,
+                    profile=profile,
                     map_threshold=map_threshold,
                     map_max_required_keys=map_max_required_keys,
                     unify_maps=unify_maps,
