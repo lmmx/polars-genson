@@ -5,6 +5,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::borrow::Cow;
 use std::panic::{self, AssertUnwindSafe};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub(crate) mod core;
 pub use core::*;
@@ -13,6 +14,17 @@ use map_inference::*;
 
 /// Maximum length of JSON string to include in error messages before truncating
 const MAX_JSON_ERROR_LENGTH: usize = 100;
+
+fn current_time_hms() -> String {
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+    let total_seconds = now.as_secs() % 86_400; // seconds in a day
+    let hours = total_seconds / 3600;
+    let minutes = (total_seconds % 3600) / 60;
+    let seconds = total_seconds % 60;
+
+    format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+}
 
 fn validate_json(s: &str) -> Result<(), serde_json::Error> {
     let mut de = serde_json::Deserializer::from_str(s);
@@ -103,11 +115,87 @@ fn type_string_rank(s: &str) -> usize {
     }
 }
 
+/// Prepare a single JSON string for schema building (validation + wrap_root transformation)
+fn prepare_json_string(
+    json_str: &str,
+    index: usize,
+    config: &SchemaInferenceConfig,
+) -> Result<String, String> {
+    if json_str.trim().is_empty() {
+        return Ok(String::new());
+    }
+
+    // Choose validation strategy based on delimiter
+    let validation_result = if let Some(delim) = config.delimiter {
+        if delim == b'\n' {
+            validate_ndjson(json_str)
+        } else {
+            Err(serde_json::Error::custom(format!(
+                "Unsupported delimiter: {:?}",
+                delim
+            )))
+        }
+    } else {
+        validate_json(json_str)
+    };
+
+    if let Err(parse_error) = validation_result {
+        let truncated_json = if json_str.len() > MAX_JSON_ERROR_LENGTH {
+            format!(
+                "{}... [truncated {} chars]",
+                &json_str[..MAX_JSON_ERROR_LENGTH],
+                json_str.len() - MAX_JSON_ERROR_LENGTH
+            )
+        } else {
+            json_str.to_string()
+        };
+
+        return Err(format!(
+            "Invalid JSON input at index {}: {} - JSON: {}",
+            index + 1,
+            parse_error,
+            truncated_json
+        ));
+    }
+
+    // Safe: JSON is valid, now hand off to genson-rs
+    let prepared_json: Cow<str> = if let Some(ref field) = config.wrap_root {
+        if config.delimiter == Some(b'\n') {
+            // NDJSON: wrap each line separately
+            let mut wrapped_lines = Vec::new();
+            for line in json_str.lines() {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    continue;
+                }
+                let inner_val: Value = serde_json::from_str(trimmed)
+                    .map_err(|e| format!("Failed to parse NDJSON line before wrap_root: {}", e))?;
+                wrapped_lines.push(serde_json::json!({ field: inner_val }).to_string());
+            }
+            Cow::Owned(wrapped_lines.join("\n"))
+        } else {
+            // Single JSON doc
+            let inner_val: Value = serde_json::from_str(json_str)
+                .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
+            Cow::Owned(serde_json::json!({ field: inner_val }).to_string())
+        }
+    } else {
+        Cow::Borrowed(json_str)
+    };
+
+    Ok(prepared_json.into_owned())
+}
+
 /// Infer JSON schema from a collection of JSON strings
 pub fn infer_json_schema_from_strings(
     json_strings: &[String],
     config: SchemaInferenceConfig,
 ) -> Result<SchemaInferenceResult, String> {
+    eprintln!(
+        "Processing {} strings ({})",
+        json_strings.len(),
+        current_time_hms()
+    );
     debug!(config, "Schema inference config: {:#?}", config);
     if json_strings.is_empty() {
         return Err("No JSON strings provided".to_string());
@@ -129,68 +217,13 @@ pub fn infer_json_schema_from_strings(
 
             // Process each JSON string
             for (i, json_str) in json_strings.iter().enumerate() {
-                if json_str.trim().is_empty() {
+                eprintln!("PROCESSING JSON STRING {}", i);
+
+                let prepared_json = prepare_json_string(json_str, i, &config)?;
+
+                if prepared_json.is_empty() {
                     continue;
                 }
-
-                // Choose validation strategy based on delimiter
-                let validation_result = if let Some(delim) = config.delimiter {
-                    if delim == b'\n' {
-                        validate_ndjson(json_str)
-                    } else {
-                        Err(serde_json::Error::custom(format!(
-                            "Unsupported delimiter: {:?}",
-                            delim
-                        )))
-                    }
-                } else {
-                    validate_json(json_str)
-                };
-
-                if let Err(parse_error) = validation_result {
-                    let truncated_json = if json_str.len() > MAX_JSON_ERROR_LENGTH {
-                        format!(
-                            "{}... [truncated {} chars]",
-                            &json_str[..MAX_JSON_ERROR_LENGTH],
-                            json_str.len() - MAX_JSON_ERROR_LENGTH
-                        )
-                    } else {
-                        json_str.clone()
-                    };
-
-                    return Err(format!(
-                        "Invalid JSON input at index {}: {} - JSON: {}",
-                        i + 1,
-                        parse_error,
-                        truncated_json
-                    ));
-                }
-
-                // Safe: JSON is valid, now hand off to genson-rs
-                let prepared_json: Cow<str> = if let Some(ref field) = config.wrap_root {
-                    if config.delimiter == Some(b'\n') {
-                        // NDJSON: wrap each line separately
-                        let mut wrapped_lines = Vec::new();
-                        for line in json_str.lines() {
-                            let trimmed = line.trim();
-                            if trimmed.is_empty() {
-                                continue;
-                            }
-                            let inner_val: Value = serde_json::from_str(trimmed).map_err(|e| {
-                                format!("Failed to parse NDJSON line before wrap_root: {}", e)
-                            })?;
-                            wrapped_lines.push(serde_json::json!({ field: inner_val }).to_string());
-                        }
-                        Cow::Owned(wrapped_lines.join("\n"))
-                    } else {
-                        // Single JSON doc
-                        let inner_val: Value = serde_json::from_str(json_str)
-                            .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
-                        Cow::Owned(serde_json::json!({ field: inner_val }).to_string())
-                    }
-                } else {
-                    Cow::Borrowed(json_str)
-                };
 
                 let mut bytes = prepared_json.as_bytes().to_vec();
 
@@ -201,7 +234,9 @@ pub fn infer_json_schema_from_strings(
 
             // Get final schema
             let mut final_schema = builder.to_schema();
+            eprintln!("Rewriting objects ({})", current_time_hms());
             rewrite_objects(&mut final_schema, None, &config, true);
+            eprintln!("Reordering unions ({})", current_time_hms());
             reorder_unions(&mut final_schema);
 
             #[cfg(feature = "avro")]
