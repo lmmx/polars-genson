@@ -214,12 +214,16 @@ pub fn infer_json_schema_from_strings(
             };
 
             let mut processed_count = 0;
+            eprintln!("Starting preparation loop ({})", current_time_hms());
 
             // Process each JSON string
             for (i, json_str) in json_strings.iter().enumerate() {
                 eprintln!("PROCESSING JSON STRING {}", i);
 
+                let prep_start = std::time::Instant::now();
                 let prepared_json = prepare_json_string(json_str, i, &config)?;
+                let prep_elapsed = prep_start.elapsed();
+                eprintln!("  Preparation took: {:?}", prep_elapsed);
 
                 if prepared_json.is_empty() {
                     continue;
@@ -228,7 +232,11 @@ pub fn infer_json_schema_from_strings(
                 let mut bytes = prepared_json.as_bytes().to_vec();
 
                 // Build schema incrementally - this is where panics happen
+                let build_start = std::time::Instant::now();
                 let _schema = build_json_schema(&mut builder, &mut bytes, &build_config);
+                let build_elapsed = build_start.elapsed();
+                eprintln!("  Schema building took: {:?}", build_elapsed);
+
                 processed_count += 1;
             }
 
