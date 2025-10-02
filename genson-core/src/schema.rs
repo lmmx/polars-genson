@@ -1,5 +1,6 @@
 use crate::debug;
 use crate::genson_rs::{build_json_schema, get_builder, BuildConfig};
+use rayon::prelude::*;
 use serde::de::Error as DeError;
 use serde::Deserialize;
 use serde_json::Value;
@@ -186,6 +187,46 @@ fn prepare_json_string(
     Ok(prepared_json.into_owned())
 }
 
+/// Process all JSON strings sequentially and build schemas
+fn process_json_strings_sequential(
+    json_strings: &[String],
+    config: &SchemaInferenceConfig,
+    builder: &mut crate::genson_rs::SchemaBuilder,
+) -> Result<usize, String> {
+    let build_config = BuildConfig {
+        delimiter: config.delimiter,
+        ignore_outer_array: config.ignore_outer_array,
+    };
+
+    let mut processed_count = 0;
+
+    // Process each JSON string
+    for (i, json_str) in json_strings.iter().enumerate() {
+        eprintln!("PROCESSING JSON STRING {}", i);
+
+        let prep_start = std::time::Instant::now();
+        let prepared_json = prepare_json_string(json_str, i, config)?;
+        let prep_elapsed = prep_start.elapsed();
+        eprintln!("  Preparation took: {:?}", prep_elapsed);
+
+        if prepared_json.is_empty() {
+            continue;
+        }
+
+        let mut bytes = prepared_json.as_bytes().to_vec();
+
+        // Build schema incrementally - this is where panics happen
+        let build_start = std::time::Instant::now();
+        let _schema = build_json_schema(builder, &mut bytes, &build_config);
+        let build_elapsed = build_start.elapsed();
+        eprintln!("  Schema building took: {:?}", build_elapsed);
+
+        processed_count += 1;
+    }
+
+    Ok(processed_count)
+}
+
 /// Infer JSON schema from a collection of JSON strings
 pub fn infer_json_schema_from_strings(
     json_strings: &[String],
@@ -207,38 +248,10 @@ pub fn infer_json_schema_from_strings(
             // Create schema builder
             let mut builder = get_builder(config.schema_uri.as_deref());
 
-            // Build config for genson-rs
-            let build_config = BuildConfig {
-                delimiter: config.delimiter,
-                ignore_outer_array: config.ignore_outer_array,
-            };
-
-            let mut processed_count = 0;
             eprintln!("Starting preparation loop ({})", current_time_hms());
 
-            // Process each JSON string
-            for (i, json_str) in json_strings.iter().enumerate() {
-                eprintln!("PROCESSING JSON STRING {}", i);
-
-                let prep_start = std::time::Instant::now();
-                let prepared_json = prepare_json_string(json_str, i, &config)?;
-                let prep_elapsed = prep_start.elapsed();
-                eprintln!("  Preparation took: {:?}", prep_elapsed);
-
-                if prepared_json.is_empty() {
-                    continue;
-                }
-
-                let mut bytes = prepared_json.as_bytes().to_vec();
-
-                // Build schema incrementally - this is where panics happen
-                let build_start = std::time::Instant::now();
-                let _schema = build_json_schema(&mut builder, &mut bytes, &build_config);
-                let build_elapsed = build_start.elapsed();
-                eprintln!("  Schema building took: {:?}", build_elapsed);
-
-                processed_count += 1;
-            }
+            let processed_count =
+                process_json_strings_sequential(json_strings, &config, &mut builder)?;
 
             // Get final schema
             let mut final_schema = builder.to_schema();
