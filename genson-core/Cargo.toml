@@ -34,7 +34,7 @@ license.workspace = true
 name = "genson-core"
 readme = "README.md"
 repository.workspace = true
-version = "0.4.5"
+version = "0.4.6"
 
 [dev-dependencies]
 predicates = "3.1.3"

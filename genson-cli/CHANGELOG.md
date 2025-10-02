@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.7](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.4.6...genson-cli-v0.4.7) - 2025-10-02
+
+### <!-- 9 -->Other
+
+- Add `profile` (timing logs) flag ([#119](https://github.com/lmmx/polars-genson/pull/119))
+
 ## [0.4.4](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.4.3...genson-cli-v0.4.4) - 2025-10-01
 
 ### <!-- 2 -->Bug Fixes

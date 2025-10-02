@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.6](https://github.com/lmmx/polars-genson/compare/genson-core-v0.4.5...genson-core-v0.4.6) - 2025-10-02
+
+### <!-- 9 -->Other
+
+- Add `profile` (timing logs) flag ([#119](https://github.com/lmmx/polars-genson/pull/119))
+- Parallelise JSON string prep and schema building ([#118](https://github.com/lmmx/polars-genson/pull/118))
+
 ## [0.4.3](https://github.com/lmmx/polars-genson/compare/genson-core-v0.4.2...genson-core-v0.4.3) - 2025-10-01
 
 ### <!-- 2 -->Bug Fixes
