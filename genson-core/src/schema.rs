@@ -68,8 +68,13 @@ pub fn reorder_unions(schema: &mut Value) {
             }
         }
         Value::Array(arr) => {
-            for v in arr {
-                reorder_unions(v);
+            // Parallelize across array elements (if large enough)
+            if arr.len() >= PARALLEL_THRESHOLD {
+                arr.par_iter_mut().for_each(reorder_unions);
+            } else {
+                for v in arr {
+                    reorder_unions(v);
+                }
             }
         }
         _ => {}
