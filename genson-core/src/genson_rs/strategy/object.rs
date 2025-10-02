@@ -148,8 +148,6 @@ impl SchemaStrategy for ObjectStrategy {
     /// Optimized batch schema merging for objects
     /// Collects all properties from all schemas first, then merges each property once
     fn add_schemas(&mut self, schemas: &[&Value]) {
-        let start = std::time::Instant::now();
-
         // Phase 1: Collect all properties and required sets from all schemas
         let mut property_groups: OrderMap<String, Vec<&Value>> = OrderMap::new();
         let mut pattern_property_groups: OrderMap<String, Vec<&Value>> = OrderMap::new();
@@ -194,25 +192,15 @@ impl SchemaStrategy for ObjectStrategy {
         }
 
         // Phase 2: Merge properties in parallel if there are enough properties
-        if property_groups.len() > 10 {
+        if property_groups.len() > 3 {
             let merged_properties: Vec<(String, SchemaNode)> = property_groups
                 .into_par_iter()
                 .map(|(prop_name, sub_schemas)| {
-                    let prop_start = std::time::Instant::now();
                     let mut node = SchemaNode::new();
                     // Batch add all schemas for this property
                     let schema_values: Vec<Value> =
                         sub_schemas.iter().map(|&s| s.clone()).collect();
                     node.add_schemas(&schema_values);
-                    let prop_elapsed = prop_start.elapsed();
-                    if prop_elapsed.as_millis() > 100 {
-                        eprintln!(
-                            "[PROFILE]   Property '{}': {} schemas took {:?}",
-                            prop_name,
-                            sub_schemas.len(),
-                            prop_elapsed
-                        );
-                    }
                     (prop_name, node)
                 })
                 .collect();
@@ -260,16 +248,6 @@ impl SchemaStrategy for ObjectStrategy {
                     .unwrap()
                     .retain(|p| final_required.contains(p));
             }
-        }
-
-        let elapsed = start.elapsed();
-        if elapsed.as_millis() > 10 {
-            eprintln!(
-                "[PROFILE] ObjectStrategy: add_schemas({} schemas, {} props) took {:?}",
-                schemas.len(),
-                self.properties.len(),
-                elapsed
-            );
         }
     }
 

@@ -28,9 +28,9 @@ fn current_time_hms() -> String {
     let total_seconds = now.as_secs() % 86_400; // seconds in a day
     let hours = total_seconds / 3600;
     let minutes = (total_seconds % 3600) / 60;
-    let seconds = total_seconds % 60;
+    let seconds = (total_seconds % 60) as f64 + now.subsec_millis() as f64 / 1000.0; // add fractional part
 
-    format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+    format!("{:02}:{:02}:{:04.1}", hours, minutes, seconds)
 }
 
 fn validate_json(s: &str) -> Result<(), serde_json::Error> {
