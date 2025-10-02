@@ -13,7 +13,9 @@ fn main() {
     let json_strings: Vec<String> = std::fs::read_to_string("../genson-cli/tests/data/claims_fixture_x30.jsonl")
         .expect("Failed to read file")
         .lines()
-        .take(5)
+        // .take(5)
+        // .cycle()
+        .take(30)
         .map(String::from)
         .collect();
 

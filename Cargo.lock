@@ -938,6 +938,7 @@ dependencies = [
  "simd-json 0.13.11",
  "tracing",
  "tracing-subscriber",
+ "xxhash-rust",
 ]
 
 [[package]]
