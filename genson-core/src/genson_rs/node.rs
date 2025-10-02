@@ -87,7 +87,7 @@ impl SchemaNode {
 
                 schema_groups
                     .entry(strategy_idx)
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(subschema_idx);
             }
         }

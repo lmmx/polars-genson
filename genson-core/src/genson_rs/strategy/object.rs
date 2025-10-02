@@ -162,7 +162,7 @@ impl SchemaStrategy for ObjectStrategy {
                     for (prop_name, sub_schema) in props {
                         property_groups
                             .entry(prop_name.clone())
-                            .or_insert_with(Vec::new)
+                            .or_default()
                             .push(sub_schema);
                     }
                 }
@@ -172,7 +172,7 @@ impl SchemaStrategy for ObjectStrategy {
                     for (pattern, sub_schema) in patterns {
                         pattern_property_groups
                             .entry(pattern.clone())
-                            .or_insert_with(Vec::new)
+                            .or_default()
                             .push(sub_schema);
                     }
                 }
@@ -212,10 +212,7 @@ impl SchemaStrategy for ObjectStrategy {
         } else {
             // Sequential for small property counts
             for (prop_name, sub_schemas) in property_groups {
-                let node = self
-                    .properties
-                    .entry(prop_name)
-                    .or_insert_with(SchemaNode::new);
+                let node = self.properties.entry(prop_name).or_default();
 
                 let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
                 node.add_schemas(&schema_values);
@@ -224,10 +221,7 @@ impl SchemaStrategy for ObjectStrategy {
 
         // Phase 3: Merge pattern properties (usually few, so sequential is fine)
         for (pattern, sub_schemas) in pattern_property_groups {
-            let node = self
-                .pattern_properties
-                .entry(pattern)
-                .or_insert_with(SchemaNode::new);
+            let node = self.pattern_properties.entry(pattern).or_default();
 
             let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
             node.add_schemas(&schema_values);
