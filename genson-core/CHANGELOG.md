@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1](https://github.com/lmmx/polars-genson/compare/genson-core-v0.5.0...genson-core-v0.5.1) - 2025-10-03
+
+### <!-- 2 -->Bug Fixes
+
+- gate the profile logs (too noisy)
+
 ## [0.5.0](https://github.com/lmmx/polars-genson/compare/genson-core-v0.4.6...genson-core-v0.5.0) - 2025-10-02
 
 ### <!-- 3 -->Performance
