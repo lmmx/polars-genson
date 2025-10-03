@@ -53,7 +53,8 @@ fn test_scalar_unification_with_old_nullable_format() {
         json!(["null", {"type": ["null", "string"]}]),       // Old nullable format
     ];
 
-    let result = check_unifiable_schemas(&schemas, "test", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = check_unifiable_schemas(&schema_refs, "test", &config);
     
     // Should successfully unify all scalar string types
     assert!(result.is_some());
@@ -235,7 +236,7 @@ fn test_schema_inference_nested_anyof() {
 
 #[test]
 fn test_scalar_promotion_integer_vs_number() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
@@ -257,7 +258,8 @@ fn test_scalar_promotion_integer_vs_number() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();
@@ -276,7 +278,7 @@ fn test_scalar_promotion_integer_vs_number() {
 
 #[test]
 fn test_scalar_promotion_string_vs_boolean() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
@@ -298,7 +300,8 @@ fn test_scalar_promotion_string_vs_boolean() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();
@@ -311,7 +314,7 @@ fn test_scalar_promotion_string_vs_boolean() {
 
 #[test]
 fn test_scalar_promotion_string_vs_number() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
@@ -333,7 +336,8 @@ fn test_scalar_promotion_string_vs_number() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();
@@ -346,7 +350,7 @@ fn test_scalar_promotion_string_vs_number() {
 
 #[test]
 fn test_scalar_promotion_string_vs_integer() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
@@ -368,7 +372,8 @@ fn test_scalar_promotion_string_vs_integer() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();
@@ -381,7 +386,7 @@ fn test_scalar_promotion_string_vs_integer() {
 
 #[test]
 fn test_scalar_promotion_boolean_vs_number() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
@@ -403,7 +408,8 @@ fn test_scalar_promotion_boolean_vs_number() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();
@@ -416,7 +422,7 @@ fn test_scalar_promotion_boolean_vs_number() {
 
 #[test]
 fn test_scalar_promotion_boolean_vs_integer() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
@@ -438,7 +444,8 @@ fn test_scalar_promotion_boolean_vs_integer() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();
@@ -480,7 +487,8 @@ fn test_scalar_promotion_three_types() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();
@@ -530,7 +538,8 @@ fn test_scalar_promotion_all_four_types() {
         ..Default::default()
     };
 
-    let result = unify_record_schemas(&schemas, "root", &config);
+    let schema_refs: Vec<&Value> = schemas.iter().collect();
+    let result = unify_record_schemas(&schema_refs, "root", &config);
     assert!(result.is_some(), "Should unify records with scalar promotion");
 
     let unified = result.unwrap();

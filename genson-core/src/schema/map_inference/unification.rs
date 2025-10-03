@@ -293,7 +293,7 @@ fn try_scalar_promotion(
 
     // Recursively unify with the object schema
     check_unifiable_schemas(
-        &[object_schema.clone(), promoted],
+        &[&object_schema.clone(), &promoted],
         &format!("{path}.{}", field_name),
         config,
     )
@@ -332,7 +332,7 @@ fn extract_field_from_nullable_schema<'a>(
 
 /// Unify array schemas by unifying their items
 fn unify_array_schemas(
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
@@ -348,8 +348,8 @@ fn unify_array_schemas(
     }
 
     // Extract all items schemas
-    let mut items_schemas = Vec::new();
-    for (i, schema) in schemas.iter().enumerate() {
+    let mut items_schemas = Vec::<&Value>::new();
+    for (i, &schema) in schemas.iter().enumerate() {
         if let Some(items) = extract_field_from_nullable_schema(schema, "items") {
             debug_verbose!(
                 config,
@@ -358,7 +358,7 @@ fn unify_array_schemas(
                 i,
                 serde_json::to_string(items).unwrap_or_default()
             );
-            items_schemas.push(items.clone());
+            items_schemas.push(items);
         } else {
             debug!(config, "{}: Array schema[{}] missing items", path, i);
             return None;
@@ -381,7 +381,7 @@ fn unify_array_schemas(
 }
 
 fn unify_scalar_schemas(
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
@@ -393,7 +393,7 @@ fn unify_scalar_schemas(
     // Extract all the scalar types
     let mut base_types = std::collections::HashSet::new();
 
-    for schema in schemas {
+    for &schema in schemas {
         if let Some(type_val) = schema.get("type") {
             if let Some(type_str) = type_val.as_str() {
                 // Direct scalar type
@@ -437,7 +437,7 @@ fn unify_scalar_schemas(
 
 /// Unify map schemas by unifying their additionalProperties
 fn unify_map_schemas(
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
@@ -453,8 +453,8 @@ fn unify_map_schemas(
     }
 
     // Extract all additionalProperties schemas
-    let mut additional_props_schemas = Vec::new();
-    for (i, schema) in schemas.iter().enumerate() {
+    let mut additional_props_schemas = Vec::<&Value>::new();
+    for (i, &schema) in schemas.iter().enumerate() {
         if let Some(additional_props) =
             extract_field_from_nullable_schema(schema, "additionalProperties")
         {
@@ -465,7 +465,7 @@ fn unify_map_schemas(
                 i,
                 serde_json::to_string(additional_props).unwrap_or_default()
             );
-            additional_props_schemas.push(additional_props.clone());
+            additional_props_schemas.push(additional_props);
         } else {
             debug!(
                 config,
@@ -498,7 +498,7 @@ fn unify_map_schemas(
 /// Sequential pairwise unification with full scalar promotion support
 fn unify_field_schemas_sequential(
     field_name: &str,
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> (String, Option<Value>) {
@@ -506,14 +506,14 @@ fn unify_field_schemas_sequential(
         return (field_name.to_string(), Some(schemas[0].clone()));
     }
 
-    let first = &schemas[0];
-    if schemas.iter().all(|s| s == first) {
+    let first = schemas[0];
+    if schemas.iter().all(|&s| s == first) {
         return (field_name.to_string(), Some(first.clone()));
     }
 
     let mut unified = schemas[0].clone();
 
-    for new in &schemas[1..] {
+    for &new in &schemas[1..] {
         if let Some(compatible) = schemas_compatible(&unified, new) {
             unified = compatible;
             continue;
@@ -523,7 +523,7 @@ fn unify_field_schemas_sequential(
             || (is_object_schema(&unified) && is_object_schema(new))
         {
             if let Some(result) = check_unifiable_schemas(
-                &[unified.clone(), new.clone()],
+                &[&unified, new],
                 &format!("{}.{}", path, field_name),
                 config,
             ) {
@@ -573,7 +573,7 @@ fn unify_field_schemas_sequential(
 /// Divide-and-conquer parallel unification (no scalar promotion)
 fn unify_field_schemas_parallel(
     field_name: &str,
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> (String, Option<Value>) {
@@ -600,7 +600,7 @@ fn unify_field_schemas_parallel(
     // Merge the two halves
     let merged = match (l_res, r_res) {
         (Some(lv), Some(rv)) => {
-            check_unifiable_schemas(&[lv, rv], &format!("{}.{}", path, field_name), config)
+            check_unifiable_schemas(&[&lv, &rv], &format!("{}.{}", path, field_name), config)
         }
         _ => None,
     };
@@ -611,7 +611,7 @@ fn unify_field_schemas_parallel(
 /// Main entry point: choose strategy based on field characteristics
 fn unify_field_schemas(
     field_name: &str,
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> (String, Option<Value>) {
@@ -621,8 +621,8 @@ fn unify_field_schemas(
 
     // Check if we need scalar promotion for this field
     let needs_scalar_promo = config.wrap_scalars && {
-        let has_scalars = schemas.iter().any(is_scalar_schema);
-        let has_objects = schemas.iter().any(is_object_schema);
+        let has_scalars = schemas.iter().any(|&s| is_scalar_schema(s));
+        let has_objects = schemas.iter().any(|&s| is_object_schema(s));
         has_scalars && has_objects
     };
 
@@ -637,7 +637,7 @@ fn unify_field_schemas(
 
 /// Unify record schemas by merging their properties
 fn unify_record_schemas(
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
@@ -652,7 +652,7 @@ fn unify_record_schemas(
     let schema_properties: Vec<Option<serde_json::Map<String, Value>>> = if schemas.len() >= 50 {
         schemas
             .par_iter()
-            .map(|schema| {
+            .map(|&schema| {
                 extract_field_from_nullable_schema(schema, "properties")
                     .and_then(|v| v.as_object())
                     .cloned()
@@ -661,7 +661,7 @@ fn unify_record_schemas(
     } else {
         schemas
             .iter()
-            .map(|schema| {
+            .map(|&schema| {
                 extract_field_from_nullable_schema(schema, "properties")
                     .and_then(|v| v.as_object())
                     .cloned()
@@ -670,8 +670,11 @@ fn unify_record_schemas(
     };
 
     // Step 2: Collect all schemas for each field
-    let mut field_schemas: ordermap::OrderMap<String, Vec<Value>> = ordermap::OrderMap::new();
+    let mut field_schemas: ordermap::OrderMap<String, Vec<&Value>> = ordermap::OrderMap::new();
     let mut field_counts = ordermap::OrderMap::new();
+    let mut unified_anyof_values: Vec<Value> = Vec::new();
+    // Track which fields need unified anyOf values
+    let mut anyof_indices: Vec<(String, usize)> = Vec::new();
 
     for (i, props_opt) in schema_properties.iter().enumerate() {
         let Some(props) = props_opt else {
@@ -682,24 +685,33 @@ fn unify_record_schemas(
         for (field_name, field_schema) in props {
             *field_counts.entry(field_name.clone()).or_insert(0) += 1;
 
-            let normalized = normalise_nullable(field_schema).clone();
+            let normalized = normalise_nullable(field_schema);
 
             // Handle anyOf before storing
-            let normalized = if normalized.get("anyOf").is_some() {
-                if let Some(Value::Array(any_of_schemas)) = normalized.get("anyOf") {
-                    unify_anyof_schemas(any_of_schemas, field_name, config).unwrap_or(normalized)
-                } else {
-                    normalized
+            if let Some(Value::Array(any_of_schemas)) = normalized.get("anyOf") {
+                let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
+                if let Some(unified) = unify_anyof_schemas(&any_of_refs, field_name, config) {
+                    let idx = unified_anyof_values.len();
+                    unified_anyof_values.push(unified);
+                    anyof_indices.push((field_name.clone(), idx));
+                    continue; // Skip the normal push
                 }
-            } else {
-                normalized
-            };
+            }
 
+            // Normal path: store the normalized reference
             field_schemas
                 .entry(field_name.clone())
                 .or_default()
                 .push(normalized);
         }
+    }
+
+    // Now add all the unified anyOf references
+    for (field_name, idx) in anyof_indices {
+        field_schemas
+            .entry(field_name)
+            .or_default()
+            .push(&unified_anyof_values[idx]);
     }
 
     // Step 3: Unify schemas for each field
@@ -852,7 +864,7 @@ fn try_mixed_scalar_promotion(
 }
 
 pub(crate) fn unify_anyof_schemas(
-    schemas: &[Value],
+    schemas: &[&Value],
     field_name: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
@@ -861,8 +873,8 @@ pub(crate) fn unify_anyof_schemas(
     }
 
     // Check if we have the specific case: some scalars, some objects
-    let has_scalars = schemas.iter().any(is_scalar_schema);
-    let has_objects = schemas.iter().any(is_object_schema);
+    let has_scalars = schemas.iter().any(|&s| is_scalar_schema(s));
+    let has_objects = schemas.iter().any(|&s| is_object_schema(s));
 
     if !has_scalars || !has_objects {
         return None; // Not the mixed case we handle
@@ -875,7 +887,7 @@ pub(crate) fn unify_anyof_schemas(
 
     let mut promoted_schemas = Vec::new();
 
-    for schema in schemas {
+    for &schema in schemas {
         if is_scalar_schema(schema) {
             if let Some(scalar_type) = get_scalar_type_name(schema) {
                 let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
@@ -894,8 +906,9 @@ pub(crate) fn unify_anyof_schemas(
         }
     }
 
-    // Now unify the promoted schemas (all objects)
-    check_unifiable_schemas(&promoted_schemas, field_name, config)
+    // Now unify the promoted schemas (all objects), after converting to references
+    let promoted_refs: Vec<&Value> = promoted_schemas.iter().collect();
+    check_unifiable_schemas(&promoted_refs, field_name, config)
 }
 
 /// Check if a collection of schemas can be unified into a single schema.
@@ -918,7 +931,7 @@ pub(crate) fn unify_anyof_schemas(
 /// - `Some(unified_schema)` if schemas can be unified
 /// - `None` if schemas cannot be unified due to fundamental incompatibilities
 pub(crate) fn check_unifiable_schemas(
-    schemas: &[Value],
+    schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
@@ -928,7 +941,7 @@ pub(crate) fn check_unifiable_schemas(
         path,
         schemas.len()
     );
-    for (i, schema) in schemas.iter().enumerate() {
+    for (i, &schema) in schemas.iter().enumerate() {
         debug_verbose!(
             config,
             "  Schema[{}]: {}",
@@ -943,7 +956,7 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     // Check if all are array schemas
-    if schemas.iter().all(is_array_schema) {
+    if schemas.iter().all(|&s| is_array_schema(s)) {
         debug!(
             config,
             "{}: All schemas are arrays, attempting array unification", path
@@ -952,7 +965,7 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     // Check if all are map schemas (objects with additionalProperties)
-    if schemas.iter().all(is_map_schema) {
+    if schemas.iter().all(|&s| is_map_schema(s)) {
         debug!(
             config,
             "{}: All schemas are maps, attempting map unification", path
@@ -961,7 +974,7 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     // Check if all are record schemas (objects with properties)
-    if schemas.iter().all(is_object_schema) {
+    if schemas.iter().all(|&s| is_object_schema(s)) {
         debug!(
             config,
             "{}: All schemas are records, attempting record unification", path
@@ -970,7 +983,7 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     // Check if all are scalar schemas
-    if schemas.iter().all(is_scalar_schema) {
+    if schemas.iter().all(|&s| is_scalar_schema(s)) {
         debug!(
             config,
             "{}: All schemas are scalars, attempting scalar unification", path
@@ -983,7 +996,7 @@ pub(crate) fn check_unifiable_schemas(
         config,
         "{}: Mixed schema types not supported for unification", path
     );
-    for (i, schema) in schemas.iter().enumerate() {
+    for (i, &schema) in schemas.iter().enumerate() {
         let schema_type = if is_array_schema(schema) {
             "array"
         } else if is_map_schema(schema) {
