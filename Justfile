@@ -513,7 +513,7 @@ ship-wheels mode="":
 # --------------------------------------------------------------------------------------------------
 
 # Rust release workflow using release-plz
-ship-rust bump_level="auto":
+ship-rust version="auto":
     #!/usr/bin/env -S echo-comment --shell-flags="-euo pipefail" --color="\\033[38;5;202m"
 
     just check-no-fmt-feat
@@ -524,6 +524,7 @@ ship-rust bump_level="auto":
         # ❌ Refusing to run: not on 'master' branch (current: $branch)
         exit 1
     fi
+
     # 🔍 Fetch master branch
     git fetch origin master
     local_rev="$(git rev-parse HEAD)"
@@ -541,28 +542,29 @@ ship-rust bump_level="auto":
     just publish-rust --dry-run
     # ✅ Dry-run went OK, proceeding to real release
 
-    if [[ "{{bump_level}}" != "auto" ]]; then
+    if [[ "{{version}}" != "auto" ]]; then
         if [[ -n "$(git status --porcelain)" ]]; then
             # ❌ Working directory must be clean for manual version bump
             git status --short
             exit 1
         fi
-        cargo set-version -p genson-core --bump {{bump_level}}
-        cargo set-version -p polars-jsonschema-bridge --bump {{bump_level}}
-        cargo set-version -p genson-cli --bump {{bump_level}}
+
+        # 🦀 Explicit version bump with release-plz
+        release-plz set-version genson-core@{{version}} \
+                               polars-jsonschema-bridge@{{version}} \
+                               genson-cli@{{version}}
 
         # 🦀 Update Cargo.toml versions and changelogs
         release-plz update --allow-dirty
     else
-        # 🦀 Update Cargo.toml versions and changelogs
+        # 🦀 Auto update Cargo.toml versions and changelogs
         release-plz update
     fi
-    
+
     git add .
     # Run a pre-precommit lint pass to avoid the linter halting our release!
     just precommit || true
     git commit -m "chore(release): 🦀 Upgrades"
-    # Note: if already pushed you would just need to revert the additions (delete changelogs)
 
     # 🦀 Run prepush only for the Rust crates we are releasing
     just prepush-rs
