@@ -39,31 +39,10 @@ info:
                     ]
                   },
                   "labels": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "type": "null"
-                              },
-                              {
-                                "type": "object",
-                                "additionalProperties": {
-                                  "type": "string"
-                                }
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
                   }
                 },
                 "required": [
