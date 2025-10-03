@@ -3,6 +3,7 @@ use crate::{
     debug, debug_verbose,
     schema::core::{make_promoted_scalar_key, SchemaInferenceConfig},
 };
+use rayon::prelude::*;
 use serde_json::{json, Map, Value};
 
 /// Normalize a schema that may be wrapped in one or more layers of
@@ -494,6 +495,82 @@ fn unify_map_schemas(
     }
 }
 
+/// Unify all schemas for a single field, applying all the special-case logic
+fn unify_field_schemas(
+    field_name: &str,
+    schemas: &[Value],
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> (String, Option<Value>) {
+    // Single schema - just return it
+    if schemas.len() == 1 {
+        return (field_name.to_string(), Some(schemas[0].clone()));
+    }
+
+    // Try to unify pairwise with special-case handling
+    let mut unified = schemas[0].clone();
+
+    for new in &schemas[1..] {
+        // Try nullable compatibility first
+        if let Some(compatible) = schemas_compatible(&unified, new) {
+            unified = compatible;
+            continue;
+        }
+
+        // Try recursive unification for arrays/objects
+        if (is_array_schema(&unified) && is_array_schema(new))
+            || (is_object_schema(&unified) && is_object_schema(new))
+        {
+            if let Some(result) = check_unifiable_schemas(
+                &[unified.clone(), new.clone()],
+                &format!("{}.{}", path, field_name),
+                config,
+            ) {
+                unified = result;
+                continue;
+            } else {
+                return (field_name.to_string(), None);
+            }
+        }
+
+        // Try scalar promotion if enabled
+        if config.wrap_scalars {
+            let unified_is_obj = is_object_schema(&unified);
+            let unified_is_scalar = is_scalar_schema(&unified);
+            let new_is_obj = is_object_schema(new);
+            let new_is_scalar = is_scalar_schema(new);
+
+            if unified_is_obj && new_is_scalar {
+                if let Some(result) =
+                    try_scalar_promotion(&unified, new, field_name, "new", path, config)
+                {
+                    unified = result;
+                    continue;
+                }
+            } else if new_is_obj && unified_is_scalar {
+                if let Some(result) =
+                    try_scalar_promotion(new, &unified, field_name, "existing", path, config)
+                {
+                    unified = result;
+                    continue;
+                }
+            } else if unified_is_scalar && new_is_scalar {
+                if let Some(result) =
+                    try_mixed_scalar_promotion(&unified, new, field_name, path, config)
+                {
+                    unified = result;
+                    continue;
+                }
+            }
+        }
+
+        // Incompatible
+        return (field_name.to_string(), None);
+    }
+
+    (field_name.to_string(), Some(unified))
+}
+
 /// Unify record schemas by merging their properties
 fn unify_record_schemas(
     schemas: &[Value],
@@ -507,156 +584,93 @@ fn unify_record_schemas(
         schemas.len()
     );
 
-    let mut all_fields = ordermap::OrderMap::new();
-    let mut field_counts = std::collections::HashMap::new();
+    // Step 1: Extract all properties from all schemas IN PARALLEL (if large enough)
+    let schema_properties: Vec<Option<serde_json::Map<String, Value>>> = if schemas.len() >= 50 {
+        schemas
+            .par_iter()
+            .map(|schema| {
+                extract_field_from_nullable_schema(schema, "properties")
+                    .and_then(|v| v.as_object())
+                    .map(|props| props.clone())
+            })
+            .collect()
+    } else {
+        schemas
+            .iter()
+            .map(|schema| {
+                extract_field_from_nullable_schema(schema, "properties")
+                    .and_then(|v| v.as_object())
+                    .map(|props| props.clone())
+            })
+            .collect()
+    };
 
-    // Collect all field types and count occurrences
-    for (i, schema) in schemas.iter().enumerate() {
-        if let Some(Value::Object(props)) = extract_field_from_nullable_schema(schema, "properties")
-        {
-            for (field_name, field_schema) in props {
-                *field_counts.entry(field_name.clone()).or_insert(0) += 1;
+    // Step 2: Collect all schemas for each field
+    let mut field_schemas: ordermap::OrderMap<String, Vec<Value>> = ordermap::OrderMap::new();
+    let mut field_counts = ordermap::OrderMap::new();
 
-                match all_fields.entry(field_name.clone()) {
-                    ordermap::map::Entry::Vacant(e) => {
-                        debug_verbose!(config, "Schema[{i}] introduces new field `{field_name}`");
-                        e.insert(normalise_nullable(field_schema).clone());
-                    }
-                    ordermap::map::Entry::Occupied(mut e) => {
-                        let existing = normalise_nullable(e.get()).clone();
-                        let new = normalise_nullable(field_schema).clone();
-
-                        // Handle anyOf in either schema before attempting unification
-                        let existing = if existing.get("anyOf").is_some() {
-                            if let Some(Value::Array(any_of_schemas)) = existing.get("anyOf") {
-                                if let Some(unified) =
-                                    unify_anyof_schemas(any_of_schemas, field_name, config)
-                                {
-                                    unified
-                                } else {
-                                    existing
-                                }
-                            } else {
-                                existing
-                            }
-                        } else {
-                            existing
-                        };
-
-                        let new = if new.get("anyOf").is_some() {
-                            if let Some(Value::Array(any_of_schemas)) = new.get("anyOf") {
-                                if let Some(unified) =
-                                    unify_anyof_schemas(any_of_schemas, field_name, config)
-                                {
-                                    unified
-                                } else {
-                                    new
-                                }
-                            } else {
-                                new
-                            }
-                        } else {
-                            new
-                        };
-
-                        // First try the compatibility check for nullable/non-nullable
-                        if let Some(compatible_schema) = schemas_compatible(&existing, &new) {
-                            debug_verbose!(config, "Field `{field_name}` compatible (nullable/non-nullable unification)");
-                            e.insert(compatible_schema);
-                        } else if is_array_schema(&existing) && is_array_schema(&new) {
-                            // Try recursive unify if both are arrays
-                            debug!(config,
-                                "Field `{field_name}` has conflicting array schemas, attempting recursive unify"
-                            );
-                            if let Some(unified) = check_unifiable_schemas(
-                                &[existing.clone(), new.clone()],
-                                &format!("{path}.{}", field_name),
-                                config,
-                            ) {
-                                debug!(
-                                    config,
-                                    "Field `{field_name}` unified successfully after array recursion"
-                                );
-                                e.insert(unified);
-                            } else {
-                                debug!(config, "{path}.{}: failed to unify arrays", field_name);
-                                return None;
-                            }
-                        } else if is_object_schema(&existing) && is_object_schema(&new) {
-                            // Try recursive unify if both are objects
-                            debug!(config,
-                                "Field `{field_name}` has conflicting object schemas, attempting recursive unify"
-                            );
-                            if let Some(unified) = check_unifiable_schemas(
-                                &[existing.clone(), new.clone()],
-                                &format!("{path}.{}", field_name),
-                                config,
-                            ) {
-                                debug!(
-                                    config,
-                                    "Field `{field_name}` unified successfully after recursion"
-                                );
-                                e.insert(unified);
-                            } else {
-                                debug!(config, "{path}.{}: failed to unify", field_name);
-                                return None;
-                            }
-                        } else if config.wrap_scalars {
-                            let existing_is_obj = is_object_schema(&existing);
-                            let existing_is_scalar = is_scalar_schema(&existing);
-                            let new_is_obj = is_object_schema(&new);
-                            let new_is_scalar = is_scalar_schema(&new);
-
-                            if existing_is_obj && new_is_scalar {
-                                if let Some(unified) = try_scalar_promotion(
-                                    &existing, &new, field_name, "new", path, config,
-                                ) {
-                                    debug!(config, "Field `{field_name}` unified successfully after scalar promotion");
-                                    e.insert(unified);
-                                    continue;
-                                }
-                            } else if new_is_obj && existing_is_scalar {
-                                if let Some(unified) = try_scalar_promotion(
-                                    &new, &existing, field_name, "existing", path, config,
-                                ) {
-                                    debug!(config, "Field `{field_name}` unified successfully after scalar promotion");
-                                    e.insert(unified);
-                                    continue;
-                                }
-                            } else if existing_is_scalar && new_is_scalar {
-                                // NEW: Handle scalar vs scalar conflicts with mixed types
-                                debug!(config, "Field `{field_name}` has scalar vs scalar conflict, attempting promotion");
-
-                                if let Some(unified) = try_mixed_scalar_promotion(
-                                    &existing, &new, field_name, path, config,
-                                ) {
-                                    debug!(config, "Field `{field_name}` unified successfully after mixed scalar promotion");
-                                    e.insert(unified);
-                                    continue;
-                                }
-                            }
-
-                            // If we reach here, it's not a valid promotion case
-                            debug!(config,
-                                "{path}.{field_name}: incompatible types (promotion failed):\n  existing={:#?}\n  new={:#?}",
-                                existing, new
-                            );
-                            return None;
-                        } else {
-                            // If we didn't handle it, it's a true conflict
-                            debug!(config,
-                                "{path}.{field_name}: incompatible types:\n  existing={:#?}\n  new={:#?}",
-                                existing, new
-                            );
-                            return None; // fundamentally incompatible types
-                        }
-                    }
-                }
-            }
-        } else {
+    for (i, props_opt) in schema_properties.iter().enumerate() {
+        let Some(props) = props_opt else {
             debug!(config, "Schema[{i}] has no properties object");
             return None;
+        };
+
+        for (field_name, field_schema) in props {
+            *field_counts.entry(field_name.clone()).or_insert(0) += 1;
+
+            let normalized = normalise_nullable(field_schema).clone();
+
+            // Handle anyOf before storing
+            let normalized = if normalized.get("anyOf").is_some() {
+                if let Some(Value::Array(any_of_schemas)) = normalized.get("anyOf") {
+                    unify_anyof_schemas(any_of_schemas, field_name, config).unwrap_or(normalized)
+                } else {
+                    normalized
+                }
+            } else {
+                normalized
+            };
+
+            field_schemas
+                .entry(field_name.clone())
+                .or_insert_with(Vec::new)
+                .push(normalized);
         }
+    }
+
+    // Step 3: Unify schemas for each field
+    let merge_start = std::time::Instant::now();
+    let field_names: Vec<_> = field_schemas.keys().cloned().collect();
+
+    let unified_fields: Vec<(String, Option<Value>)> = if field_names.len() >= 10 {
+        field_names
+            .par_iter()
+            .map(|field_name| {
+                unify_field_schemas(field_name, &field_schemas[field_name], path, config)
+            })
+            .collect()
+    } else {
+        field_names
+            .iter()
+            .map(|field_name| {
+                unify_field_schemas(field_name, &field_schemas[field_name], path, config)
+            })
+            .collect()
+    };
+
+    // Build all_fields from results
+    let mut all_fields = ordermap::OrderMap::new();
+    for (field_name, unified_opt) in unified_fields {
+        if let Some(unified) = unified_opt {
+            all_fields.insert(field_name, unified);
+        } else {
+            debug!(config, "Failed to unify field schemas");
+            return None;
+        }
+    }
+
+    if config.profile && schemas.len() > 50 {
+        eprintln!("  Merge loop took {:?}", merge_start.elapsed());
     }
 
     let total_schemas = schemas.len();

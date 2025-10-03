@@ -61,9 +61,6 @@ info:
                           }
                         ]
                       }
-                    ],
-                    "dependencies": [
-                      "null"
                     ]
                   }
                 }
