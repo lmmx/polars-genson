@@ -12,17 +12,19 @@ const PARALLEL_PROP_THRESHOLD: usize = 3;
 /// Process properties in parallel when beneficial
 fn process_properties_parallel<F>(
     props_obj: &mut serde_json::Map<String, Value>,
-    _config: &SchemaInferenceConfig,
+    config: &SchemaInferenceConfig,
     processor: F,
 ) where
     F: Fn(&str, &mut Value) + Send + Sync,
 {
     if props_obj.len() >= PARALLEL_PROP_THRESHOLD {
-        eprintln!(
-            "Parallelising: {} properties ({})",
-            props_obj.len(),
-            current_time_hms()
-        );
+        if config.profile {
+            eprintln!(
+                "Parallelising: {} properties ({})",
+                props_obj.len(),
+                current_time_hms()
+            );
+        }
         // Extract entries, process in parallel, reconstruct map
         let entries: Vec<_> = std::mem::take(props_obj).into_iter().collect();
         let processed: Vec<(String, Value)> = entries
