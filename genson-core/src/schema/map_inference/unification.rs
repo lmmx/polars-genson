@@ -655,7 +655,7 @@ fn unify_record_schemas(
             .map(|schema| {
                 extract_field_from_nullable_schema(schema, "properties")
                     .and_then(|v| v.as_object())
-                    .map(|props| props.clone())
+                    .cloned()
             })
             .collect()
     } else {
@@ -664,7 +664,7 @@ fn unify_record_schemas(
             .map(|schema| {
                 extract_field_from_nullable_schema(schema, "properties")
                     .and_then(|v| v.as_object())
-                    .map(|props| props.clone())
+                    .cloned()
             })
             .collect()
     };
@@ -697,7 +697,7 @@ fn unify_record_schemas(
 
             field_schemas
                 .entry(field_name.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(normalized);
         }
     }
