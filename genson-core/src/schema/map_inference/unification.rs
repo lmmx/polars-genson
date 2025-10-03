@@ -495,29 +495,30 @@ fn unify_map_schemas(
     }
 }
 
-/// Unify all schemas for a single field, applying all the special-case logic
-fn unify_field_schemas(
+/// Sequential pairwise unification with full scalar promotion support
+fn unify_field_schemas_sequential(
     field_name: &str,
     schemas: &[Value],
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> (String, Option<Value>) {
-    // Single schema - just return it
     if schemas.len() == 1 {
         return (field_name.to_string(), Some(schemas[0].clone()));
     }
 
-    // Try to unify pairwise with special-case handling
+    let first = &schemas[0];
+    if schemas.iter().all(|s| s == first) {
+        return (field_name.to_string(), Some(first.clone()));
+    }
+
     let mut unified = schemas[0].clone();
 
     for new in &schemas[1..] {
-        // Try nullable compatibility first
         if let Some(compatible) = schemas_compatible(&unified, new) {
             unified = compatible;
             continue;
         }
 
-        // Try recursive unification for arrays/objects
         if (is_array_schema(&unified) && is_array_schema(new))
             || (is_object_schema(&unified) && is_object_schema(new))
         {
@@ -533,7 +534,6 @@ fn unify_field_schemas(
             }
         }
 
-        // Try scalar promotion if enabled
         if config.wrap_scalars {
             let unified_is_obj = is_object_schema(&unified);
             let unified_is_scalar = is_scalar_schema(&unified);
@@ -564,11 +564,75 @@ fn unify_field_schemas(
             }
         }
 
-        // Incompatible
         return (field_name.to_string(), None);
     }
 
     (field_name.to_string(), Some(unified))
+}
+
+/// Divide-and-conquer parallel unification (no scalar promotion)
+fn unify_field_schemas_parallel(
+    field_name: &str,
+    schemas: &[Value],
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> (String, Option<Value>) {
+    if schemas.is_empty() {
+        return (field_name.to_string(), None);
+    }
+    if schemas.len() == 1 {
+        return (field_name.to_string(), Some(schemas[0].clone()));
+    }
+    if schemas.len() < 10 {
+        // Small sets: use sequential to avoid overhead
+        return unify_field_schemas_sequential(field_name, schemas, path, config);
+    }
+
+    // Split and recurse in parallel
+    let mid = schemas.len() / 2;
+    let (left, right) = schemas.split_at(mid);
+
+    let ((_l_name, l_res), (_r_name, r_res)) = rayon::join(
+        || unify_field_schemas_parallel(field_name, left, path, config),
+        || unify_field_schemas_parallel(field_name, right, path, config),
+    );
+
+    // Merge the two halves
+    let merged = match (l_res, r_res) {
+        (Some(lv), Some(rv)) => {
+            check_unifiable_schemas(&[lv, rv], &format!("{}.{}", path, field_name), config)
+        }
+        _ => None,
+    };
+
+    (field_name.to_string(), merged)
+}
+
+/// Main entry point: choose strategy based on field characteristics
+fn unify_field_schemas(
+    field_name: &str,
+    schemas: &[Value],
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> (String, Option<Value>) {
+    if schemas.len() == 1 {
+        return (field_name.to_string(), Some(schemas[0].clone()));
+    }
+
+    // Check if we need scalar promotion for this field
+    let needs_scalar_promo = config.wrap_scalars && {
+        let has_scalars = schemas.iter().any(is_scalar_schema);
+        let has_objects = schemas.iter().any(is_object_schema);
+        has_scalars && has_objects
+    };
+
+    if needs_scalar_promo || schemas.len() < 50 {
+        // Use sequential (preserves scalar promotion, good for small/mixed sets)
+        unify_field_schemas_sequential(field_name, schemas, path, config)
+    } else {
+        // Use parallel divide-and-conquer (faster for large homogeneous sets)
+        unify_field_schemas_parallel(field_name, schemas, path, config)
+    }
 }
 
 /// Unify record schemas by merging their properties
