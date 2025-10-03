@@ -3,7 +3,7 @@ use crate::{debug, profile};
 use rayon::prelude::*;
 use serde::de::Error as DeError;
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::panic::{self, AssertUnwindSafe};
@@ -127,14 +127,18 @@ fn type_string_rank(s: &str) -> usize {
     }
 }
 
-/// Prepare a single JSON string for schema building (validation + wrap_root transformation)
-fn prepare_json_string(
-    json_str: &str,
+/// Prepare JSON bytes for schema building (validation + wrap_root transformation)
+fn prepare_json_bytes<'a>(
+    json_bytes: &'a [u8],
     index: usize,
     config: &SchemaInferenceConfig,
-) -> Result<String, String> {
+) -> Result<Cow<'a, [u8]>, String> {
+    // Early return for empty input
+    let json_str = std::str::from_utf8(json_bytes)
+        .map_err(|e| format!("Invalid UTF-8 at index {}: {}", index + 1, e))?;
+
     if json_str.trim().is_empty() {
-        return Ok(String::new());
+        return Ok(Cow::Borrowed(&[]));
     }
 
     // Choose validation strategy based on delimiter
@@ -171,10 +175,10 @@ fn prepare_json_string(
     }
 
     // Safe: JSON is valid, now hand off to genson-rs
-    let prepared_json: Cow<str> = if let Some(ref field) = config.wrap_root {
+    if let Some(ref field) = config.wrap_root {
         if config.delimiter == Some(b'\n') {
             // NDJSON: wrap each line separately
-            let mut wrapped_lines = Vec::new();
+            let mut wrapped_bytes = Vec::new();
             for line in json_str.lines() {
                 let trimmed = line.trim();
                 if trimmed.is_empty() {
@@ -182,20 +186,26 @@ fn prepare_json_string(
                 }
                 let inner_val: Value = serde_json::from_str(trimmed)
                     .map_err(|e| format!("Failed to parse NDJSON line before wrap_root: {}", e))?;
-                wrapped_lines.push(serde_json::json!({ field: inner_val }).to_string());
+
+                if !wrapped_bytes.is_empty() {
+                    wrapped_bytes.push(b'\n');
+                }
+                serde_json::to_writer(&mut wrapped_bytes, &json!({ field: inner_val }))
+                    .map_err(|e| format!("Failed to serialize wrapped NDJSON: {}", e))?;
             }
-            Cow::Owned(wrapped_lines.join("\n"))
+            Ok(Cow::Owned(wrapped_bytes))
         } else {
             // Single JSON doc
             let inner_val: Value = serde_json::from_str(json_str)
                 .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
-            Cow::Owned(serde_json::json!({ field: inner_val }).to_string())
+            let wrapped_bytes = serde_json::to_vec(&json!({ field: inner_val }))
+                .map_err(|e| format!("Failed to serialize wrapped JSON: {}", e))?;
+            Ok(Cow::Owned(wrapped_bytes))
         }
     } else {
-        Cow::Borrowed(json_str)
-    };
-
-    Ok(prepared_json.into_owned())
+        // No wrapping needed - just borrow the original bytes
+        Ok(Cow::Borrowed(json_bytes))
+    }
 }
 
 /// Process all JSON strings sequentially and build schemas
@@ -216,7 +226,7 @@ fn process_json_strings_sequential(
         profile!(config, "PROCESSING JSON STRING {}", i);
 
         let prep_start = std::time::Instant::now();
-        let prepared_json = prepare_json_string(json_str, i, config)?;
+        let prepared_json = prepare_json_bytes(json_str.as_bytes(), i, config)?;
         let prep_elapsed = prep_start.elapsed();
         profile!(config, "  Preparation took: {:?}", prep_elapsed);
 
@@ -224,7 +234,7 @@ fn process_json_strings_sequential(
             continue;
         }
 
-        let mut bytes = prepared_json.as_bytes().to_vec();
+        let mut bytes = prepared_json.into_owned(); // Only allocate if Cow::Owned
 
         // Build schema incrementally - this is where panics happen
         let build_start = std::time::Instant::now();
@@ -259,7 +269,7 @@ fn process_json_strings_parallel(
                 profile!(config, "Thread processing JSON STRING {}", i);
 
                 let prep_start = std::time::Instant::now();
-                let prepared = prepare_json_string(json_str, i, config)?;
+                let prepared = prepare_json_bytes(json_str.as_bytes(), i, config)?;
                 let prep_elapsed = prep_start.elapsed();
                 profile!(
                     config,
@@ -274,7 +284,7 @@ fn process_json_strings_parallel(
                 }
 
                 let mut chunk_builder = get_builder(config.schema_uri.as_deref());
-                let mut bytes = prepared.as_bytes().to_vec();
+                let mut bytes = prepared.into_owned();
                 let chunk_build_config = BuildConfig {
                     delimiter: config.delimiter,
                     ignore_outer_array: config.ignore_outer_array,
