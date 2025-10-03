@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3](https://github.com/lmmx/polars-genson/compare/genson-core-v0.5.2...genson-core-v0.5.3) - 2025-10-03
+
+### <!-- 3 -->Performance
+
+- reduce clones in unification functions ([#135](https://github.com/lmmx/polars-genson/pull/135))
+
 ## [0.5.2](https://github.com/lmmx/polars-genson/compare/genson-core-v0.5.1...genson-core-v0.5.2) - 2025-10-03
 
 ### <!-- 3 -->Performance
