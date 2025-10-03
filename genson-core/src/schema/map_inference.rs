@@ -108,7 +108,8 @@ fn process_anyof_unions(
             // Handle direct anyOf at this level
             if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
                 if config.unify_maps {
-                    if let Some(unified) = unify_anyof_schemas(any_of_schemas, field_name, config) {
+                    let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
+                    if let Some(unified) = unify_anyof_schemas(&any_of_refs, field_name, config) {
                         debug!(config, "Successfully unified anyOf schemas");
                         *schema = unified;
                         made_changes = true;
@@ -228,8 +229,9 @@ pub(crate) fn rewrite_objects(
                         any_of_schemas.len()
                     );
                 }
+                let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
                 if let Some(unified) =
-                    unify_anyof_schemas(any_of_schemas, field_name.unwrap_or(""), config)
+                    unify_anyof_schemas(&any_of_refs, field_name.unwrap_or(""), config)
                 {
                     debug!(config, "Successfully unified anyOf schemas");
                     // Replace the entire schema with the unified result
@@ -295,26 +297,9 @@ pub(crate) fn rewrite_objects(
             let above_threshold = key_count >= config.map_threshold;
 
             // Copy out child schema shapes
-            let clone_start = std::time::Instant::now();
-            let child_schemas: Vec<Value> = if props.len() >= 100 {
-                if config.profile && props.len() > 50 {
-                    eprintln!(
-                        "Parallel cloning {} props ({})",
-                        props.len(),
-                        current_time_hms()
-                    );
-                }
-                let props_vec: Vec<_> = props.iter().collect();
-                props_vec.par_iter().map(|(_, v)| (*v).clone()).collect()
-            } else {
-                props.values().cloned().collect()
-            };
+            let child_schemas: Vec<&Value> = props.values().collect();
             if config.profile && child_schemas.len() > 50 {
-                eprintln!(
-                    "Cloning {} schemas took {:?}",
-                    child_schemas.len(),
-                    clone_start.elapsed()
-                );
+                eprintln!("Collected {} schemas", child_schemas.len());
             }
 
             // Detect map-of-records only if:
@@ -328,9 +313,10 @@ pub(crate) fn rewrite_objects(
                     {
                         let all_same = child_schemas.par_iter().all(|other| other == first);
                         if all_same {
+                            let first_clone = (*first).clone();
                             obj.remove("properties");
                             obj.remove("required");
-                            obj.insert("additionalProperties".to_string(), first.clone());
+                            obj.insert("additionalProperties".to_string(), first_clone);
                             return;
                         }
                     }
@@ -456,11 +442,12 @@ pub(crate) fn rewrite_objects(
                             .all(|s| s.get("type") == Some(&Value::String("array".into())))
                         {
                             // Collect item schemas, short-circuit if any missing
-                            let mut item_schemas = Vec::with_capacity(child_schemas.len());
+                            let mut item_schemas: Vec<&Value> =
+                                Vec::with_capacity(child_schemas.len());
                             let mut all_items_ok = true;
                             for s in &child_schemas {
                                 if let Some(items) = s.get("items") {
-                                    item_schemas.push(items.clone());
+                                    item_schemas.push(items);
                                 } else {
                                     all_items_ok = false;
                                     break;
