@@ -5,13 +5,18 @@
 //! serde_json = "1.0"
 //! ```
 
+use std::fs;
+use std::path::PathBuf;
 use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use genson_core::normalise::{normalise_values, NormaliseConfig, MapEncoding};
 
 fn main() {
     // Simulate what the Python extension does with 30 rows
-    let json_strings: Vec<String> = std::fs::read_to_string("../genson-cli/tests/data/claims_fixture_x30.jsonl")
-        .expect("Failed to read file")
+    let home = std::env::var("HOME").expect("HOME environment variable not set");
+    let path = PathBuf::from(home)
+        .join("dev/polars-genson/genson-cli/tests/data/claims_fixture_x30.jsonl");
+    let json_strings: Vec<String> = fs::read_to_string(&path)
+        .expect("Failed to read JSONL file")
         .lines()
         // .take(5)
         // .cycle()
