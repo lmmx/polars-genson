@@ -134,6 +134,16 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             "--root-map" => {
                 config.no_root_map = false;
             }
+            "--max-builders" => {
+                if i + 1 < args.len() {
+                    config.max_builders = Some(args[i + 1].parse::<usize>().map_err(|_| {
+                        format!("Invalid value for --max-builders: {}", args[i + 1])
+                    })?);
+                    i += 1;
+                } else {
+                    return Err("Missing value for --max-builders".into());
+                }
+            }
             "--debug" => {
                 config.debug = true;
             }
@@ -242,6 +252,8 @@ fn print_help() {
     println!("    --no-wrap-scalars     Disable scalar promotion (keep raw scalar types)");
     println!("    --wrap-root <field>   Wrap top-level schema under this required field");
     println!("    --root-map            Allow document root to become a map");
+    println!("    --max-builders <N>    Maximum schema builders to create in parallel at once");
+    println!("                          Lower values reduce peak memory (default: unlimited)");
     println!("    --debug               Enable debug output during schema inference");
     println!("    --profile             Enable profiling output during schema inference");
     println!();
