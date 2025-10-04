@@ -173,7 +173,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
         // Original behavior: merge all schemas into one
         // We only need a single row, and we are allowed to change the length
         // Wrap EVERYTHING in panic catching, including config creation
-        let result = panic::catch_unwind(|| -> Result<String, String> {
+        let result = panic::catch_unwind(move || -> Result<String, String> {
             let config = SchemaInferenceConfig {
                 ignore_outer_array: kwargs.ignore_outer_array,
                 delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
@@ -195,6 +195,8 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
             let schema_result = infer_json_schema_from_strings(&json_strings, config)
                 .map_err(|e| format!("Genson error: {}", e))?;
 
+            drop(json_strings);
+
             serde_json::to_string_pretty(&schema_result.schema)
                 .map_err(|e| format!("JSON serialization error: {}", e))
         });
@@ -215,7 +217,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
         }
     } else {
         // New behavior: infer schema for each row individually
-        let result = panic::catch_unwind(|| -> Result<Vec<serde_json::Value>, String> {
+        let result = panic::catch_unwind(move || -> Result<Vec<serde_json::Value>, String> {
             let mut individual_schemas = Vec::new();
             for json_str in &json_strings {
                 let config = SchemaInferenceConfig {
@@ -240,6 +242,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     .map_err(|e| format!("Individual genson error: {}", e))?;
                 individual_schemas.push(single_result.schema);
             }
+            drop(json_strings);
             Ok(individual_schemas)
         });
 
@@ -304,7 +307,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
     let wrap_root_field = kwargs.wrap_root.clone();
 
     // Use genson to infer JSON schema, then convert to Polars schema fields
-    let result = panic::catch_unwind(|| -> Result<Vec<(String, String)>, String> {
+    let result = panic::catch_unwind(move || -> Result<Vec<(String, String)>, String> {
         let config = SchemaInferenceConfig {
             ignore_outer_array: kwargs.ignore_outer_array,
             delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
@@ -325,6 +328,8 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
 
         let schema_result = infer_json_schema_from_strings(&json_strings, config)
             .map_err(|e| format!("Genson error: {}", e))?;
+
+        drop(json_strings);
 
         let format = if kwargs.avro {
             SchemaFormat::Avro
@@ -465,6 +470,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
 
     let schema_result = infer_json_schema_from_strings(&json_strings, config)
         .map_err(|e| PolarsError::ComputeError(format!("Schema inference failed: {e}").into()))?;
+    drop(json_strings);
 
     let schema = &schema_result.schema;
 
