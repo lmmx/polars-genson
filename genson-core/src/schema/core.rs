@@ -60,6 +60,13 @@ impl SchemaInferenceConfig {
         }
     }
 
+    pub(crate) fn profile_verbose(&self, args: std::fmt::Arguments) {
+        if self.profile && matches!(self.verbosity, DebugVerbosity::Verbose) {
+            let message = format!("{}", args);
+            eprintln!("{}", message);
+        }
+    }
+
     pub(crate) fn debug(&self, args: std::fmt::Arguments) {
         if self.debug {
             let message = format!("{}", args);
@@ -128,6 +135,13 @@ impl Default for SchemaInferenceConfig {
 macro_rules! profile {
     ($cfg:expr, $($arg:tt)*) => {
         $cfg.profile(format_args!($($arg)*))
+    };
+}
+
+#[macro_export]
+macro_rules! profile_verbose {
+    ($cfg:expr, $($arg:tt)*) => {
+        $cfg.profile_verbose(format_args!($($arg)*))
     };
 }
 

@@ -1,5 +1,5 @@
 use crate::genson_rs::{build_json_schema, get_builder, BuildConfig};
-use crate::{debug, profile};
+use crate::{debug, profile, profile_verbose};
 use rayon::prelude::*;
 use serde::de::Error as DeError;
 use serde::Deserialize;
@@ -21,6 +21,35 @@ use map_inference::*;
 const MAX_JSON_ERROR_LENGTH: usize = 100;
 /// Threshold for switching to parallel processing. Below this, use sequential.
 const PARALLEL_THRESHOLD: usize = 10;
+
+/// Get current RSS memory usage in bytes
+pub(crate) fn get_rss_bytes() -> Option<usize> {
+    let status = std::fs::read_to_string("/proc/self/status").ok()?;
+    for line in status.lines() {
+        if line.starts_with("VmRSS:") {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 2 {
+                let kb: usize = parts[1].parse().ok()?;
+                return Some(kb * 1024); // Convert KB to bytes
+            }
+        }
+    }
+    None
+}
+
+/// Format bytes to human-readable string
+pub(crate) fn format_bytes(bytes: usize) -> String {
+    const MB: usize = 1024 * 1024;
+    const GB: usize = 1024 * 1024 * 1024;
+
+    if bytes >= GB {
+        format!("{:.2} GB", bytes as f64 / GB as f64)
+    } else if bytes >= MB {
+        format!("{:.2} MB", bytes as f64 / MB as f64)
+    } else {
+        format!("{:.2} KB", bytes as f64 / 1024.0)
+    }
+}
 
 fn current_time_hms() -> String {
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
@@ -223,12 +252,12 @@ fn process_json_strings_sequential(
 
     // Process each JSON string
     for (i, json_str) in json_strings.iter().enumerate() {
-        profile!(config, "PROCESSING JSON STRING {}", i);
+        profile_verbose!(config, "PROCESSING JSON STRING {}", i);
 
         let prep_start = std::time::Instant::now();
         let prepared_json = prepare_json_bytes(json_str.as_bytes(), i, config)?;
         let prep_elapsed = prep_start.elapsed();
-        profile!(config, "  Preparation took: {:?}", prep_elapsed);
+        profile_verbose!(config, "  Preparation took: {:?}", prep_elapsed);
 
         if prepared_json.is_empty() {
             continue;
@@ -240,7 +269,7 @@ fn process_json_strings_sequential(
         let build_start = std::time::Instant::now();
         let _schema = build_json_schema(builder, &mut bytes, &build_config);
         let build_elapsed = build_start.elapsed();
-        profile!(config, "  Schema building took: {:?}", build_elapsed);
+        profile_verbose!(config, "  Schema building took: {:?}", build_elapsed);
 
         processed_count += 1;
     }
@@ -260,18 +289,24 @@ fn process_json_strings_parallel(
         current_time_hms()
     );
 
+    if config.profile {
+        if let Some(rss) = get_rss_bytes() {
+            eprintln!("📊 RSS before parallel processing: {}", format_bytes(rss));
+        }
+    }
+
     // Process each string independently in parallel, keeping track of index
     let individual_builders: Vec<(usize, SchemaBuilder, bool)> = json_strings
         .par_iter()
         .enumerate()
         .map(
             |(i, json_str)| -> Result<(usize, SchemaBuilder, bool), String> {
-                profile!(config, "Thread processing JSON STRING {}", i);
+                profile_verbose!(config, "Thread processing JSON STRING {}", i);
 
                 let prep_start = std::time::Instant::now();
                 let prepared = prepare_json_bytes(json_str.as_bytes(), i, config)?;
                 let prep_elapsed = prep_start.elapsed();
-                profile!(
+                profile_verbose!(
                     config,
                     "  String {} preparation took: {:?}",
                     i,
@@ -293,7 +328,7 @@ fn process_json_strings_parallel(
                 let build_start = std::time::Instant::now();
                 build_json_schema(&mut chunk_builder, &mut bytes, &chunk_build_config);
                 let build_elapsed = build_start.elapsed();
-                profile!(
+                profile_verbose!(
                     config,
                     "  String {} schema building took: {:?}",
                     i,
@@ -304,6 +339,16 @@ fn process_json_strings_parallel(
             },
         )
         .collect::<Result<Vec<_>, String>>()?;
+
+    if config.profile {
+        if let Some(rss) = get_rss_bytes() {
+            eprintln!(
+                "📊 RSS after collecting {} individual_builders: {}",
+                individual_builders.len(),
+                format_bytes(rss)
+            );
+        }
+    }
 
     profile!(config, "Merging schemas in batch ({})", current_time_hms());
 
@@ -325,6 +370,16 @@ fn process_json_strings_parallel(
         }
     }
 
+    if config.profile {
+        if let Some(rss) = get_rss_bytes() {
+            eprintln!(
+                "📊 RSS after extracting {} schemas: {}",
+                schemas_to_merge.len(),
+                format_bytes(rss)
+            );
+        }
+    }
+
     // Batch merge all collected schemas at once
     profile!(
         config,
@@ -333,6 +388,11 @@ fn process_json_strings_parallel(
         current_time_hms()
     );
     builder.add_schemas(&schemas_to_merge);
+    if config.profile {
+        if let Some(rss) = get_rss_bytes() {
+            eprintln!("📊 RSS after builder.add_schemas: {}", format_bytes(rss));
+        }
+    }
     profile!(config, "Batch merge complete ({})", current_time_hms());
 
     Ok(processed_count)
