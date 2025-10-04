@@ -289,111 +289,106 @@ fn process_json_strings_parallel(
         current_time_hms()
     );
 
+    // Process in chunks to limit peak memory
+    let chunk_size = config.max_builders.unwrap_or(json_strings.len());
+
     if config.profile {
         if let Some(rss) = get_rss_bytes() {
             eprintln!("📊 RSS before parallel processing: {}", format_bytes(rss));
         }
     }
 
-    // Process each string independently in parallel, keeping track of index
-    let individual_builders: Vec<(usize, SchemaBuilder, bool)> = json_strings
-        .par_iter()
-        .enumerate()
-        .map(
-            |(i, json_str)| -> Result<(usize, SchemaBuilder, bool), String> {
-                profile_verbose!(config, "Thread processing JSON STRING {}", i);
-
-                let prep_start = std::time::Instant::now();
-                let prepared = prepare_json_bytes(json_str.as_bytes(), i, config)?;
-                let prep_elapsed = prep_start.elapsed();
-                profile_verbose!(
-                    config,
-                    "  String {} preparation took: {:?}",
-                    i,
-                    prep_elapsed
-                );
-
-                if prepared.is_empty() {
-                    return Ok((i, get_builder(config.schema_uri.as_deref()), false));
-                    // Mark as empty
-                }
-
-                let mut chunk_builder = get_builder(config.schema_uri.as_deref());
-                let mut bytes = prepared.into_owned();
-                let chunk_build_config = BuildConfig {
-                    delimiter: config.delimiter,
-                    ignore_outer_array: config.ignore_outer_array,
-                };
-
-                let build_start = std::time::Instant::now();
-                build_json_schema(&mut chunk_builder, &mut bytes, &chunk_build_config);
-                let build_elapsed = build_start.elapsed();
-                profile_verbose!(
-                    config,
-                    "  String {} schema building took: {:?}",
-                    i,
-                    build_elapsed
-                );
-
-                Ok((i, chunk_builder, true)) // Mark as non-empty
-            },
-        )
-        .collect::<Result<Vec<_>, String>>()?;
-
-    if config.profile {
-        if let Some(rss) = get_rss_bytes() {
-            eprintln!(
-                "📊 RSS after collecting {} individual_builders: {}",
-                individual_builders.len(),
-                format_bytes(rss)
-            );
-        }
-    }
-
-    profile!(config, "Merging schemas in batch ({})", current_time_hms());
-
-    // Collect unique schemas first (dedup by hash)
     let mut processed_count = 0;
     let mut seen_hashes = HashSet::new();
-    let mut schemas_to_merge: Vec<Value> = Vec::new();
 
-    for (_i, individual_builder, was_non_empty) in individual_builders.into_iter() {
-        if was_non_empty {
-            let schema = individual_builder.to_schema();
-            let schema_str = schema.to_string();
-            let hash = xxh64(schema_str.as_bytes(), 0);
+    for (chunk_idx, chunk) in json_strings.chunks(chunk_size).enumerate() {
+        profile!(
+            config,
+            "Processing chunk {} ({} strings)",
+            chunk_idx,
+            chunk.len()
+        );
 
-            if seen_hashes.insert(hash) {
-                schemas_to_merge.push(schema);
+        if config.profile {
+            if let Some(rss) = get_rss_bytes() {
+                eprintln!("📊 RSS before chunk {}: {}", chunk_idx, format_bytes(rss));
             }
+        }
+
+        let chunk_builders: Vec<(usize, SchemaBuilder, bool)> = chunk
+            .par_iter()
+            .enumerate()
+            .map(
+                |(i, json_str)| -> Result<(usize, SchemaBuilder, bool), String> {
+                    profile_verbose!(config, "Thread processing JSON STRING {}", i);
+
+                    let prep_start = std::time::Instant::now();
+                    let prepared = prepare_json_bytes(json_str.as_bytes(), i, config)?;
+                    let prep_elapsed = prep_start.elapsed();
+                    profile_verbose!(
+                        config,
+                        "  String {} preparation took: {:?}",
+                        i,
+                        prep_elapsed
+                    );
+
+                    if prepared.is_empty() {
+                        return Ok((i, get_builder(config.schema_uri.as_deref()), false));
+                    }
+
+                    let mut chunk_builder = get_builder(config.schema_uri.as_deref());
+                    let mut bytes = prepared.into_owned();
+                    let chunk_build_config = BuildConfig {
+                        delimiter: config.delimiter,
+                        ignore_outer_array: config.ignore_outer_array,
+                    };
+
+                    let build_start = std::time::Instant::now();
+                    build_json_schema(&mut chunk_builder, &mut bytes, &chunk_build_config);
+                    let build_elapsed = build_start.elapsed();
+                    profile_verbose!(
+                        config,
+                        "  String {} schema building took: {:?}",
+                        i,
+                        build_elapsed
+                    );
+
+                    Ok((i, chunk_builder, true))
+                },
+            )
+            .collect::<Result<Vec<_>, String>>()?;
+
+        if config.profile {
+            if let Some(rss) = get_rss_bytes() {
+                eprintln!("📊 RSS after collecting chunk: {}", format_bytes(rss));
+            }
+        }
+
+        // Extract and merge schemas from this chunk
+        for (_i, individual_builder, was_non_empty) in chunk_builders {
+            if !was_non_empty {
+                continue;
+            }
+
+            let schema = individual_builder.to_schema();
+            let hash = xxh64(schema.to_string().as_bytes(), 0);
+
+            if !seen_hashes.insert(hash) {
+                continue;
+            }
+
             processed_count += 1;
+            builder.add_schema(schema);
+        }
+
+        if config.profile {
+            if let Some(rss) = get_rss_bytes() {
+                eprintln!("📊 RSS after merging chunk: {}", format_bytes(rss));
+            }
         }
     }
 
-    if config.profile {
-        if let Some(rss) = get_rss_bytes() {
-            eprintln!(
-                "📊 RSS after extracting {} schemas: {}",
-                schemas_to_merge.len(),
-                format_bytes(rss)
-            );
-        }
-    }
-
-    // Batch merge all collected schemas at once
-    profile!(
-        config,
-        "Merging {} unique schemas in batch ({})",
-        schemas_to_merge.len(),
-        current_time_hms()
-    );
-    builder.add_schemas(&schemas_to_merge);
-    if config.profile {
-        if let Some(rss) = get_rss_bytes() {
-            eprintln!("📊 RSS after builder.add_schemas: {}", format_bytes(rss));
-        }
-    }
-    profile!(config, "Batch merge complete ({})", current_time_hms());
+    profile!(config, "All chunks processed ({})", current_time_hms());
 
     Ok(processed_count)
 }
