@@ -24,7 +24,7 @@ description = "A Polars plugin for JSON schema inference using genson-rs."
 name = "polars-genson"
 readme = "README.md"
 requires-python = ">=3.9"
-version = "0.5.3"
+version = "0.5.4"
 
 [project.optional-dependencies]
 dev = ["pdm-bump>=0.9.10", "pdm>=2.22.3", "pre-commit>=4.1.0", "pytest>=8.3.4"]
