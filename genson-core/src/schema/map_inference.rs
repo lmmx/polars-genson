@@ -1,6 +1,6 @@
 // genson-core/src/schema/map_inference.rs
-use crate::debug;
 use crate::schema::core::SchemaInferenceConfig;
+use crate::{debug, profile_verbose};
 use rayon::prelude::*;
 use serde_json::Value;
 mod unification;
@@ -18,13 +18,12 @@ fn process_properties_parallel<F>(
     F: Fn(&str, &mut Value) + Send + Sync,
 {
     if props_obj.len() >= PARALLEL_PROP_THRESHOLD {
-        if config.profile {
-            eprintln!(
-                "Parallelising: {} properties ({})",
-                props_obj.len(),
-                current_time_hms()
-            );
-        }
+        profile_verbose!(
+            config,
+            "Parallelising: {} properties ({})",
+            props_obj.len(),
+            current_time_hms()
+        );
         // Extract entries, process in parallel, reconstruct map
         let entries: Vec<_> = std::mem::take(props_obj).into_iter().collect();
         let processed: Vec<(String, Value)> = entries
