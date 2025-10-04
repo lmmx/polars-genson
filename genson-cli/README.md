@@ -74,13 +74,25 @@ OPTIONS:
     --coerce-strings      Coerce numeric/boolean strings to schema type during normalisation
     --keep-empty          Keep empty arrays/maps instead of turning them into nulls
     --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)
+    --map-max-rk <N>      Maximum required keys for Map inference (default: no limit)
+    --map-max-required-keys <N>
+    --unify-maps          Enable unification of compatible record schemas into maps
+                          Same as --map-max-rk
+    --no-unify <fields>   Exclude fields from record unification (comma-separated)
+                          Example: --no-unify qualifiers,references
     --force-type k:v,...  Force field(s) to 'map' or 'record'
                           Example: --force-type labels:map,claims:record
     --map-encoding <mode> Choose map encoding (mapping|entries|kv)
                           mapping = Avro/JSON object (shared dict)
                           entries = list of single-entry objects (individual dicts)
                           kv      = list of {key,value} objects
+    --no-wrap-scalars     Disable scalar promotion (keep raw scalar types)
     --wrap-root <field>   Wrap top-level schema under this required field
+    --root-map            Allow document root to become a map
+    --max-builders <N>    Maximum schema builders to create in parallel at once
+                          Lower values reduce peak memory (default: unlimited)
+    --debug               Enable debug output during schema inference
+    --profile             Enable profiling output during schema inference
 
 EXAMPLES:
     genson-cli data.json

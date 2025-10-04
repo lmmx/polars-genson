@@ -101,6 +101,7 @@ def infer_json_schema(
     avro: bool = False,
     wrap_root: str | None = None,
     no_root_map: bool = True,
+    max_builders: int | None = None,
 ) -> pl.Expr:
     """Infer JSON schema from a string column containing JSON data.
 
@@ -151,6 +152,10 @@ def infer_json_schema(
         If ``None``, leave rows unchanged.
     no_root_map : bool, default True
         Prevent document root from becoming a map type, even if it meets map inference criteria
+    max_builders : int, optional
+        Maximum number of schema builders to create in parallel at once.
+        Lower values reduce peak memory usage during schema inference.
+        If None, processes all strings at once. Default is None.
 
     Returns:
     -------
@@ -172,6 +177,7 @@ def infer_json_schema(
         "avro": avro,
         "wrap_root": wrap_root,
         "no_root_map": no_root_map,
+        "max_builders": max_builders,
     }
     if schema_uri is not None:
         kwargs["schema_uri"] = schema_uri
@@ -199,6 +205,7 @@ def infer_polars_schema(
     avro: bool = False,
     wrap_root: str | None = None,
     no_root_map: bool = True,
+    max_builders: int | None = None,
 ) -> pl.Expr:
     """Infer Polars schema from a string column containing JSON data.
 
@@ -247,6 +254,10 @@ def infer_polars_schema(
         If ``None``, leave rows unchanged.
     no_root_map : bool, default True
         Prevent document root from becoming a map type, even if it meets map inference criteria
+    max_builders : int, optional
+        Maximum number of schema builders to create in parallel at once.
+        Lower values reduce peak memory usage during schema inference.
+        If None, processes all strings at once. Default is None.
 
     Returns:
     -------
@@ -268,6 +279,7 @@ def infer_polars_schema(
         "avro": avro,
         "wrap_root": wrap_root,
         "no_root_map": no_root_map,
+        "max_builders": max_builders,
     }
     if not merge_schemas:
         url = "https://github.com/lmmx/polars-genson/issues/37"
@@ -295,6 +307,7 @@ def normalise_json(
     wrap_scalars: bool = True,
     wrap_root: str | None = None,
     no_root_map: bool = True,
+    max_builders: int | None = None,
 ) -> pl.Expr:
     """Normalise a JSON string column against an inferred Avro schema.
 
@@ -350,6 +363,10 @@ def normalise_json(
         If ``None``, leave rows unchanged.
     no_root_map : bool, default True
         Prevent document root from becoming a map type, even if it meets map inference criteria
+    max_builders : int, optional
+        Maximum number of schema builders to create in parallel at once.
+        Lower values reduce peak memory usage during schema inference.
+        If None, processes all strings at once. Default is None.
 
     Returns:
     -------
@@ -390,6 +407,7 @@ def normalise_json(
         "wrap_scalars": wrap_scalars,
         "wrap_root": wrap_root,
         "no_root_map": no_root_map,
+        "max_builders": max_builders,
     }
     if force_field_types is not None:
         kwargs["force_field_types"] = force_field_types
@@ -433,6 +451,7 @@ class GensonNamespace:
         avro: bool = False,
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
+        max_builders: int | None = None,
     ) -> pl.Schema:
         # ) -> pl.Schema | list[pl.Schema]:
         """Infer Polars schema from a string column containing JSON data.
@@ -483,6 +502,10 @@ class GensonNamespace:
             If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
         no_root_map : bool, default True
             Prevent document root from becoming a map type, even if it meets map inference criteria
+        max_builders : int, optional
+            Maximum number of schema builders to create in parallel at once.
+            Lower values reduce peak memory usage during schema inference.
+            If None, processes all strings at once. Default is None.
 
         Returns:
         -------
@@ -514,6 +537,7 @@ class GensonNamespace:
                 avro=avro,
                 wrap_root=wrap_root_field,
                 no_root_map=no_root_map,
+                max_builders=max_builders,
             ).first()
         )
 
@@ -546,6 +570,7 @@ class GensonNamespace:
         avro: bool = False,
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
+        max_builders: int | None = None,
     ) -> dict | list[dict]:
         """Infer JSON schema from a string column containing JSON data.
 
@@ -596,6 +621,10 @@ class GensonNamespace:
             If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
         no_root_map : bool, default True
             Prevent document root from becoming a map type, even if it meets map inference criteria
+        max_builders : int, optional
+            Maximum number of schema builders to create in parallel at once.
+            Lower values reduce peak memory usage during schema inference.
+            If None, processes all strings at once. Default is None.
 
         Returns:
         -------
@@ -622,6 +651,7 @@ class GensonNamespace:
                 avro=avro,
                 wrap_root=wrap_root_field,
                 no_root_map=no_root_map,
+                max_builders=max_builders,
             ).first()
         )
 
@@ -655,6 +685,7 @@ class GensonNamespace:
         wrap_scalars: bool = True,
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
+        max_builders: int | None = None,
     ) -> pl.Series:
         """Normalise a JSON string column to conform to an inferred Avro schema.
 
@@ -722,6 +753,10 @@ class GensonNamespace:
             If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
         no_root_map : bool, default True
             Prevent document root from becoming a map type, even if it meets map inference criteria
+        max_builders : int, optional
+            Maximum number of schema builders to create in parallel at once.
+            Lower values reduce peak memory usage during schema inference.
+            If None, processes all strings at once. Default is None.
 
         Returns:
         -------
@@ -747,6 +782,7 @@ class GensonNamespace:
             wrap_scalars=wrap_scalars,
             wrap_root=wrap_root_field,
             no_root_map=no_root_map,
+            max_builders=max_builders,
         )
         if decode:
             if map_encoding != "kv":
@@ -770,6 +806,7 @@ class GensonNamespace:
                     avro=True,
                     wrap_root=wrap_root_field,
                     no_root_map=no_root_map,
+                    max_builders=max_builders,
                 )
                 dtype = pl.Struct(schema)
             else:

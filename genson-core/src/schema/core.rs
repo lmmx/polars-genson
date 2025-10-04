@@ -31,6 +31,10 @@ pub struct SchemaInferenceConfig {
     pub wrap_root: Option<String>,
     /// Prevent the document root from becoming a map type, even if it meets map inference criteria
     pub no_root_map: bool,
+    /// Maximum number of schema builders to create in parallel at once
+    /// Lower values reduce peak memory usage during schema inference
+    /// None: process all strings at once
+    pub max_builders: Option<usize>,
     /// Whether to output Avro schema rather than regular JSON Schema.
     #[cfg(feature = "avro")]
     pub avro: bool,
@@ -122,6 +126,7 @@ impl Default for SchemaInferenceConfig {
             wrap_scalars: true,
             wrap_root: None,
             no_root_map: true,
+            max_builders: None,
             #[cfg(feature = "avro")]
             avro: false,
             debug: false,

@@ -76,6 +76,12 @@ pub struct GensonKwargs {
 
     #[serde(default = "default_no_root_map")]
     pub no_root_map: bool,
+
+    /// Maximum number of schema builders to create in parallel at once.
+    /// Lower values reduce peak memory usage during schema inference.
+    /// If None, processes all strings at once. Default is None.
+    #[serde(default)]
+    pub max_builders: Option<usize>,
 }
 
 fn default_map_threshold() -> usize {
@@ -187,6 +193,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
                 no_root_map: kwargs.no_root_map,
+                max_builders: kwargs.max_builders,
                 debug: kwargs.debug,
                 profile: kwargs.profile,
                 verbosity: kwargs.verbosity,
@@ -233,6 +240,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
                     no_root_map: kwargs.no_root_map,
+                    max_builders: kwargs.max_builders,
                     debug: kwargs.debug,
                     profile: kwargs.profile,
                     verbosity: kwargs.verbosity,
@@ -321,6 +329,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
             no_root_map: kwargs.no_root_map,
+            max_builders: kwargs.max_builders,
             debug: kwargs.debug,
             profile: kwargs.profile,
             verbosity: kwargs.verbosity,
@@ -463,6 +472,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         avro: true, // normalisation implies Avro
         wrap_root: wrap_root_field.clone(),
         no_root_map: kwargs.no_root_map,
+        max_builders: kwargs.max_builders,
         debug: kwargs.debug,
         profile: kwargs.profile,
         verbosity: kwargs.verbosity,
