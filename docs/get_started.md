@@ -28,3 +28,15 @@ cd polars-genson-py/
 uv venv && source .venv/bin/activate
 uv sync
 ```
+
+## Troubleshooting
+
+### Memory usage exceeds RAM
+
+If memory usage exceeds RAM, try reducing the max. schema builders.
+
+For example, if you have a DataFrame with 1000 rows, and call `.genson.normalise_json` on it,
+you'll by default get 1000 threads that get scheduled on your available cores. This will mean that
+at one moment in time you will have 1000 `genson-rs` schema "builders" all storing their built
+schemas, before they are all merged in one go. If you limit to 100 builders, they will be merged 100
+at a time, which will reduce the peak RSS (RAM use by the process).
