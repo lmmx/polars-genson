@@ -83,7 +83,7 @@ def main():
     path = (
         Path.home() / "dev/polars-genson/genson-cli/tests/data/claims_fixture_x30.jsonl"
     )
-    n_rows = 400
+    n_rows = 30  # 400
 
     print(f"\nLoading first {n_rows} JSON rows from {path}")
     with open(path, "r") as f:
@@ -118,7 +118,8 @@ def main():
         print(f"Result shape: {result.shape}")
 
     mem_tracker.report_final()
+    return df, result
 
 
 if __name__ == "__main__":
-    main()
+    df, result = main()

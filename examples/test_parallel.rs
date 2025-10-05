@@ -138,6 +138,7 @@ fn main() {
         avro: true,
         wrap_root: Some("claims".to_string()),
         no_root_map: true,
+        max_builders: None,
         debug: false,
         profile: true,
         verbosity: genson_core::DebugVerbosity::Normal,
