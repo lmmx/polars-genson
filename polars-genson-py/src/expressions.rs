@@ -7,6 +7,19 @@ use serde::Deserialize;
 use std::panic;
 use std::slice::from_ref;
 
+// Mimalloc purge function - forces allocator to return memory to OS
+extern "C" {
+    fn mi_collect(force: bool);
+}
+
+fn force_memory_release() {
+    unsafe {
+        for _ in 0..3 {
+            mi_collect(true);
+        }
+    }
+}
+
 #[derive(Deserialize)]
 pub struct GensonKwargs {
     #[serde(default = "default_ignore_outer_array")]
@@ -448,59 +461,66 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         PolarsError::ComputeError("Expected string column for JSON normalisation".into())
     })?;
 
-    // Collect all JSON strings
-    let mut json_strings = Vec::new();
-    for s in string_chunked.iter().flatten() {
-        if !s.trim().is_empty() {
-            json_strings.push(s.to_string());
+    let out = {
+        // Collect all JSON strings
+        let mut json_strings = Vec::new();
+        for s in string_chunked.iter().flatten() {
+            if !s.trim().is_empty() {
+                json_strings.push(s.to_string());
+            }
         }
-    }
 
-    let wrap_root_field = kwargs.wrap_root.clone();
+        let wrap_root_field = kwargs.wrap_root.clone();
 
-    // Infer schema ONCE
-    let config = SchemaInferenceConfig {
-        ignore_outer_array: kwargs.ignore_outer_array,
-        delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
-        schema_uri: kwargs.schema_uri.clone(),
-        map_threshold: kwargs.map_threshold,
-        map_max_required_keys: kwargs.map_max_required_keys,
-        unify_maps: kwargs.unify_maps,
-        no_unify: kwargs.no_unify.iter().cloned().collect(),
-        force_field_types: kwargs.force_field_types.clone(),
-        wrap_scalars: kwargs.wrap_scalars,
-        avro: true, // normalisation implies Avro
-        wrap_root: wrap_root_field.clone(),
-        no_root_map: kwargs.no_root_map,
-        max_builders: kwargs.max_builders,
-        debug: kwargs.debug,
-        profile: kwargs.profile,
-        verbosity: kwargs.verbosity,
+        // Infer schema ONCE
+        let config = SchemaInferenceConfig {
+            ignore_outer_array: kwargs.ignore_outer_array,
+            delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
+            schema_uri: kwargs.schema_uri.clone(),
+            map_threshold: kwargs.map_threshold,
+            map_max_required_keys: kwargs.map_max_required_keys,
+            unify_maps: kwargs.unify_maps,
+            no_unify: kwargs.no_unify.iter().cloned().collect(),
+            force_field_types: kwargs.force_field_types.clone(),
+            wrap_scalars: kwargs.wrap_scalars,
+            avro: true, // normalisation implies Avro
+            wrap_root: wrap_root_field.clone(),
+            no_root_map: kwargs.no_root_map,
+            max_builders: kwargs.max_builders,
+            debug: kwargs.debug,
+            profile: kwargs.profile,
+            verbosity: kwargs.verbosity,
+        };
+
+        let schema_result = infer_json_schema_from_strings(&json_strings, config).map_err(|e| {
+            PolarsError::ComputeError(format!("Schema inference failed: {e}").into())
+        })?;
+
+        drop(json_strings);
+
+        let schema = &schema_result.schema;
+
+        // Parse each row and normalise
+        let cfg = NormaliseConfig {
+            empty_as_null: kwargs.empty_as_null,
+            coerce_string: kwargs.coerce_string,
+            map_encoding: kwargs.map_encoding,
+            wrap_root: wrap_root_field.clone(),
+        };
+
+        let mut out = Vec::with_capacity(string_chunked.len());
+        for s in string_chunked {
+            let val = s
+                .and_then(|st| serde_json::from_str::<serde_json::Value>(st).ok())
+                .unwrap_or(serde_json::Value::Null);
+
+            let normed = normalise_values(vec![val], schema, &cfg).pop().unwrap();
+            out.push(serde_json::to_string(&normed).unwrap());
+        }
+        out
     };
 
-    let schema_result = infer_json_schema_from_strings(&json_strings, config)
-        .map_err(|e| PolarsError::ComputeError(format!("Schema inference failed: {e}").into()))?;
-    drop(json_strings);
-
-    let schema = &schema_result.schema;
-
-    // Parse each row and normalise
-    let cfg = NormaliseConfig {
-        empty_as_null: kwargs.empty_as_null,
-        coerce_string: kwargs.coerce_string,
-        map_encoding: kwargs.map_encoding,
-        wrap_root: wrap_root_field.clone(),
-    };
-
-    let mut out = Vec::with_capacity(string_chunked.len());
-    for s in string_chunked {
-        let val = s
-            .and_then(|st| serde_json::from_str::<serde_json::Value>(st).ok())
-            .unwrap_or(serde_json::Value::Null);
-
-        let normed = normalise_values(vec![val], schema, &cfg).pop().unwrap();
-        out.push(serde_json::to_string(&normed).unwrap());
-    }
+    force_memory_release();
 
     Ok(Series::new("normalised".into(), out))
 }
