@@ -1400,7 +1400,7 @@ wheels = [
 
 [[package]]
 name = "polars-genson"
-version = "0.5.6"
+version = "0.5.7"
 source = { editable = "." }
 dependencies = [
     { name = "orjson" },
@@ -1454,8 +1454,8 @@ requires-dist = [
     { name = "orjson", specifier = ">=3.11.2" },
     { name = "pdm", marker = "extra == 'dev'", specifier = ">=2.22.3" },
     { name = "pdm-bump", marker = "extra == 'dev'", specifier = ">=0.9.10" },
-    { name = "polars", marker = "extra == 'polars'", specifier = ">=1.32.0,!=1.32.3,!=1.33.0" },
-    { name = "polars-lts-cpu", marker = "extra == 'polars-lts-cpu'", specifier = ">=1.32.0,!=1.32.3,!=1.33.0" },
+    { name = "polars", marker = "extra == 'polars'", specifier = ">=1.32.0,!=1.32.3,!=1.33.0,!=1.33.1" },
+    { name = "polars-lts-cpu", marker = "extra == 'polars-lts-cpu'", specifier = ">=1.32.0,!=1.32.3,!=1.33.0,!=1.33.1" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
 ]
@@ -1469,7 +1469,7 @@ build = [
 debug = [{ name = "pysnooper", specifier = ">=1.2.3" }]
 dev = [
     { name = "pdbpp", specifier = ">=0.11.7" },
-    { name = "polars", specifier = ">=1.32.0,!=1.32.3,!=1.33.0" },
+    { name = "polars", specifier = ">=1.32.0,!=1.32.3,!=1.33.0,!=1.33.1" },
 ]
 doc = [
     { name = "livereload", specifier = ">=2.7.1" },
