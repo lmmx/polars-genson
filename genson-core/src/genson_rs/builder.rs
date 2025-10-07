@@ -45,7 +45,7 @@ impl SchemaBuilder {
         if let Value::Object(ref mut schema_obj) = schema {
             if schema_obj.contains_key("$schema") && self.schema_uri.is_none() {
                 self.schema_uri = Some(schema_obj["$schema"].as_str().unwrap().to_string());
-                schema_obj.remove("$schema");
+                schema_obj.shift_remove("$schema");
             }
             self.root_node.add_schema(DataType::Schema(&schema));
         } else {

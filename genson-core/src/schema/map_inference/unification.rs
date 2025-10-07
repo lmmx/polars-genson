@@ -300,7 +300,7 @@ fn try_scalar_promotion(
 
     // CRITICAL: Remove required array since all fields must be optional after scalar promotion
     if let Some(obj) = result.as_object_mut() {
-        obj.remove("required");
+        obj.shift_remove("required");
     }
 
     Some(result)

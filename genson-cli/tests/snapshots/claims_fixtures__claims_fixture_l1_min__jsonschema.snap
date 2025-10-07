@@ -46,6 +46,18 @@ info:
                         "string"
                       ]
                     },
+                    "text": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "language": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
                     "time": {
                       "type": [
                         "null",
@@ -77,18 +89,6 @@ info:
                       ]
                     },
                     "calendarmodel": {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    },
-                    "text": {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    },
-                    "language": {
                       "type": [
                         "null",
                         "string"

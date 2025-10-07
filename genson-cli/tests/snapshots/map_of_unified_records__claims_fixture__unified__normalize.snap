@@ -5,7 +5,7 @@ info:
   approved: false
   args:
     - "--map-threshold"
-    - "2"
+    - "1"
     - "--unify-maps"
     - "--normalise"
   input:

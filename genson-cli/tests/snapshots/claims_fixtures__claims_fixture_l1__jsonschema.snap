@@ -58,6 +58,18 @@ info:
                         "string"
                       ]
                     },
+                    "text": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "language": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
                     "time": {
                       "type": [
                         "null",
@@ -89,18 +101,6 @@ info:
                       ]
                     },
                     "calendarmodel": {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    },
-                    "text": {
-                      "type": [
-                        "null",
-                        "string"
-                      ]
-                    },
-                    "language": {
                       "type": [
                         "null",
                         "string"
@@ -234,12 +234,6 @@ info:
                     "datavalue": {
                       "type": "object",
                       "properties": {
-                        "datavalue__string": {
-                          "type": [
-                            "null",
-                            "string"
-                          ]
-                        },
                         "id": {
                           "type": [
                             "null",
@@ -251,8 +245,18 @@ info:
                           "additionalProperties": {
                             "type": "string"
                           }
+                        },
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
                         }
-                      }
+                      },
+                      "required": [
+                        "id",
+                        "labels"
+                      ]
                     },
                     "datatype": {
                       "type": "string"
