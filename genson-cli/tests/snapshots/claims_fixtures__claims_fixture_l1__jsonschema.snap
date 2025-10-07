@@ -234,6 +234,12 @@ info:
                     "datavalue": {
                       "type": "object",
                       "properties": {
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
                         "id": {
                           "type": [
                             "null",
@@ -245,18 +251,8 @@ info:
                           "additionalProperties": {
                             "type": "string"
                           }
-                        },
-                        "datavalue__string": {
-                          "type": [
-                            "null",
-                            "string"
-                          ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ]
+                      }
                     },
                     "datatype": {
                       "type": "string"

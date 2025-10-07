@@ -4,12 +4,12 @@ expression: stdout_str
 info:
   approved: false
   args:
-    - "--ndjson"
     - "--map-threshold"
     - "0"
     - "--unify-maps"
     - "--wrap-root"
     - claims
+    - "--ndjson"
     - "--avro"
   fixture: tests/data/claims_fixture_x4_L1.jsonl
 ---
@@ -146,6 +146,71 @@ info:
                 "type": "string"
               },
               {
+                "name": "qualifiers",
+                "type": [
+                  "null",
+                  {
+                    "name": "qualifiers",
+                    "type": "map",
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "record",
+                        "name": "qualifiers_values",
+                        "namespace": "genson.document_types.claims_values_types",
+                        "fields": [
+                          {
+                            "name": "property",
+                            "type": "string"
+                          },
+                          {
+                            "name": "datavalue",
+                            "type": {
+                              "type": "record",
+                              "name": "datavalue",
+                              "namespace": "genson.document_types.claims_values_types.qualifiers_values_types",
+                              "fields": [
+                                {
+                                  "name": "id",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "labels",
+                                  "type": {
+                                    "name": "labels",
+                                    "type": "map",
+                                    "values": "string"
+                                  }
+                                },
+                                {
+                                  "name": "datavalue__string",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "datatype",
+                            "type": "string"
+                          },
+                          {
+                            "name": "property-labels",
+                            "type": {
+                              "name": "property-labels",
+                              "type": "map",
+                              "values": "string"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
                 "name": "references",
                 "type": [
                   "null",
@@ -174,15 +239,21 @@ info:
                                 "fields": [
                                   {
                                     "name": "id",
-                                    "type": "string"
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
                                   },
                                   {
                                     "name": "labels",
-                                    "type": {
-                                      "name": "labels",
-                                      "type": "map",
-                                      "values": "string"
-                                    }
+                                    "type": [
+                                      "null",
+                                      {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    ]
                                   },
                                   {
                                     "name": "time",
@@ -250,71 +321,6 @@ info:
                             }
                           ]
                         }
-                      }
-                    }
-                  }
-                ]
-              },
-              {
-                "name": "qualifiers",
-                "type": [
-                  "null",
-                  {
-                    "name": "qualifiers",
-                    "type": "map",
-                    "values": {
-                      "type": "array",
-                      "items": {
-                        "type": "record",
-                        "name": "qualifiers_values",
-                        "namespace": "genson.document_types.claims_values_types",
-                        "fields": [
-                          {
-                            "name": "property",
-                            "type": "string"
-                          },
-                          {
-                            "name": "datavalue",
-                            "type": {
-                              "type": "record",
-                              "name": "datavalue",
-                              "namespace": "genson.document_types.claims_values_types.qualifiers_values_types",
-                              "fields": [
-                                {
-                                  "name": "id",
-                                  "type": "string"
-                                },
-                                {
-                                  "name": "labels",
-                                  "type": {
-                                    "name": "labels",
-                                    "type": "map",
-                                    "values": "string"
-                                  }
-                                },
-                                {
-                                  "name": "datavalue__string",
-                                  "type": [
-                                    "null",
-                                    "string"
-                                  ]
-                                }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "datatype",
-                            "type": "string"
-                          },
-                          {
-                            "name": "property-labels",
-                            "type": {
-                              "name": "property-labels",
-                              "type": "map",
-                              "values": "string"
-                            }
-                          }
-                        ]
                       }
                     }
                   }

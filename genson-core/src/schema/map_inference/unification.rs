@@ -292,11 +292,18 @@ fn try_scalar_promotion(
     });
 
     // Recursively unify with the object schema
-    check_unifiable_schemas(
+    let mut result = check_unifiable_schemas(
         &[&object_schema.clone(), &promoted],
         &format!("{path}.{}", field_name),
         config,
-    )
+    )?;
+
+    // CRITICAL: Remove required array since all fields must be optional after scalar promotion
+    if let Some(obj) = result.as_object_mut() {
+        obj.remove("required");
+    }
+
+    Some(result)
 }
 
 /// Recursively unwrap nullable schema wrappers and extract a specific field.

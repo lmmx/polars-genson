@@ -263,10 +263,7 @@ info:
                             "string"
                           ]
                         }
-                      },
-                      "required": [
-                        "value__string"
-                      ]
+                      }
                     },
                     "type": {
                       "type": "string"

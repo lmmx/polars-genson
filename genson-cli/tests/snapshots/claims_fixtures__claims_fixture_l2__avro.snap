@@ -4,12 +4,12 @@ expression: stdout_str
 info:
   approved: false
   args:
-    - "--ndjson"
     - "--map-threshold"
     - "0"
     - "--unify-maps"
     - "--wrap-root"
     - claims
+    - "--ndjson"
     - "--avro"
   fixture: tests/data/claims_fixture_x4_L2.jsonl
 ---
@@ -50,7 +50,10 @@ info:
                         "fields": [
                           {
                             "name": "datavalue__string",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "id",

@@ -72,10 +72,7 @@ info:
                               "number"
                             ]
                           }
-                        },
-                        "required": [
-                          "precision__integer"
-                        ]
+                        }
                       },
                       "time": {
                         "type": [

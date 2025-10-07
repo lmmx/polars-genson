@@ -221,7 +221,10 @@ info:
                               "fields": [
                                 {
                                   "name": "value__string",
-                                  "type": "string"
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
                                 },
                                 {
                                   "name": "id",
