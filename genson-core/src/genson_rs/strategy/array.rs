@@ -1,7 +1,7 @@
 use rayon::prelude::*;
 use serde_json::{json, Value};
 use simd_json;
-use simd_json::prelude::TypedContainerValue;
+use simd_json::prelude::TypedArrayValue;
 use std::slice::{Iter, IterMut};
 
 use crate::genson_rs::node::{DataType, SchemaNode};

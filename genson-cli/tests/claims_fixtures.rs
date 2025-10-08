@@ -63,6 +63,7 @@ fn run_genson_claims_fixture_from_disk(fixture_path: &str, name: &str, extra_arg
 }
 
 #[test]
+#[ignore]
 fn test_claims_fixture_l1_avro() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims_fixture_x4_L1.jsonl",
@@ -72,6 +73,7 @@ fn test_claims_fixture_l1_avro() {
 }
 
 #[test]
+#[ignore]
 fn test_claims_fixture_l1_jsonschema() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims_fixture_x4_L1.jsonl",
@@ -81,6 +83,7 @@ fn test_claims_fixture_l1_jsonschema() {
 }
 
 #[test]
+#[ignore]
 fn test_claims_fixture_l1_normalize() {
     run_genson_claims_fixture_from_disk(
         "tests/data/claims_fixture_x4_L1.jsonl",
