@@ -5,7 +5,7 @@ use std::collections::hash_set::HashSet;
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
 use simd_json;
-use simd_json::prelude::TypedContainerValue;
+use simd_json::prelude::TypedObjectValue;
 
 use crate::genson_rs::node::{DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;

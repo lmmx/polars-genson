@@ -53,7 +53,7 @@ mimalloc = "0.1.47"
 ordermap = { features = ["rayon"], version = "0.5.9" }
 rayon = "1.11.0"
 regex = "1.11.1"
-simd-json = "0.13.10"
+simd-json = "0.17.0"
 # simd-json = "0.15.1"
 
 [workspace.package]
