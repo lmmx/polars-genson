@@ -852,3 +852,185 @@ fn test_no_root_map_false_allows_root_becoming_map() {
 
     println!("✅ no_root_map=false allowed root to become map");
 }
+
+#[test]
+#[ignore]
+fn test_schema_field_order_determinism() {
+    // Use actual data similar to your claims fixture
+    let json_string = r#"{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q15632617"},"datatype":"wikibase-item"},"rank":"normal"}],"P40":[{"mainsnak":{"property":"P40","datavalue":{"id":"Q1049347"},"datatype":"wikibase-item"},"rank":"normal"}],"P27":[{"mainsnak":{"property":"P27","datavalue":{"id":"Q30"},"datatype":"wikibase-item"},"rank":"normal"}],"P345":[{"mainsnak":{"property":"P345","datavalue":"ch0009881","datatype":"external-id"},"rank":"deprecated"}],"P108":[{"mainsnak":{"property":"P108","datavalue":{"id":"Q2944031"},"datatype":"wikibase-item"},"rank":"normal"}],"P463":[{"mainsnak":{"property":"P463","datavalue":{"id":"Q209114"},"datatype":"wikibase-item"},"rank":"normal"}],"P569":[{"mainsnak":{"property":"P569","datavalue":{"time":"+1966-02-18T00:00:00Z","timezone":0,"before":0,"after":0,"precision":11,"calendarmodel":"http://www.wikidata.org/entity/Q1985727"},"datatype":"time"},"rank":"normal"}],"P451":[{"mainsnak":{"property":"P451","datavalue":{"id":"Q284262"},"datatype":"wikibase-item"},"rank":"normal"}],"P19":[{"mainsnak":{"property":"P19","datavalue":{"id":"Q47164"},"datatype":"wikibase-item"},"rank":"normal"}],"P22":[{"mainsnak":{"property":"P22","datavalue":{"id":"Q3322144"},"datatype":"wikibase-item"},"rank":"normal"}],"P166":[{"mainsnak":{"property":"P166","datavalue":{"id":"Q852071"},"datatype":"wikibase-item"},"rank":"normal"}],"P410":[{"mainsnak":{"property":"P410","datavalue":{"id":"Q19100"},"datatype":"wikibase-item"},"rank":"normal"}],"P26":[{"mainsnak":{"property":"P26","datavalue":{"id":"Q1095612"},"datatype":"wikibase-item"},"rank":"normal"}],"P512":[{"mainsnak":{"property":"P512","datavalue":{"id":"Q1765120"},"datatype":"wikibase-item"},"rank":"normal"}],"P106":[{"mainsnak":{"property":"P106","datavalue":{"id":"Q5446967"},"datatype":"wikibase-item"},"rank":"normal"}],"P21":[{"mainsnak":{"property":"P21","datavalue":{"id":"Q6581097"},"datatype":"wikibase-item"},"rank":"normal"}],"P646":[{"mainsnak":{"property":"P646","datavalue":"/m/022jzf","datatype":"external-id"},"rank":"normal"}],"P18":[{"mainsnak":{"property":"P18","datavalue":"Kiefer Sutherland at 24 Redemption premiere 1 (headshot).jpg","datatype":"commonsMedia"},"rank":"normal"}],"P1441":[{"mainsnak":{"property":"P1441","datavalue":{"id":"Q56194"},"datatype":"wikibase-item"},"rank":"normal"}],"P1448":[{"mainsnak":{"property":"P1448","datavalue":{"text":"Jack Bauer","language":"en"},"datatype":"monolingualtext"},"rank":"normal"}],"P3373":[{"mainsnak":{"property":"P3373","datavalue":{"id":"Q10290844"},"datatype":"wikibase-item"},"rank":"normal"}],"P3417":[{"mainsnak":{"property":"P3417","datavalue":"Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P4839":[{"mainsnak":{"property":"P4839","datavalue":"Entity[\"FictionalCharacter\", \"JackBauer\"]","datatype":"external-id"},"rank":"normal"}],"P175":[{"mainsnak":{"property":"P175","datavalue":{"id":"Q103946"},"datatype":"wikibase-item"},"rank":"normal"}],"P1412":[{"mainsnak":{"property":"P1412","datavalue":{"id":"Q1860"},"datatype":"wikibase-item"},"rank":"normal"}],"P1417":[{"mainsnak":{"property":"P1417","datavalue":"topic/Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P5800":[{"mainsnak":{"property":"P5800","datavalue":{"id":"Q215972"},"datatype":"wikibase-item"},"rank":"normal"}],"P6262":[{"mainsnak":{"property":"P6262","datavalue":"24:Jack_Bauer","datatype":"external-id"},"rank":"normal"}],"P570":[{"mainsnak":{"property":"P570","datatype":"time"},"rank":"normal"}],"P2581":[{"mainsnak":{"property":"P2581","datavalue":"03111055n","datatype":"external-id"},"rank":"normal"}],"P10291":[{"mainsnak":{"property":"P10291","datavalue":"12819","datatype":"external-id"},"rank":"normal"}],"P10757":[{"mainsnak":{"property":"P10757","datavalue":"170","datatype":"external-id"},"rank":"normal"}],"P3553":[{"mainsnak":{"property":"P3553","datavalue":"19959170","datatype":"external-id"},"rank":"normal"}]}"#;
+
+    let config = SchemaInferenceConfig {
+        map_threshold: 0,
+        unify_maps: true,
+        wrap_root: Some("claims".to_string()),
+        delimiter: Some(b'\n'),
+        ..Default::default()
+    };
+
+    // Run inference multiple times
+    let mut all_keys = Vec::new();
+    let result = infer_json_schema_from_strings(&[json_string.to_string()], config.clone())
+        .expect("Schema inference should succeed");
+
+    // Navigate to datavalue.properties, handling both Avro and non-Avro schema shapes
+    let datavalue_props = &result.schema["properties"]["claims"]["additionalProperties"]
+        ["items"]["properties"]["mainsnak"]["properties"]["datavalue"]["properties"];
+
+    if let Some(props) = datavalue_props.as_object() {
+        let keys: Vec<String> = props.keys().cloned().collect();
+        eprintln!("Run keys: {:?}", keys);
+        all_keys.push(keys);
+    } else {
+        panic!(
+            "datavalue_props was not an object: {:?}",
+            datavalue_props
+        );
+    }
+
+    assert!(
+        !all_keys.is_empty(),
+        "No key vectors collected — datavalue_props was not an object in any run"
+    );
+
+    let first = &all_keys[0];
+    let first_key = &first[0];
+    assert_eq!(first_key, "id");
+}
+
+// #[test]
+// #[ignore]
+// fn test_builder_to_schema_determinism() {
+//     let json_string = r#"{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q15632617"},"datatype":"wikibase-item"},"rank":"normal"}],"P40":[{"mainsnak":{"property":"P40","datavalue":{"id":"Q1049347"},"datatype":"wikibase-item"},"rank":"normal"}],"P27":[{"mainsnak":{"property":"P27","datavalue":{"id":"Q30"},"datatype":"wikibase-item"},"rank":"normal"}],"P345":[{"mainsnak":{"property":"P345","datavalue":"ch0009881","datatype":"external-id"},"rank":"deprecated"}],"P108":[{"mainsnak":{"property":"P108","datavalue":{"id":"Q2944031"},"datatype":"wikibase-item"},"rank":"normal"}],"P463":[{"mainsnak":{"property":"P463","datavalue":{"id":"Q209114"},"datatype":"wikibase-item"},"rank":"normal"}],"P569":[{"mainsnak":{"property":"P569","datavalue":{"time":"+1966-02-18T00:00:00Z","timezone":0,"before":0,"after":0,"precision":11,"calendarmodel":"http://www.wikidata.org/entity/Q1985727"},"datatype":"time"},"rank":"normal"}],"P451":[{"mainsnak":{"property":"P451","datavalue":{"id":"Q284262"},"datatype":"wikibase-item"},"rank":"normal"}],"P19":[{"mainsnak":{"property":"P19","datavalue":{"id":"Q47164"},"datatype":"wikibase-item"},"rank":"normal"}],"P22":[{"mainsnak":{"property":"P22","datavalue":{"id":"Q3322144"},"datatype":"wikibase-item"},"rank":"normal"}],"P166":[{"mainsnak":{"property":"P166","datavalue":{"id":"Q852071"},"datatype":"wikibase-item"},"rank":"normal"}],"P410":[{"mainsnak":{"property":"P410","datavalue":{"id":"Q19100"},"datatype":"wikibase-item"},"rank":"normal"}],"P26":[{"mainsnak":{"property":"P26","datavalue":{"id":"Q1095612"},"datatype":"wikibase-item"},"rank":"normal"}],"P512":[{"mainsnak":{"property":"P512","datavalue":{"id":"Q1765120"},"datatype":"wikibase-item"},"rank":"normal"}],"P106":[{"mainsnak":{"property":"P106","datavalue":{"id":"Q5446967"},"datatype":"wikibase-item"},"rank":"normal"}],"P21":[{"mainsnak":{"property":"P21","datavalue":{"id":"Q6581097"},"datatype":"wikibase-item"},"rank":"normal"}],"P646":[{"mainsnak":{"property":"P646","datavalue":"/m/022jzf","datatype":"external-id"},"rank":"normal"}],"P18":[{"mainsnak":{"property":"P18","datavalue":"Kiefer Sutherland at 24 Redemption premiere 1 (headshot).jpg","datatype":"commonsMedia"},"rank":"normal"}],"P1441":[{"mainsnak":{"property":"P1441","datavalue":{"id":"Q56194"},"datatype":"wikibase-item"},"rank":"normal"}],"P1448":[{"mainsnak":{"property":"P1448","datavalue":{"text":"Jack Bauer","language":"en"},"datatype":"monolingualtext"},"rank":"normal"}],"P3373":[{"mainsnak":{"property":"P3373","datavalue":{"id":"Q10290844"},"datatype":"wikibase-item"},"rank":"normal"}],"P3417":[{"mainsnak":{"property":"P3417","datavalue":"Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P4839":[{"mainsnak":{"property":"P4839","datavalue":"Entity[\"FictionalCharacter\", \"JackBauer\"]","datatype":"external-id"},"rank":"normal"}],"P175":[{"mainsnak":{"property":"P175","datavalue":{"id":"Q103946"},"datatype":"wikibase-item"},"rank":"normal"}],"P1412":[{"mainsnak":{"property":"P1412","datavalue":{"id":"Q1860"},"datatype":"wikibase-item"},"rank":"normal"}],"P1417":[{"mainsnak":{"property":"P1417","datavalue":"topic/Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P5800":[{"mainsnak":{"property":"P5800","datavalue":{"id":"Q215972"},"datatype":"wikibase-item"},"rank":"normal"}],"P6262":[{"mainsnak":{"property":"P6262","datavalue":"24:Jack_Bauer","datatype":"external-id"},"rank":"normal"}],"P570":[{"mainsnak":{"property":"P570","datatype":"time"},"rank":"normal"}],"P2581":[{"mainsnak":{"property":"P2581","datavalue":"03111055n","datatype":"external-id"},"rank":"normal"}],"P10291":[{"mainsnak":{"property":"P10291","datavalue":"12819","datatype":"external-id"},"rank":"normal"}],"P10757":[{"mainsnak":{"property":"P10757","datavalue":"170","datatype":"external-id"},"rank":"normal"}],"P3553":[{"mainsnak":{"property":"P3553","datavalue":"19959170","datatype":"external-id"},"rank":"normal"}]}"#;
+// 
+//     let config = SchemaInferenceConfig {
+//         delimiter: Some(b'\n'),
+//         ..Default::default()
+//     };
+// 
+//     let mut builder = get_builder(config.schema_uri.as_deref());
+//     
+//     process_json_strings_sequential(&[json_string.to_string()], &config, &mut builder)
+//         .expect("Processing should succeed");
+//     
+//     let schema = builder.to_schema();
+//     
+//     let schema_props = &schema["properties"];
+//     
+//     if let Some(props) = schema_props.as_object() {
+//         let keys: Vec<String> = props.keys().cloned().collect();
+//         eprintln!("properties keys (count={}): {:?}", keys.len(), keys);
+//         eprintln!("First key: {}", keys[0]);
+//         assert_eq!(keys[0], "P31", "Expected first key to be P31");
+//     } else {
+//         eprintln!("properties: {:?}", schema_props);
+//         panic!("properties was not an object");
+//     }
+// }
+
+// #[test]
+// #[ignore]
+// fn test_build_json_schema_determinism() {
+//     let json_string = r#"{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q15632617"},"datatype":"wikibase-item"},"rank":"normal"}],"P40":[{"mainsnak":{"property":"P40","datavalue":{"id":"Q1049347"},"datatype":"wikibase-item"},"rank":"normal"}],"P27":[{"mainsnak":{"property":"P27","datavalue":{"id":"Q30"},"datatype":"wikibase-item"},"rank":"normal"}],"P345":[{"mainsnak":{"property":"P345","datavalue":"ch0009881","datatype":"external-id"},"rank":"deprecated"}],"P108":[{"mainsnak":{"property":"P108","datavalue":{"id":"Q2944031"},"datatype":"wikibase-item"},"rank":"normal"}],"P463":[{"mainsnak":{"property":"P463","datavalue":{"id":"Q209114"},"datatype":"wikibase-item"},"rank":"normal"}],"P569":[{"mainsnak":{"property":"P569","datavalue":{"time":"+1966-02-18T00:00:00Z","timezone":0,"before":0,"after":0,"precision":11,"calendarmodel":"http://www.wikidata.org/entity/Q1985727"},"datatype":"time"},"rank":"normal"}],"P451":[{"mainsnak":{"property":"P451","datavalue":{"id":"Q284262"},"datatype":"wikibase-item"},"rank":"normal"}],"P19":[{"mainsnak":{"property":"P19","datavalue":{"id":"Q47164"},"datatype":"wikibase-item"},"rank":"normal"}],"P22":[{"mainsnak":{"property":"P22","datavalue":{"id":"Q3322144"},"datatype":"wikibase-item"},"rank":"normal"}],"P166":[{"mainsnak":{"property":"P166","datavalue":{"id":"Q852071"},"datatype":"wikibase-item"},"rank":"normal"}],"P410":[{"mainsnak":{"property":"P410","datavalue":{"id":"Q19100"},"datatype":"wikibase-item"},"rank":"normal"}],"P26":[{"mainsnak":{"property":"P26","datavalue":{"id":"Q1095612"},"datatype":"wikibase-item"},"rank":"normal"}],"P512":[{"mainsnak":{"property":"P512","datavalue":{"id":"Q1765120"},"datatype":"wikibase-item"},"rank":"normal"}],"P106":[{"mainsnak":{"property":"P106","datavalue":{"id":"Q5446967"},"datatype":"wikibase-item"},"rank":"normal"}],"P21":[{"mainsnak":{"property":"P21","datavalue":{"id":"Q6581097"},"datatype":"wikibase-item"},"rank":"normal"}],"P646":[{"mainsnak":{"property":"P646","datavalue":"/m/022jzf","datatype":"external-id"},"rank":"normal"}],"P18":[{"mainsnak":{"property":"P18","datavalue":"Kiefer Sutherland at 24 Redemption premiere 1 (headshot).jpg","datatype":"commonsMedia"},"rank":"normal"}],"P1441":[{"mainsnak":{"property":"P1441","datavalue":{"id":"Q56194"},"datatype":"wikibase-item"},"rank":"normal"}],"P1448":[{"mainsnak":{"property":"P1448","datavalue":{"text":"Jack Bauer","language":"en"},"datatype":"monolingualtext"},"rank":"normal"}],"P3373":[{"mainsnak":{"property":"P3373","datavalue":{"id":"Q10290844"},"datatype":"wikibase-item"},"rank":"normal"}],"P3417":[{"mainsnak":{"property":"P3417","datavalue":"Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P4839":[{"mainsnak":{"property":"P4839","datavalue":"Entity[\"FictionalCharacter\", \"JackBauer\"]","datatype":"external-id"},"rank":"normal"}],"P175":[{"mainsnak":{"property":"P175","datavalue":{"id":"Q103946"},"datatype":"wikibase-item"},"rank":"normal"}],"P1412":[{"mainsnak":{"property":"P1412","datavalue":{"id":"Q1860"},"datatype":"wikibase-item"},"rank":"normal"}],"P1417":[{"mainsnak":{"property":"P1417","datavalue":"topic/Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P5800":[{"mainsnak":{"property":"P5800","datavalue":{"id":"Q215972"},"datatype":"wikibase-item"},"rank":"normal"}],"P6262":[{"mainsnak":{"property":"P6262","datavalue":"24:Jack_Bauer","datatype":"external-id"},"rank":"normal"}],"P570":[{"mainsnak":{"property":"P570","datatype":"time"},"rank":"normal"}],"P2581":[{"mainsnak":{"property":"P2581","datavalue":"03111055n","datatype":"external-id"},"rank":"normal"}],"P10291":[{"mainsnak":{"property":"P10291","datavalue":"12819","datatype":"external-id"},"rank":"normal"}],"P10757":[{"mainsnak":{"property":"P10757","datavalue":"170","datatype":"external-id"},"rank":"normal"}],"P3553":[{"mainsnak":{"property":"P3553","datavalue":"19959170","datatype":"external-id"},"rank":"normal"}]}"#;
+// 
+//     let config = SchemaInferenceConfig {
+//         delimiter: Some(b'\n'),
+//         ..Default::default()
+//     };
+// 
+//     let build_config = BuildConfig {
+//         delimiter: config.delimiter,
+//         ignore_outer_array: config.ignore_outer_array,
+//     };
+// 
+//     let mut builder = get_builder(None);
+// 
+//     let prepared_json = prepare_json_bytes(json_string.as_bytes(), 0, &config)
+//         .expect("Preparation should succeed");
+// 
+//     let mut bytes = prepared_json.into_owned();
+// 
+//     build_json_schema(&mut builder, &mut bytes, &build_config);
+// 
+//     let schema = builder.to_schema();
+// 
+//     let schema_props = &schema["properties"];
+// 
+//     if let Some(props) = schema_props.as_object() {
+//         let keys: Vec<String> = props.keys().cloned().collect();
+//         eprintln!("properties keys (count={}): {:?}", keys.len(), keys);
+//         eprintln!("First key: {}", keys[0]);
+//         assert_eq!(keys[0], "P31", "Expected first key to be P31");
+//     } else {
+//         panic!("properties was not an object");
+//     }
+// }
+
+// #[test]
+// #[ignore]
+// fn test_build_genson_rs_builder_determinism() {
+//     let json_string = r#"{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q15632617"},"datatype":"wikibase-item"},"rank":"normal"}],"P40":[{"mainsnak":{"property":"P40","datavalue":{"id":"Q1049347"},"datatype":"wikibase-item"},"rank":"normal"}],"P27":[{"mainsnak":{"property":"P27","datavalue":{"id":"Q30"},"datatype":"wikibase-item"},"rank":"normal"}],"P345":[{"mainsnak":{"property":"P345","datavalue":"ch0009881","datatype":"external-id"},"rank":"deprecated"}],"P108":[{"mainsnak":{"property":"P108","datavalue":{"id":"Q2944031"},"datatype":"wikibase-item"},"rank":"normal"}],"P463":[{"mainsnak":{"property":"P463","datavalue":{"id":"Q209114"},"datatype":"wikibase-item"},"rank":"normal"}],"P569":[{"mainsnak":{"property":"P569","datavalue":{"time":"+1966-02-18T00:00:00Z","timezone":0,"before":0,"after":0,"precision":11,"calendarmodel":"http://www.wikidata.org/entity/Q1985727"},"datatype":"time"},"rank":"normal"}],"P451":[{"mainsnak":{"property":"P451","datavalue":{"id":"Q284262"},"datatype":"wikibase-item"},"rank":"normal"}],"P19":[{"mainsnak":{"property":"P19","datavalue":{"id":"Q47164"},"datatype":"wikibase-item"},"rank":"normal"}],"P22":[{"mainsnak":{"property":"P22","datavalue":{"id":"Q3322144"},"datatype":"wikibase-item"},"rank":"normal"}],"P166":[{"mainsnak":{"property":"P166","datavalue":{"id":"Q852071"},"datatype":"wikibase-item"},"rank":"normal"}],"P410":[{"mainsnak":{"property":"P410","datavalue":{"id":"Q19100"},"datatype":"wikibase-item"},"rank":"normal"}],"P26":[{"mainsnak":{"property":"P26","datavalue":{"id":"Q1095612"},"datatype":"wikibase-item"},"rank":"normal"}],"P512":[{"mainsnak":{"property":"P512","datavalue":{"id":"Q1765120"},"datatype":"wikibase-item"},"rank":"normal"}],"P106":[{"mainsnak":{"property":"P106","datavalue":{"id":"Q5446967"},"datatype":"wikibase-item"},"rank":"normal"}],"P21":[{"mainsnak":{"property":"P21","datavalue":{"id":"Q6581097"},"datatype":"wikibase-item"},"rank":"normal"}],"P646":[{"mainsnak":{"property":"P646","datavalue":"/m/022jzf","datatype":"external-id"},"rank":"normal"}],"P18":[{"mainsnak":{"property":"P18","datavalue":"Kiefer Sutherland at 24 Redemption premiere 1 (headshot).jpg","datatype":"commonsMedia"},"rank":"normal"}],"P1441":[{"mainsnak":{"property":"P1441","datavalue":{"id":"Q56194"},"datatype":"wikibase-item"},"rank":"normal"}],"P1448":[{"mainsnak":{"property":"P1448","datavalue":{"text":"Jack Bauer","language":"en"},"datatype":"monolingualtext"},"rank":"normal"}],"P3373":[{"mainsnak":{"property":"P3373","datavalue":{"id":"Q10290844"},"datatype":"wikibase-item"},"rank":"normal"}],"P3417":[{"mainsnak":{"property":"P3417","datavalue":"Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P4839":[{"mainsnak":{"property":"P4839","datavalue":"Entity[\"FictionalCharacter\", \"JackBauer\"]","datatype":"external-id"},"rank":"normal"}],"P175":[{"mainsnak":{"property":"P175","datavalue":{"id":"Q103946"},"datatype":"wikibase-item"},"rank":"normal"}],"P1412":[{"mainsnak":{"property":"P1412","datavalue":{"id":"Q1860"},"datatype":"wikibase-item"},"rank":"normal"}],"P1417":[{"mainsnak":{"property":"P1417","datavalue":"topic/Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P5800":[{"mainsnak":{"property":"P5800","datavalue":{"id":"Q215972"},"datatype":"wikibase-item"},"rank":"normal"}],"P6262":[{"mainsnak":{"property":"P6262","datavalue":"24:Jack_Bauer","datatype":"external-id"},"rank":"normal"}],"P570":[{"mainsnak":{"property":"P570","datatype":"time"},"rank":"normal"}],"P2581":[{"mainsnak":{"property":"P2581","datavalue":"03111055n","datatype":"external-id"},"rank":"normal"}],"P10291":[{"mainsnak":{"property":"P10291","datavalue":"12819","datatype":"external-id"},"rank":"normal"}],"P10757":[{"mainsnak":{"property":"P10757","datavalue":"170","datatype":"external-id"},"rank":"normal"}],"P3553":[{"mainsnak":{"property":"P3553","datavalue":"19959170","datatype":"external-id"},"rank":"normal"}]}"#;
+// 
+//     let mut builder = get_builder(None);
+//     
+//     // Parse and add the object directly
+//     let mut bytes = json_string.as_bytes().to_vec();
+//     let object = simd_json::to_borrowed_value(&mut bytes).unwrap();
+//     builder.add_object(&object);
+// 
+//     let schema = builder.to_schema();
+// 
+//     let schema_props = &schema["properties"];
+// 
+//     if let Some(props) = schema_props.as_object() {
+//         let keys: Vec<String> = props.keys().cloned().collect();
+//         eprintln!("properties keys (count={}): {:?}", keys.len(), keys);
+//         eprintln!("First key: {}", keys[0]);
+//         assert_eq!(keys[0], "P31", "Expected first key to be P31");
+//     } else {
+//         panic!("properties was not an object");
+//     }
+// }
+
+// #[test]
+// #[ignore]
+// fn test_add_object_determinism() {
+//     let json_string = r#"{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q15632617"},"datatype":"wikibase-item"},"rank":"normal"}],"P40":[{"mainsnak":{"property":"P40","datavalue":{"id":"Q1049347"},"datatype":"wikibase-item"},"rank":"normal"}],"P27":[{"mainsnak":{"property":"P27","datavalue":{"id":"Q30"},"datatype":"wikibase-item"},"rank":"normal"}],"P345":[{"mainsnak":{"property":"P345","datavalue":"ch0009881","datatype":"external-id"},"rank":"deprecated"}],"P108":[{"mainsnak":{"property":"P108","datavalue":{"id":"Q2944031"},"datatype":"wikibase-item"},"rank":"normal"}],"P463":[{"mainsnak":{"property":"P463","datavalue":{"id":"Q209114"},"datatype":"wikibase-item"},"rank":"normal"}],"P569":[{"mainsnak":{"property":"P569","datavalue":{"time":"+1966-02-18T00:00:00Z","timezone":0,"before":0,"after":0,"precision":11,"calendarmodel":"http://www.wikidata.org/entity/Q1985727"},"datatype":"time"},"rank":"normal"}],"P451":[{"mainsnak":{"property":"P451","datavalue":{"id":"Q284262"},"datatype":"wikibase-item"},"rank":"normal"}],"P19":[{"mainsnak":{"property":"P19","datavalue":{"id":"Q47164"},"datatype":"wikibase-item"},"rank":"normal"}],"P22":[{"mainsnak":{"property":"P22","datavalue":{"id":"Q3322144"},"datatype":"wikibase-item"},"rank":"normal"}],"P166":[{"mainsnak":{"property":"P166","datavalue":{"id":"Q852071"},"datatype":"wikibase-item"},"rank":"normal"}],"P410":[{"mainsnak":{"property":"P410","datavalue":{"id":"Q19100"},"datatype":"wikibase-item"},"rank":"normal"}],"P26":[{"mainsnak":{"property":"P26","datavalue":{"id":"Q1095612"},"datatype":"wikibase-item"},"rank":"normal"}],"P512":[{"mainsnak":{"property":"P512","datavalue":{"id":"Q1765120"},"datatype":"wikibase-item"},"rank":"normal"}],"P106":[{"mainsnak":{"property":"P106","datavalue":{"id":"Q5446967"},"datatype":"wikibase-item"},"rank":"normal"}],"P21":[{"mainsnak":{"property":"P21","datavalue":{"id":"Q6581097"},"datatype":"wikibase-item"},"rank":"normal"}],"P646":[{"mainsnak":{"property":"P646","datavalue":"/m/022jzf","datatype":"external-id"},"rank":"normal"}],"P18":[{"mainsnak":{"property":"P18","datavalue":"Kiefer Sutherland at 24 Redemption premiere 1 (headshot).jpg","datatype":"commonsMedia"},"rank":"normal"}],"P1441":[{"mainsnak":{"property":"P1441","datavalue":{"id":"Q56194"},"datatype":"wikibase-item"},"rank":"normal"}],"P1448":[{"mainsnak":{"property":"P1448","datavalue":{"text":"Jack Bauer","language":"en"},"datatype":"monolingualtext"},"rank":"normal"}],"P3373":[{"mainsnak":{"property":"P3373","datavalue":{"id":"Q10290844"},"datatype":"wikibase-item"},"rank":"normal"}],"P3417":[{"mainsnak":{"property":"P3417","datavalue":"Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P4839":[{"mainsnak":{"property":"P4839","datavalue":"Entity[\"FictionalCharacter\", \"JackBauer\"]","datatype":"external-id"},"rank":"normal"}],"P175":[{"mainsnak":{"property":"P175","datavalue":{"id":"Q103946"},"datatype":"wikibase-item"},"rank":"normal"}],"P1412":[{"mainsnak":{"property":"P1412","datavalue":{"id":"Q1860"},"datatype":"wikibase-item"},"rank":"normal"}],"P1417":[{"mainsnak":{"property":"P1417","datavalue":"topic/Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P5800":[{"mainsnak":{"property":"P5800","datavalue":{"id":"Q215972"},"datatype":"wikibase-item"},"rank":"normal"}],"P6262":[{"mainsnak":{"property":"P6262","datavalue":"24:Jack_Bauer","datatype":"external-id"},"rank":"normal"}],"P570":[{"mainsnak":{"property":"P570","datatype":"time"},"rank":"normal"}],"P2581":[{"mainsnak":{"property":"P2581","datavalue":"03111055n","datatype":"external-id"},"rank":"normal"}],"P10291":[{"mainsnak":{"property":"P10291","datavalue":"12819","datatype":"external-id"},"rank":"normal"}],"P10757":[{"mainsnak":{"property":"P10757","datavalue":"170","datatype":"external-id"},"rank":"normal"}],"P3553":[{"mainsnak":{"property":"P3553","datavalue":"19959170","datatype":"external-id"},"rank":"normal"}]}"#;
+//     
+//     let mut builder = get_builder(None);
+// 
+//     let mut bytes = json_string.as_bytes().to_vec();
+//     let object = simd_json::to_borrowed_value(&mut bytes).unwrap();
+//     builder.add_object(&object);
+// 
+//     // Introspect BEFORE calling to_schema
+//     // Access the root_node's active_strategies
+//     let root_node = &builder.root_node;
+//     eprintln!("Number of strategies: {}", root_node.active_strategies.len());
+// 
+//     if let Some(crate::genson_rs::strategy::BasicSchemaStrategy::Object(obj_strategy)) = root_node.active_strategies.first() {
+//         let keys: Vec<String> = obj_strategy.properties.keys().cloned().collect();
+//         eprintln!("properties keys after add_object (count={}): {:?}", keys.len(), keys);
+//         eprintln!("First key: {}", keys[0]);
+//         assert_eq!(keys[0], "P31", "Expected first key to be P31");
+//     } else {
+//         panic!("No object strategy found");
+//     }
+// }
+
+#[test]
+#[ignore]
+fn test_simd_json_iteration_determinism() {
+    let json_string = r#"{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q15632617"},"datatype":"wikibase-item"},"rank":"normal"}],"P40":[{"mainsnak":{"property":"P40","datavalue":{"id":"Q1049347"},"datatype":"wikibase-item"},"rank":"normal"}],"P27":[{"mainsnak":{"property":"P27","datavalue":{"id":"Q30"},"datatype":"wikibase-item"},"rank":"normal"}],"P345":[{"mainsnak":{"property":"P345","datavalue":"ch0009881","datatype":"external-id"},"rank":"deprecated"}],"P108":[{"mainsnak":{"property":"P108","datavalue":{"id":"Q2944031"},"datatype":"wikibase-item"},"rank":"normal"}],"P463":[{"mainsnak":{"property":"P463","datavalue":{"id":"Q209114"},"datatype":"wikibase-item"},"rank":"normal"}],"P569":[{"mainsnak":{"property":"P569","datavalue":{"time":"+1966-02-18T00:00:00Z","timezone":0,"before":0,"after":0,"precision":11,"calendarmodel":"http://www.wikidata.org/entity/Q1985727"},"datatype":"time"},"rank":"normal"}],"P451":[{"mainsnak":{"property":"P451","datavalue":{"id":"Q284262"},"datatype":"wikibase-item"},"rank":"normal"}],"P19":[{"mainsnak":{"property":"P19","datavalue":{"id":"Q47164"},"datatype":"wikibase-item"},"rank":"normal"}],"P22":[{"mainsnak":{"property":"P22","datavalue":{"id":"Q3322144"},"datatype":"wikibase-item"},"rank":"normal"}],"P166":[{"mainsnak":{"property":"P166","datavalue":{"id":"Q852071"},"datatype":"wikibase-item"},"rank":"normal"}],"P410":[{"mainsnak":{"property":"P410","datavalue":{"id":"Q19100"},"datatype":"wikibase-item"},"rank":"normal"}],"P26":[{"mainsnak":{"property":"P26","datavalue":{"id":"Q1095612"},"datatype":"wikibase-item"},"rank":"normal"}],"P512":[{"mainsnak":{"property":"P512","datavalue":{"id":"Q1765120"},"datatype":"wikibase-item"},"rank":"normal"}],"P106":[{"mainsnak":{"property":"P106","datavalue":{"id":"Q5446967"},"datatype":"wikibase-item"},"rank":"normal"}],"P21":[{"mainsnak":{"property":"P21","datavalue":{"id":"Q6581097"},"datatype":"wikibase-item"},"rank":"normal"}],"P646":[{"mainsnak":{"property":"P646","datavalue":"/m/022jzf","datatype":"external-id"},"rank":"normal"}],"P18":[{"mainsnak":{"property":"P18","datavalue":"Kiefer Sutherland at 24 Redemption premiere 1 (headshot).jpg","datatype":"commonsMedia"},"rank":"normal"}],"P1441":[{"mainsnak":{"property":"P1441","datavalue":{"id":"Q56194"},"datatype":"wikibase-item"},"rank":"normal"}],"P1448":[{"mainsnak":{"property":"P1448","datavalue":{"text":"Jack Bauer","language":"en"},"datatype":"monolingualtext"},"rank":"normal"}],"P3373":[{"mainsnak":{"property":"P3373","datavalue":{"id":"Q10290844"},"datatype":"wikibase-item"},"rank":"normal"}],"P3417":[{"mainsnak":{"property":"P3417","datavalue":"Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P4839":[{"mainsnak":{"property":"P4839","datavalue":"Entity[\"FictionalCharacter\", \"JackBauer\"]","datatype":"external-id"},"rank":"normal"}],"P175":[{"mainsnak":{"property":"P175","datavalue":{"id":"Q103946"},"datatype":"wikibase-item"},"rank":"normal"}],"P1412":[{"mainsnak":{"property":"P1412","datavalue":{"id":"Q1860"},"datatype":"wikibase-item"},"rank":"normal"}],"P1417":[{"mainsnak":{"property":"P1417","datavalue":"topic/Jack-Bauer","datatype":"external-id"},"rank":"normal"}],"P5800":[{"mainsnak":{"property":"P5800","datavalue":{"id":"Q215972"},"datatype":"wikibase-item"},"rank":"normal"}],"P6262":[{"mainsnak":{"property":"P6262","datavalue":"24:Jack_Bauer","datatype":"external-id"},"rank":"normal"}],"P570":[{"mainsnak":{"property":"P570","datatype":"time"},"rank":"normal"}],"P2581":[{"mainsnak":{"property":"P2581","datavalue":"03111055n","datatype":"external-id"},"rank":"normal"}],"P10291":[{"mainsnak":{"property":"P10291","datavalue":"12819","datatype":"external-id"},"rank":"normal"}],"P10757":[{"mainsnak":{"property":"P10757","datavalue":"170","datatype":"external-id"},"rank":"normal"}],"P3553":[{"mainsnak":{"property":"P3553","datavalue":"19959170","datatype":"external-id"},"rank":"normal"}]}"#;
+
+    let mut bytes = json_string.as_bytes().to_vec();
+    let object = simd_json::to_borrowed_value(&mut bytes).unwrap();
+
+    if let simd_json::BorrowedValue::Object(obj) = object {
+        let keys: Vec<String> = obj.iter().map(|(k, _)| k.to_string()).collect();
+        eprintln!("simd_json object keys (count={}): {:?}", keys.len(), keys);
+        eprintln!("First key: {}", keys[0]);
+        assert_eq!(keys[0], "P31", "Expected first key to be P31");
+    } else {
+        panic!("Not an object");
+    }
+}
