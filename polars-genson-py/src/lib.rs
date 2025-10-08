@@ -1,8 +1,10 @@
 use pyo3::prelude::*;
 
 mod expressions;
+mod parquet_io;
 mod schema;
 
+use parquet_io::{infer_from_parquet, normalise_from_parquet};
 use schema::{json_to_schema, schema_to_json};
 
 #[pymodule]
@@ -10,6 +12,8 @@ fn _polars_genson(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_function(wrap_pyfunction!(json_to_schema, m)?)?;
     m.add_function(wrap_pyfunction!(schema_to_json, m)?)?;
+    m.add_function(wrap_pyfunction!(infer_from_parquet, m)?)?;
+    m.add_function(wrap_pyfunction!(normalise_from_parquet, m)?)?;
     Ok(())
 }
 
