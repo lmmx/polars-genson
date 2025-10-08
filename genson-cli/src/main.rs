@@ -20,6 +20,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     // Handle command line options
     let mut config = SchemaInferenceConfig::default();
     let mut input_file = None;
+    let mut pq_column: Option<String> = None;
 
     // Normalisation config
     let mut do_normalise = false;
@@ -39,6 +40,14 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             }
             "--ndjson" => {
                 config.delimiter = Some(b'\n');
+            }
+            "--pq-column" => {
+                if i + 1 < args.len() {
+                    pq_column = Some(args[i + 1].clone());
+                    i += 1;
+                } else {
+                    return Err("Missing value for --pq-column".into());
+                }
             }
             "--avro" => {
                 config.avro = true;
@@ -162,17 +171,33 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         i += 1;
     }
 
-    // Read input from file or stdin
-    let input = if let Some(path) = input_file {
-        fs::read_to_string(path)?
-    } else {
-        let mut buffer = String::new();
-        io::stdin().read_to_string(&mut buffer)?;
-        buffer
-    };
-
     // For CLI, we treat the entire input as one JSON string
-    let json_strings = vec![input.clone()];
+    let json_strings = if let Some(ref col_name) = pq_column {
+        // Parquet mode
+        let path = input_file.ok_or("--pq-column requires an input file path")?;
+
+        let strings = genson_core::parquet::read_string_column(&path, col_name)?;
+
+        // If --ndjson, split each string by newlines
+        if config.delimiter == Some(b'\n') {
+            strings
+                .into_iter()
+                .flat_map(|s| s.lines().map(|l| l.to_string()).collect::<Vec<_>>())
+                .collect()
+        } else {
+            strings
+        }
+    } else {
+        // Original JSON/JSONL mode - pass as single string, let core handle delimiter
+        let input = if let Some(path) = input_file {
+            fs::read_to_string(path)?
+        } else {
+            let mut buffer = String::new();
+            io::stdin().read_to_string(&mut buffer)?;
+            buffer
+        };
+        vec![input] // Don't clone, just move
+    };
 
     // Infer schema - genson-core should handle any panics and return proper errors
     let result = infer_json_schema(&json_strings, Some(config.clone()))
@@ -181,15 +206,22 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     if do_normalise {
         let schema = &result.schema;
 
-        // Parse input again for actual values
-        let values: Vec<Value> = if config.delimiter == Some(b'\n') {
-            input
+        let values: Vec<Value> = if pq_column.is_some() {
+            // Parquet mode: json_strings is already split correctly
+            json_strings
+                .iter()
+                .map(|s| serde_json::from_str::<Value>(s).unwrap_or(Value::Null))
+                .collect()
+        } else if config.delimiter == Some(b'\n') {
+            // NDJSON mode: split the single string by lines
+            json_strings[0]
                 .lines()
                 .filter(|l| !l.trim().is_empty())
                 .map(|l| serde_json::from_str::<Value>(l).unwrap_or(Value::Null))
                 .collect()
         } else {
-            vec![serde_json::from_str::<Value>(&input).unwrap_or(Value::Null)]
+            // Regular JSON: parse the single string
+            vec![serde_json::from_str::<Value>(&json_strings[0]).unwrap_or(Value::Null)]
         };
 
         let cfg = NormaliseConfig {
