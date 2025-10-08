@@ -256,3 +256,10 @@ pub fn normalise_from_parquet(
 
     Ok(())
 }
+
+#[pyfunction]
+pub fn read_parquet_metadata(path: String) -> PyResult<HashMap<String, String>> {
+    genson_core::parquet::read_parquet_metadata(&path).map_err(|e| {
+        pyo3::exceptions::PyIOError::new_err(format!("Failed to read metadata: {}", e))
+    })
+}
