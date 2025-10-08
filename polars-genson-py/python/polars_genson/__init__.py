@@ -35,6 +35,7 @@ __all__ = [
     "infer_from_parquet",
     "normalise_from_parquet",
     "read_parquet_metadata",
+    "schema_to_dict",
 ]
 
 
@@ -1106,3 +1107,22 @@ def avro_to_polars_schema(avro_schema_json: str, debug: bool = False) -> pl.Sche
     return pl.Schema(
         {name: _parse_polars_dtype(dtype_str) for name, dtype_str in fields}
     )
+
+
+def _dtype_to_dict(dtype: pl.datatypes.DataType):
+    """Recursively convert a Polars dtype (possibly nested) to a Python dict."""
+    if isinstance(dtype, pl.Struct):
+        return {field.name: _dtype_to_dict(field.dtype) for field in dtype.fields}
+    elif isinstance(dtype, pl.List):
+        return {"list": _dtype_to_dict(dtype.inner)}
+    elif isinstance(dtype, pl.Array):
+        return {"array": {"inner": _dtype_to_dict(dtype.inner), "size": dtype.size}}
+    else:
+        return str(dtype)  # e.g. "Int64", "Utf8", etc.
+
+
+def schema_to_dict(schema: pl.Schema):
+    """Convert a Polars Schema into a nested Python dict."""
+    if not isinstance(schema, pl.Schema):
+        raise TypeError(f"Expected Polars Schema, got {type(schema)}")
+    return {name: _dtype_to_dict(dtype) for name, dtype in schema.items()}
