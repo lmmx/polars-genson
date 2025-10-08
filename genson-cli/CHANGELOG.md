@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.5.5...genson-cli-v0.5.6) - 2025-10-08
+
+### <!-- 9 -->Other
+
+- update Cargo.lock dependencies
+
 ## [0.5.5](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.5.4...genson-cli-v0.5.5) - 2025-10-04
 
 ### <!-- 9 -->Other

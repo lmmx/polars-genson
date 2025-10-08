@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6](https://github.com/lmmx/polars-genson/compare/genson-core-v0.5.5...genson-core-v0.5.6) - 2025-10-08
+
+### <!-- 9 -->Other
+
+- update simd-json to latest; disable unstable x4-L1 fixture ([#147](https://github.com/lmmx/polars-genson/pull/147))
+
 ## [0.5.5](https://github.com/lmmx/polars-genson/compare/genson-core-v0.5.4...genson-core-v0.5.5) - 2025-10-04
 
 ### <!-- 9 -->Other

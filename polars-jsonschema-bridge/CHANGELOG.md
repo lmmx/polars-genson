@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.5.0...polars-jsonschema-bridge-v0.5.1) - 2025-10-08
+
+### <!-- 9 -->Other
+
+- update Cargo.toml dependencies
+
 ## [0.1.7](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.1.6...polars-jsonschema-bridge-v0.1.7) - 2025-09-10
 
 ### <!-- 4 -->Documentation
