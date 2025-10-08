@@ -41,8 +41,11 @@ pub fn read_string_column(path: &str, column_name: &str) -> Result<Vec<String>, 
         )
     })?;
 
+    // Clone the data type so we don't hold a reference to schema/builder
+    let data_type = field.data_type().clone();
+
     // Ensure it's actually a string column
-    match field.data_type() {
+    match &data_type {
         DataType::Utf8 | DataType::LargeUtf8 => {}
         other => {
             return Err(format!(
@@ -62,20 +65,49 @@ pub fn read_string_column(path: &str, column_name: &str) -> Result<Vec<String>, 
     for batch_result in reader {
         let batch = batch_result.map_err(|e| format!("Failed to read record batch: {}", e))?;
 
+        // Around line 66-76, replace the downcast logic:
+
         let column = batch.column(column_index);
 
-        // Downcast to StringArray - this should always succeed given our type check
-        let string_array = column
-            .as_any()
-            .downcast_ref::<StringArray>()
-            .ok_or_else(|| "Failed to downcast column to StringArray".to_string())?;
+        // Handle both StringArray and LargeStringArray
+        let strings_in_batch: Vec<String> = match &data_type {
+            DataType::Utf8 => {
+                let string_array = column
+                    .as_any()
+                    .downcast_ref::<StringArray>()
+                    .ok_or_else(|| "Failed to downcast column to StringArray".to_string())?;
 
-        // Extract non-null values
-        for i in 0..string_array.len() {
-            if !string_array.is_null(i) {
-                strings.push(string_array.value(i).to_string());
+                (0..string_array.len())
+                    .filter_map(|i| {
+                        if !string_array.is_null(i) {
+                            Some(string_array.value(i).to_string())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
             }
-        }
+            DataType::LargeUtf8 => {
+                use arrow::array::LargeStringArray;
+                let string_array = column
+                    .as_any()
+                    .downcast_ref::<LargeStringArray>()
+                    .ok_or_else(|| "Failed to downcast column to LargeStringArray".to_string())?;
+
+                (0..string_array.len())
+                    .filter_map(|i| {
+                        if !string_array.is_null(i) {
+                            Some(string_array.value(i).to_string())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            }
+            _ => unreachable!("Type already validated"),
+        };
+
+        strings.extend(strings_in_batch);
     }
 
     Ok(strings)
