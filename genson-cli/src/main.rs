@@ -110,6 +110,16 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --force-type".into());
                 }
             }
+            "--force-scalar-promotion" => {
+                if i + 1 < args.len() {
+                    for field in args[i + 1].split(',') {
+                        config.force_scalar_promotion.insert(field.to_string());
+                    }
+                    i += 1;
+                } else {
+                    return Err("Missing value for --force-scalar-promotion".into());
+                }
+            }
             "--map-encoding" => {
                 if i + 1 < args.len() {
                     map_encoding = match args[i + 1].as_str() {
@@ -277,6 +287,9 @@ fn print_help() {
     println!("                          Example: --no-unify qualifiers,references");
     println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     println!("                          Example: --force-type labels:map,claims:record");
+    println!("    --force-scalar-promotion <fields>");
+    println!("                          Always promote these fields to wrapped scalars (comma-separated)");
+    println!("                          Example: --force-scalar-promotion precision,datavalue");
     println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");
     println!("                          mapping = Avro/JSON object (shared dict)");
     println!("                          entries = list of single-entry objects (individual dicts)");

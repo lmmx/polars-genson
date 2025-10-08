@@ -1,5 +1,5 @@
 // genson-core/src/schema/map_inference.rs
-use crate::schema::core::SchemaInferenceConfig;
+use crate::schema::core::{make_promoted_scalar_key, SchemaInferenceConfig};
 use crate::{debug, profile_verbose};
 use rayon::prelude::*;
 use serde_json::Value;
@@ -178,6 +178,32 @@ pub(crate) fn rewrite_objects(
             field_name,
             serde_json::to_string(schema).unwrap_or_default()
         );
+    }
+    if let Some(name) = field_name {
+        if config.force_scalar_promotion.contains(name) {
+            // Check if this is a scalar type that needs promotion
+            if let Some(type_val) = schema.get("type") {
+                if let Some(type_str) = type_val.as_str() {
+                    if matches!(type_str, "string" | "integer" | "number" | "boolean") {
+                        debug!(
+                            config,
+                            "Force promoting scalar field '{}' of type '{}'", name, type_str
+                        );
+
+                        let wrapped_key = make_promoted_scalar_key(name, type_str);
+                        let scalar_schema = schema.clone();
+
+                        *schema = serde_json::json!({
+                            "type": "object",
+                            "properties": {
+                                wrapped_key: scalar_schema
+                            }
+                        });
+                        return; // Don't apply other logic to this promoted field
+                    }
+                }
+            }
+        }
     }
     if let Value::Object(obj) = schema {
         // --- Forced overrides by field name ---
