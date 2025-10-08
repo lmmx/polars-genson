@@ -119,7 +119,10 @@ info:
                               "fields": [
                                 {
                                   "name": "datavalue__string",
-                                  "type": "string"
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
                                 },
                                 {
                                   "name": "id",

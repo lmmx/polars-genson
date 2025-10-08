@@ -55,7 +55,10 @@ pub fn build_json_schema(
             builder.to_schema()
         } else {
             let mut inner_schema = builder.to_schema();
-            let schema_uri = inner_schema.as_object_mut().unwrap().remove("$schema");
+            let schema_uri = inner_schema
+                .as_object_mut()
+                .unwrap()
+                .shift_remove("$schema");
             if let Some(schema_uri) = schema_uri {
                 json!({"$schema": schema_uri, "type": "array", "items": inner_schema})
             } else {

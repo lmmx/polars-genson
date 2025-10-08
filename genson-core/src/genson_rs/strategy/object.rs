@@ -268,10 +268,10 @@ impl SchemaStrategy for ObjectStrategy {
             } else {
                 // this is done in case there's a conflict with the required properties
                 // from extra keywords
-                schema.as_object_mut().unwrap().remove("required");
+                schema.as_object_mut().unwrap().shift_remove("required");
             }
         } else {
-            schema.as_object_mut().unwrap().remove("required");
+            schema.as_object_mut().unwrap().shift_remove("required");
         }
         schema
     }

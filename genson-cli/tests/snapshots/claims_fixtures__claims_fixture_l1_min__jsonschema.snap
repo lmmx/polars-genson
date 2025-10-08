@@ -1,0 +1,125 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--ndjson"
+  fixture: tests/data/claims_fixture_x4_L1_min.jsonl
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "claims": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
+              "type": "object",
+              "properties": {
+                "property": {
+                  "type": "string"
+                },
+                "datatype": {
+                  "type": "string"
+                },
+                "datavalue": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "datavalue__string": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "text": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "language": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "time": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "timezone": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "before": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "after": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "precision": {
+                      "type": [
+                        "null",
+                        "integer"
+                      ]
+                    },
+                    "calendarmodel": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                }
+              },
+              "required": [
+                "property",
+                "datatype",
+                "datavalue"
+              ]
+            },
+            "rank": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "mainsnak",
+            "rank"
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "claims"
+  ],
+  "type": "object"
+}

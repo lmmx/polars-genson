@@ -5,9 +5,11 @@ serde_json = { workspace = true }
 xxhash-rust = { workspace = true }
 
 # Optional dependencies
+arrow = { optional = true, version = "53.0.0" }
 avrotize = { optional = true, version = "0.1.1" }
 crustrace = { features = ["debug"], optional = true, version = "0.1.9" }
 crustrace-mermaid = { optional = true, version = "0.1.6" }
+parquet = { optional = true, version = "53.0.0" }
 tracing = { optional = true, version = "0.1.41" }
 tracing-subscriber = { optional = true, version = "0.3.20" }
 
@@ -21,6 +23,7 @@ simd-json.workspace = true
 [features]
 avro = ["avrotize"]
 default = []
+parquet = ["dep:arrow", "dep:parquet"]
 trace = ["crustrace", "crustrace-mermaid", "tracing", "tracing-subscriber"]
 
 [package]
@@ -38,6 +41,7 @@ version = "0.5.6"
 
 [dev-dependencies]
 predicates = "3.1.3"
+tempfile = "3"
 
 [package.metadata.cargo-machete]
-ignored = ["crustrace", "tracing"]
+ignored = ["arrow", "crustrace", "parquet", "tracing"]

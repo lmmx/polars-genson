@@ -88,7 +88,10 @@ info:
                                 "fields": [
                                   {
                                     "name": "precision__integer",
-                                    "type": "int"
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
                                   },
                                   {
                                     "name": "precision__number",

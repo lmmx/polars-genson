@@ -188,8 +188,8 @@ pub(crate) fn rewrite_objects(
                 }
                 match forced.as_str() {
                     "map" => {
-                        obj.remove("properties");
-                        obj.remove("required");
+                        obj.shift_remove("properties");
+                        obj.shift_remove("required");
                         obj.insert(
                             "additionalProperties".to_string(),
                             serde_json::json!({ "type": "string" }),
@@ -313,8 +313,8 @@ pub(crate) fn rewrite_objects(
                         let all_same = child_schemas.par_iter().all(|other| other == first);
                         if all_same {
                             let first_clone = (*first).clone();
-                            obj.remove("properties");
-                            obj.remove("required");
+                            obj.shift_remove("properties");
+                            obj.shift_remove("required");
                             obj.insert("additionalProperties".to_string(), first_clone);
                             return;
                         }
@@ -583,8 +583,8 @@ pub(crate) fn rewrite_objects(
                         }
                     }
 
-                    obj.remove("properties");
-                    obj.remove("required");
+                    obj.shift_remove("properties");
+                    obj.shift_remove("required");
                     obj.insert("type".to_string(), Value::String("object".to_string()));
 
                     // Process the schema being moved to additionalProperties for nested anyOf

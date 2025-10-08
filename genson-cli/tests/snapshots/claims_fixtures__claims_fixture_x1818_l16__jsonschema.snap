@@ -44,10 +44,7 @@ info:
                       "type": "string"
                     }
                   }
-                },
-                "required": [
-                  "datavalue__string"
-                ]
+                }
               }
             },
             "qualifiers": {

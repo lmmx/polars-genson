@@ -1,0 +1,379 @@
+{
+  "P31": [
+    {
+      "mainsnak": {
+        "property": "P31",
+        "datavalue": {
+          "id": "Q15632617"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P40": [
+    {
+      "mainsnak": {
+        "property": "P40",
+        "datavalue": {
+          "id": "Q1049347"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P27": [
+    {
+      "mainsnak": {
+        "property": "P27",
+        "datavalue": {
+          "id": "Q30"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P345": [
+    {
+      "mainsnak": {
+        "property": "P345",
+        "datavalue": "ch0009881",
+        "datatype": "external-id"
+      },
+      "rank": "deprecated"
+    }
+  ],
+  "P108": [
+    {
+      "mainsnak": {
+        "property": "P108",
+        "datavalue": {
+          "id": "Q2944031"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P463": [
+    {
+      "mainsnak": {
+        "property": "P463",
+        "datavalue": {
+          "id": "Q209114"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P569": [
+    {
+      "mainsnak": {
+        "property": "P569",
+        "datavalue": {
+          "time": "+1966-02-18T00:00:00Z",
+          "timezone": 0,
+          "before": 0,
+          "after": 0,
+          "precision": 11,
+          "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+        },
+        "datatype": "time"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P451": [
+    {
+      "mainsnak": {
+        "property": "P451",
+        "datavalue": {
+          "id": "Q284262"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P19": [
+    {
+      "mainsnak": {
+        "property": "P19",
+        "datavalue": {
+          "id": "Q47164"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P22": [
+    {
+      "mainsnak": {
+        "property": "P22",
+        "datavalue": {
+          "id": "Q3322144"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P166": [
+    {
+      "mainsnak": {
+        "property": "P166",
+        "datavalue": {
+          "id": "Q852071"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P410": [
+    {
+      "mainsnak": {
+        "property": "P410",
+        "datavalue": {
+          "id": "Q19100"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P26": [
+    {
+      "mainsnak": {
+        "property": "P26",
+        "datavalue": {
+          "id": "Q1095612"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P512": [
+    {
+      "mainsnak": {
+        "property": "P512",
+        "datavalue": {
+          "id": "Q1765120"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P106": [
+    {
+      "mainsnak": {
+        "property": "P106",
+        "datavalue": {
+          "id": "Q5446967"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P21": [
+    {
+      "mainsnak": {
+        "property": "P21",
+        "datavalue": {
+          "id": "Q6581097"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P646": [
+    {
+      "mainsnak": {
+        "property": "P646",
+        "datavalue": "/m/022jzf",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P18": [
+    {
+      "mainsnak": {
+        "property": "P18",
+        "datavalue": "Kiefer Sutherland at 24 Redemption premiere 1 (headshot).jpg",
+        "datatype": "commonsMedia"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P1441": [
+    {
+      "mainsnak": {
+        "property": "P1441",
+        "datavalue": {
+          "id": "Q56194"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P1448": [
+    {
+      "mainsnak": {
+        "property": "P1448",
+        "datavalue": {
+          "text": "Jack Bauer",
+          "language": "en"
+        },
+        "datatype": "monolingualtext"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P3373": [
+    {
+      "mainsnak": {
+        "property": "P3373",
+        "datavalue": {
+          "id": "Q10290844"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P3417": [
+    {
+      "mainsnak": {
+        "property": "P3417",
+        "datavalue": "Jack-Bauer",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P4839": [
+    {
+      "mainsnak": {
+        "property": "P4839",
+        "datavalue": "Entity[\"FictionalCharacter\", \"JackBauer\"]",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P175": [
+    {
+      "mainsnak": {
+        "property": "P175",
+        "datavalue": {
+          "id": "Q103946"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P1412": [
+    {
+      "mainsnak": {
+        "property": "P1412",
+        "datavalue": {
+          "id": "Q1860"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P1417": [
+    {
+      "mainsnak": {
+        "property": "P1417",
+        "datavalue": "topic/Jack-Bauer",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P5800": [
+    {
+      "mainsnak": {
+        "property": "P5800",
+        "datavalue": {
+          "id": "Q215972"
+        },
+        "datatype": "wikibase-item"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P6262": [
+    {
+      "mainsnak": {
+        "property": "P6262",
+        "datavalue": "24:Jack_Bauer",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P570": [
+    {
+      "mainsnak": {
+        "property": "P570",
+        "datatype": "time"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P2581": [
+    {
+      "mainsnak": {
+        "property": "P2581",
+        "datavalue": "03111055n",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P10291": [
+    {
+      "mainsnak": {
+        "property": "P10291",
+        "datavalue": "12819",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P10757": [
+    {
+      "mainsnak": {
+        "property": "P10757",
+        "datavalue": "170",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ],
+  "P3553": [
+    {
+      "mainsnak": {
+        "property": "P3553",
+        "datavalue": "19959170",
+        "datatype": "external-id"
+      },
+      "rank": "normal"
+    }
+  ]
+}

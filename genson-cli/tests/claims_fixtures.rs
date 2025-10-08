@@ -492,3 +492,37 @@ fn test_claims_fixture_x1818_l14_v2_normalize() {
 }
 
 // Do not use L26 penult., it was not reduced very much
+
+// There is a bug with the l1 which we can repro as l1 min
+// I think the non-determinism is coming from simd-json
+// and specifically halfbrown not using indexmap (PR 37)
+
+#[test]
+#[ignore]
+fn test_claims_fixture_l1_min_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1_min.jsonl",
+        "claims_fixture_l1_min__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+#[ignore]
+fn test_claims_fixture_l1_min_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1_min.jsonl",
+        "claims_fixture_l1_min__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+#[ignore]
+fn test_claims_fixture_l1_min_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims_fixture_x4_L1_min.jsonl",
+        "claims_fixture_l1_min__normalize",
+        &["--normalise"],
+    );
+}

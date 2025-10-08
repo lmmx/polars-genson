@@ -109,10 +109,7 @@ info:
                             "type": "string"
                           }
                         }
-                      },
-                      "required": [
-                        "datavalue__string"
-                      ]
+                      }
                     },
                     "datatype": {
                       "type": "string"
