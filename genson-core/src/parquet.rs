@@ -129,7 +129,7 @@ pub fn write_string_column(
 ) -> Result<(), String> {
     // Calculate total byte size to decide between Utf8 and LargeUtf8
     let total_bytes: usize = strings.iter().map(|s| s.len()).sum();
-    let use_large = total_bytes > i32::MAX as usize;
+    let use_large = total_bytes > i32::MAX as usize || strings.len() > i32::MAX as usize;
 
     // Create schema with appropriate string type
     let data_type = if use_large {
