@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1](https://github.com/lmmx/polars-genson/compare/genson-core-v0.6.0...genson-core-v0.6.1) - 2025-10-08
+
+### <!-- 9 -->Other
+
+- Support writing large string parquet columns ([#151](https://github.com/lmmx/polars-genson/pull/151))
+
 ## [0.6.0](https://github.com/lmmx/polars-genson/compare/genson-core-v0.5.5...genson-core-v0.6.0) - 2025-10-08
 
 ### <!-- 9 -->Other
