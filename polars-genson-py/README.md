@@ -716,6 +716,29 @@ out = df.genson.normalise_json("json_data")
 print(out.to_list())
 # ['{"labels": null}', '{"labels": {"en": "Hello"}}']
 ```
+### Schema Comparison Helper: `schema_to_dict`
+
+For when you need to **compare Polars schemas structurally** — for example, to verify that a round-tripped or inferred schema is equivalent to another,
+`polars-genson` provides a small utility function, `schema_to_dict`, to make life easier.
+
+```python
+from polars_genson import schema_to_dict
+import polars as pl
+
+schema1 = pl.Schema({"id": pl.Int64, "data": pl.Struct({"x": pl.Int32, "y": pl.Utf8})})
+schema2 = pl.Schema({"data": pl.Struct({"y": pl.Utf8, "x": pl.Int32}), "id": pl.Int64})
+
+assert schema_to_dict(schema1) == schema_to_dict(schema2)
+```
+
+Unlike direct schema equality (`schema1 == schema2`), this approach:
+
+* Recursively normalises **nested Struct**, **List**, and **Array** types
+* Ignores **field order** when comparing
+* Produces a **pure-Python nested dict**, suitable for JSON serialization or snapshot tests
+
+This helper is used internally in `polars-genson`’s test suite (see `tests/schema_roundtrip_test.py`)
+to verify equivalence of inferred, converted, and round-tripped schemas.
 
 ## Examples
 

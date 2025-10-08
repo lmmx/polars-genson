@@ -34,7 +34,7 @@ def test_round_trip_complex_types():
             "meta": pl.Struct(
                 {"source": pl.String, "ts": pl.Datetime(time_unit="us", time_zone=None)}
             ),
-            "tags": pl.List(pl.Utf8),
+            "tags": pl.List(pl.String),
         }
     )
 
@@ -69,3 +69,43 @@ def test_json_to_schema_invalid_json_raises():
     bad_json = "{not valid json"
     with pytest.raises(Exception):
         _ = polars_genson.json_to_schema(bad_json)
+
+
+def test_schema_to_dict_nested_structs_lists():
+    """schema_to_dict flattens nested types into comparable dicts."""
+    schema = pl.Schema(
+        {
+            "id": pl.Int64,
+            "meta": pl.Struct(
+                {
+                    "tags": pl.List(pl.List(pl.String)),
+                    "scores": pl.Array(pl.Float32, 3),
+                }
+            ),
+        }
+    )
+
+    # Expect correct deep structure for equality comparisons
+    assert polars_genson.schema_to_dict(schema) == {
+        "id": "Int64",
+        "meta": {
+            "tags": {"list": {"list": "String"}},
+            "scores": {"array": {"inner": "Float32", "size": 3}},
+        },
+    }
+
+    schema2 = pl.Schema(
+        {
+            "meta": pl.Struct(
+                {
+                    "scores": pl.Array(pl.Float32, 3),
+                    "tags": pl.List(pl.List(pl.String)),
+                }
+            ),
+            "id": pl.Int64,
+        }
+    )
+    # Reordered schemas should not be directly equivalent
+    assert schema != schema2
+    # Reordered schemas should be equivalent after recursive conversion to dicts
+    assert polars_genson.schema_to_dict(schema) == polars_genson.schema_to_dict(schema2)
