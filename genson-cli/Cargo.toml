@@ -15,7 +15,7 @@ license.workspace = true
 name = "genson-cli"
 readme = "README.md"
 repository.workspace = true
-version = "0.6.1"
+version = "0.6.2"
 
 [dev-dependencies]
 assert_cmd = { features = ["color", "color-auto"], version = "2.0.17" }

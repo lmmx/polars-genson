@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2](https://github.com/lmmx/polars-genson/compare/genson-core-v0.6.1...genson-core-v0.6.2) - 2025-10-08
+
+### <!-- 1 -->Features
+
+- *(parquet)* write schema metadata when normalising directly to disk ([#152](https://github.com/lmmx/polars-genson/pull/152))
+
 ## [0.6.1](https://github.com/lmmx/polars-genson/compare/genson-core-v0.6.0...genson-core-v0.6.1) - 2025-10-08
 
 ### <!-- 9 -->Other
