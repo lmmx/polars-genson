@@ -127,22 +127,37 @@ pub fn write_string_column(
     column_name: &str,
     strings: Vec<String>,
 ) -> Result<(), String> {
-    // Create schema with single nullable string column
-    let schema = Schema::new(vec![Field::new(column_name, DataType::Utf8, true)]);
-    let schema_ref = Arc::new(schema.clone());
+    // Calculate total byte size to decide between Utf8 and LargeUtf8
+    let total_bytes: usize = strings.iter().map(|s| s.len()).sum();
+    let use_large = total_bytes > i32::MAX as usize || strings.len() > i32::MAX as usize;
 
-    // Convert Vec<String> to Arrow StringArray
-    let string_array = StringArray::from(strings);
+    // Create schema with appropriate string type
+    let data_type = if use_large {
+        DataType::LargeUtf8
+    } else {
+        DataType::Utf8
+    };
+
+    let schema = Schema::new(vec![Field::new(column_name, data_type.clone(), true)]);
+    let schema_ref = Arc::new(schema);
+
+    // Create appropriate string array based on size
+    let array: Arc<dyn Array> = if use_large {
+        use arrow::array::LargeStringArray;
+        Arc::new(LargeStringArray::from(strings))
+    } else {
+        Arc::new(StringArray::from(strings))
+    };
 
     // Create RecordBatch
-    let batch = RecordBatch::try_new(schema_ref.clone(), vec![Arc::new(string_array)])
+    let batch = RecordBatch::try_new(schema_ref.clone(), vec![array])
         .map_err(|e| format!("Failed to create RecordBatch: {}", e))?;
 
     // Open file for writing
     let file = File::create(path)
         .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
 
-    // Configure writer properties (can be customized)
+    // Configure writer properties
     let props = WriterProperties::builder().build();
 
     // Create Arrow writer
