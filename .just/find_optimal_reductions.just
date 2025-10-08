@@ -4,19 +4,49 @@
 # just find-skip-last-limit 26 225 1 135
 
 # Configuration
-CLI := "genson-cli"
-WORKING_LINES := "12 14 26"
+CLI := "../target/release/genson-cli"
+WORKING_LINES := "1"
 DATA_DIR := "tests/data/claims"
 
-# Test if a file preserves the bug reproduction
+# Test if a file exhibits non-determinism AND maintains unification (no P-codes in output)
 [working-directory: 'genson-cli']
 test-repro line suffix="PENULTIMATE":
-    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "outL{{line}}_{{suffix}}.json" 2> "errL{{line}}_{{suffix}}.txt"
-    @if rg -q 'name": "P' "outL{{line}}_{{suffix}}.json"; then \
-        echo "    ✓ L{{line}} repro preserved"; \
-    else \
-        echo "    ✗ L{{line}} repro broken"; \
-        exit 1; \
+    #!/bin/bash
+    set -euo pipefail
+    
+    max_runs=10
+    found_diff=0
+    
+    # First run
+    {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "outL{{line}}_{{suffix}}_run1.json" 2> "errL{{line}}_{{suffix}}_run1.txt"
+    
+    # Check first run has no P-codes (successful unification)
+    if rg -q '"name": "P' "outL{{line}}_{{suffix}}_run1.json"; then
+        echo "    ✗ L{{line}} unification broken (P-codes found in output)"
+        exit 1
+    fi
+    
+    # Keep running until we find a difference or hit max_runs
+    for i in $(seq 2 $max_runs); do
+        {{CLI}} --avro --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record --no-unify qualifiers "{{DATA_DIR}}/x1818_L{{line}}_{{suffix}}.json" > "outL{{line}}_{{suffix}}_run$i.json" 2> "errL{{line}}_{{suffix}}_run$i.txt"
+        
+        # Check this run also has no P-codes
+        if rg -q '"name": "P' "outL{{line}}_{{suffix}}_run$i.json"; then
+            echo "    ✗ L{{line}} unification broken (P-codes found in output)"
+            exit 1
+        fi
+        
+        # Compare with first run
+        if ! diff -q "outL{{line}}_{{suffix}}_run1.json" "outL{{line}}_{{suffix}}_run$i.json" > /dev/null 2>&1; then
+            echo "    ✓ L{{line}} non-determinism preserved with unification intact (difference found on run $i, no P-codes)"
+            found_diff=1
+            break
+        fi
+    done
+    
+    if [ $found_diff -eq 0 ]; then
+        echo "    ✗ L{{line}} non-determinism lost (all $max_runs runs identical)"
+        exit 1
     fi
 
 # Apply P-code reduction with safety check
