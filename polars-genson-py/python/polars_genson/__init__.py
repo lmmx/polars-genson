@@ -11,9 +11,11 @@ import polars as pl
 from polars.api import register_dataframe_namespace
 from polars.plugins import register_plugin_function
 
+from ._polars_genson import avro_to_polars_fields as _rust_avro_to_polars_fields
 from ._polars_genson import infer_from_parquet as _rust_infer_from_parquet
 from ._polars_genson import json_to_schema as _rust_json_to_schema
 from ._polars_genson import normalise_from_parquet as _rust_normalise_from_parquet
+from ._polars_genson import read_parquet_metadata as _rust_read_parquet_metadata
 from ._polars_genson import schema_to_json as _rust_schema_to_json
 from .dtypes import _parse_polars_dtype
 from .utils import parse_into_expr, parse_version  # noqa: F401
@@ -32,6 +34,7 @@ __all__ = [
     "schema_to_json",
     "infer_from_parquet",
     "normalise_from_parquet",
+    "read_parquet_metadata",
 ]
 
 
@@ -424,9 +427,9 @@ def normalise_json(
 
 
 def infer_from_parquet(
-    input_path: str,
+    input_path: str | Path,
     column: str,
-    output_path: str | None = None,
+    output_path: str | Path | None = None,
     *,
     ignore_outer_array: bool = True,
     ndjson: bool = False,
@@ -449,11 +452,11 @@ def infer_from_parquet(
 
     Parameters
     ----------
-    input_path : str
+    input_path : str | Path
         Path to input Parquet file
     column : str
         Name of column containing JSON strings
-    output_path : str, optional
+    output_path : str | Path, optional
         Path to write schema JSON. If None, returns schema as dict
     ignore_outer_array : bool, default True
         Whether to treat top-level arrays as streams of objects
@@ -512,9 +515,9 @@ def infer_from_parquet(
     >>> infer_from_parquet("data.parquet", "claims", "schema.json")
     """
     result = _rust_infer_from_parquet(
-        input_path=input_path,
+        input_path=str(input_path),
         column=column,
-        output_path=output_path,
+        output_path=str(output_path) if output_path else None,
         ignore_outer_array=ignore_outer_array,
         ndjson=ndjson,
         schema_uri=schema_uri,
@@ -540,9 +543,9 @@ def infer_from_parquet(
 
 
 def normalise_from_parquet(
-    input_path: str,
+    input_path: str | Path,
     column: str,
-    output_path: str,
+    output_path: str | Path,
     *,
     output_column: str | None = None,
     ignore_outer_array: bool = True,
@@ -565,11 +568,11 @@ def normalise_from_parquet(
 
     Parameters
     ----------
-    input_path : str
+    input_path : str | Path
         Path to input Parquet file
     column : str
         Name of column containing JSON strings
-    output_path : str
+    output_path : str | Path
         Path to write normalised Parquet file (can be same as input_path for in-place)
     output_column : str, optional
         Name for output column. Defaults to same as input column name
@@ -637,9 +640,9 @@ def normalise_from_parquet(
     ... )
     """
     _rust_normalise_from_parquet(
-        input_path=input_path,
+        input_path=str(input_path),
         column=column,
-        output_path=output_path,
+        output_path=str(output_path),
         output_column=output_column,
         ignore_outer_array=ignore_outer_array,
         ndjson=ndjson,
@@ -1063,3 +1066,43 @@ class GensonNamespace:
         else:
             result = self._df.select(expr).to_series()
         return result
+
+
+def read_parquet_metadata(path: str | Path) -> dict[str, str]:
+    """Read metadata from a Parquet file.
+
+    Parameters
+    ----------
+    path : str
+        Path to the Parquet file
+
+    Returns:
+    -------
+    dict[str, str]
+        Dictionary of metadata key-value pairs
+    """
+    return _rust_read_parquet_metadata(str(path))
+
+
+def avro_to_polars_schema(avro_schema_json: str, debug: bool = False) -> pl.Schema:
+    """Convert an Avro schema to a Polars Schema.
+
+    Parameters
+    ----------
+    avro_schema_json : str
+        JSON string containing Avro schema
+    debug : bool, default False
+        Whether to print debug information
+
+    Returns:
+    -------
+    pl.Schema
+        Polars schema representation
+    """
+    # Get field name/type string pairs from Rust
+    fields = _rust_avro_to_polars_fields(avro_schema_json, debug)
+
+    # Convert type strings to actual DataType objects
+    return pl.Schema(
+        {name: _parse_polars_dtype(dtype_str) for name, dtype_str in fields}
+    )
