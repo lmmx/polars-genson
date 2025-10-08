@@ -26,6 +26,27 @@ def test_keep_empty_preserves_arrays():
     assert out == ['{"labels":[]}']
 
 
+def test_force_scalar_promotion():
+    """Force scalar promotion wraps integer fields as objects."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"precision": 11}',
+                '{"precision": 12}',
+            ]
+        }
+    )
+
+    schema = df.genson.infer_json_schema(
+        "json_data",
+        force_scalar_promotion={"precision"},
+    )
+
+    # precision should be wrapped as object with precision__integer
+    assert schema["properties"]["precision"]["type"] == "object"
+    assert "precision__integer" in schema["properties"]["precision"]["properties"]
+
+
 def test_string_coercion_disabled_by_default():
     """Numeric strings should remain strings unless coercion is enabled."""
     df = pl.DataFrame(

@@ -20,6 +20,7 @@ use std::collections::HashMap;
     unify_maps=false,
     no_unify=None,
     force_field_types=None,
+    force_scalar_promotion=None,
     wrap_scalars=true,
     avro=false,
     wrap_root=None,
@@ -42,6 +43,7 @@ pub fn infer_from_parquet(
     unify_maps: bool,
     no_unify: Option<Vec<String>>,
     force_field_types: Option<HashMap<String, String>>,
+    force_scalar_promotion: Option<Vec<String>>,
     wrap_scalars: bool,
     avro: bool,
     wrap_root: Option<String>,
@@ -77,6 +79,10 @@ pub fn infer_from_parquet(
         unify_maps,
         no_unify: no_unify.unwrap_or_default().into_iter().collect(),
         force_field_types: force_field_types.unwrap_or_default(),
+        force_scalar_promotion: force_scalar_promotion
+            .unwrap_or_default()
+            .into_iter()
+            .collect(),
         wrap_scalars,
         avro,
         wrap_root,
@@ -129,6 +135,7 @@ pub fn infer_from_parquet(
     unify_maps=false,
     no_unify=None,
     force_field_types=None,
+    force_scalar_promotion=None,
     wrap_scalars=true,
     wrap_root=None,
     no_root_map=true,
@@ -151,6 +158,7 @@ pub fn normalise_from_parquet(
     unify_maps: bool,
     no_unify: Option<Vec<String>>,
     force_field_types: Option<HashMap<String, String>>,
+    force_scalar_promotion: Option<Vec<String>>,
     wrap_scalars: bool,
     wrap_root: Option<String>,
     no_root_map: bool,
@@ -177,6 +185,10 @@ pub fn normalise_from_parquet(
         unify_maps,
         no_unify: no_unify.unwrap_or_default().into_iter().collect(),
         force_field_types: force_field_types.unwrap_or_default(),
+        force_scalar_promotion: force_scalar_promotion
+            .unwrap_or_default()
+            .into_iter()
+            .collect(),
         wrap_scalars,
         avro: true,
         wrap_root: wrap_root.clone(),

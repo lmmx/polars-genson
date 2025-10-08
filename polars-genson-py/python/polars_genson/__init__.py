@@ -109,6 +109,7 @@ def infer_json_schema(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
     wrap_root: str | None = None,
@@ -151,6 +152,11 @@ def infer_json_schema(
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
+    force_scalar_promotion : set[str], optional
+        Set of field names that should always be promoted to wrapped scalars,
+        even when they appear as simple scalars. Ensures schema stability for
+        fields known to have heterogeneous types across chunks.
+        Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
         in contexts where other rows provide objects. This avoids unification
@@ -185,6 +191,9 @@ def infer_json_schema(
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
         "no_unify": list(no_unify) if no_unify else [],
+        "force_scalar_promotion": (
+            list(force_scalar_promotion) if force_scalar_promotion else []
+        ),
         "wrap_scalars": wrap_scalars,
         "avro": avro,
         "wrap_root": wrap_root,
@@ -213,6 +222,7 @@ def infer_polars_schema(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
     wrap_root: str | None = None,
@@ -253,6 +263,11 @@ def infer_polars_schema(
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
+    force_scalar_promotion : set[str], optional
+        Set of field names that should always be promoted to wrapped scalars,
+        even when they appear as simple scalars. Ensures schema stability for
+        fields known to have heterogeneous types across chunks.
+        Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
         in contexts where other rows provide objects. This avoids unification
@@ -287,6 +302,9 @@ def infer_polars_schema(
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
         "no_unify": list(no_unify) if no_unify else [],
+        "force_scalar_promotion": (
+            list(force_scalar_promotion) if force_scalar_promotion else []
+        ),
         "wrap_scalars": wrap_scalars,
         "avro": avro,
         "wrap_root": wrap_root,
@@ -316,6 +334,7 @@ def normalise_json(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     wrap_root: str | None = None,
     no_root_map: bool = True,
@@ -364,6 +383,11 @@ def normalise_json(
     force_field_types : dict[str, str], optional
         Override the inferred type for specific fields. Keys are field names,
         values must be either ``"map"`` or ``"record"``.
+    force_scalar_promotion : set[str], optional
+        Set of field names that should always be promoted to wrapped scalars,
+        even when they appear as simple scalars. Ensures schema stability for
+        fields known to have heterogeneous types across chunks.
+        Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
         in contexts where other rows provide objects. This avoids unification
@@ -416,6 +440,9 @@ def normalise_json(
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
         "no_unify": list(no_unify) if no_unify else [],
+        "force_scalar_promotion": (
+            list(force_scalar_promotion) if force_scalar_promotion else []
+        ),
         "wrap_scalars": wrap_scalars,
         "wrap_root": wrap_root,
         "no_root_map": no_root_map,
@@ -443,6 +470,7 @@ def infer_from_parquet(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
     wrap_root: str | None = None,
@@ -487,6 +515,11 @@ def infer_from_parquet(
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
+    force_scalar_promotion : set[str], optional
+        Set of field names that should always be promoted to wrapped scalars,
+        even when they appear as simple scalars. Ensures schema stability for
+        fields known to have heterogeneous types across chunks.
+        Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
         in contexts where other rows provide objects.
@@ -529,6 +562,9 @@ def infer_from_parquet(
         map_max_required_keys=map_max_required_keys,
         unify_maps=unify_maps,
         no_unify=list(no_unify) if no_unify else None,
+        force_scalar_promotion=(
+            list(force_scalar_promotion) if force_scalar_promotion else []
+        ),
         force_field_types=force_field_types,
         wrap_scalars=wrap_scalars,
         avro=avro,
@@ -560,6 +596,7 @@ def normalise_from_parquet(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     wrap_root: str | None = None,
     no_root_map: bool = True,
@@ -610,6 +647,11 @@ def normalise_from_parquet(
         Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
+    force_scalar_promotion : set[str], optional
+        Set of field names that should always be promoted to wrapped scalars,
+        even when they appear as simple scalars. Ensures schema stability for
+        fields known to have heterogeneous types across chunks.
+        Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
         in contexts where other rows provide objects.
@@ -656,6 +698,9 @@ def normalise_from_parquet(
         unify_maps=unify_maps,
         no_unify=list(no_unify) if no_unify else None,
         force_field_types=force_field_types,
+        force_scalar_promotion=(
+            list(force_scalar_promotion) if force_scalar_promotion else []
+        ),
         wrap_scalars=wrap_scalars,
         wrap_root=wrap_root,
         no_root_map=no_root_map,
@@ -695,6 +740,7 @@ class GensonNamespace:
         unify_maps: bool = False,
         no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
+        force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = False,
         wrap_root: bool | str | None = None,
@@ -736,6 +782,11 @@ class GensonNamespace:
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
+        force_scalar_promotion : set[str], optional
+            Set of field names that should always be promoted to wrapped scalars,
+            even when they appear as simple scalars. Ensures schema stability for
+            fields known to have heterogeneous types across chunks.
+            Example: ``{"precision", "datavalue"}``.
         wrap_scalars : bool, default True
             Whether to promote scalar values into singleton objects when they appear
             in contexts where other rows provide objects. This avoids unification
@@ -781,6 +832,9 @@ class GensonNamespace:
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,
                 **fft,
+                force_scalar_promotion=(
+                    list(force_scalar_promotion) if force_scalar_promotion else []
+                ),
                 wrap_scalars=wrap_scalars,
                 avro=avro,
                 wrap_root=wrap_root_field,
@@ -814,6 +868,7 @@ class GensonNamespace:
         unify_maps: bool = False,
         no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
+        force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = False,
         wrap_root: bool | str | None = None,
@@ -856,6 +911,11 @@ class GensonNamespace:
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
+        force_scalar_promotion : set[str], optional
+            Set of field names that should always be promoted to wrapped scalars,
+            even when they appear as simple scalars. Ensures schema stability for
+            fields known to have heterogeneous types across chunks.
+            Example: ``{"precision", "datavalue"}``.
         wrap_scalars : bool, default True
             Whether to promote scalar values into singleton objects when they appear
             in contexts where other rows provide objects. This avoids unification
@@ -895,6 +955,9 @@ class GensonNamespace:
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,
                 force_field_types=force_field_types,
+                force_scalar_promotion=(
+                    list(force_scalar_promotion) if force_scalar_promotion else []
+                ),
                 wrap_scalars=wrap_scalars,
                 avro=avro,
                 wrap_root=wrap_root_field,
@@ -930,6 +993,7 @@ class GensonNamespace:
         unify_maps: bool = False,
         no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
+        force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
@@ -990,6 +1054,11 @@ class GensonNamespace:
             Prevent unification of keys under these field names with their sibling record fields.
         force_field_types : dict[str, str], optional
             Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
+        force_scalar_promotion : set[str], optional
+            Set of field names that should always be promoted to wrapped scalars,
+            even when they appear as simple scalars. Ensures schema stability for
+            fields known to have heterogeneous types across chunks.
+            Example: ``{"precision", "datavalue"}``.
         wrap_scalars : bool, default True
             Whether to promote scalar values into singleton objects when they appear
             in contexts where other rows provide objects. This avoids unification
@@ -1027,6 +1096,9 @@ class GensonNamespace:
             map_max_required_keys=map_max_required_keys,
             unify_maps=unify_maps,
             force_field_types=force_field_types,
+            force_scalar_promotion=(
+                list(force_scalar_promotion) if force_scalar_promotion else []
+            ),
             wrap_scalars=wrap_scalars,
             wrap_root=wrap_root_field,
             no_root_map=no_root_map,
@@ -1050,6 +1122,9 @@ class GensonNamespace:
                     map_max_required_keys=map_max_required_keys,
                     unify_maps=unify_maps,
                     force_field_types=force_field_types,
+                    force_scalar_promotion=(
+                        list(force_scalar_promotion) if force_scalar_promotion else []
+                    ),
                     wrap_scalars=wrap_scalars,
                     avro=True,
                     wrap_root=wrap_root_field,

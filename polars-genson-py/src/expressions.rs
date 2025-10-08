@@ -63,6 +63,9 @@ pub struct GensonKwargs {
     #[serde(default)]
     pub force_field_types: std::collections::HashMap<String, String>,
 
+    #[serde(default)]
+    pub force_scalar_promotion: Vec<String>,
+
     #[serde(default = "default_wrap_scalars")]
     pub wrap_scalars: bool,
 
@@ -202,6 +205,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 unify_maps: kwargs.unify_maps,
                 no_unify: kwargs.no_unify.iter().cloned().collect(),
                 force_field_types: kwargs.force_field_types.clone(),
+                force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
                 wrap_scalars: kwargs.wrap_scalars,
                 avro: kwargs.avro,
                 wrap_root: wrap_root_field.clone(),
@@ -249,6 +253,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     unify_maps: kwargs.unify_maps,
                     no_unify: kwargs.no_unify.iter().cloned().collect(),
                     force_field_types: kwargs.force_field_types.clone(),
+                    force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
                     wrap_scalars: kwargs.wrap_scalars,
                     avro: kwargs.avro,
                     wrap_root: wrap_root_field.clone(),
@@ -338,6 +343,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             unify_maps: kwargs.unify_maps,
             no_unify: kwargs.no_unify.iter().cloned().collect(),
             force_field_types: kwargs.force_field_types.clone(),
+            force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
             wrap_scalars: kwargs.wrap_scalars,
             avro: kwargs.avro,
             wrap_root: wrap_root_field,
@@ -482,6 +488,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
             unify_maps: kwargs.unify_maps,
             no_unify: kwargs.no_unify.iter().cloned().collect(),
             force_field_types: kwargs.force_field_types.clone(),
+            force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
             wrap_scalars: kwargs.wrap_scalars,
             avro: true, // normalisation implies Avro
             wrap_root: wrap_root_field.clone(),
