@@ -231,9 +231,23 @@ pub fn normalise_from_parquet(
     // Always write to Parquet
     let col_name = output_column.unwrap_or_else(|| column.clone());
 
-    write_string_column(&output_path, &col_name, normalised_strings).map_err(|e| {
-        pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e))
-    })?;
+    let mut metadata = HashMap::new();
+    metadata.insert(
+        "genson_avro_schema".to_string(),
+        serde_json::to_string(&result.schema).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("Failed to serialize schema: {}", e))
+        })?,
+    );
+    metadata.insert(
+        "genson_normalise_config".to_string(),
+        serde_json::to_string(&norm_config).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("Failed to serialize config: {}", e))
+        })?,
+    );
+
+    write_string_column(&output_path, &col_name, normalised_strings, Some(metadata)).map_err(
+        |e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e)),
+    )?;
 
     eprintln!(
         "Normalised data written to: {} (column: {})",

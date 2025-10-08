@@ -6,6 +6,7 @@ use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 use parquet::arrow::ArrowWriter;
 use parquet::file::properties::WriterProperties;
+use std::collections::HashMap;
 use std::fs::File;
 use std::sync::Arc;
 
@@ -126,6 +127,7 @@ pub fn write_string_column(
     path: &str,
     column_name: &str,
     strings: Vec<String>,
+    metadata: Option<HashMap<String, String>>,
 ) -> Result<(), String> {
     // Calculate total byte size to decide between Utf8 and LargeUtf8
     let total_bytes: usize = strings.iter().map(|s| s.len()).sum();
@@ -138,7 +140,15 @@ pub fn write_string_column(
         DataType::Utf8
     };
 
-    let schema = Schema::new(vec![Field::new(column_name, data_type.clone(), true)]);
+    let field = Field::new(column_name, data_type.clone(), true);
+
+    // Create schema with metadata if provided
+    let schema = if let Some(meta) = metadata {
+        Schema::new_with_metadata(vec![field], meta)
+    } else {
+        Schema::new(vec![field])
+    };
+
     let schema_ref = Arc::new(schema);
 
     // Create appropriate string array based on size
@@ -175,6 +185,17 @@ pub fn write_string_column(
         .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
 
     Ok(())
+}
+
+pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, String> {
+    let file =
+        File::open(path).map_err(|e| format!("Failed to open Parquet file '{}': {}", path, e))?;
+
+    let builder = ParquetRecordBatchReaderBuilder::try_new(file)
+        .map_err(|e| format!("Failed to read Parquet file '{}': {}", path, e))?;
+
+    let metadata = builder.schema().metadata().clone();
+    Ok(metadata)
 }
 
 #[cfg(test)]

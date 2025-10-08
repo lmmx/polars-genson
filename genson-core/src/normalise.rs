@@ -14,7 +14,7 @@ pub enum MapEncoding {
 }
 
 /// Configuration options for normalisation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct NormaliseConfig {
     /// Whether empty arrays/maps should be normalised to `null` (default: true).
     pub empty_as_null: bool,
