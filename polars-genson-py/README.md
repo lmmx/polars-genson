@@ -258,23 +258,55 @@ Output:
 }
 ```
 
-### When Unification Fails
+### Parquet I/O
 
-Records with **conflicting field types** cannot be unified:
+For working with JSON data stored in Parquet files, `polars-genson` provides direct I/O functions that handle reading from and writing to Parquet columns without needing to load data into DataFrames first.
+
+#### Schema Inference from Parquet
 
 ```python
-df_conflict = pl.DataFrame({
-    "json_data": [
-        '{"data": {"person1": {"name": "Alice", "age": 30}, "person2": {"name": "Bob", "age": "twenty-five"}}}'
-    ]
-})
+from polars_genson import infer_from_parquet
 
-# age field has conflicting types (int vs string) - unification fails
-schema = df_conflict.genson.infer_json_schema("json_data", avro=True, map_threshold=1, unify_maps=True)
-# Results in separate record fields, not a unified map
+# Infer schema from a Parquet column
+schema = infer_from_parquet(
+    "data.parquet",
+    column="claims",
+    map_threshold=0,
+    unify_maps=True,
+)
+
+# Or write schema to a file
+infer_from_parquet(
+    "data.parquet",
+    column="claims",
+    output_path="schema.json",
+    avro=True
+)
 ```
 
-The `unify_maps` feature enables more flexible schema inference for semi-structured data while maintaining type safety by rejecting incompatible field combinations.
+#### Normalization with Parquet
+
+```python
+from polars_genson import normalise_from_parquet
+
+# Normalize JSON in a Parquet column and write back to Parquet
+normalise_from_parquet(
+    input_path="input.parquet",
+    column="claims",
+    output_path="normalized.parquet",
+    map_threshold=0,
+    unify_maps=True
+)
+
+# In-place normalization (overwrites source file)
+normalise_from_parquet(
+    input_path="data.parquet",
+    column="claims",
+    output_path="data.parquet"
+)
+```
+
+Both functions accept the same schema inference and normalization options as the DataFrame methods, making it easy to work with Parquet files directly.
 
 ### Root Wrapping (`wrap_root`)
 
