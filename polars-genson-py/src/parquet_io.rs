@@ -26,6 +26,7 @@ use std::collections::HashMap;
     no_root_map=true,
     max_builders=None,
 ))]
+#[allow(clippy::too_many_arguments)]
 pub fn infer_from_parquet(
     input_path: String,
     column: String,
@@ -133,6 +134,7 @@ pub fn infer_from_parquet(
     no_root_map=true,
     max_builders=None,
 ))]
+#[allow(clippy::too_many_arguments)]
 pub fn normalise_from_parquet(
     input_path: String,
     column: String,
