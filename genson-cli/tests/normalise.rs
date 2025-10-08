@@ -305,3 +305,13 @@ fn test_normalise_labels_wrap_map_of_structs_snapshot() {
         ],
     );
 }
+
+#[test]
+fn test_normalise_force_scalar_promotion_snapshot() {
+    run_normalise_snapshot(
+        "normalise_force_scalar_promotion",
+        &[r#"{"precision": 11}"#],
+        &["--force-scalar-promotion", "precision"],
+        true,
+    );
+}
