@@ -64,7 +64,7 @@ def test_infer_from_parquet_to_file(claims_parquet_path, temp_json):
 
     # Read and verify content
     with open(temp_json) as f:
-        schema = orjson.load(f)
+        schema = orjson.loads(f.read())
 
     assert isinstance(schema, dict)
     assert "type" in schema
