@@ -641,6 +641,40 @@ fn test_rewrite_objects_zero_required_keys_allowed() {
 }
 
 #[test]
+fn test_force_scalar_promotion() {
+    let json_strings = vec![
+        r#"{"precision": 11}"#.to_string(),
+        r#"{"precision": 12}"#.to_string(),
+    ];
+
+    let mut force_promo = std::collections::HashSet::new();
+    force_promo.insert("precision".to_string());
+
+    let config = SchemaInferenceConfig {
+        force_scalar_promotion: force_promo,
+        ..Default::default()
+    };
+
+    let result = infer_json_schema_from_strings(&json_strings, config)
+        .expect("Schema inference should succeed");
+
+    let schema = &result.schema;
+    let precision_schema = &schema["properties"]["precision"];
+
+    eprintln!("Got the schema: {}", precision_schema);
+
+    // Should be an object with promoted scalar keys, not just a scalar type
+    assert_eq!(precision_schema["type"], "object");
+    assert!(precision_schema["properties"].is_object());
+    
+    // Should have both integer and number wrapped forms
+    let props = precision_schema["properties"].as_object().unwrap();
+    assert!(props.contains_key("precision__integer"));
+    
+    println!("✅ Force scalar promotion created wrapped fields: {:?}", props.keys());
+}
+
+#[test]
 fn test_rewrite_objects_force_override_wins() {
     let mut schema = json!({
         "type": "object",

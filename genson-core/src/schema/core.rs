@@ -21,6 +21,10 @@ pub struct SchemaInferenceConfig {
     pub no_unify: std::collections::HashSet<String>,
     /// Force override of field treatment, e.g. {"labels": "map"}
     pub force_field_types: HashMap<String, String>,
+    /// Set of field names that should always be promoted to wrapped scalars,
+    /// even when they appear as simple scalars (not in type unions). This ensures
+    /// schema stability for fields known to have heterogeneous types across schematised files.
+    pub force_scalar_promotion: std::collections::HashSet<String>,
     /// Whether to promote scalar values to wrapped objects when they collide with record values
     /// during unification. If `true`, scalars are promoted under a synthetic property name derived from
     /// the parent field and the scalar type (e.g. "foo__string"). If `false`, don't unify on conflicts.
@@ -123,6 +127,7 @@ impl Default for SchemaInferenceConfig {
             unify_maps: false,
             no_unify: std::collections::HashSet::new(),
             force_field_types: std::collections::HashMap::new(),
+            force_scalar_promotion: std::collections::HashSet::new(),
             wrap_scalars: true,
             wrap_root: None,
             no_root_map: true,

@@ -200,3 +200,29 @@ fn test_nested_field_order_preservation() {
         nested_z_pos, nested_a_pos
     );
 }
+
+#[test]
+fn test_force_scalar_promotion_cli() {
+    let json_content = r#"{"precision": 11}
+{"precision": 12}"#;
+
+    let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    temp_file
+        .write_all(json_content.as_bytes())
+        .expect("Failed to write to temp file");
+
+    let mut cmd = assert_cmd::Command::cargo_bin("genson-cli").unwrap();
+    cmd.arg("--ndjson")
+        .arg("--force-scalar-promotion")
+        .arg("precision")
+        .arg(temp_file.path());
+
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("\"precision\""))
+        .stdout(predicate::str::contains("\"precision__integer\""))
+        .stdout(predicate::str::contains("\"type\": \"object\""))
+        .stderr(predicate::str::contains("Processed 1 JSON object(s)"));
+
+    println!("✅ Force scalar promotion CLI test passed");
+}

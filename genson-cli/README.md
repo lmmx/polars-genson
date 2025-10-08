@@ -82,6 +82,9 @@ OPTIONS:
                           Example: --no-unify qualifiers,references
     --force-type k:v,...  Force field(s) to 'map' or 'record'
                           Example: --force-type labels:map,claims:record
+    --force-scalar-promotion <fields>
+                          Always promote these fields to wrapped scalars (comma-separated)
+                          Example: --force-scalar-promotion precision,datavalue
     --map-encoding <mode> Choose map encoding (mapping|entries|kv)
                           mapping = Avro/JSON object (shared dict)
                           entries = list of single-entry objects (individual dicts)

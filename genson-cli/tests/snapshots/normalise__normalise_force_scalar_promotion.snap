@@ -1,0 +1,18 @@
+---
+source: genson-cli/tests/normalise.rs
+expression: value
+info:
+  approved: false
+  args:
+    - "--normalise"
+    - "--ndjson"
+    - "--force-scalar-promotion"
+    - precision
+  input:
+    - precision: 11
+---
+{
+  "precision": {
+    "precision__integer": 11
+  }
+}
