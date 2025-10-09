@@ -718,6 +718,45 @@ fn test_force_scalar_promotion_with_unify_maps() {
 }
 
 #[test]
+fn test_force_scalar_promotion_nested_in_maps() {
+    // Reproduces bug where precision field in deeply nested maps doesn't get promoted
+    // Even though it's in force_scalar_promotion, it remains as plain int
+    let json_strings = vec![
+        r#"{"P646":[{"references":[{"P577":[{"datavalue":{"precision":11}}]}]}],"P937":[{"references":[{"P143":[{"datavalue":{"labels":{"en":"German Wikipedia"}}}]}]}]}"#.to_string(),
+        r#"{"P646":[{"references":[{"P577":[{"datavalue":{"precision":11}}]}]}]}"#.to_string(),
+    ];
+
+    let mut force_promo = std::collections::HashSet::new();
+    force_promo.insert("datavalue".to_string());
+    force_promo.insert("precision".to_string());
+
+    let config = SchemaInferenceConfig {
+        force_scalar_promotion: force_promo,
+        unify_maps: true,
+        map_threshold: 0,
+        wrap_root: Some("claims".to_string()),
+        ..Default::default()
+    };
+
+    let result = infer_json_schema_from_strings(&json_strings, config)
+        .expect("Schema inference should succeed");
+
+    let schema_str = serde_json::to_string_pretty(&result.schema).unwrap();
+    eprintln!("Full schema:\n{}", schema_str);
+
+    // Bug: precision should be promoted to precision__integer even in deeply nested maps
+    assert!(
+        schema_str.contains("precision__integer"),
+        "Schema should contain precision__integer type reference. \
+         Bug: precision field in nested maps is not promoted despite being in force_scalar_promotion.\n\
+         Schema: {}",
+        schema_str
+    );
+
+    println!("✅ Force scalar promotion applied to fields nested in maps");
+}
+
+#[test]
 fn test_rewrite_objects_force_override_wins() {
     let mut schema = json!({
         "type": "object",
