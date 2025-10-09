@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.4](https://github.com/lmmx/polars-genson/compare/genson-core-v0.6.3...genson-core-v0.6.4) - 2025-10-09
+
+### <!-- 9 -->Other
+
+- enforce scalar promotion fields in map unification too ([#156](https://github.com/lmmx/polars-genson/pull/156))
+
 ## [0.6.3](https://github.com/lmmx/polars-genson/compare/genson-core-v0.6.2...genson-core-v0.6.3) - 2025-10-08
 
 ### <!-- 9 -->Other
