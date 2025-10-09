@@ -199,7 +199,6 @@ pub(crate) fn rewrite_objects(
                                 wrapped_key: scalar_schema
                             }
                         });
-                        return; // Don't apply other logic to this promoted field
                     }
                 }
             }
@@ -284,6 +283,24 @@ pub(crate) fn rewrite_objects(
 
         // --- Heuristic rewrite ---
         if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
+            // GUARD: Skip map conversion if this field was force-promoted to a scalar wrapper
+            if let Some(name) = field_name {
+                if config.force_scalar_promotion.contains(name) {
+                    debug!(
+                        config,
+                        "Skipping map conversion for force-promoted field '{}'", name
+                    );
+                    // Still need to recurse into properties
+                    if let Some(props_mut) =
+                        obj.get_mut("properties").and_then(|p| p.as_object_mut())
+                    {
+                        process_properties_parallel(props_mut, config, |k, v| {
+                            rewrite_objects(v, Some(k), config, false);
+                        });
+                    }
+                    return;
+                }
+            }
             // GUARD: Skip re-processing of already converted map schemas
             if obj.get("additionalProperties").is_some() {
                 if props.is_empty() {
