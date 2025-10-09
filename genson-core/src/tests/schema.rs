@@ -675,6 +675,49 @@ fn test_force_scalar_promotion() {
 }
 
 #[test]
+fn test_force_scalar_promotion_with_unify_maps() {
+    // Reproduces bug where precision field loses scalar promotion when:
+    // 1. Multiple fields are promoted (datavalue, precision)
+    // 2. unify_maps is enabled
+    // 3. map_threshold is low (causing properties to become maps)
+    let json_strings = vec![
+        r#"{"P646":[{"references":[{"P577":[{"datavalue":{"time":"+2013-10-28T00:00:00Z","precision":11}}]}]}]}"#.to_string(),
+        r#"{"P646":[{"references":[{"P577":[{"datavalue":{"time":"+2013-10-28T00:00:00Z","precision":11}}]}]}]}"#.to_string(),
+    ];
+
+    let mut force_promo = std::collections::HashSet::new();
+    force_promo.insert("datavalue".to_string());
+    force_promo.insert("precision".to_string());
+
+    let config = SchemaInferenceConfig {
+        force_scalar_promotion: force_promo,
+        unify_maps: true,
+        map_threshold: 0,
+        wrap_root: Some("claims".to_string()),
+        ..Default::default()
+    };
+
+    let result = infer_json_schema_from_strings(&json_strings, config)
+        .expect("Schema inference should succeed");
+
+    let schema_str = serde_json::to_string_pretty(&result.schema).unwrap();
+    eprintln!("Full schema:\n{}", schema_str);
+
+    // Bug: precision should reference the promoted type "precision__integer"
+    // but instead shows plain "int"
+    assert!(
+        schema_str.contains("precision__integer"),
+        "Schema should contain precision__integer type reference. \
+         Bug: precision field shows 'int' instead of 'precision__integer' when \
+         force_scalar_promotion is combined with unify_maps.\n\
+         Schema: {}",
+        schema_str
+    );
+
+    println!("✅ Force scalar promotion correctly applied with unify_maps");
+}
+
+#[test]
 fn test_rewrite_objects_force_override_wins() {
     let mut schema = json!({
         "type": "object",
