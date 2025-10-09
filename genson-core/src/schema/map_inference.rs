@@ -200,6 +200,62 @@ pub(crate) fn rewrite_objects(
                             }
                         });
                     }
+                } else if let Some(type_arr) = type_val.as_array() {
+                    if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
+                        if let Some(inner_type) = type_arr
+                            .iter()
+                            .find(|t| *t != &Value::String("null".into()))
+                            .and_then(|t| t.as_str())
+                        {
+                            if matches!(inner_type, "string" | "integer" | "number" | "boolean") {
+                                debug!(
+                                    config,
+                                    "Force promoting nullable scalar field '{}' of type '{}'",
+                                    name,
+                                    inner_type
+                                );
+
+                                let wrapped_key = make_promoted_scalar_key(name, inner_type);
+                                let scalar_schema = schema.clone();
+
+                                *schema = serde_json::json!({
+                                    "type": "object",
+                                    "properties": {
+                                        wrapped_key: scalar_schema
+                                    }
+                                });
+                                return;
+                            }
+                        }
+                    }
+                } else if let Some(type_arr) = type_val.as_array() {
+                    if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
+                        if let Some(inner_type) = type_arr
+                            .iter()
+                            .find(|t| *t != &Value::String("null".into()))
+                            .and_then(|t| t.as_str())
+                        {
+                            if matches!(inner_type, "string" | "integer" | "number" | "boolean") {
+                                debug!(
+                                    config,
+                                    "Force promoting nullable scalar field '{}' of type '{}'",
+                                    name,
+                                    inner_type
+                                );
+
+                                let wrapped_key = make_promoted_scalar_key(name, inner_type);
+                                let scalar_schema = schema.clone();
+
+                                *schema = serde_json::json!({
+                                    "type": "object",
+                                    "properties": {
+                                        wrapped_key: scalar_schema
+                                    }
+                                });
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         }
