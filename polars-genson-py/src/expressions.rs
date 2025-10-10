@@ -179,13 +179,14 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
     }
 
     if kwargs.debug {
-        eprintln!("DEBUG: Processing {} JSON strings", json_strings.len());
-        eprintln!(
+        anstream::eprintln!("DEBUG: Processing {} JSON strings", json_strings.len());
+        anstream::eprintln!(
             "DEBUG: Config: ignore_outer_array={}, ndjson={}",
-            kwargs.ignore_outer_array, kwargs.ndjson
+            kwargs.ignore_outer_array,
+            kwargs.ndjson
         );
         for (i, json_str) in json_strings.iter().take(3).enumerate() {
-            eprintln!("DEBUG: Sample JSON {}: {}", i + 1, json_str);
+            anstream::eprintln!("DEBUG: Sample JSON {}: {}", i + 1, json_str);
         }
     }
 
@@ -228,7 +229,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
         match result {
             Ok(Ok(schema_json)) => {
                 if kwargs.debug {
-                    eprintln!("DEBUG: Successfully generated merged schema");
+                    anstream::eprintln!("DEBUG: Successfully generated merged schema");
                 }
                 Ok(Series::new("schema".into(), vec![schema_json; 1]))
             }
@@ -275,7 +276,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
         match result {
             Ok(Ok(individual_schemas)) => {
                 if kwargs.debug {
-                    eprintln!(
+                    anstream::eprintln!(
                         "DEBUG: Generated {} individual schemas",
                         individual_schemas.len()
                     );

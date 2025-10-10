@@ -397,7 +397,7 @@ pub(crate) fn rewrite_objects(
             // Copy out child schema shapes
             let child_schemas: Vec<&Value> = props.values().collect();
             if config.profile && child_schemas.len() > 50 {
-                eprintln!("Collected {} schemas", child_schemas.len());
+                anstream::eprintln!("Collected {} schemas", child_schemas.len());
             }
 
             // Detect map-of-records only if:
@@ -513,7 +513,7 @@ pub(crate) fn rewrite_objects(
                 } else if config.unify_maps {
                     debug!(config, "Schemas not homogeneous, attempting unification");
                     if config.profile && normalised_schemas.len() > 50 {
-                        eprintln!(
+                        anstream::eprintln!(
                             "Unification of {} heterogeneous schemas beginning...",
                             normalised_schemas.len()
                         );
@@ -564,7 +564,7 @@ pub(crate) fn rewrite_objects(
                                     }));
                                 }
                                 if config.profile && child_schemas.len() > 50 {
-                                    eprintln!(
+                                    anstream::eprintln!(
                                         "Unification of {} item schemas took {:?}",
                                         child_schemas.len(),
                                         unify_start.elapsed()
@@ -582,7 +582,7 @@ pub(crate) fn rewrite_objects(
                                     config,
                                 );
                                 if config.profile && child_schemas.len() > 50 {
-                                    eprintln!(
+                                    anstream::eprintln!(
                                         "Unification of {} child schemas took {:?}",
                                         child_schemas.len(),
                                         unify_start.elapsed()
@@ -593,7 +593,7 @@ pub(crate) fn rewrite_objects(
                     }
                 }
                 if config.profile && normalised_schemas.len() > 50 {
-                    eprintln!(
+                    anstream::eprintln!(
                         "Homogeneity check on {} schemas took {:?}",
                         normalised_schemas.len(),
                         homog_start.elapsed()

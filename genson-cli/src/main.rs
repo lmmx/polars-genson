@@ -245,67 +245,87 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         if config.delimiter == Some(b'\n') {
             // print one line per row
             for v in normalised {
-                println!("{}", serde_json::to_string(&v)?);
+                anstream::println!("{}", serde_json::to_string(&v)?);
             }
         } else {
-            println!("{}", serde_json::to_string_pretty(&normalised)?);
+            anstream::println!("{}", serde_json::to_string_pretty(&normalised)?);
         }
     } else {
         // Pretty-print the schema
-        println!("{}", serde_json::to_string_pretty(&result.schema)?);
+        anstream::println!("{}", serde_json::to_string_pretty(&result.schema)?);
     }
 
-    eprintln!("Processed {} JSON object(s)", result.processed_count);
+    anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
     Ok(())
 }
 
 fn print_help() {
-    println!("genson-cli - JSON schema inference tool");
-    println!();
-    println!("USAGE:");
-    println!("    genson-cli [OPTIONS] [FILE]");
-    println!();
-    println!("ARGS:");
-    println!("    <FILE>    Input JSON file (reads from stdin if not provided)");
-    println!();
-    println!("OPTIONS:");
-    println!("    -h, --help            Print this help message");
-    println!("    --no-ignore-array     Don't treat top-level arrays as object streams");
-    println!("    --ndjson              Treat input as newline-delimited JSON");
-    println!("    --avro                Output Avro schema instead of JSON Schema");
-    println!("    --normalise           Normalise the input data against the inferred schema");
-    println!("    --coerce-strings      Coerce numeric/boolean strings to schema type during normalisation");
-    println!("    --keep-empty          Keep empty arrays/maps instead of turning them into nulls");
-    println!("    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)");
-    println!(
+    anstream::println!("genson-cli - JSON schema inference tool");
+    anstream::println!();
+    anstream::println!("USAGE:");
+    anstream::println!("    genson-cli [OPTIONS] [FILE]");
+    anstream::println!();
+    anstream::println!("ARGS:");
+    anstream::println!("    <FILE>    Input JSON file (reads from stdin if not provided)");
+    anstream::println!();
+    anstream::println!("OPTIONS:");
+    anstream::println!("    -h, --help            Print this help message");
+    anstream::println!("    --no-ignore-array     Don't treat top-level arrays as object streams");
+    anstream::println!("    --ndjson              Treat input as newline-delimited JSON");
+    anstream::println!("    --avro                Output Avro schema instead of JSON Schema");
+    anstream::println!(
+        "    --normalise           Normalise the input data against the inferred schema"
+    );
+    anstream::println!("    --coerce-strings      Coerce numeric/boolean strings to schema type during normalisation");
+    anstream::println!(
+        "    --keep-empty          Keep empty arrays/maps instead of turning them into nulls"
+    );
+    anstream::println!(
+        "    --map-threshold <N>   Treat objects with >N keys as map candidates (default 20)"
+    );
+    anstream::println!(
         "    --map-max-rk <N>      Maximum required keys for Map inference (default: no limit)"
     );
-    println!("    --map-max-required-keys <N>");
-    println!("    --unify-maps          Enable unification of compatible record schemas into maps");
-    println!("                          Same as --map-max-rk");
-    println!("    --no-unify <fields>   Exclude fields from record unification (comma-separated)");
-    println!("                          Example: --no-unify qualifiers,references");
-    println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
-    println!("                          Example: --force-type labels:map,claims:record");
-    println!("    --force-scalar-promotion <fields>");
-    println!("                          Always promote these fields to wrapped scalars (comma-separated)");
-    println!("                          Example: --force-scalar-promotion precision,datavalue");
-    println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");
-    println!("                          mapping = Avro/JSON object (shared dict)");
-    println!("                          entries = list of single-entry objects (individual dicts)");
-    println!("                          kv      = list of {{key,value}} objects");
-    println!("    --no-wrap-scalars     Disable scalar promotion (keep raw scalar types)");
-    println!("    --wrap-root <field>   Wrap top-level schema under this required field");
-    println!("    --root-map            Allow document root to become a map");
-    println!("    --max-builders <N>    Maximum schema builders to create in parallel at once");
-    println!("                          Lower values reduce peak memory (default: unlimited)");
-    println!("    --debug               Enable debug output during schema inference");
-    println!("    --profile             Enable profiling output during schema inference");
-    println!();
-    println!("EXAMPLES:");
-    println!("    genson-cli data.json");
-    println!("    echo '{{\"name\": \"test\"}}' | genson-cli");
-    println!("    genson-cli --ndjson multi-line.jsonl");
+    anstream::println!("    --map-max-required-keys <N>");
+    anstream::println!(
+        "    --unify-maps          Enable unification of compatible record schemas into maps"
+    );
+    anstream::println!("                          Same as --map-max-rk");
+    anstream::println!(
+        "    --no-unify <fields>   Exclude fields from record unification (comma-separated)"
+    );
+    anstream::println!("                          Example: --no-unify qualifiers,references");
+    anstream::println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
+    anstream::println!("                          Example: --force-type labels:map,claims:record");
+    anstream::println!("    --force-scalar-promotion <fields>");
+    anstream::println!("                          Always promote these fields to wrapped scalars (comma-separated)");
+    anstream::println!(
+        "                          Example: --force-scalar-promotion precision,datavalue"
+    );
+    anstream::println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");
+    anstream::println!("                          mapping = Avro/JSON object (shared dict)");
+    anstream::println!(
+        "                          entries = list of single-entry objects (individual dicts)"
+    );
+    anstream::println!("                          kv      = list of {{key,value}} objects");
+    anstream::println!(
+        "    --no-wrap-scalars     Disable scalar promotion (keep raw scalar types)"
+    );
+    anstream::println!("    --wrap-root <field>   Wrap top-level schema under this required field");
+    anstream::println!("    --root-map            Allow document root to become a map");
+    anstream::println!(
+        "    --max-builders <N>    Maximum schema builders to create in parallel at once"
+    );
+    anstream::println!(
+        "                          Lower values reduce peak memory (default: unlimited)"
+    );
+    anstream::println!("    --debug               Enable debug output during schema inference");
+    anstream::println!("    --profile             Enable profiling output during schema inference");
+    anstream::println!();
+    anstream::println!("EXAMPLES:");
+    anstream::println!("    genson-cli data.json");
+    anstream::println!("    echo '{{\"name\": \"test\"}}' | genson-cli");
+    anstream::println!("    genson-cli --ndjson multi-line.jsonl");
 }
 
 #[cfg(test)]
@@ -316,7 +336,7 @@ mod tests {
 
     #[test]
     fn test_cli_with_invalid_json_unit() {
-        println!("=== Unit test calling CLI logic directly ===");
+        anstream::println!("=== Unit test calling CLI logic directly ===");
 
         // Create a temp file with invalid JSON
         let invalid_json = r#"{"invalid": json}"#;
@@ -333,7 +353,7 @@ mod tests {
         let json_strings = vec![invalid_json.to_string()];
         let result = infer_json_schema(&json_strings, Some(SchemaInferenceConfig::default()));
 
-        println!("Result: {:?}", result);
+        anstream::println!("Result: {:?}", result);
 
         match result {
             Ok(schema_result) => {
@@ -343,7 +363,7 @@ mod tests {
                 );
             }
             Err(error_msg) => {
-                println!("✅ Got error in unit test: {}", error_msg);
+                anstream::println!("✅ Got error in unit test: {}", error_msg);
                 // Check for the key parts of the error message instead of exact match
                 assert!(error_msg.contains("Invalid JSON input"));
                 assert!(error_msg.contains("line"));
@@ -353,19 +373,19 @@ mod tests {
 
     #[test]
     fn test_genson_core_directly() {
-        println!("=== Direct test of genson-core function ===");
+        anstream::println!("=== Direct test of genson-core function ===");
 
         let json_strings = vec![r#"{"invalid": json}"#.to_string()];
         let result = infer_json_schema(&json_strings, Some(SchemaInferenceConfig::default()));
 
-        println!("Direct result: {:?}", result);
+        anstream::println!("Direct result: {:?}", result);
 
         match result {
             Ok(schema_result) => {
                 panic!("Expected error but got success: {:?}", schema_result);
             }
             Err(error_msg) => {
-                println!("✅ Got expected error: {}", error_msg);
+                anstream::println!("✅ Got expected error: {}", error_msg);
                 // Check for the key parts of the error message instead of exact match
                 assert!(error_msg.contains("Invalid JSON input"));
                 assert!(error_msg.contains("line"));
@@ -398,7 +418,7 @@ mod tests {
         };
         let normalised = normalise_values(values, &result.schema, &norm_cfg);
 
-        println!(
+        anstream::println!(
             "Normalised with empty_as_null: {}",
             serde_json::to_string(&normalised).unwrap()
         );
@@ -430,7 +450,7 @@ mod tests {
         };
         let normalised = normalise_values(values, &result.schema, &norm_cfg);
 
-        println!(
+        anstream::println!(
             "Normalised with keep_empty: {}",
             serde_json::to_string(&normalised).unwrap()
         );

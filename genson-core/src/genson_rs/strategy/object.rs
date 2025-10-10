@@ -304,8 +304,8 @@ mod tests {
 
         let keys1: Vec<_> = strat1.properties.keys().collect();
         let keys2: Vec<_> = strat2.properties.keys().collect();
-        println!("keys1 = {:?}", keys1);
-        println!("keys2 = {:?}", keys2);
+        anstream::println!("keys1 = {:?}", keys1);
+        anstream::println!("keys2 = {:?}", keys2);
 
         // The keys are the same set, but in different order.
         // With OrderMap, properties != properties because order matters.

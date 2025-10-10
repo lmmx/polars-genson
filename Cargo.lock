@@ -1239,6 +1239,7 @@ dependencies = [
 name = "genson-cli"
 version = "0.6.5"
 dependencies = [
+ "anstream",
  "assert_cmd",
  "genson-core",
  "insta",
@@ -1252,6 +1253,7 @@ dependencies = [
 name = "genson-core"
 version = "0.6.5"
 dependencies = [
+ "anstream",
  "arrow",
  "avrotize",
  "crustrace",
@@ -2537,6 +2539,7 @@ dependencies = [
 name = "polars-genson-py"
 version = "0.1.0"
 dependencies = [
+ "anstream",
  "genson-core",
  "polars",
  "polars-arrow",
@@ -2615,6 +2618,7 @@ dependencies = [
 name = "polars-jsonschema-bridge"
 version = "0.6.0"
 dependencies = [
+ "anstream",
  "eyre",
  "insta",
  "polars",

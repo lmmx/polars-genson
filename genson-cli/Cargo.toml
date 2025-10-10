@@ -1,4 +1,5 @@
 [dependencies]
+anstream = { workspace = true }
 genson-core = { features = ["avro", "parquet"], workspace = true }
 serde_json = { workspace = true }
 
