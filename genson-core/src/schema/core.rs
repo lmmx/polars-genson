@@ -64,28 +64,28 @@ impl SchemaInferenceConfig {
     pub(crate) fn profile(&self, args: std::fmt::Arguments) {
         if self.profile {
             let message = format!("{}", args);
-            eprintln!("{}", message);
+            anstream::eprintln!("{}", message);
         }
     }
 
     pub(crate) fn profile_verbose(&self, args: std::fmt::Arguments) {
         if self.profile && matches!(self.verbosity, DebugVerbosity::Verbose) {
             let message = format!("{}", args);
-            eprintln!("{}", message);
+            anstream::eprintln!("{}", message);
         }
     }
 
     pub(crate) fn debug(&self, args: std::fmt::Arguments) {
         if self.debug {
             let message = format!("{}", args);
-            eprintln!("{}", self.maybe_truncate(message));
+            anstream::eprintln!("{}", self.maybe_truncate(message));
         }
     }
 
     pub(crate) fn debug_verbose(&self, args: std::fmt::Arguments) {
         if self.debug && matches!(self.verbosity, DebugVerbosity::Verbose) {
             let message = format!("{}", args);
-            eprintln!("{}", self.maybe_truncate(message));
+            anstream::eprintln!("{}", self.maybe_truncate(message));
         }
     }
 

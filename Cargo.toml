@@ -31,6 +31,7 @@ polars-genson-py = { path = "polars-genson-py", version = "0.1.0" }
 polars-jsonschema-bridge = { path = "polars-jsonschema-bridge", version = "0.6.0" }
 
 # Core dependencies
+anstream = "0.6"
 serde = { features = ["derive"], version = "1.0" }
 serde_json = { features = ["preserve_order"], version = "1.0" }
 xxhash-rust = { features = ["xxh64"], version = "0.8.15" }

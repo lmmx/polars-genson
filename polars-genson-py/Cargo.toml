@@ -1,4 +1,5 @@
 [dependencies]
+anstream = { workspace = true }
 genson-core = { features = ["avro", "parquet"], workspace = true }
 polars.workspace = true
 polars-arrow.workspace = true

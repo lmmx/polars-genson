@@ -9,7 +9,7 @@ macro_rules! eprintln_orange {
     ($($arg:tt)*) => {{
         const ORANGE: &str = "\x1b[38;5;202m";
         const RESET: &str = "\x1b[0m";
-        eprintln!("{ORANGE}(🦀) {}{}", format!($($arg)*), RESET);
+        anstream::eprintln!("{ORANGE}(🦀) {}{}", format!($($arg)*), RESET);
     }};
 }
 

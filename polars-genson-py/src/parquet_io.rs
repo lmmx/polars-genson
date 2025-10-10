@@ -56,7 +56,7 @@ pub fn infer_from_parquet(
     })?;
 
     if debug {
-        eprintln!(
+        anstream::eprintln!(
             "Read {} JSON strings from column '{}'",
             json_strings.len(),
             column
@@ -104,14 +104,14 @@ pub fn infer_from_parquet(
     })?;
 
     // Print to stderr
-    eprintln!("Processed {} JSON object(s)", result.processed_count);
+    anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
 
     // Write to file or return
     if let Some(out_path) = output_path {
         std::fs::write(&out_path, &schema_json).map_err(|e| {
             pyo3::exceptions::PyIOError::new_err(format!("Failed to write to {}: {}", out_path, e))
         })?;
-        eprintln!("Schema written to: {}", out_path);
+        anstream::eprintln!("Schema written to: {}", out_path);
         Ok(format!("Schema written to: {}", out_path))
     } else {
         Ok(schema_json)
@@ -169,7 +169,7 @@ pub fn normalise_from_parquet(
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
     })?;
 
-    eprintln!(
+    anstream::eprintln!(
         "Read {} JSON strings from column '{}'",
         json_strings.len(),
         column
@@ -203,7 +203,7 @@ pub fn normalise_from_parquet(
         pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
     })?;
 
-    eprintln!("Processed {} JSON object(s)", result.processed_count);
+    anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
 
     // Parse values
     let values: Vec<serde_json::Value> = json_strings
@@ -261,9 +261,10 @@ pub fn normalise_from_parquet(
         |e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e)),
     )?;
 
-    eprintln!(
+    anstream::eprintln!(
         "Normalised data written to: {} (column: {})",
-        output_path, col_name
+        output_path,
+        col_name
     );
 
     Ok(())

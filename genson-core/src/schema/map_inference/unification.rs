@@ -753,7 +753,7 @@ fn unify_record_schemas(
     }
 
     if config.profile && schemas.len() > 50 {
-        eprintln!("  Merge loop took {:?}", merge_start.elapsed());
+        anstream::eprintln!("  Merge loop took {:?}", merge_start.elapsed());
     }
 
     let total_schemas = schemas.len();

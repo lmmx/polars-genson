@@ -24,13 +24,13 @@ pub fn schema_to_polars_fields(
     debug: bool,
 ) -> Result<Vec<(String, String)>, PolarsError> {
     if debug {
-        eprintln!("=== Generated Schema ({:?}) ===", format);
-        eprintln!(
+        anstream::eprintln!("=== Generated Schema ({:?}) ===", format);
+        anstream::eprintln!(
             "{}",
             serde_json::to_string_pretty(schema)
                 .unwrap_or_else(|_| "Failed to serialize".to_string())
         );
-        eprintln!("==============================");
+        anstream::eprintln!("==============================");
     }
 
     match format {

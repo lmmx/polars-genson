@@ -294,7 +294,7 @@ fn process_json_strings_parallel(
 
     if config.profile {
         if let Some(rss) = get_rss_bytes() {
-            eprintln!("📊 RSS before parallel processing: {}", format_bytes(rss));
+            anstream::eprintln!("📊 RSS before parallel processing: {}", format_bytes(rss));
         }
     }
 
@@ -311,7 +311,7 @@ fn process_json_strings_parallel(
 
         if config.profile {
             if let Some(rss) = get_rss_bytes() {
-                eprintln!("📊 RSS before chunk {}: {}", chunk_idx, format_bytes(rss));
+                anstream::eprintln!("📊 RSS before chunk {}: {}", chunk_idx, format_bytes(rss));
             }
         }
 
@@ -360,7 +360,7 @@ fn process_json_strings_parallel(
 
         if config.profile {
             if let Some(rss) = get_rss_bytes() {
-                eprintln!("📊 RSS after collecting chunk: {}", format_bytes(rss));
+                anstream::eprintln!("📊 RSS after collecting chunk: {}", format_bytes(rss));
             }
         }
 
@@ -383,7 +383,7 @@ fn process_json_strings_parallel(
 
         if config.profile {
             if let Some(rss) = get_rss_bytes() {
-                eprintln!("📊 RSS after merging chunk: {}", format_bytes(rss));
+                anstream::eprintln!("📊 RSS after merging chunk: {}", format_bytes(rss));
             }
         }
     }
