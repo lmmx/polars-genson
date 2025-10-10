@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.6](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.6.5...genson-cli-v0.6.6) - 2025-10-10
+
+### <!-- 1 -->Features
+
+- use anstream for all (e)println calls to make them pipeable ([#158](https://github.com/lmmx/polars-genson/pull/158))
+
 ## [0.6.5](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.6.4...genson-cli-v0.6.5) - 2025-10-09
 
 ### <!-- 9 -->Other
