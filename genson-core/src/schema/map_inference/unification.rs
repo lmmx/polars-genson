@@ -172,6 +172,67 @@ fn is_object_schema(schema: &Value) -> bool {
     false
 }
 
+/// Check if a schema represents an empty record (object with no/empty properties)
+fn is_empty_record_schema(schema: &Value) -> bool {
+    if let Some(obj) = schema.as_object() {
+        if let Some(type_val) = obj.get("type") {
+            if let Some(type_str) = type_val.as_str() {
+                if type_str == "object" {
+                    // Must NOT be a map (additionalProperties must not be an object/true)
+                    if let Some(additional_props) = obj.get("additionalProperties") {
+                        // If additionalProperties is an object or true, it's a map
+                        if additional_props.is_object() || additional_props == &Value::Bool(true) {
+                            return false;
+                        }
+                        // If it's false, continue checking - it's not a map
+                    }
+
+                    // Empty if: no properties field, OR properties exists but is empty
+                    match obj.get("properties") {
+                        None => return true, // No properties field at all
+                        Some(props) => {
+                            if let Some(props_obj) = props.as_object() {
+                                return props_obj.is_empty(); // Empty properties
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Handle nullable format: {"type": ["null", "object"]}
+            if let Some(arr) = type_val.as_array() {
+                if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
+                    let non_null_type = arr
+                        .iter()
+                        .find(|t| *t != &Value::String("null".into()))
+                        .and_then(|t| t.as_str());
+                    if non_null_type == Some("object") {
+                        // Must NOT be a map
+                        if let Some(additional_props) = obj.get("additionalProperties") {
+                            if additional_props.is_object()
+                                || additional_props == &Value::Bool(true)
+                            {
+                                return false;
+                            }
+                        }
+
+                        match obj.get("properties") {
+                            None => return true,
+                            Some(props) => {
+                                if let Some(props_obj) = props.as_object() {
+                                    return props_obj.is_empty();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
 /// Check if a schema represents a map type (object with additionalProperties)
 fn is_map_schema(schema: &Value) -> bool {
     // Check direct type field
@@ -971,13 +1032,47 @@ pub(crate) fn check_unifiable_schemas(
         return unify_array_schemas(schemas, path, config);
     }
 
-    // Check if all are map schemas (objects with additionalProperties)
-    if schemas.iter().all(|&s| is_map_schema(s)) {
-        debug!(
-            config,
-            "{}: All schemas are maps, attempting map unification", path
-        );
-        return unify_map_schemas(schemas, path, config);
+    // Check if all are map schemas OR empty records (semantically equivalent to empty maps)
+    let all_maps_or_empty = schemas
+        .iter()
+        .all(|&s| is_map_schema(s) || is_empty_record_schema(s));
+
+    if all_maps_or_empty {
+        // Filter to only map schemas (ignore empty records)
+        let map_schemas: Vec<&Value> = schemas
+            .iter()
+            .filter(|&&s| is_map_schema(s))
+            .copied()
+            .collect();
+
+        if map_schemas.is_empty() {
+            // All schemas are empty records - treat as an empty map
+            debug!(
+                config,
+                "{}: All schemas are empty records, treating as empty map", path
+            );
+            return Some(json!({
+                "type": "object",
+                "additionalProperties": {"type": "string"}
+            }));
+        } else if map_schemas.len() < schemas.len() {
+            // Some maps, some empty records - unify the maps (empty records contribute nothing)
+            debug!(
+                config,
+                "{}: Mix of {} maps and {} empty records, unifying maps only",
+                path,
+                map_schemas.len(),
+                schemas.len() - map_schemas.len()
+            );
+            return unify_map_schemas(&map_schemas, path, config);
+        } else {
+            // All maps, no empty records
+            debug!(
+                config,
+                "{}: All schemas are maps, attempting map unification", path
+            );
+            return unify_map_schemas(&map_schemas, path, config);
+        }
     }
 
     // Check if all are record schemas (objects with properties)
