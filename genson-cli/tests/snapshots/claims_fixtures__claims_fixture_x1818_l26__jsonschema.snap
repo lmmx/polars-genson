@@ -15,402 +15,213 @@ info:
   "$schema": "http://json-schema.org/schema#",
   "properties": {
     "claims": {
-      "properties": {
-        "P1333": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
               "type": "object",
               "additionalProperties": {
-                "properties": {
-                  "latitude": {
-                    "type": "number"
-                  },
-                  "longitude": {
-                    "type": "number"
-                  },
-                  "altitude": {
-                    "type": "null"
-                  },
-                  "precision": {
-                    "type": "number"
-                  },
-                  "globe": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "altitude",
-                  "globe",
-                  "latitude",
-                  "longitude",
-                  "precision"
-                ],
-                "type": "object"
-              }
-            }
-          }
-        },
-        "P3221": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P1792": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
                 "type": "object",
-                "additionalProperties": {
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "labels": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
+                "properties": {
+                  "precision": {
+                    "type": "object",
+                    "properties": {
+                      "precision__number": {
+                        "type": [
+                          "null",
+                          "number"
+                        ]
+                      },
+                      "precision__integer": {
+                        "type": "integer"
                       }
                     }
                   },
-                  "required": [
-                    "id",
-                    "labels"
-                  ],
-                  "type": "object"
-                }
-              },
-              "references": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "labels": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "mainsnak",
-              "references"
-            ],
-            "type": "object"
-          }
-        },
-        "P3238": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          }
-        },
-        "P5337": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "P2959": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "properties": {
                   "id": {
-                    "type": "string"
+                    "type": [
+                      "null",
+                      "string"
+                    ]
                   },
                   "labels": {
                     "type": "object",
                     "additionalProperties": {
                       "type": "string"
                     }
+                  },
+                  "datavalue__string": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "latitude": {
+                    "type": [
+                      "null",
+                      "number"
+                    ]
+                  },
+                  "longitude": {
+                    "type": [
+                      "null",
+                      "number"
+                    ]
+                  },
+                  "altitude": {
+                    "type": "null"
+                  },
+                  "globe": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "time": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "timezone": {
+                    "type": [
+                      "null",
+                      "integer"
+                    ]
+                  },
+                  "before": {
+                    "type": [
+                      "null",
+                      "integer"
+                    ]
+                  },
+                  "after": {
+                    "type": [
+                      "null",
+                      "integer"
+                    ]
+                  },
+                  "calendarmodel": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
                   }
                 },
                 "required": [
-                  "id",
-                  "labels"
-                ],
-                "type": "object"
+                  "precision"
+                ]
+              }
+            },
+            "references": {
+              "type": [
+                "null",
+                "array"
+              ],
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "datavalue__string": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "id": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "time": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        },
+                        "timezone": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "before": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "after": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "precision": {
+                          "type": [
+                            "null",
+                            "integer"
+                          ]
+                        },
+                        "calendarmodel": {
+                          "type": [
+                            "null",
+                            "string"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "labels"
+                    ]
+                  }
+                }
               }
             }
-          }
-        },
-        "P1552": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
-                "type": "object",
-                "additionalProperties": {
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "labels": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ],
-                  "type": "object"
-                }
-              },
-              "qualifiers": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "labels": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                }
-              },
-              "references": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "time": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "timezone": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "before": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "after": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "precision": {
-                            "type": [
-                              "null",
-                              "integer"
-                            ]
-                          },
-                          "calendarmodel": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          "datavalue__string": {
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "mainsnak",
-              "qualifiers",
-              "references"
-            ],
-            "type": "object"
-          }
-        },
-        "P571": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "mainsnak": {
-                "type": "object",
-                "additionalProperties": {
-                  "properties": {
-                    "time": {
-                      "type": "string"
-                    },
-                    "timezone": {
-                      "type": "integer"
-                    },
-                    "before": {
-                      "type": "integer"
-                    },
-                    "after": {
-                      "type": "integer"
-                    },
-                    "precision": {
-                      "type": "integer"
-                    },
-                    "calendarmodel": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "after",
-                    "before",
-                    "calendarmodel",
-                    "precision",
-                    "time",
-                    "timezone"
-                  ],
-                  "type": "object"
-                }
-              },
-              "qualifiers": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "labels": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                }
-              },
-              "references": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "labels": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "mainsnak",
-              "qualifiers",
-              "references"
-            ],
-            "type": "object"
-          }
+          },
+          "required": [
+            "mainsnak"
+          ]
         }
-      },
-      "required": [
-        "P1333",
-        "P1552",
-        "P1792",
-        "P2959",
-        "P3221",
-        "P3238",
-        "P5337",
-        "P571"
-      ],
-      "type": "object"
+      }
     }
   },
   "required": [

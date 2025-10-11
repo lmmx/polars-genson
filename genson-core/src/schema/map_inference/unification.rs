@@ -588,7 +588,8 @@ fn unify_field_schemas_sequential(
         }
 
         if (is_array_schema(&unified) && is_array_schema(new))
-            || (is_object_schema(&unified) && is_object_schema(new))
+            || ((is_object_schema(&unified) || is_empty_record_schema(&unified))
+                && (is_object_schema(new) || is_empty_record_schema(new)))
         {
             if let Some(result) = check_unifiable_schemas(
                 &[&unified, new],
@@ -724,6 +725,14 @@ fn unify_record_schemas(
                 extract_field_from_nullable_schema(schema, "properties")
                     .and_then(|v| v.as_object())
                     .cloned()
+                    .or_else(|| {
+                        // Handle empty objects without properties field
+                        if is_empty_record_schema(schema) {
+                            Some(serde_json::Map::new())
+                        } else {
+                            None
+                        }
+                    })
             })
             .collect()
     } else {
@@ -733,6 +742,14 @@ fn unify_record_schemas(
                 extract_field_from_nullable_schema(schema, "properties")
                     .and_then(|v| v.as_object())
                     .cloned()
+                    .or_else(|| {
+                        // Handle empty objects without properties field
+                        if is_empty_record_schema(schema) {
+                            Some(serde_json::Map::new())
+                        } else {
+                            None
+                        }
+                    })
             })
             .collect()
     };
@@ -1075,8 +1092,11 @@ pub(crate) fn check_unifiable_schemas(
         }
     }
 
-    // Check if all are record schemas (objects with properties)
-    if schemas.iter().all(|&s| is_object_schema(s)) {
+    // Check if all are record schemas (objects with properties) OR empty records
+    if schemas
+        .iter()
+        .all(|&s| is_object_schema(s) || is_empty_record_schema(s))
+    {
         debug!(
             config,
             "{}: All schemas are records, attempting record unification", path
