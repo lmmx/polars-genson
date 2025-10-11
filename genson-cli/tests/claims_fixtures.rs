@@ -526,3 +526,32 @@ fn test_claims_fixture_l1_min_normalize() {
         &["--normalise"],
     );
 }
+
+// chunk_0-00024-of-00546_x750_t30_REDUCED_REWRITTEN.jsonl
+
+#[test]
+fn test_claims_c0_p24_x750_t30_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/chunk_0-00024-of-00546_x750_t30_REDUCED_REWRITTEN.jsonl",
+        "claims_c0_p24_x750_t30__avro",
+        &["--avro"],
+    );
+}
+
+#[test]
+fn test_claims_c0_p24_x750_t30_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/chunk_0-00024-of-00546_x750_t30_REDUCED_REWRITTEN.jsonl",
+        "claims_c0_p24_x750_t30__jsonschema",
+        &[],
+    );
+}
+
+#[test]
+fn test_claims_c0_p24_x750_t30_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/chunk_0-00024-of-00546_x750_t30_REDUCED_REWRITTEN.jsonl",
+        "claims_c0_p24_x750_t30__normalize",
+        &["--normalise"],
+    );
+}

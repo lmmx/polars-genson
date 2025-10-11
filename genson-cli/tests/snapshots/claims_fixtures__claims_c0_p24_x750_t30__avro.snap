@@ -1,0 +1,157 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--ndjson"
+    - "--avro"
+  fixture: tests/data/claims/chunk_0-00024-of-00546_x750_t30_REDUCED_REWRITTEN.jsonl
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "claims",
+      "type": {
+        "name": "claims",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "claims_values",
+            "namespace": "genson.document_types",
+            "fields": [
+              {
+                "name": "mainsnak",
+                "type": {
+                  "type": "record",
+                  "name": "mainsnak",
+                  "namespace": "genson.document_types.claims_values_types",
+                  "fields": [
+                    {
+                      "name": "datavalue",
+                      "type": {
+                        "type": "record",
+                        "name": "datavalue",
+                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
+                        "fields": [
+                          {
+                            "name": "id",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          },
+                          {
+                            "name": "labels",
+                            "type": [
+                              "null",
+                              {
+                                "name": "labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            ]
+                          },
+                          {
+                            "name": "datavalue__string",
+                            "type": [
+                              "null",
+                              "string"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "datatype",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "references",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": {
+                      "name": "references",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "references_values",
+                          "namespace": "genson.document_types.claims_values_types",
+                          "fields": [
+                            {
+                              "name": "datavalue",
+                              "type": {
+                                "type": "record",
+                                "name": "datavalue",
+                                "namespace": "genson.document_types.claims_values_types.references_values_types",
+                                "fields": [
+                                  {
+                                    "name": "id",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "labels",
+                                    "type": [
+                                      "null",
+                                      {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "time",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
+                                  },
+                                  {
+                                    "name": "precision",
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "datatype",
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

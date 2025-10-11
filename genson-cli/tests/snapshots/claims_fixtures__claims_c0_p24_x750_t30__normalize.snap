@@ -1,0 +1,16 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--ndjson"
+    - "--normalise"
+  fixture: tests/data/claims/chunk_0-00024-of-00546_x750_t30_REDUCED_REWRITTEN.jsonl
+---
+{"claims":{"P100":[{"mainsnak":{"datavalue":{"id":"Q111","labels":{"en":"Category:A"},"datavalue__string":null},"datatype":"wikibase-item"},"references":[{"P200":[{"datavalue":{"id":"Q222","labels":{"fr":"Langue Allemagne"},"time":null,"precision":null},"datatype":"wikibase-item"}]}]}],"P300":[{"mainsnak":{"datavalue":{"id":"Q333","labels":{"foo":"bar"},"datavalue__string":null},"datatype":"wikibase-item"},"references":null}],"P400":[{"mainsnak":{"datavalue":{"id":null,"labels":null,"datavalue__string":"987"},"datatype":"external-id"},"references":[{"P500":[{"datavalue":{"id":"Q444","labels":{"en":"Library C"},"time":null,"precision":null},"datatype":"wikibase-item"}],"P600":[{"datavalue":{"id":null,"labels":null,"time":"+2024-01-01T00:00:00Z","precision":11},"datatype":"time"}]}]}]}}
