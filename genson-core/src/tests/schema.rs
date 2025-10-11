@@ -757,6 +757,71 @@ fn test_force_scalar_promotion_nested_in_maps() {
 }
 
 #[test]
+fn test_unify_maps_with_heterogeneous_array_items() {
+    // Reproduces bug where P-keys don't unify to a map because their array items
+    // have heterogeneous types (some become maps, some stay records)
+    // Root cause: objects containing only a force-typed field (like mainsnak)
+    // get converted to maps, causing heterogeneity
+    let json_strings = vec![
+        r#"{"P100":[{"mainsnak":{"datavalue":{"id":"Q111","labels":{"en":"Category:A"}},"datatype":"wikibase-item"},"references":[{"P200":[{"datavalue":{"id":"Q222","labels":{"fr":"Langue Allemagne"}},"datatype":"wikibase-item"}]}]}],"P300":[{"mainsnak":{"datavalue":{"id":"Q333","labels":{}},"datatype":"wikibase-item"}}],"P400":[{"mainsnak":{"datavalue":"987","datatype":"external-id"},"references":[{"P500":[{"datavalue":{"id":"Q444","labels":{"en":"Library C"}},"datatype":"wikibase-item"}],"P600":[{"datavalue":{"time":"+2024-01-01T00:00:00Z","precision":11},"datatype":"time"}]}]}]}"#.to_string(),
+    ];
+
+    let mut force_promo = std::collections::HashSet::new();
+    force_promo.insert("datavalue".to_string());
+    force_promo.insert("precision".to_string());
+
+    let mut force_types = std::collections::HashMap::new();
+    force_types.insert("mainsnak".to_string(), "record".to_string());
+
+    // This should prevent parent objects of force-typed fields from becoming maps
+    let mut force_parent_types = std::collections::HashMap::new();
+    force_parent_types.insert("mainsnak".to_string(), "record".to_string());
+
+    let mut no_unify = std::collections::HashSet::new();
+    no_unify.insert("qualifiers".to_string());
+
+    let config = SchemaInferenceConfig {
+        force_scalar_promotion: force_promo,
+        force_field_types: force_types,
+        force_parent_field_types: force_parent_types,
+        unify_maps: true,
+        map_threshold: 0,
+        wrap_root: Some("claims".to_string()),
+        no_unify,
+        ..Default::default()
+    };
+
+    let result = infer_json_schema_from_strings(&json_strings, config)
+        .expect("Schema inference should succeed");
+
+    let schema_str = serde_json::to_string_pretty(&result.schema).unwrap();
+    eprintln!("Full schema:\n{}", schema_str);
+
+    // Bug: claims should be a map, not a record with P100/P300/P400 fields
+    // The P-keys should unify into a single map type
+    assert!(
+        !schema_str.contains(r#""name": "P100""#) &&
+        !schema_str.contains(r#""name": "P300""#) &&
+        !schema_str.contains(r#""name": "P400""#),
+        "Schema should NOT contain individual P-field names. \
+         Bug: P-keys remain as separate record fields instead of unifying to a map.\n\
+         This happens because objects containing force-typed fields (mainsnak) \
+         get converted to maps, causing array item heterogeneity.\n\
+         Schema: {}",
+        schema_str
+    );
+
+    // Verify claims is a map
+    assert!(
+        schema_str.contains(r#""name": "claims""#) &&
+        schema_str.contains(r#""type": "map""#),
+        "claims field should be a map type"
+    );
+
+    println!("✅ P-keys correctly unified to map despite force-typed nested fields");
+}
+
+#[test]
 fn test_rewrite_objects_force_override_wins() {
     let mut schema = json!({
         "type": "object",

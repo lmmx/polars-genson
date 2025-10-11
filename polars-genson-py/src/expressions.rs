@@ -64,6 +64,9 @@ pub struct GensonKwargs {
     pub force_field_types: std::collections::HashMap<String, String>,
 
     #[serde(default)]
+    pub force_parent_field_types: std::collections::HashMap<String, String>,
+
+    #[serde(default)]
     pub force_scalar_promotion: Vec<String>,
 
     #[serde(default = "default_wrap_scalars")]
@@ -206,6 +209,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                 unify_maps: kwargs.unify_maps,
                 no_unify: kwargs.no_unify.iter().cloned().collect(),
                 force_field_types: kwargs.force_field_types.clone(),
+                force_parent_field_types: kwargs.force_parent_field_types.clone(),
                 force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
                 wrap_scalars: kwargs.wrap_scalars,
                 avro: kwargs.avro,
@@ -254,6 +258,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
                     unify_maps: kwargs.unify_maps,
                     no_unify: kwargs.no_unify.iter().cloned().collect(),
                     force_field_types: kwargs.force_field_types.clone(),
+                    force_parent_field_types: kwargs.force_parent_field_types.clone(),
                     force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
                     wrap_scalars: kwargs.wrap_scalars,
                     avro: kwargs.avro,
@@ -344,6 +349,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
             unify_maps: kwargs.unify_maps,
             no_unify: kwargs.no_unify.iter().cloned().collect(),
             force_field_types: kwargs.force_field_types.clone(),
+            force_parent_field_types: kwargs.force_parent_field_types.clone(),
             force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
             wrap_scalars: kwargs.wrap_scalars,
             avro: kwargs.avro,
@@ -437,7 +443,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
 ///   - `ndjson`: Input is newline-delimited JSON
 ///   - `empty_as_null`: Convert empty arrays/maps to `null` (default)
 ///   - `coerce_string`: Allow strings to be coerced into numeric/boolean types
-///   - `map_threshold`, `force_field_types`: Influence schema inference
+///   - `map_threshold`, `force_field_types`, `force_parent_field_types`: Influence schema inference
 ///
 /// # Returns
 /// * A Polars Series of strings, length equal to the input, where each row
@@ -489,6 +495,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
             unify_maps: kwargs.unify_maps,
             no_unify: kwargs.no_unify.iter().cloned().collect(),
             force_field_types: kwargs.force_field_types.clone(),
+            force_parent_field_types: kwargs.force_parent_field_types.clone(),
             force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
             wrap_scalars: kwargs.wrap_scalars,
             avro: true, // normalisation implies Avro
