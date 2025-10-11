@@ -95,7 +95,7 @@ clippy-py:
 # -------------------------------------
 
 test *args:
-    just test-core {{args}} -F avro
+    just test-core {{args}}
     just test-cli {{args}}
     just test-js {{args}}
 
@@ -109,7 +109,7 @@ test-ci *args:
 
 [working-directory: 'genson-core']
 test-core *args:
-    cargo nextest run {{args}}
+    cargo nextest run {{args}} -F avro
     
 [working-directory: 'genson-cli']
 test-cli *args:

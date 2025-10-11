@@ -71,7 +71,7 @@ fn test_map_encoding_scalar_fallback() {
     };
     assert_eq!(
         normalise_value(json!("foo"), &schema, &cfg, None),
-        json!({"default": "foo"})
+        json!({"__string": "foo"})
     );
 
     // Entries
@@ -81,7 +81,7 @@ fn test_map_encoding_scalar_fallback() {
     };
     assert_eq!(
         normalise_value(json!("foo"), &schema, &cfg, None),
-        json!([{"default": "foo"}])
+        json!([{"__string": "foo"}])
     );
 
     // KeyValueEntries
@@ -91,6 +91,6 @@ fn test_map_encoding_scalar_fallback() {
     };
     assert_eq!(
         normalise_value(json!("foo"), &schema, &cfg, None),
-        json!([{"key": "default", "value": "foo"}])
+        json!([{"key": "__string", "value": "foo"}])
     );
 }

@@ -756,6 +756,7 @@ fn test_force_scalar_promotion_nested_in_maps() {
     println!("✅ Force scalar promotion applied to fields nested in maps");
 }
 
+#[cfg(feature = "avro")]
 #[test]
 fn test_unify_maps_with_heterogeneous_array_items() {
     // Reproduces bug where P-keys don't unify to a map because their array items
@@ -785,6 +786,7 @@ fn test_unify_maps_with_heterogeneous_array_items() {
         force_field_types: force_types,
         force_parent_field_types: force_parent_types,
         unify_maps: true,
+        avro: true,
         map_threshold: 0,
         wrap_root: Some("claims".to_string()),
         no_unify,

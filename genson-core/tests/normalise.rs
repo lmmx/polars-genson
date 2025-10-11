@@ -48,7 +48,7 @@ fn test_map_empty_behavior() {
 
     // Fallback scalar coerced into map
     let val = normalise_value(json!("foo"), &schema, &cfg, None);
-    assert_eq!(val, json!({"default":"foo"}));
+    assert_eq!(val, json!({"__string":"foo"}));
 }
 
 /// Nested record with array field, ensures row is preserved.
@@ -111,7 +111,7 @@ fn test_union_precedence_map() {
 
     // scalar coerced into map, because map branch is first non-null
     let val = normalise_value(json!("foo"), &schema, &cfg, None);
-    assert_eq!(val, json!({"default":"foo"}));
+    assert_eq!(val, json!({"__string":"foo"}));
 }
 
 /// End-to-end: vector of values stays same length (no row loss).
@@ -147,7 +147,7 @@ fn test_map_scalar_fallback_encodings() {
         ..NormaliseConfig::default()
     };
     let val = normalise_value(json!("foo"), &schema, &cfg, None);
-    assert_eq!(val, json!({"default": "foo"}));
+    assert_eq!(val, json!({"__string": "foo"}));
 
     // Entries
     let cfg = NormaliseConfig {
@@ -155,7 +155,7 @@ fn test_map_scalar_fallback_encodings() {
         ..NormaliseConfig::default()
     };
     let val = normalise_value(json!("foo"), &schema, &cfg, None);
-    assert_eq!(val, json!([{"default": "foo"}]));
+    assert_eq!(val, json!([{"__string": "foo"}]));
 
     // KeyValueEntries
     let cfg = NormaliseConfig {
@@ -163,5 +163,5 @@ fn test_map_scalar_fallback_encodings() {
         ..NormaliseConfig::default()
     };
     let val = normalise_value(json!("foo"), &schema, &cfg, None);
-    assert_eq!(val, json!([{"key": "default", "value": "foo"}]));
+    assert_eq!(val, json!([{"key": "__string", "value": "foo"}]));
 }
