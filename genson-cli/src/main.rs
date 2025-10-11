@@ -110,6 +110,20 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --force-type".into());
                 }
             }
+            "--force-parent-type" => {
+                if i + 1 < args.len() {
+                    for pair in args[i + 1].split(',') {
+                        if let Some((field, typ)) = pair.split_once(':') {
+                            config
+                                .force_parent_field_types
+                                .insert(field.to_string(), typ.to_string());
+                        }
+                    }
+                    i += 1;
+                } else {
+                    return Err("Missing value for --force-parent-type".into());
+                }
+            }
             "--force-scalar-promotion" => {
                 if i + 1 < args.len() {
                     for field in args[i + 1].split(',') {
@@ -297,6 +311,10 @@ fn print_help() {
     anstream::println!("                          Example: --no-unify qualifiers,references");
     anstream::println!("    --force-type k:v,...  Force field(s) to 'map' or 'record'");
     anstream::println!("                          Example: --force-type labels:map,claims:record");
+    anstream::println!("    --force-parent-type k:v,...  Force parent objects containing field(s) to 'map' or 'record'");
+    anstream::println!(
+        "                                 Example: --force-parent-type mainsnak:record"
+    );
     anstream::println!("    --force-scalar-promotion <fields>");
     anstream::println!("                          Always promote these fields to wrapped scalars (comma-separated)");
     anstream::println!(

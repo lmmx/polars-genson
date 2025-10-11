@@ -152,6 +152,22 @@ fn process_anyof_unions(
     made_changes
 }
 
+/// Check if an object schema contains any fields specified in force_parent_field_types.
+/// Returns Some(forced_type) if a match is found, None otherwise.
+fn check_force_parent_field_types<'a>(
+    obj: &serde_json::Map<String, Value>,
+    config: &'a SchemaInferenceConfig,
+) -> Option<&'a str> {
+    if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
+        for (prop_key, forced_parent_type) in &config.force_parent_field_types {
+            if props.contains_key(prop_key) {
+                return Some(forced_parent_type.as_str());
+            }
+        }
+    }
+    None
+}
+
 /// Post-process an inferred JSON Schema to rewrite certain object shapes as maps.
 ///
 /// This mutates the schema in place, applying user overrides and heuristics.
@@ -339,6 +355,38 @@ pub(crate) fn rewrite_objects(
 
         // --- Heuristic rewrite ---
         if let Some(props) = obj.get("properties").and_then(|p| p.as_object()) {
+            // GUARD: Check if this object contains force_parent_field_types keys
+            if let Some(forced_parent_type) = check_force_parent_field_types(obj, config) {
+                if config.debug {
+                    debug!(
+                        config,
+                        "Object at field {:?} contains a force_parent_field, forcing parent type to '{}'",
+                        field_name.unwrap_or("root"),
+                        forced_parent_type
+                    );
+                }
+
+                if forced_parent_type == "record" {
+                    // Skip map conversion, but still recurse into properties
+                    if let Some(props_mut) =
+                        obj.get_mut("properties").and_then(|p| p.as_object_mut())
+                    {
+                        process_properties_parallel(props_mut, config, |k, v| {
+                            if config.debug {
+                                debug!(config, "Force parent field induced recursion: {}", k);
+                            }
+                            rewrite_objects(v, Some(k), config, false);
+                        });
+                    }
+                    if let Some(items) = obj.get_mut("items") {
+                        debug!(config, "Force parent field induced recursion: items");
+                        rewrite_objects(items, None, config, false);
+                    }
+                    return;
+                }
+                // If "map" is forced, continue with normal map conversion logic below
+            }
+
             // GUARD: Skip map conversion if this field was force-promoted to a scalar wrapper
             if let Some(name) = field_name {
                 if config.force_scalar_promotion.contains(name) {

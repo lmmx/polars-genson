@@ -19,30 +19,76 @@ info:
         {
           "mainsnak": {
             "datavalue": {
+              "precision": {
+                "precision__number": 0.00027777777777778,
+                "precision__integer": null
+              },
+              "id": null,
+              "labels": null,
+              "datavalue__string": null,
               "latitude": -33.75,
               "longitude": -53.390277777778,
               "altitude": null,
-              "precision": 0.00027777777777778,
-              "globe": "http://www.wikidata.org/entity/Q2"
+              "globe": "http://www.wikidata.org/entity/Q2",
+              "time": null,
+              "timezone": null,
+              "before": null,
+              "after": null,
+              "calendarmodel": null
             }
-          }
+          },
+          "references": null,
+          "qualifiers": null
         }
       ],
       "P3221": [
         {
           "mainsnak": {
-            "datavalue": "destination/brazil"
-          }
+            "datavalue": {
+              "precision": {
+                "precision__number": null,
+                "precision__integer": null
+              },
+              "id": null,
+              "labels": null,
+              "datavalue__string": "destination/brazil",
+              "latitude": null,
+              "longitude": null,
+              "altitude": null,
+              "globe": null,
+              "time": null,
+              "timezone": null,
+              "before": null,
+              "after": null,
+              "calendarmodel": null
+            }
+          },
+          "references": null,
+          "qualifiers": null
         }
       ],
       "P1792": [
         {
           "mainsnak": {
             "datavalue": {
+              "precision": {
+                "precision__number": null,
+                "precision__integer": null
+              },
               "id": "Q6993761",
               "labels": {
                 "de": "Kategorie:Brasilianer"
-              }
+              },
+              "datavalue__string": null,
+              "latitude": null,
+              "longitude": null,
+              "altitude": null,
+              "globe": null,
+              "time": null,
+              "timezone": null,
+              "before": null,
+              "after": null,
+              "calendarmodel": null
             }
           },
           "references": [
@@ -50,51 +96,159 @@ info:
               "P143": [
                 {
                   "datavalue": {
+                    "datavalue__string": null,
                     "id": "Q328",
                     "labels": {
                       "en": "English Wikipedia"
-                    }
+                    },
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null
                   }
                 }
               ]
             }
-          ]
+          ],
+          "qualifiers": null
         }
       ],
       "P3238": [
         {
-          "mainsnak": {}
+          "mainsnak": null,
+          "references": null,
+          "qualifiers": null
         }
       ],
       "P5337": [
         {
           "mainsnak": {
-            "datavalue": "CAAqJQgKIh9DQkFTRVFvSUwyMHZNREUxWm5JU0JYQjBMVUpTS0FBUAE"
-          }
+            "datavalue": {
+              "precision": {
+                "precision__number": null,
+                "precision__integer": null
+              },
+              "id": null,
+              "labels": null,
+              "datavalue__string": "CAAqJQgKIh9DQkFTRVFvSUwyMHZNREUxWm5JU0JYQjBMVUpTS0FBUAE",
+              "latitude": null,
+              "longitude": null,
+              "altitude": null,
+              "globe": null,
+              "time": null,
+              "timezone": null,
+              "before": null,
+              "after": null,
+              "calendarmodel": null
+            }
+          },
+          "references": null,
+          "qualifiers": null
         }
       ],
       "P2959": [
         {
           "mainsnak": {
             "datavalue": {
+              "precision": {
+                "precision__number": null,
+                "precision__integer": null
+              },
               "id": "Q21286972",
               "labels": {
                 "ru": "Бразилия"
-              }
+              },
+              "datavalue__string": null,
+              "latitude": null,
+              "longitude": null,
+              "altitude": null,
+              "globe": null,
+              "time": null,
+              "timezone": null,
+              "before": null,
+              "after": null,
+              "calendarmodel": null
             }
-          }
+          },
+          "references": null,
+          "qualifiers": null
         }
       ],
       "P1552": [
         {
           "mainsnak": {
             "datavalue": {
+              "precision": {
+                "precision__number": null,
+                "precision__integer": null
+              },
               "id": "Q3174312",
               "labels": {
                 "pt": "país livre"
-              }
+              },
+              "datavalue__string": null,
+              "latitude": null,
+              "longitude": null,
+              "altitude": null,
+              "globe": null,
+              "time": null,
+              "timezone": null,
+              "before": null,
+              "after": null,
+              "calendarmodel": null
             }
           },
+          "references": [
+            {
+              "P854": [
+                {
+                  "datavalue": {
+                    "datavalue__string": "https://freedomhouse.org/report/freedom-world/freedom-world-2017",
+                    "id": null,
+                    "labels": null,
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null
+                  }
+                }
+              ],
+              "P1065": [
+                {
+                  "datavalue": {
+                    "datavalue__string": "https://web.archive.org/web/20170505040003/https://freedomhouse.org/report/freedom-world/freedom-world-2017",
+                    "id": null,
+                    "labels": null,
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null
+                  }
+                }
+              ],
+              "P2960": [
+                {
+                  "datavalue": {
+                    "datavalue__string": null,
+                    "id": null,
+                    "labels": null,
+                    "time": "+2017-05-05T00:00:00Z",
+                    "timezone": 0,
+                    "before": 0,
+                    "after": 0,
+                    "precision": 11,
+                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                  }
+                }
+              ]
+            }
+          ],
           "qualifiers": {
             "P3680": [
               {
@@ -106,64 +260,52 @@ info:
                 }
               }
             ]
-          },
-          "references": [
-            {
-              "P854": [
-                {
-                  "datavalue": {
-                    "time": null,
-                    "timezone": null,
-                    "before": null,
-                    "after": null,
-                    "precision": null,
-                    "calendarmodel": null,
-                    "datavalue__string": "https://freedomhouse.org/report/freedom-world/freedom-world-2017"
-                  }
-                }
-              ],
-              "P1065": [
-                {
-                  "datavalue": {
-                    "time": null,
-                    "timezone": null,
-                    "before": null,
-                    "after": null,
-                    "precision": null,
-                    "calendarmodel": null,
-                    "datavalue__string": "https://web.archive.org/web/20170505040003/https://freedomhouse.org/report/freedom-world/freedom-world-2017"
-                  }
-                }
-              ],
-              "P2960": [
-                {
-                  "datavalue": {
-                    "time": "+2017-05-05T00:00:00Z",
-                    "timezone": 0,
-                    "before": 0,
-                    "after": 0,
-                    "precision": 11,
-                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727",
-                    "datavalue__string": null
-                  }
-                }
-              ]
-            }
-          ]
+          }
         }
       ],
       "P571": [
         {
           "mainsnak": {
             "datavalue": {
+              "precision": {
+                "precision__number": null,
+                "precision__integer": 11
+              },
+              "id": null,
+              "labels": null,
+              "datavalue__string": null,
+              "latitude": null,
+              "longitude": null,
+              "altitude": null,
+              "globe": null,
               "time": "+1822-09-07T00:00:00Z",
               "timezone": 0,
               "before": 0,
               "after": 0,
-              "precision": 11,
               "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
             }
           },
+          "references": [
+            {
+              "P143": [
+                {
+                  "datavalue": {
+                    "datavalue__string": null,
+                    "id": "Q328",
+                    "labels": {
+                      "en": "English Wikipedia"
+                    },
+                    "time": null,
+                    "timezone": null,
+                    "before": null,
+                    "after": null,
+                    "precision": null,
+                    "calendarmodel": null
+                  }
+                }
+              ]
+            }
+          ],
           "qualifiers": {
             "P518": [
               {
@@ -175,21 +317,7 @@ info:
                 }
               }
             ]
-          },
-          "references": [
-            {
-              "P143": [
-                {
-                  "datavalue": {
-                    "id": "Q328",
-                    "labels": {
-                      "en": "English Wikipedia"
-                    }
-                  }
-                }
-              ]
-            }
-          ]
+          }
         }
       ]
     }
