@@ -1237,7 +1237,7 @@ dependencies = [
 
 [[package]]
 name = "genson-cli"
-version = "0.6.6"
+version = "0.7.0"
 dependencies = [
  "anstream",
  "assert_cmd",
@@ -1251,7 +1251,7 @@ dependencies = [
 
 [[package]]
 name = "genson-core"
-version = "0.6.6"
+version = "0.7.0"
 dependencies = [
  "anstream",
  "arrow",
@@ -2616,7 +2616,7 @@ dependencies = [
 
 [[package]]
 name = "polars-jsonschema-bridge"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anstream",
  "eyre",
