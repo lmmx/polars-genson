@@ -25,10 +25,10 @@ resolver = "2"
 
 [workspace.dependencies]
 # Internal crates
-genson-cli = { path = "genson-cli", version = "0.6.6" }
-genson-core = { path = "genson-core", version = "0.6.6" }
+genson-cli = { path = "genson-cli", version = "0.7.0" }
+genson-core = { path = "genson-core", version = "0.7.0" }
 polars-genson-py = { path = "polars-genson-py", version = "0.1.0" }
-polars-jsonschema-bridge = { path = "polars-jsonschema-bridge", version = "0.6.1" }
+polars-jsonschema-bridge = { path = "polars-jsonschema-bridge", version = "0.7.0" }
 
 # Core dependencies
 anstream = "0.6"
