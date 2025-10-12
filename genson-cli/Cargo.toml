@@ -28,7 +28,7 @@ tempfile = "3"
 [package.metadata.binstall]
 # Generic template — applies to all platforms unless overridden
 bin-dir = "{ name }-{ target }-v{ version }"
-pkg-fmt = "tar.gz"
+pkg-fmt = "tgz"
 pkg-url = "https://github.com/lmmx/polars-genson/releases/download/genson-cli-v{ version }/genson-cli-{ target }-v{ version }.tar.gz"
 
 # Windows builds: provide both .tar.gz and .zip variants
