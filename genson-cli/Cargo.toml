@@ -24,3 +24,18 @@ insta = { features = ["json"], version = "1" }
 predicates = "3.1.3"
 serde = "1"
 tempfile = "3"
+
+[package.metadata.binstall]
+# Generic template — applies to all platforms unless overridden
+bin-dir = "{ name }-{ target }-v{ version }"
+pkg-fmt = "tar.gz"
+pkg-url = "https://github.com/lmmx/polars-genson/releases/download/genson-cli-v{ version }/genson-cli-{ target }-v{ version }.tar.gz"
+
+# Windows builds: provide both .tar.gz and .zip variants
+[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
+pkg-fmt = "zip"
+pkg-url = "https://github.com/lmmx/polars-genson/releases/download/genson-cli-v{ version }/genson-cli-x86_64-pc-windows-msvc-v{ version }.zip"
+
+[package.metadata.binstall.overrides.aarch64-pc-windows-msvc]
+pkg-fmt = "zip"
+pkg-url = "https://github.com/lmmx/polars-genson/releases/download/genson-cli-v{ version }/genson-cli-aarch64-pc-windows-msvc-v{ version }.zip"
