@@ -71,11 +71,15 @@ jobs:
       - run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "${GITHUB_ENV}"
         if: endsWith(matrix.target, 'windows-msvc')
       
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#genson-cli-}" >> $GITHUB_OUTPUT
+      
       - uses: taiki-e/upload-rust-binary-action@v1
         if: github.event_name == 'workflow_dispatch' || contains(github.event.release.tag_name, env.BINARY_NAME)
         with:
           bin: ${{ env.BINARY_NAME }}
-          archive: ${{ env.BINARY_NAME }}-${{ matrix.target }}
+          archive: ${{ env.BINARY_NAME }}-${{ matrix.target }}-${{ steps.version.outputs.VERSION }}
           target: ${{ matrix.target }}
           tar: all
           zip: windows
