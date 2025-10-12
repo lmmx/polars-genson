@@ -21,6 +21,14 @@ This is the core library that powers both the [genson-cli](https://crates.io/cra
 - **Memory Efficient**: Uses mimalloc for optimized memory allocation
 - **SIMD Acceleration**: Fast JSON parsing with simd-json
 
+## Feature Flags
+
+| Feature | Description | Dependencies |
+|----------|--------------|---------------|
+| `avro` | Enables Avro schema export and normalisation against Avro types | `avrotize` |
+| `parquet` | Enables Parquet schema integration | `arrow`, `parquet` |
+| `trace` | Enables tracing and visualisation of schema inference using `crustrace` + Mermaid diagrams | `crustrace`, `tracing`, `tracing-subscriber` |
+
 ## Quick Start
 
 Add this to your `Cargo.toml`:
@@ -59,6 +67,32 @@ fn main() -> Result<(), String> {
 
 ### Configuration Options
 
+#### Schema Inference Configuration
+
+The `SchemaInferenceConfig` struct controls how `genson-core` infers, merges, and normalises JSON schemas.
+It allows you to fine-tune map detection, scalar wrapping, and unification behaviour.
+
+| Field | Type | Default | Description |
+|--------|------|----------|-------------|
+| `ignore_outer_array` | `bool` | `true` | Treat top-level arrays as streams of JSON objects instead of a single array value. |
+| `delimiter` | `Option<u8>` | `None` | Enables NDJSON processing when set (typically `b'\n'`). |
+| `schema_uri` | `Option<String>` | `"AUTO"` | Base URI for the generated schema; `"AUTO"` uses a default inferred URI. |
+| `map_threshold` | `usize` | `20` | When an object has more than this number of distinct keys across records, it’s treated as a `map` instead of a `record`. |
+| `map_max_required_keys` | `Option<usize>` | `None` | Upper limit for required keys before forcing an object to remain a `record`. If `None`, no restriction applies. |
+| `unify_maps` | `bool` | `false` | Enables merging of record-like and map-like structures during schema unification. |
+| `no_unify` | `HashSet<String>` | `∅` | Fields whose subfields should **not** be merged during schema unification. Prevents overgeneralisation. |
+| `force_field_types` | `HashMap<String, String>` | `{}` | Explicitly force certain fields to specific types, e.g. `{ "labels": "map" }`. |
+| `force_parent_field_types` | `HashMap<String, String>` | `{}` | Prevents objects containing specific child fields from being inferred as maps. Ensures parent remains a record. |
+| `force_scalar_promotion` | `HashSet<String>` | `∅` | Always wrap specific scalar fields in objects to ensure schema stability across datasets. |
+| `wrap_scalars` | `bool` | `true` | When scalar values collide with object values, promote the scalar to a wrapped object (e.g. `"foo" → { "foo__string": "foo" }`). |
+| `wrap_root` | `Option<String>` | `None` | Wraps the entire schema under a single required field name (e.g. `"labels"`). |
+| `no_root_map` | `bool` | `true` | Prevents the top-level document from being inferred as a `map`. |
+| `max_builders` | `Option<usize>` | `None` | Limits the number of schema builders used in parallel (reduces peak memory usage). |
+| `avro` *(feature = "avro")* | `bool` | `false` | When enabled, outputs Avro-compatible schema instead of JSON Schema. |
+| `debug` | `bool` | `false` | Enables structured debug output showing inference and unification decisions. |
+| `profile` | `bool` | `false` | Enables profiling output for timing information during schema inference. |
+| `verbosity` | `DebugVerbosity` | `Normal` | Controls how detailed debug/profiling output is (`Normal` or `Verbose`). |
+
 ```rust
 use genson_core::{infer_json_schema, SchemaInferenceConfig};
 
@@ -70,6 +104,16 @@ let config = SchemaInferenceConfig {
 
 let result = infer_json_schema(&json_strings, Some(config))?;
 ```
+
+#### DebugVerbosity
+
+As well as profiling (which is mainly to tell how long each step takes, the unification itself can
+be debugged more verbosely.
+
+| Variant | Description |
+|----------|-------------|
+| `Normal` | Shows high-level inference and unification decisions. |
+| `Verbose` | Shows all internal debug output including field introductions and merges. |
 
 ### NDJSON Processing
 

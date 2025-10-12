@@ -82,6 +82,8 @@ OPTIONS:
                           Example: --no-unify qualifiers,references
     --force-type k:v,...  Force field(s) to 'map' or 'record'
                           Example: --force-type labels:map,claims:record
+    --force-parent-type k:v,...  Force parent objects containing field(s) to 'map' or 'record'
+                                 Example: --force-parent-type mainsnak:record
     --force-scalar-promotion <fields>
                           Always promote these fields to wrapped scalars (comma-separated)
                           Example: --force-scalar-promotion precision,datavalue

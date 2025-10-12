@@ -181,8 +181,6 @@ In the controlled example:
 
 This gives you fine-grained control over how objects with different key stability patterns are classified.
 
-Here's a section to add to the README that demonstrates the unified maps feature with a simple example:
-
 ## Schema Unification
 
 For objects with heterogeneous but compatible record structures, `polars-genson` can **unify** them into a single map schema instead of creating separate fixed fields. This is useful for dynamic data where keys represent similar entities with slightly different structures.
