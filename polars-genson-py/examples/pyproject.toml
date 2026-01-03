@@ -1,5 +1,5 @@
 [project]
-dependencies = ["polars-genson>=0.5.3", "polars>=1.34.0", "psutil>=7.1.0"]
+dependencies = ["polars-genson>=0.7.0", "polars>=1.36.0", "psutil>=7.1.0"]
 description = "Standalone example"
 name = "examples"
 readme = "README.md"
