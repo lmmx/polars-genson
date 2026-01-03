@@ -54,6 +54,7 @@ jobs:
             dockeropts: ""
             skip: false
             manylinux: auto
+            extra-args: ""
           - runner: ubuntu-22.04
             target: x86
             before: |
@@ -85,6 +86,7 @@ jobs:
               --env PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/lib64/pkgconfig
             skip: true
             manylinux: "2_28"
+            extra-args: ""
           - runner: ubuntu-22.04
             target: aarch64
             before: |
@@ -93,6 +95,7 @@ jobs:
             dockeropts: ""
             skip: false
             manylinux: 2_28
+            extra-args: ""
           - runner: ubuntu-22.04
             target: armv7
             before: |
@@ -113,6 +116,7 @@ jobs:
               --env PKG_CONFIG_ALLOW_CROSS=1
             skip: false
             manylinux: auto
+            extra-args: ""
           - runner: ubuntu-22.04
             target: s390x
             before: |
@@ -135,6 +139,7 @@ jobs:
               --env PKG_CONFIG_ALLOW_CROSS=1
             skip: true
             manylinux: auto
+            extra-args: ""
           - runner: ubuntu-22.04
             target: ppc64le
             before: |
@@ -156,6 +161,7 @@ jobs:
               --env PKG_CONFIG_ALLOW_CROSS=1
             skip: true
             manylinux: auto
+            extra-args: ""
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -166,7 +172,7 @@ jobs:
         if: matrix.platform.skip != true
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter --manifest-path polars-genson-py/Cargo.toml
+          args: --release --out dist --find-interpreter --manifest-path polars-genson-py/Cargo.toml ${{ matrix.platform.extra-args }}
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.platform.manylinux }}
           before-script-linux: |

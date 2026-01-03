@@ -11,7 +11,7 @@ serde = { features = ["derive"], workspace = true }
 serde_json.workspace = true
 
 [features]
-default = ["vendor-openssl"]
+default = []
 trace = ["genson-core/trace"]
 vendor-openssl = ["dep:openssl", "openssl/vendored"]
 
