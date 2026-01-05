@@ -15,8 +15,11 @@ macro_rules! eprintln_orange {
 
 /// Convert a Polars schema to JSON string representation
 #[pyfunction]
-pub fn schema_to_json(df: PyDataFrame) -> PyResult<String> {
-    eprintln_orange!("Got df: {:?}", df);
+#[pyo3(signature = (df, debug=false))]
+pub fn schema_to_json(df: PyDataFrame, debug: bool) -> PyResult<String> {
+    if debug {
+        eprintln_orange!("Got df: {:?}", df);
+    }
 
     let schema = df.0.schema();
 
@@ -26,12 +29,14 @@ pub fn schema_to_json(df: PyDataFrame) -> PyResult<String> {
             pyo3::exceptions::PyValueError::new_err(format!("Failed to serialize dtype: {}", e))
         })?;
 
-        eprintln_orange!(
-            "field: {}, dtype: {:?}, as JSON: {}",
-            name,
-            dtype,
-            dtype_json
-        );
+        if debug {
+            eprintln_orange!(
+                "field: {}, dtype: {:?}, as JSON: {}",
+                name,
+                dtype,
+                dtype_json
+            );
+        }
 
         schema_map.insert(name.to_string(), dtype_json);
     }
@@ -43,14 +48,19 @@ pub fn schema_to_json(df: PyDataFrame) -> PyResult<String> {
         ))
     })?;
 
-    eprintln_orange!("Final schema JSON:\n{}", out);
+    if debug {
+        eprintln_orange!("Final schema JSON:\n{}", out);
+    }
 
     Ok(out)
 }
 
 #[pyfunction]
-pub fn json_to_schema(json_str: &str) -> PyResult<PyDataFrame> {
-    eprintln_orange!("Loading schema JSON:\n{}", json_str);
+#[pyo3(signature = (json_str, debug=false))]
+pub fn json_to_schema(json_str: &str, debug: bool) -> PyResult<PyDataFrame> {
+    if debug {
+        eprintln_orange!("Loading schema JSON:\n{}", json_str);
+    }
 
     let schema_map: Map<String, Value> = serde_json::from_str(json_str).map_err(|e| {
         pyo3::exceptions::PyValueError::new_err(format!("Failed to parse schema JSON: {}", e))
@@ -59,7 +69,9 @@ pub fn json_to_schema(json_str: &str) -> PyResult<PyDataFrame> {
     let schema: Schema = schema_map
         .into_iter()
         .map(|(name, dtype_val)| -> PyResult<(PlSmallStr, DataType)> {
-            eprintln_orange!("deserializing field: {}, raw JSON: {}", name, dtype_val);
+            if debug {
+                eprintln_orange!("deserializing field: {}, raw JSON: {}", name, dtype_val);
+            }
 
             let dtype: DataType = serde_json::from_value(dtype_val).map_err(|e| {
                 pyo3::exceptions::PyValueError::new_err(format!(
@@ -72,9 +84,11 @@ pub fn json_to_schema(json_str: &str) -> PyResult<PyDataFrame> {
         })
         .collect::<Result<Schema, _>>()?;
 
-    eprintln_orange!("Reconstructed schema: {:?}", schema);
+    if debug {
+        eprintln_orange!("Reconstructed schema: {:?}", schema);
+    }
 
-    // 🔑 Make an empty DataFrame with the schema
+    // Make an empty DataFrame with the schema
     let df = DataFrame::empty_with_schema(&schema);
 
     Ok(PyDataFrame(df))

@@ -57,13 +57,15 @@ def json_to_schema(json_str: str) -> pl.Schema:
     return schema
 
 
-def schema_to_json(schema: pl.Schema) -> str:
+def schema_to_json(schema: pl.Schema, *, debug: bool = False) -> str:
     """Convert a Polars schema to JSON string representation.
 
     Parameters
     ----------
     schema : pl.Schema
         The Polars schema to convert to JSON
+    debug : bool, default False
+        Whether to print debug information
 
     Returns:
     -------
@@ -74,7 +76,27 @@ def schema_to_json(schema: pl.Schema) -> str:
         f"Expected Schema, got {type(schema)}: {schema}"
     )
     empty_df = schema.to_frame()
-    return _rust_schema_to_json(empty_df)
+    return _rust_schema_to_json(empty_df, debug)
+
+
+def json_to_schema(json_str: str, *, debug: bool = False) -> pl.Schema:
+    """Convert a JSON string to Polars schema.
+
+    Parameters
+    ----------
+    json_str : str
+        JSON string to convert to Polars schema
+    debug : bool, default False
+        Whether to print debug information
+
+    Returns:
+    -------
+    schema : pl.Schema
+        The Polars schema representation of the JSON
+    """
+    df = _rust_json_to_schema(json_str, debug)
+    schema = df.schema
+    return schema
 
 
 def plug(expr: pl.Expr, changes_length: bool, **kwargs) -> pl.Expr:
@@ -590,6 +612,7 @@ def normalise_from_parquet(
     empty_as_null: bool = True,
     coerce_strings: bool = False,
     map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+    debug: bool = False,
     profile: bool = False,
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
@@ -630,6 +653,8 @@ def normalise_from_parquet(
         - "mapping": plain JSON object ({"en":"Hello"})
         - "entries": list of single-entry objects ([{"en":"Hello"}])
         - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
+    debug : bool, default False
+        Whether to print debug information
     profile : bool, default False
         Whether to display timing profile information
     map_threshold : int, default 20
@@ -692,6 +717,7 @@ def normalise_from_parquet(
         empty_as_null=empty_as_null,
         coerce_strings=coerce_strings,
         map_encoding=map_encoding,
+        debug=debug,
         profile=profile,
         map_threshold=map_threshold,
         map_max_required_keys=map_max_required_keys,

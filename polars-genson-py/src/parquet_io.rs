@@ -106,15 +106,18 @@ pub fn infer_from_parquet(
         pyo3::exceptions::PyValueError::new_err(format!("JSON serialization failed: {}", e))
     })?;
 
-    // Print to stderr
-    anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
+    if debug {
+        anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
+    }
 
     // Write to file or return
     if let Some(out_path) = output_path {
         std::fs::write(&out_path, &schema_json).map_err(|e| {
             pyo3::exceptions::PyIOError::new_err(format!("Failed to write to {}: {}", out_path, e))
         })?;
-        anstream::eprintln!("Schema written to: {}", out_path);
+        if debug {
+            anstream::eprintln!("Schema written to: {}", out_path);
+        }
         Ok(format!("Schema written to: {}", out_path))
     } else {
         Ok(schema_json)
@@ -132,6 +135,7 @@ pub fn infer_from_parquet(
     empty_as_null=true,
     coerce_strings=false,
     map_encoding="kv".to_string(),
+    debug=false,
     profile=false,
     map_threshold=20,
     map_max_required_keys=None,
@@ -156,6 +160,7 @@ pub fn normalise_from_parquet(
     empty_as_null: bool,
     coerce_strings: bool,
     map_encoding: String,
+    debug: bool,
     profile: bool,
     map_threshold: usize,
     map_max_required_keys: Option<usize>,
@@ -174,11 +179,13 @@ pub fn normalise_from_parquet(
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
     })?;
 
-    anstream::eprintln!(
-        "Read {} JSON strings from column '{}'",
-        json_strings.len(),
-        column
-    );
+    if debug {
+        anstream::eprintln!(
+            "Read {} JSON strings from column '{}'",
+            json_strings.len(),
+            column
+        );
+    }
 
     // Infer schema first (Avro mode)
     let config = SchemaInferenceConfig {
@@ -200,7 +207,7 @@ pub fn normalise_from_parquet(
         wrap_root: wrap_root.clone(),
         no_root_map,
         max_builders,
-        debug: false,
+        debug,
         profile,
         verbosity: DebugVerbosity::Normal,
     };
@@ -209,7 +216,9 @@ pub fn normalise_from_parquet(
         pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
     })?;
 
-    anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
+    if debug {
+        anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
+    }
 
     // Parse values
     let values: Vec<serde_json::Value> = json_strings
@@ -267,11 +276,13 @@ pub fn normalise_from_parquet(
         |e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e)),
     )?;
 
-    anstream::eprintln!(
-        "Normalised data written to: {} (column: {})",
-        output_path,
-        col_name
-    );
+    if debug {
+        anstream::eprintln!(
+            "Normalised data written to: {} (column: {})",
+            output_path,
+            col_name
+        );
+    }
 
     Ok(())
 }
