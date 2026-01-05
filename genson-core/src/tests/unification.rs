@@ -47,7 +47,7 @@ fn test_scalar_unification_with_old_nullable_format() {
     };
 
     // Simulate the old nullable format that was causing issues
-    let schemas = vec![
+    let schemas = [
         json!({"type": "string"}),                           // Regular string
         json!({"type": ["null", "string"]}),                 // New nullable format
         json!(["null", {"type": ["null", "string"]}]),       // Old nullable format
@@ -458,7 +458,7 @@ fn test_scalar_promotion_boolean_vs_integer() {
 
 #[test]
 fn test_scalar_promotion_three_types() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
@@ -502,7 +502,7 @@ fn test_scalar_promotion_three_types() {
 
 #[test]
 fn test_scalar_promotion_all_four_types() {
-    let schemas = vec![
+    let schemas = [
         json!({
             "type": "object",
             "properties": {
