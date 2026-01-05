@@ -57,13 +57,15 @@ def json_to_schema(json_str: str) -> pl.Schema:
     return schema
 
 
-def schema_to_json(schema: pl.Schema) -> str:
+def schema_to_json(schema: pl.Schema, *, debug: bool = False) -> str:
     """Convert a Polars schema to JSON string representation.
 
     Parameters
     ----------
     schema : pl.Schema
         The Polars schema to convert to JSON
+    debug : bool, default False
+        Whether to print debug information
 
     Returns:
     -------
@@ -74,7 +76,27 @@ def schema_to_json(schema: pl.Schema) -> str:
         f"Expected Schema, got {type(schema)}: {schema}"
     )
     empty_df = schema.to_frame()
-    return _rust_schema_to_json(empty_df)
+    return _rust_schema_to_json(empty_df, debug)
+
+
+def json_to_schema(json_str: str, *, debug: bool = False) -> pl.Schema:
+    """Convert a JSON string to Polars schema.
+
+    Parameters
+    ----------
+    json_str : str
+        JSON string to convert to Polars schema
+    debug : bool, default False
+        Whether to print debug information
+
+    Returns:
+    -------
+    schema : pl.Schema
+        The Polars schema representation of the JSON
+    """
+    df = _rust_json_to_schema(json_str, debug)
+    schema = df.schema
+    return schema
 
 
 def plug(expr: pl.Expr, changes_length: bool, **kwargs) -> pl.Expr:
