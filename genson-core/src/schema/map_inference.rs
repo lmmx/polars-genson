@@ -195,8 +195,16 @@ pub(crate) fn rewrite_objects(
             serde_json::to_string(schema).unwrap_or_default()
         );
     }
+    // GUARD: Skip map conversion if this field was force-promoted to a scalar wrapper
+    // BUT: Allow explicit force_field_types to override
     if let Some(name) = field_name {
-        if config.force_scalar_promotion.contains(name) {
+        if config.force_scalar_promotion.contains(name)
+            && !config.force_field_types.contains_key(name)
+        {
+            debug!(
+                config,
+                "Skipping map conversion for force-promoted field '{}'", name
+            );
             // Check if this is a scalar type that needs promotion
             if let Some(type_val) = schema.get("type") {
                 if let Some(type_str) = type_val.as_str() {

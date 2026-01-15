@@ -277,6 +277,57 @@ fn process_json_strings_sequential(
     Ok(processed_count)
 }
 
+/// Apply force_field_types to a schema before merging.
+/// This ensures structural consistency across schemas that will be unified.
+fn apply_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
+    match schema {
+        Value::Object(obj) => {
+            // Check if this object has properties
+            if let Some(props) = obj.get_mut("properties") {
+                if let Some(props_obj) = props.as_object_mut() {
+                    for (field_name, field_schema) in props_obj.iter_mut() {
+                        // Apply force_field_types
+                        if let Some(forced) = config.force_field_types.get(field_name) {
+                            if forced == "map" {
+                                if let Some(field_obj) = field_schema.as_object_mut() {
+                                    // Convert to map schema
+                                    field_obj.shift_remove("properties");
+                                    field_obj.shift_remove("required");
+                                    field_obj.insert("type".to_string(), json!("object"));
+                                    field_obj.insert(
+                                        "additionalProperties".to_string(),
+                                        json!({"type": "string"}),
+                                    );
+                                }
+                            }
+                        }
+                        // Recurse
+                        apply_force_field_types(field_schema, config);
+                    }
+                }
+            }
+            // Also recurse into items, additionalProperties, anyOf, etc.
+            if let Some(items) = obj.get_mut("items") {
+                apply_force_field_types(items, config);
+            }
+            if let Some(additional) = obj.get_mut("additionalProperties") {
+                apply_force_field_types(additional, config);
+            }
+            if let Some(Value::Array(any_of)) = obj.get_mut("anyOf") {
+                for item in any_of {
+                    apply_force_field_types(item, config);
+                }
+            }
+        }
+        Value::Array(arr) => {
+            for item in arr {
+                apply_force_field_types(item, config);
+            }
+        }
+        _ => {}
+    }
+}
+
 /// Process all JSON strings in parallel while maintaining order
 fn process_json_strings_parallel(
     json_strings: &[String],
@@ -370,9 +421,12 @@ fn process_json_strings_parallel(
                 continue;
             }
 
-            let schema = individual_builder.to_schema();
-            let hash = xxh64(schema.to_string().as_bytes(), 0);
+            let mut schema = individual_builder.to_schema();
 
+            // Apply force_field_types BEFORE merging to ensure structural consistency
+            apply_force_field_types(&mut schema, config);
+
+            let hash = xxh64(schema.to_string().as_bytes(), 0);
             if !seen_hashes.insert(hash) {
                 continue;
             }
@@ -391,6 +445,106 @@ fn process_json_strings_parallel(
     profile!(config, "All chunks processed ({})", current_time_hms());
 
     Ok(processed_count)
+}
+
+/// Recursively convert fields matching force_field_types BEFORE unification runs.
+/// This ensures structural consistency so that unification can succeed.
+pub(crate) fn preprocess_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
+    match schema {
+        Value::Object(obj) => {
+            // Process properties
+            if let Some(props) = obj.get_mut("properties") {
+                if let Some(props_obj) = props.as_object_mut() {
+                    for (field_name, field_schema) in props_obj.iter_mut() {
+                        // Check if this field should be forced to a type
+                        if let Some(forced) = config.force_field_types.get(field_name) {
+                            if forced == "map" {
+                                convert_to_map(field_schema);
+                            }
+                        }
+                        // Recurse into the field schema
+                        preprocess_force_field_types(field_schema, config);
+                    }
+                }
+            }
+            // Recurse into items (for arrays)
+            if let Some(items) = obj.get_mut("items") {
+                preprocess_force_field_types(items, config);
+            }
+            // Recurse into additionalProperties (for maps)
+            if let Some(additional) = obj.get_mut("additionalProperties") {
+                preprocess_force_field_types(additional, config);
+            }
+            // Recurse into anyOf branches
+            if let Some(Value::Array(any_of)) = obj.get_mut("anyOf") {
+                for item in any_of {
+                    preprocess_force_field_types(item, config);
+                }
+            }
+        }
+        Value::Array(arr) => {
+            // Handle union types like ["null", {...}]
+            for item in arr {
+                preprocess_force_field_types(item, config);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Convert any schema to a Map<string, string> schema
+fn convert_to_map(schema: &mut Value) {
+    // Handle union types first: ["null", {...}] or [Record, "string"]
+    if let Value::Array(arr) = schema {
+        // Check if it's a nullable union
+        let has_null = arr.iter().any(|v| {
+            v == &Value::String("null".into())
+                || v.get("type") == Some(&Value::String("null".into()))
+        });
+        if has_null {
+            // Create nullable map
+            *schema = serde_json::json!({
+                "type": ["null", "object"],
+                "additionalProperties": {"type": "string"}
+            });
+        } else {
+            // Non-nullable map
+            *schema = serde_json::json!({
+                "type": "object",
+                "additionalProperties": {"type": "string"}
+            });
+        }
+        return;
+    }
+
+    if let Value::Object(obj) = schema {
+        // Check if already a map
+        if obj.contains_key("additionalProperties") {
+            return;
+        }
+
+        // Check for nullable type: {"type": ["null", "object"]}
+        let is_nullable = obj
+            .get("type")
+            .and_then(|t| t.as_array())
+            .map(|arr| arr.contains(&Value::String("null".into())))
+            .unwrap_or(false);
+
+        // Convert to map
+        obj.shift_remove("properties");
+        obj.shift_remove("required");
+        obj.shift_remove("anyOf");
+
+        if is_nullable {
+            obj.insert("type".to_string(), serde_json::json!(["null", "object"]));
+        } else {
+            obj.insert("type".to_string(), serde_json::json!("object"));
+        }
+        obj.insert(
+            "additionalProperties".to_string(),
+            serde_json::json!({"type": "string"}),
+        );
+    }
 }
 
 /// Infer JSON schema from a collection of JSON strings
@@ -429,6 +583,12 @@ pub fn infer_json_schema_from_strings(
 
             // Get final schema
             let mut final_schema = builder.to_schema();
+            profile!(
+                config,
+                "Applying force field types ({})",
+                current_time_hms()
+            );
+            preprocess_force_field_types(&mut final_schema, &config);
             profile!(config, "Rewriting objects ({})", current_time_hms());
             rewrite_objects(&mut final_schema, None, &config, true);
             profile!(config, "Reordering unions ({})", current_time_hms());

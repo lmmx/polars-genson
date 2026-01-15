@@ -555,3 +555,65 @@ fn test_claims_c0_p24_x750_t30_normalize() {
         &["--normalise"],
     );
 }
+
+#[test]
+fn test_claims_c0_p24_ddminv2_avro() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/chunk_0-00024-of-00546_ddminv2_REDUCED.jsonl",
+        "claims_c0_p24_ddminv2__avro",
+        &[
+            "--avro",
+            "--force-parent-type",
+            "mainsnak:record",
+            "--force-scalar-promotion",
+            "datavalue,precision,latitude,labels",
+            "--no-unify",
+            "qualifiers",
+            "--force-type",
+            "labels:map",
+            "--max-builders",
+            "1000",
+        ],
+    );
+}
+
+#[test]
+fn test_claims_c0_p24_ddminv2_jsonschema() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/chunk_0-00024-of-00546_ddminv2_REDUCED.jsonl",
+        "claims_c0_p24_ddminv2__jsonschema",
+        &[
+            "--force-parent-type",
+            "mainsnak:record",
+            "--force-scalar-promotion",
+            "datavalue,precision,latitude,labels",
+            "--no-unify",
+            "qualifiers",
+            "--force-type",
+            "labels:map",
+            "--max-builders",
+            "1000",
+        ],
+    );
+}
+
+#[test]
+fn test_claims_c0_p24_ddminv2_normalize() {
+    run_genson_claims_fixture_from_disk(
+        "tests/data/claims/chunk_0-00024-of-00546_ddminv2_REDUCED.jsonl",
+        "claims_c0_p24_ddminv2__normalize",
+        &[
+            "--normalise",
+            "--force-parent-type",
+            "mainsnak:record",
+            "--force-scalar-promotion",
+            "datavalue,precision,latitude,labels",
+            "--no-unify",
+            "qualifiers",
+            "--force-type",
+            "labels:map",
+            "--max-builders",
+            "1000",
+        ],
+    );
+}
