@@ -77,6 +77,7 @@ check-cli:
 check-py:
     cargo check -p polars-genson-py
 
+[working-directory: 'genson-core']
 bench-baseline:
     cargo bench -- --save-baseline main
 
