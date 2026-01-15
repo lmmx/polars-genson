@@ -77,6 +77,9 @@ check-cli:
 check-py:
     cargo check -p polars-genson-py
 
+bench-baseline:
+    cargo bench -- --save-baseline main
+
 # -------------------------------------
 
 clippy: clippy-all
