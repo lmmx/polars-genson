@@ -1,0 +1,190 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--ndjson"
+    - "--force-parent-type"
+    - "mainsnak:record"
+    - "--force-scalar-promotion"
+    - "datavalue,precision,latitude,labels"
+    - "--no-unify"
+    - qualifiers
+    - "--force-type"
+    - "labels:map"
+    - "--max-builders"
+    - "1000"
+  fixture: tests/data/claims/chunk_0-00024-of-00546_ddminv2_REDUCED.jsonl
+---
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "claims": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "mainsnak": {
+              "type": "object",
+              "properties": {
+                "property": {
+                  "type": "string"
+                },
+                "datavalue": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "labels"
+                  ],
+                  "type": "object"
+                },
+                "datatype": {
+                  "type": "string"
+                },
+                "property-labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "property",
+                "datavalue",
+                "datatype",
+                "property-labels"
+              ]
+            },
+            "rank": {
+              "type": "string"
+            },
+            "references": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "property": {
+                        "type": "string"
+                      },
+                      "datavalue": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "labels": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "labels"
+                        ],
+                        "type": "object"
+                      },
+                      "datatype": {
+                        "type": "string"
+                      },
+                      "property-labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "datatype",
+                      "datavalue",
+                      "property",
+                      "property-labels"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "qualifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "properties": {
+                    "property": {
+                      "type": "string"
+                    },
+                    "datavalue": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "labels": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "labels"
+                      ],
+                      "type": "object"
+                    },
+                    "datatype": {
+                      "type": "string"
+                    },
+                    "property-labels": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "datatype",
+                    "datavalue",
+                    "property",
+                    "property-labels"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": [
+            "mainsnak",
+            "rank",
+            "references"
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "claims"
+  ],
+  "type": "object"
+}

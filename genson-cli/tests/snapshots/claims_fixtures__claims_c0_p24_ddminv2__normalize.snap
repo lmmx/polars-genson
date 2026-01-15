@@ -1,0 +1,28 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--ndjson"
+    - "--normalise"
+    - "--force-parent-type"
+    - "mainsnak:record"
+    - "--force-scalar-promotion"
+    - "datavalue,precision,latitude,labels"
+    - "--no-unify"
+    - qualifiers
+    - "--force-type"
+    - "labels:map"
+    - "--max-builders"
+    - "1000"
+  fixture: tests/data/claims/chunk_0-00024-of-00546_ddminv2_REDUCED.jsonl
+---
+{"claims":{"P2959":[{"mainsnak":{"property":"P2959","datavalue":{"id":"Q56315863","labels":null},"datatype":"wikibase-item","property-labels":{"en":"permanent duplicated item","sv":"permanent dubblett","de":"dauerhaftes Duplikat von","es":"ítem duplicado permanente","fr":"élément doublon permanent","ko":"스크립트 차이로 인한 중복 항목","nl":"permanente doublure","sr":"трајно дуплирана ставка","pt":"item duplicado permanentemente","ru":"постоянный дубликат","it":"elemento duplicato permanente","mk":"траен дупликат","zh-hans":"永久重复项","zh-hant":"永久重複項","ar":"عنصر مكرر دائم","hu":"duplikált elem","bn":"স্থায়ী সদৃশ উপাত্ত"}},"rank":"normal","references":[{"P3452":[{"property":"P3452","datavalue":{"id":"Q56315863","labels":null},"datatype":"wikibase-item","property-labels":{"en":"inferred from","pt":"inferido de","de":"abgeleitet von","nb":"avledet fra","hu":"kikövetkeztetett állítás forráseleme","fr":"déduit de","ru":"вывод из","nl":"afgeleid uit","es":"deducido de","he":"מסקנה מ־","zh-hans":"推断依据","sr":"закључено на основу","sv":"härlett från","it":"dedotto da","ca":"deduït de","cs":"na základě (položky)","ar":"مستنتج من"}}]}],"qualifiers":null}]}}
+{"claims":{"P1424":[{"mainsnak":{"property":"P1424","datavalue":{"id":"Q14399380","labels":{"en":"Template:Rowing at the 1920 Summer Olympics","ko":"틀:1920년 하계 올림픽 조정","it":"Template:CanottaggioOlimpiadi1920","pl":"Szablon:Wioślarstwo na Letnich Igrzyskach Olimpijskich 1920","ca":"Plantilla:Rem a Anvers 1920","ru":"Шаблон:Академическая гребля на летних Олимпийских играх 1920","uk":"Шаблон:Академічне веслування на літніх Олімпійських іграх 1920"}},"datatype":"wikibase-item","property-labels":{"en":"topic's main template","ru":"основной шаблон по теме","nl":"hoofdsjabloon van onderwerp","pl":"główny szablon tematu","fa":"جعبه اطلاعات اصلی","be":"асноўны шаблон па тэме","fr":"modèle principal d'un sujet","cs":"šablona tématu","de":"Hauptvorlage des Themas","ca":"plantilla principal del tema","zh":"话题主模板","es":"plantilla principal del tema","mk":"главна тематска предлошка","eu":"gaiaren txantiloi nagusia","scn":"stampu principali pi sta vuci","sco":"topic's main template","sr":"главни тематски шаблон"}},"rank":"normal","references":null,"qualifiers":null}]}}
+{"claims":{"P1424":[{"mainsnak":{"property":"P1424","datavalue":{"id":"Q25869407","labels":{"labels__string":"Template:Calcio Domagnano"}},"datatype":"wikibase-item","property-labels":{"en":"topic's main template","ru":"основной шаблон по теме","nl":"hoofdsjabloon van onderwerp","pl":"główny szablon tematu","fa":"جعبه اطلاعات اصلی","be":"асноўны шаблон па тэме","fr":"modèle principal d'un sujet","cs":"šablona tématu","de":"Hauptvorlage des Themas","ca":"plantilla principal del tema","zh":"话题主模板","es":"plantilla principal del tema","mk":"главна тематска предлошка","eu":"gaiaren txantiloi nagusia","scn":"stampu principali pi sta vuci","sco":"topic's main template","sr":"главни тематски шаблон"}},"rank":"normal","references":[{"P3452":[{"property":"P3452","datavalue":{"id":"Q25869407","labels":{"labels__string":"Template:Calcio Domagnano"}},"datatype":"wikibase-item","property-labels":{"en":"inferred from","pt":"inferido de","de":"abgeleitet von","nb":"avledet fra","hu":"kikövetkeztetett állítás forráseleme","fr":"déduit de","ru":"вывод из","nl":"afgeleid uit","es":"deducido de","he":"מסקנה מ־","zh-hans":"推断依据","sr":"закључено на основу","sv":"härlett från","it":"dedotto da","ca":"deduït de","cs":"na základě (položky)","ar":"مستنتج من"}}]}],"qualifiers":{"P3831":[{"property":"P3831","datavalue":{"id":"Q115707333","labels":{"en":"flag icon template","it":"template bandierina","ru":"шаблон значка флага","ca":"plantilla d'icona de bandera","es":"plantilla de icono de bandera","be":"шаблон значка сцяга","be-tarask":"шаблён іконкі сьцягу","nb":"flaggikon-mal","tr":"bayrak simge şablonu","ja":"旗のアイコンのテンプレート","uk":"шаблон значка прапору","dag":"di tuuta","sl":"predloga z ikono zastave"}},"datatype":"wikibase-item","property-labels":{"en":"object of statement has role","nb":"objekt har rollen","pt":"objeto tem função de","ru":"объект утверждения выступает в роли","sr":"објекат има улогу","nl":"object heeft rol","hu":"érték szerepe","zh-hans":"客体角色","de":"Objekt der Aussage fungiert als","mk":"предметот ја има улогата","tg":"дар симмати","da":"objekt har rolle","be-tarask":"аб’ект мае ролю","ja":"当てはまる役割","nn":"objektet fungerer som","cs":"objekt v roli","es":"valor de la declaración tiene el rol de"}}]}}]}}

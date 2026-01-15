@@ -1,0 +1,217 @@
+---
+source: genson-cli/tests/claims_fixtures.rs
+expression: stdout_str
+info:
+  approved: false
+  args:
+    - "--map-threshold"
+    - "0"
+    - "--unify-maps"
+    - "--wrap-root"
+    - claims
+    - "--ndjson"
+    - "--avro"
+    - "--force-parent-type"
+    - "mainsnak:record"
+    - "--force-scalar-promotion"
+    - "datavalue,precision,latitude,labels"
+    - "--no-unify"
+    - qualifiers
+    - "--force-type"
+    - "labels:map"
+    - "--max-builders"
+    - "1000"
+  fixture: tests/data/claims/chunk_0-00024-of-00546_ddminv2_REDUCED.jsonl
+---
+{
+  "type": "record",
+  "name": "document",
+  "namespace": "genson",
+  "fields": [
+    {
+      "name": "claims",
+      "type": {
+        "name": "claims",
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "claims_values",
+            "namespace": "genson.document_types",
+            "fields": [
+              {
+                "name": "mainsnak",
+                "type": {
+                  "type": "record",
+                  "name": "mainsnak",
+                  "namespace": "genson.document_types.claims_values_types",
+                  "fields": [
+                    {
+                      "name": "property",
+                      "type": "string"
+                    },
+                    {
+                      "name": "datavalue",
+                      "type": {
+                        "type": "record",
+                        "name": "datavalue",
+                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
+                        "fields": [
+                          {
+                            "name": "id",
+                            "type": "string"
+                          },
+                          {
+                            "name": "labels",
+                            "type": {
+                              "name": "labels",
+                              "type": "map",
+                              "values": "string"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "datatype",
+                      "type": "string"
+                    },
+                    {
+                      "name": "property-labels",
+                      "type": {
+                        "name": "property-labels",
+                        "type": "map",
+                        "values": "string"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "rank",
+                "type": "string"
+              },
+              {
+                "name": "references",
+                "type": {
+                  "type": "array",
+                  "items": {
+                    "name": "references",
+                    "type": "map",
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "record",
+                        "name": "references_values",
+                        "namespace": "genson.document_types.claims_values_types",
+                        "fields": [
+                          {
+                            "name": "property",
+                            "type": "string"
+                          },
+                          {
+                            "name": "datavalue",
+                            "type": {
+                              "type": "record",
+                              "name": "datavalue",
+                              "namespace": "genson.document_types.claims_values_types.references_values_types",
+                              "fields": [
+                                {
+                                  "name": "id",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "labels",
+                                  "type": {
+                                    "name": "labels",
+                                    "type": "map",
+                                    "values": "string"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "datatype",
+                            "type": "string"
+                          },
+                          {
+                            "name": "property-labels",
+                            "type": {
+                              "name": "property-labels",
+                              "type": "map",
+                              "values": "string"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "name": "qualifiers",
+                "type": [
+                  "null",
+                  {
+                    "name": "qualifiers",
+                    "type": "map",
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "record",
+                        "name": "qualifiers_values",
+                        "namespace": "genson.document_types.claims_values_types",
+                        "fields": [
+                          {
+                            "name": "property",
+                            "type": "string"
+                          },
+                          {
+                            "name": "datavalue",
+                            "type": {
+                              "type": "record",
+                              "name": "datavalue",
+                              "namespace": "genson.document_types.claims_values_types.qualifiers_values_types",
+                              "fields": [
+                                {
+                                  "name": "id",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "labels",
+                                  "type": {
+                                    "name": "labels",
+                                    "type": "map",
+                                    "values": "string"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "datatype",
+                            "type": "string"
+                          },
+                          {
+                            "name": "property-labels",
+                            "type": {
+                              "name": "property-labels",
+                              "type": "map",
+                              "values": "string"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
