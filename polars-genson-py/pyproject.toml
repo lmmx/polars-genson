@@ -39,7 +39,7 @@ Repository = "https://github.com/lmmx/polars-genson.git"
 module-name = "polars_genson._polars_genson"
 python-source = "python"
 release = true
-strip = false
+strip = true
 
 [tool.pytest.ini_options]
 markers = ["failing: Tests that don't work"]
