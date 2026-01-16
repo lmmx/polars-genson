@@ -4,6 +4,7 @@ pub mod object;
 pub mod scalar;
 
 use serde_json::Value;
+use sonic_rs::Value as SonicValue;
 
 use array::{ListStrategy, TupleStrategy};
 use base::{ScalarSchemaStrategy, SchemaStrategy};
@@ -27,7 +28,7 @@ pub enum BasicSchemaStrategy {
 // TODO: the match check is repeated everywhere, maybe we can optimize this with a macro!
 
 impl BasicSchemaStrategy {
-    pub fn new_for_object(object: &simd_json::BorrowedValue) -> Option<Self> {
+    pub fn new_for_object(object: &SonicValue) -> Option<Self> {
         if ObjectStrategy::match_object(object) {
             Some(BasicSchemaStrategy::Object(ObjectStrategy::new()))
         } else if <ListStrategy as ListSchemaStrategy>::match_object(object) {
@@ -80,7 +81,7 @@ impl BasicSchemaStrategy {
         }
     }
 
-    pub fn match_object(&self, object: &simd_json::BorrowedValue) -> bool {
+    pub fn match_object(&self, object: &SonicValue) -> bool {
         match self {
             BasicSchemaStrategy::Object(_) => ObjectStrategy::match_object(object),
             BasicSchemaStrategy::List(_) => {
@@ -149,7 +150,7 @@ impl BasicSchemaStrategy {
         }
     }
 
-    pub fn add_object(&mut self, object: &simd_json::BorrowedValue) {
+    pub fn add_object(&mut self, object: &SonicValue) {
         match self {
             BasicSchemaStrategy::Object(strategy) => strategy.add_object(object),
             BasicSchemaStrategy::List(strategy) => strategy.add_object(object),

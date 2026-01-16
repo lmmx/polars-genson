@@ -81,6 +81,10 @@ check-py:
 bench-baseline:
     cargo bench -- --save-baseline main
 
+[working-directory: 'genson-core']
+bench-compare:
+    cargo bench -- --baseline main
+
 # -------------------------------------
 
 clippy: clippy-all

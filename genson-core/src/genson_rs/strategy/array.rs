@@ -1,9 +1,9 @@
 use rayon::prelude::*;
 use serde_json::{json, Value};
-use simd_json;
-use simd_json::prelude::TypedArrayValue;
+use sonic_rs::Value as SonicValue;
 use std::slice::{Iter, IterMut};
 
+use crate::genson_rs::json_value::{iter_array, ValueExt};
 use crate::genson_rs::node::{DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 
@@ -26,7 +26,7 @@ pub trait ListSchemaStrategy: SchemaStrategy {
         schema
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         object.is_array()
     }
 }
@@ -63,12 +63,13 @@ impl SchemaStrategy for ListStrategy {
         schema["type"] == "array" && schema["items"].is_object()
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         <Self as ListSchemaStrategy>::match_object(object)
     }
 
-    fn add_object(&mut self, object: &simd_json::BorrowedValue) {
-        if let simd_json::BorrowedValue::Array(objects) = object {
+    fn add_object(&mut self, object: &SonicValue) {
+        if object.is_array() {
+            let objects: Vec<&SonicValue> = iter_array(object).collect();
             let items = self.get_items_mut();
             items.for_each(|node| {
                 // if the number of objects is less than 10, it is more efficient to
@@ -193,13 +194,13 @@ impl SchemaStrategy for TupleStrategy {
         schema["type"] == "array" && schema["items"].is_array()
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         <Self as ListSchemaStrategy>::match_object(object)
     }
 
-    fn add_object(&mut self, object: &simd_json::BorrowedValue) {
-        if let simd_json::BorrowedValue::Array(objects) = object {
-            let items: Vec<DataType> = objects.iter().map(DataType::Object).collect();
+    fn add_object(&mut self, object: &SonicValue) {
+        if object.is_array() {
+            let items: Vec<DataType> = iter_array(object).map(DataType::Object).collect();
             self.add_items(items, |node, obj| {
                 node.add_object(obj);
             });

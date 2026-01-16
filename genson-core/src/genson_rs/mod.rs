@@ -1,5 +1,6 @@
 #![allow(mismatched_lifetime_syntaxes)]
 mod builder;
+pub mod json_value;
 mod node;
 mod strategy;
 
@@ -31,7 +32,7 @@ pub struct BuildConfig {
 /// * `builder` - the schema builder object
 /// * `object_slice` - the JSON object to parse
 pub fn build_single_json_object_schema(builder: &mut SchemaBuilder, object_slice: &mut [u8]) {
-    let object = simd_json::to_borrowed_value(object_slice).unwrap();
+    let object: sonic_rs::Value = sonic_rs::from_slice(object_slice).unwrap();
     builder.add_object(&object);
 }
 

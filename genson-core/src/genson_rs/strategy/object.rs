@@ -4,9 +4,9 @@ use std::collections::hash_set::HashSet;
 
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
-use simd_json;
-use simd_json::prelude::TypedObjectValue;
+use sonic_rs::Value as SonicValue;
 
+use crate::genson_rs::json_value::{iter_object, ValueExt};
 use crate::genson_rs::node::{DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 
@@ -45,16 +45,16 @@ impl SchemaStrategy for ObjectStrategy {
         schema["type"] == "object"
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         object.is_object()
     }
 
-    fn add_object(&mut self, object: &simd_json::BorrowedValue) {
+    fn add_object(&mut self, object: &SonicValue) {
         let mut properties = HashSet::new();
-        if let simd_json::BorrowedValue::Object(object) = object {
-            object.iter().for_each(|(prop, subobj)| {
+        if object.is_object() {
+            for (prop, subobj) in iter_object(object) {
                 let mut pattern: Option<&str> = None;
-                if !self.properties.contains_key(prop.as_ref()) {
+                if !self.properties.contains_key(prop) {
                     let pattern_matcher = |p: &str| Regex::new(p).unwrap().is_match(prop);
                     if let Some((p, node)) = self
                         .pattern_properties
@@ -68,15 +68,15 @@ impl SchemaStrategy for ObjectStrategy {
 
                 if pattern.is_none() {
                     properties.insert(prop.to_string());
-                    if !self.properties.contains_key(prop.as_ref()) {
+                    if !self.properties.contains_key(prop) {
                         self.properties.insert(prop.to_string(), SchemaNode::new());
                     }
                     self.properties
-                        .get_mut(prop.as_ref())
+                        .get_mut(prop)
                         .unwrap()
                         .add_object(DataType::Object(subobj));
                 }
-            });
+            }
         }
 
         if self.required_properties.is_none() {

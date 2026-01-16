@@ -1,7 +1,7 @@
 use serde_json::{json, Value};
-use simd_json;
-use simd_json::prelude::TypedScalarValue;
+use sonic_rs::Value as SonicValue;
 
+use crate::genson_rs::json_value::ValueExt;
 use crate::genson_rs::strategy::base::{ScalarSchemaStrategy, SchemaStrategy};
 
 #[derive(Debug, PartialEq)]
@@ -36,11 +36,11 @@ impl SchemaStrategy for NullStrategy {
         schema["type"] == "null"
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         object.is_null()
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
+    fn add_object(&mut self, _object: &SonicValue) {}
 }
 
 #[derive(Debug, PartialEq)]
@@ -75,11 +75,11 @@ impl SchemaStrategy for BooleanStrategy {
         schema["type"] == "boolean"
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         object.is_bool()
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
+    fn add_object(&mut self, _object: &SonicValue) {}
 }
 
 #[derive(Debug, PartialEq)]
@@ -108,11 +108,11 @@ impl SchemaStrategy for StringStrategy {
         schema["type"] == "string"
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         object.is_str()
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
+    fn add_object(&mut self, _object: &SonicValue) {}
 }
 
 impl ScalarSchemaStrategy for StringStrategy {
@@ -157,7 +157,7 @@ impl SchemaStrategy for NumberStrategy {
         }
     }
 
-    fn add_object(&mut self, object: &simd_json::BorrowedValue) {
+    fn add_object(&mut self, object: &SonicValue) {
         if object.is_f64() {
             self.number_type = "number";
         }
@@ -175,7 +175,7 @@ impl SchemaStrategy for NumberStrategy {
         schema["type"] == "number" || schema["type"] == "integer"
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: &SonicValue) -> bool {
         object.is_number()
     }
 }
@@ -212,9 +212,9 @@ impl SchemaStrategy for TypelessStrategy {
         true
     }
 
-    fn match_object(_: &simd_json::BorrowedValue) -> bool {
+    fn match_object(_: &SonicValue) -> bool {
         false
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue) {}
+    fn add_object(&mut self, _object: &SonicValue) {}
 }

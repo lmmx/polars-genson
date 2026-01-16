@@ -22,7 +22,7 @@ pub enum DataType<'a> {
     /// SchemaNode represents a JSON schema
     Schema(&'a Value),
     /// Object represents a valid JSON object (array, object, string, number, boolean, null)
-    Object(&'a simd_json::BorrowedValue<'a>),
+    Object(&'a sonic_rs::Value),
     /// SchemaNode reference
     SchemaNode(&'a SchemaNode),
 }
@@ -184,7 +184,7 @@ impl SchemaNode {
     /// Get the current active strategy for the object, if not found create a new one.
     fn get_or_create_strategy_for_object(
         &mut self,
-        object: &simd_json::BorrowedValue,
+        object: &sonic_rs::Value,
     ) -> &mut BasicSchemaStrategy {
         if let Some(idx) = self.get_strategy_for_kind(DataType::Object(object)) {
             return &mut self.active_strategies[idx];

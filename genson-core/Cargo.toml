@@ -18,8 +18,7 @@ mimalloc.workspace = true
 ordermap.workspace = true
 rayon.workspace = true
 regex.workspace = true
-simd-json.workspace = true
-sonic-rs = "0.5.6"
+sonic-rs.workspace = true
 
 [features]
 avro = ["avrotize"]

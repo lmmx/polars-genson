@@ -1,10 +1,10 @@
 use serde_json::Value;
-use simd_json;
+use sonic_rs::Value as SonicValue;
 
 /// base schema strategy trait
 pub trait SchemaStrategy {
     fn match_schema(schema: &Value) -> bool;
-    fn match_object(object: &simd_json::BorrowedValue) -> bool;
+    fn match_object(object: &SonicValue) -> bool;
 
     fn add_schema(&mut self, schema: &Value) {
         self.add_extra_keywords(schema)
@@ -18,7 +18,7 @@ pub trait SchemaStrategy {
         }
     }
 
-    fn add_object(&mut self, _object: &simd_json::BorrowedValue);
+    fn add_object(&mut self, _object: &SonicValue);
 
     fn to_schema(&self) -> Value {
         self.get_extra_keywords().clone()
