@@ -131,6 +131,7 @@ def infer_json_schema(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_parent_field_types: dict[str, str] | None = None,
     force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
@@ -173,6 +174,9 @@ def infer_json_schema(
         Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+        Example: ``{"labels": "map", "claims": "record"}``.
+    force_parent_field_types : dict[str, str], optional
+        Explicit overrides for fields based on their parent field name. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
     force_scalar_promotion : set[str], optional
         Set of field names that should always be promoted to wrapped scalars,
@@ -226,6 +230,8 @@ def infer_json_schema(
         kwargs["schema_uri"] = schema_uri
     if force_field_types is not None:
         kwargs["force_field_types"] = force_field_types
+    if force_parent_field_types is not None:
+        kwargs["force_parent_field_types"] = force_parent_field_types
 
     return plug(expr, changes_length=merge_schemas, **kwargs)
 
@@ -244,6 +250,7 @@ def infer_polars_schema(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_parent_field_types: dict[str, str] | None = None,
     force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
@@ -284,6 +291,9 @@ def infer_polars_schema(
         Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+        Example: ``{"labels": "map", "claims": "record"}``.
+    force_parent_field_types : dict[str, str], optional
+        Explicit overrides for fields based on their parent field name. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
     force_scalar_promotion : set[str], optional
         Set of field names that should always be promoted to wrapped scalars,
@@ -338,6 +348,8 @@ def infer_polars_schema(
         raise NotImplementedError("Merge schemas for Polars schemas is TODO: see {url}")
     if force_field_types is not None:
         kwargs["force_field_types"] = force_field_types
+    if force_parent_field_types is not None:
+        kwargs["force_parent_field_types"] = force_parent_field_types
 
     return plug(expr, changes_length=merge_schemas, **kwargs)
 
@@ -356,6 +368,7 @@ def normalise_json(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_parent_field_types: dict[str, str] | None = None,
     force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     wrap_root: str | None = None,
@@ -405,6 +418,9 @@ def normalise_json(
     force_field_types : dict[str, str], optional
         Override the inferred type for specific fields. Keys are field names,
         values must be either ``"map"`` or ``"record"``.
+    force_parent_field_types : dict[str, str], optional
+        Override the inferred type for specific fields based on their parent field name.
+        Keys are field names, values must be either ``"map"`` or ``"record"``.
     force_scalar_promotion : set[str], optional
         Set of field names that should always be promoted to wrapped scalars,
         even when they appear as simple scalars. Ensures schema stability for
@@ -472,6 +488,8 @@ def normalise_json(
     }
     if force_field_types is not None:
         kwargs["force_field_types"] = force_field_types
+    if force_parent_field_types is not None:
+        kwargs["force_parent_field_types"] = force_parent_field_types
 
     return plug(expr, changes_length=True, **kwargs)
 
@@ -492,6 +510,7 @@ def infer_from_parquet(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_parent_field_types: dict[str, str] | None = None,
     force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     avro: bool = False,
@@ -536,6 +555,9 @@ def infer_from_parquet(
         Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+        Example: ``{"labels": "map", "claims": "record"}``.
+    force_parent_field_types : dict[str, str], optional
+        Explicit overrides for fields based on their parent field name. Values must be `"map"` or `"record"`.
         Example: ``{"labels": "map", "claims": "record"}``.
     force_scalar_promotion : set[str], optional
         Set of field names that should always be promoted to wrapped scalars,
@@ -588,6 +610,7 @@ def infer_from_parquet(
             list(force_scalar_promotion) if force_scalar_promotion else []
         ),
         force_field_types=force_field_types,
+        force_parent_field_types=force_parent_field_types,
         wrap_scalars=wrap_scalars,
         avro=avro,
         wrap_root=wrap_root,
@@ -619,6 +642,7 @@ def normalise_from_parquet(
     unify_maps: bool = False,
     no_unify: set[str] | None = None,
     force_field_types: dict[str, str] | None = None,
+    force_parent_field_types: dict[str, str] | None = None,
     force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
     wrap_root: str | None = None,
@@ -672,6 +696,8 @@ def normalise_from_parquet(
         Prevent unification of keys under these field names with their sibling record fields.
     force_field_types : dict[str, str], optional
         Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
+    force_parent_field_types : dict[str, str], optional
+        Per-field overrides for schema inference based on their parent field name (e.g. ``{"labels": "map"}``).
     force_scalar_promotion : set[str], optional
         Set of field names that should always be promoted to wrapped scalars,
         even when they appear as simple scalars. Ensures schema stability for
@@ -724,6 +750,7 @@ def normalise_from_parquet(
         unify_maps=unify_maps,
         no_unify=list(no_unify) if no_unify else None,
         force_field_types=force_field_types,
+        force_parent_field_types=force_parent_field_types,
         force_scalar_promotion=(
             list(force_scalar_promotion) if force_scalar_promotion else []
         ),
@@ -766,6 +793,7 @@ class GensonNamespace:
         unify_maps: bool = False,
         no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
+        force_parent_field_types: dict[str, str] | None = None,
         force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = False,
@@ -808,6 +836,9 @@ class GensonNamespace:
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
+        force_parent_field_types : dict[str, str], optional
+            Explicit overrides for fields based on their parent field name. Values must be `"map"` or `"record"`.
+            Example: ``{"labels": "map", "claims": "record"}``.
         force_scalar_promotion : set[str], optional
             Set of field names that should always be promoted to wrapped scalars,
             even when they appear as simple scalars. Ensures schema stability for
@@ -844,6 +875,11 @@ class GensonNamespace:
             if force_field_types is None
             else {"force_field_types": force_field_types}
         )
+        fpft = (
+            {}
+            if force_parent_field_types is None
+            else {"force_parent_field_types": force_parent_field_types}
+        )
         wrap_root_field = column if wrap_root is True else wrap_root
         result = self._df.select(
             infer_polars_schema(
@@ -858,6 +894,7 @@ class GensonNamespace:
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,
                 **fft,
+                **fpft,
                 force_scalar_promotion=(
                     list(force_scalar_promotion) if force_scalar_promotion else []
                 ),
@@ -894,6 +931,7 @@ class GensonNamespace:
         unify_maps: bool = False,
         no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
+        force_parent_field_types: dict[str, str] | None = None,
         force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = False,
@@ -936,6 +974,9 @@ class GensonNamespace:
             Prevent unification of keys under these field names with their sibling record fields.
         force_field_types : dict[str, str], optional
             Explicit overrides for specific fields. Values must be `"map"` or `"record"`.
+            Example: ``{"labels": "map", "claims": "record"}``.
+        force_parent_field_types : dict[str, str], optional
+            Explicit overrides for fields based on their parent field name. Values must be `"map"` or `"record"`.
             Example: ``{"labels": "map", "claims": "record"}``.
         force_scalar_promotion : set[str], optional
             Set of field names that should always be promoted to wrapped scalars,
@@ -981,6 +1022,7 @@ class GensonNamespace:
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,
                 force_field_types=force_field_types,
+                force_parent_field_types=force_parent_field_types,
                 force_scalar_promotion=(
                     list(force_scalar_promotion) if force_scalar_promotion else []
                 ),
@@ -1019,6 +1061,7 @@ class GensonNamespace:
         unify_maps: bool = False,
         no_unify: set[str] | None = None,
         force_field_types: dict[str, str] | None = None,
+        force_parent_field_types: dict[str, str] | None = None,
         force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         wrap_root: bool | str | None = None,
@@ -1080,6 +1123,8 @@ class GensonNamespace:
             Prevent unification of keys under these field names with their sibling record fields.
         force_field_types : dict[str, str], optional
             Per-field overrides for schema inference (e.g. ``{"labels": "map"}``).
+        force_parent_field_types : dict[str, str], optional
+            Per-field overrides for schema inference based on their parent field name (e.g. ``{"labels": "map"}``).
         force_scalar_promotion : set[str], optional
             Set of field names that should always be promoted to wrapped scalars,
             even when they appear as simple scalars. Ensures schema stability for
@@ -1122,6 +1167,7 @@ class GensonNamespace:
             map_max_required_keys=map_max_required_keys,
             unify_maps=unify_maps,
             force_field_types=force_field_types,
+            force_parent_field_types=force_parent_field_types,
             force_scalar_promotion=(
                 list(force_scalar_promotion) if force_scalar_promotion else []
             ),
@@ -1148,6 +1194,7 @@ class GensonNamespace:
                     map_max_required_keys=map_max_required_keys,
                     unify_maps=unify_maps,
                     force_field_types=force_field_types,
+                    force_parent_field_types=force_parent_field_types,
                     force_scalar_promotion=(
                         list(force_scalar_promotion) if force_scalar_promotion else []
                     ),
