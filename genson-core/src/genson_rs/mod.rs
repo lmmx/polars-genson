@@ -153,7 +153,7 @@ fn is_json_object_array(data: &[u8]) -> bool {
 /// This function assumes that the data is a JSON array (i.e. call `is_json_object_array` before calling it)
 fn get_json_array_elements(data: &mut [u8]) -> &mut [u8] {
     let start = data.iter().position(|&c| c == b'[').unwrap_or(data.len());
-    let end = data.iter().rposition(|&c| c == b']').map_or(0, |p| p);
+    let end = data.iter().rposition(|&c| c == b']').unwrap_or(0);
     &mut data[start + 1..end]
 }
 
