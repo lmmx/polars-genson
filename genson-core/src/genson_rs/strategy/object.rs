@@ -81,12 +81,9 @@ impl SchemaStrategy for ObjectStrategy {
 
         if self.required_properties.is_none() {
             self.required_properties = Some(properties);
-        } else {
+        } else if let Some(req) = &mut self.required_properties {
             // take the intersection
-            self.required_properties
-                .as_mut()
-                .unwrap()
-                .retain(|p| properties.contains(p));
+            req.retain(|p| properties.contains(p));
         }
     }
 
@@ -131,12 +128,9 @@ impl SchemaStrategy for ObjectStrategy {
                             .map(|v| v.as_str().unwrap().to_string())
                             .collect();
                         self.required_properties = Some(required_fields_set);
-                    } else {
+                    } else if let Some(req) = &mut self.required_properties {
                         // take the intersection
-                        self.required_properties
-                            .as_mut()
-                            .unwrap()
-                            .retain(|p| required_fields.contains(&Value::String(p.to_string())));
+                        req.retain(|p| required_fields.contains(&Value::String(p.to_string())));
                     }
                 }
             }
@@ -236,11 +230,8 @@ impl SchemaStrategy for ObjectStrategy {
 
             if self.required_properties.is_none() {
                 self.required_properties = Some(final_required);
-            } else {
-                self.required_properties
-                    .as_mut()
-                    .unwrap()
-                    .retain(|p| final_required.contains(p));
+            } else if let Some(req) = &mut self.required_properties {
+                req.retain(|p| final_required.contains(p));
             }
         }
     }

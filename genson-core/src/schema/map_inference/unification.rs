@@ -974,18 +974,15 @@ pub(crate) fn unify_anyof_schemas(
 
     for &schema in schemas {
         if is_scalar_schema(schema) {
-            if let Some(scalar_type) = get_scalar_type_name(schema) {
-                let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
-                let promoted = json!({
-                    "type": "object",
-                    "properties": {
-                        wrapped_key: schema.clone()
-                    }
-                });
-                promoted_schemas.push(promoted);
-            } else {
-                return None;
-            }
+            let scalar_type = get_scalar_type_name(schema)?;
+            let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
+            let promoted = json!({
+                "type": "object",
+                "properties": {
+                    wrapped_key: schema.clone()
+                }
+            });
+            promoted_schemas.push(promoted);
         } else {
             promoted_schemas.push(schema.clone());
         }

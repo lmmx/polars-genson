@@ -264,12 +264,12 @@ py: py-dev py-test
 # Develop Python plugin (debug mode)
 [working-directory: 'polars-genson-py']
 py-dev:
-    $(uv python find) -m maturin develop
+    maturin develop --uv
 
 # Develop Python plugin (release mode)  
 [working-directory: 'polars-genson-py']
 py-release:
-    $(uv python find) -m maturin develop --release
+    maturin develop --uv --release
 
 # Test Python plugin with pytest
 [working-directory: 'polars-genson-py']
