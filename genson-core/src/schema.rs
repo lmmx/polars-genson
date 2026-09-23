@@ -366,11 +366,11 @@ fn process_json_strings_parallel(
             }
         }
 
-        let chunk_builders: Vec<(usize, SchemaBuilder, bool)> = chunk
+        let chunk_builders: Vec<(usize, Option<(Value, u64)>)> = chunk
             .par_iter()
             .enumerate()
             .map(
-                |(i, json_str)| -> Result<(usize, SchemaBuilder, bool), String> {
+                |(i, json_str)| -> Result<(usize, Option<(Value, u64)>), String> {
                     profile_verbose!(config, "Thread processing JSON STRING {}", i);
 
                     let prep_start = std::time::Instant::now();
@@ -384,7 +384,7 @@ fn process_json_strings_parallel(
                     );
 
                     if prepared.is_empty() {
-                        return Ok((i, get_builder(config.schema_uri.as_deref()), false));
+                        return Ok((i, None));
                     }
 
                     let mut chunk_builder = get_builder(config.schema_uri.as_deref());
@@ -404,7 +404,13 @@ fn process_json_strings_parallel(
                         build_elapsed
                     );
 
-                    Ok((i, chunk_builder, true))
+                    // Convert on the worker thread so the builder is dropped here
+                    // instead of piling up until the serial merge below.
+                    let mut schema = chunk_builder.to_schema();
+                    drop(chunk_builder);
+                    apply_force_field_types(&mut schema, config);
+                    let hash = xxh64(schema.to_string().as_bytes(), 0);
+                    Ok((i, Some((schema, hash))))
                 },
             )
             .collect::<Result<Vec<_>, String>>()?;
@@ -416,21 +422,13 @@ fn process_json_strings_parallel(
         }
 
         // Extract and merge schemas from this chunk
-        for (_i, individual_builder, was_non_empty) in chunk_builders {
-            if !was_non_empty {
+        for (_i, item) in chunk_builders {
+            let Some((schema, hash)) = item else {
                 continue;
-            }
-
-            let mut schema = individual_builder.to_schema();
-
-            // Apply force_field_types BEFORE merging to ensure structural consistency
-            apply_force_field_types(&mut schema, config);
-
-            let hash = xxh64(schema.to_string().as_bytes(), 0);
+            };
             if !seen_hashes.insert(hash) {
                 continue;
             }
-
             processed_count += 1;
             builder.add_schema(schema);
         }
