@@ -425,16 +425,21 @@ fn process_json_strings_parallel(
         let par_el = t_par.elapsed();
         let t_mrg = std::time::Instant::now();
         // Extract and merge schemas from this chunk
+        let mut merged: Vec<Value> = Vec::with_capacity(chunk_builders.len());
         for (_i, item) in chunk_builders {
-            let Some((schema, hash)) = item else {
+            let Some((mut schema, hash)) = item else {
                 continue;
             };
             if !seen_hashes.insert(hash) {
                 continue;
             }
             processed_count += 1;
-            builder.add_schema(schema);
+            builder.add_schema_mut(&mut schema);
+            merged.push(schema);
         }
+        // Freeing the merged schemas is a large share of the serial merge, so spread it
+        // over the rayon pool.
+        merged.into_par_iter().for_each(drop);
 
         profile!(
             config,
