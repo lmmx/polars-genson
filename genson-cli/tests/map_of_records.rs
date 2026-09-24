@@ -84,12 +84,12 @@ fn run_genson(mode: &str, name: &str, extra_args: &[&str]) {
 
 #[test]
 fn test_map_of_records_infer_jsonschema() {
-    run_genson("jsonschema", "infer__jsonschema", &[]);
+    run_genson("jsonschema", "infer__jsonschema", &["--root-map"]);
 }
 
 #[test]
 fn test_map_of_records_infer_avro() {
-    run_genson("avro", "infer__avro", &[]);
+    run_genson("avro", "infer__avro", &["--root-map"]);
 }
 
 #[test]
@@ -111,13 +111,13 @@ fn test_map_of_records_infer_jsonschema_kv() {
     run_genson(
         "jsonschema",
         "infer__jsonschema_kv",
-        &["--map-encoding", "kv"],
+        &["--map-encoding", "kv", "--root-map"],
     );
 }
 
 #[test]
 fn test_map_of_records_infer_avro_kv() {
-    run_genson("avro", "infer__avro_kv", &["--map-encoding", "kv"]);
+    run_genson("avro", "infer__avro_kv", &["--map-encoding", "kv", "--root-map"]);
 }
 
 #[test]

@@ -485,7 +485,7 @@ pub(crate) fn rewrite_objects(
             // Detect map-of-records only if:
             // - all children are identical
             // - and that child is itself an object with "properties" (i.e. a proper record)
-            if above_threshold {
+            if above_threshold && !(is_root && config.no_root_map) {
                 if let Some(first) = child_schemas.first() {
                     if first.get("type") == Some(&Value::String("object".into()))
                         && first.get("properties").is_some()

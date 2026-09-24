@@ -205,7 +205,7 @@ fn test_avro_map_of_record_values_snapshot() {
     run_snapshot(
         "map_of_record_values__avro_root",
         &rows,
-        &["--avro", "--ndjson", "--map-threshold", "3"],
+        &["--avro", "--ndjson", "--map-threshold", "3", "--root-map"],
         false,
         false,
     );

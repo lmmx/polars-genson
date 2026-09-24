@@ -457,8 +457,19 @@ fn test_rewrite_objects_map_of_records() {
         "required": ["en","fr"]
     });
 
+    // With no_root_map (the default) the root stays a record
+    let mut kept = schema.clone();
     let cfg = SchemaInferenceConfig {
         map_threshold: 2, // force detection at 2 keys
+        ..Default::default()
+    };
+    rewrite_objects(&mut kept, None, &cfg, true);
+    assert!(kept.get("additionalProperties").is_none());
+    assert!(kept["properties"].get("en").is_some());
+
+    let cfg = SchemaInferenceConfig {
+        map_threshold: 2,
+        no_root_map: false,
         ..Default::default()
     };
 

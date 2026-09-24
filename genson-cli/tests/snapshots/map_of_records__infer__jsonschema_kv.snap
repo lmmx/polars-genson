@@ -9,6 +9,7 @@ info:
     - "3"
     - "--map-encoding"
     - kv
+    - "--root-map"
   input:
     - en:
         language: en
