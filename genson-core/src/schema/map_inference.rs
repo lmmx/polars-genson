@@ -42,43 +42,69 @@ fn process_properties_parallel<F>(
     }
 }
 
-/// Extract the non-null schema from a nullable schema, handling both old and new formats
-fn extract_non_null_schema(schema: &Value) -> Value {
-    // Handle new format: {"type": ["null", "string"]}
+/// The non-null schema of a nullable schema (`{"type": ["null", T]}` or the legacy
+/// `["null", {...}]`), without copying it: a schema plus the `type` that replaces its own.
+struct NonNullView<'a> {
+    schema: &'a Value,
+    type_override: Option<&'a Value>,
+}
+
+fn non_null_view(schema: &Value) -> NonNullView<'_> {
+    let null = Value::String("null".into());
     if let Some(Value::Array(type_arr)) = schema.get("type") {
-        if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-            if let Some(non_null_type) = type_arr
-                .iter()
-                .find(|t| *t != &Value::String("null".into()))
-            {
-                // Create a new schema with the non-null type, preserving other properties
-                let mut non_null_schema = schema.clone();
-                if let Some(obj) = non_null_schema.as_object_mut() {
-                    obj.insert("type".to_string(), non_null_type.clone());
-                    return non_null_schema;
-                }
-            }
-            // Malformed nullable schema - return as-is
-            return schema.clone();
+        if type_arr.len() == 2 && type_arr.contains(&null) {
+            return NonNullView {
+                schema,
+                type_override: type_arr.iter().find(|t| **t != null),
+            };
         }
     }
-
-    // Handle old legacy format: ["null", {"type": "string"}]
     if let Value::Array(arr) = schema {
-        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
-            if let Some(non_null_schema) = arr
-                .iter()
-                .find(|v| *v != &Value::String("null".to_string()))
-            {
-                return non_null_schema.clone();
+        if arr.len() == 2 && arr.contains(&null) {
+            if let Some(inner) = arr.iter().find(|v| **v != null) {
+                return NonNullView {
+                    schema: inner,
+                    type_override: None,
+                };
             }
-            // Malformed legacy format - return as-is
-            return schema.clone();
+        }
+    }
+    NonNullView {
+        schema,
+        type_override: None,
+    }
+}
+
+impl NonNullView<'_> {
+    fn field<'b>(&'b self, key: &str, value: &'b Value) -> &'b Value {
+        match self.type_override {
+            Some(t) if key == "type" => t,
+            _ => value,
         }
     }
 
-    // Not a nullable schema, return as-is
-    schema.clone()
+    /// Equality of the two non-null schemas.
+    fn eq(&self, other: &NonNullView) -> bool {
+        if self.type_override.is_none() && other.type_override.is_none() {
+            return self.schema == other.schema;
+        }
+        let (Value::Object(a), Value::Object(b)) = (self.schema, other.schema) else {
+            return false;
+        };
+        a.len() == b.len()
+            && a.iter().all(|(k, v)| {
+                b.get(k)
+                    .is_some_and(|w| self.field(k, v) == other.field(k, w))
+            })
+    }
+
+    fn to_value(&self) -> Value {
+        let mut schema = self.schema.clone();
+        if let (Some(t), Some(obj)) = (self.type_override, schema.as_object_mut()) {
+            obj.insert("type".to_string(), t.clone());
+        }
+        schema
+    }
 }
 
 fn contains_anyof(value: &Value) -> bool {
@@ -488,16 +514,10 @@ pub(crate) fn rewrite_objects(
             let mut unified_schema: Option<Value> = None;
             if let Some(first_schema) = props.values().next() {
                 // Normalise all schemas for comparison
-                let normalised_schemas: Vec<Value> = if props.len() >= 100 {
-                    let props_vec: Vec<_> = props.iter().collect();
-                    props_vec
-                        .par_iter()
-                        .map(|(_, v)| extract_non_null_schema(v))
-                        .collect()
-                } else {
-                    props.values().map(extract_non_null_schema).collect()
-                };
-                let first_normalised = extract_non_null_schema(first_schema);
+                // Borrowed, since only the first is ever copied (when they all match)
+                let normalised_schemas: Vec<NonNullView> =
+                    props.values().map(non_null_view).collect();
+                let first_view = non_null_view(first_schema);
 
                 // Debug output to diagnose the issue
                 if config.debug {
@@ -509,8 +529,9 @@ pub(crate) fn rewrite_objects(
                     );
 
                     let mut unique_schemas = std::collections::BTreeSet::new();
-                    for schema in &normalised_schemas {
-                        unique_schemas.insert(serde_json::to_string(schema).unwrap_or_default());
+                    for view in &normalised_schemas {
+                        let schema = view.to_value();
+                        unique_schemas.insert(serde_json::to_string(&schema).unwrap_or_default());
                     }
 
                     if unique_schemas.len() <= 3 {
@@ -561,11 +582,11 @@ pub(crate) fn rewrite_objects(
                 let homog_start = std::time::Instant::now();
                 if normalised_schemas
                     .par_iter()
-                    .all(|schema| schema == &first_normalised)
+                    .all(|view| view.eq(&first_view))
                 {
                     // All schemas are homogeneous after normalisation
                     debug!(config, "Schemas are homogeneous after normalisation");
-                    unified_schema = Some(first_normalised);
+                    unified_schema = Some(first_view.to_value());
                 } else if config.unify_maps {
                     debug!(config, "Schemas not homogeneous, attempting unification");
                     if config.profile && normalised_schemas.len() > 50 {
