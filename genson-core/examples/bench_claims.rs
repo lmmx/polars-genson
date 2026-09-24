@@ -23,6 +23,9 @@ fn main() {
         let res = infer_json_schema_from_strings(&rows, cfg).unwrap();
         let dt = t.elapsed();
         let s = res.schema.to_string();
+        if let Ok(path) = std::env::var("DUMP") {
+            std::fs::write(path, &s).unwrap();
+        }
         let mut h = std::collections::hash_map::DefaultHasher::new();
         s.hash(&mut h);
         println!(
