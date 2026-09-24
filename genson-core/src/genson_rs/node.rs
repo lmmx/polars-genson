@@ -1,6 +1,5 @@
 use core::panic;
 use std::borrow::Cow;
-use std::collections::HashSet;
 
 use crate::genson_rs::strategy::base::SchemaStrategy;
 use crate::genson_rs::strategy::scalar::TypelessStrategy;
@@ -52,6 +51,17 @@ impl SchemaNode {
             _ => panic!("Invalid schema type"),
         };
 
+        // Common case: no `anyOf` / type array to split, so skip `get_subschemas` (which
+        // allocates a Vec per node visited).
+        if !SchemaNode::needs_splitting(&schema) {
+            let active_strategy = self.get_or_create_strategy_for_schema(&schema);
+            SchemaNode::add_schema_or_object_to_strategy(
+                active_strategy,
+                DataType::Schema(&schema),
+            );
+            return self;
+        }
+
         for subschema in SchemaNode::get_subschemas(&schema) {
             let active_strategy = self.get_or_create_strategy_for_schema(&subschema);
             SchemaNode::add_schema_or_object_to_strategy(
@@ -60,6 +70,16 @@ impl SchemaNode {
             );
         }
         self
+    }
+
+    fn needs_splitting(schema: &Value) -> bool {
+        match schema {
+            Value::Object(obj) => {
+                matches!(obj.get("anyOf"), Some(Value::Array(_)))
+                    || matches!(obj.get("type"), Some(Value::Array(_)))
+            }
+            _ => false,
+        }
     }
 
     /// Add multiple schemas at once with optimized batch processing
@@ -146,7 +166,9 @@ impl SchemaNode {
 
     /// Convert the current schema node to a JSON schema
     pub fn to_schema(&self) -> Value {
-        let mut scalar_types: HashSet<String> = HashSet::new();
+        // Scalar strategies produce `{"type": t}`; keep those apart so they can be
+        // collapsed into one entry (a single type, or a sorted type list) at the end.
+        let mut scalar_schemas: Vec<Value> = vec![];
         let mut generated_schemas: Vec<Value> = vec![];
 
         self.active_strategies.iter().for_each(|strategy| {
@@ -154,7 +176,7 @@ impl SchemaNode {
             if let Value::Object(ref schema) = generated_schema {
                 // if schema is scalar type
                 if schema.keys().len() == 1 && schema.contains_key("type") {
-                    scalar_types.insert(schema["type"].as_str().unwrap().to_string());
+                    scalar_schemas.push(generated_schema);
                 } else {
                     generated_schemas.push(generated_schema);
                 }
@@ -163,16 +185,18 @@ impl SchemaNode {
             }
         });
 
-        if !scalar_types.is_empty() {
-            if scalar_types.len() == 1 {
-                let scalar_type = scalar_types.iter().next().unwrap();
-                generated_schemas.push(json!({"type": scalar_type}));
+        if scalar_schemas.len() == 1 {
+            generated_schemas.push(scalar_schemas.swap_remove(0));
+        } else if !scalar_schemas.is_empty() {
+            let mut scalar_type_list: Vec<&str> = scalar_schemas
+                .iter()
+                .map(|schema| schema["type"].as_str().unwrap())
+                .collect();
+            scalar_type_list.sort();
+            scalar_type_list.dedup();
+            if scalar_type_list.len() == 1 {
+                generated_schemas.push(scalar_schemas.swap_remove(0));
             } else {
-                let mut scalar_type_list: Vec<String> = scalar_types
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect::<Vec<_>>();
-                scalar_type_list.sort();
                 generated_schemas.push(json!({"type": scalar_type_list}));
             }
         }
