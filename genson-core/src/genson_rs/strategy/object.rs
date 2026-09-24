@@ -345,9 +345,7 @@ impl ObjectStrategy {
 
         self.properties.par_iter_mut().for_each(|(prop, node)| {
             if let Some(sub_schemas) = groups.get(prop.as_str()) {
-                for sub_schema in sub_schemas {
-                    node.add_schema(DataType::Schema(sub_schema));
-                }
+                node.add_schemas_par(sub_schemas);
             }
         });
     }
