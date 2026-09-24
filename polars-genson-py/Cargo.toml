@@ -5,6 +5,7 @@ openssl = { optional = true, version = "0.10" }
 polars.workspace = true
 polars-arrow.workspace = true
 polars-jsonschema-bridge.workspace = true
+rayon.workspace = true
 pyo3.workspace = true
 pyo3-polars.workspace = true
 serde = { features = ["derive"], workspace = true }

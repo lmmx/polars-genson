@@ -2,6 +2,7 @@ use genson_core::normalise::{normalise_values, MapEncoding, NormaliseConfig};
 use genson_core::parquet::{read_string_column, write_string_column};
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use pyo3::prelude::*;
+use rayon::prelude::*;
 use std::collections::HashMap;
 
 #[pyfunction]
@@ -174,6 +175,13 @@ pub fn normalise_from_parquet(
     no_root_map: bool,
     max_builders: Option<usize>,
 ) -> PyResult<()> {
+    let mut t0 = std::time::Instant::now();
+    let tick = |what: &str, t: &mut std::time::Instant| {
+        if profile {
+            anstream::eprintln!("[profile] {}: {:.3}s", what, t.elapsed().as_secs_f64());
+            *t = std::time::Instant::now();
+        }
+    };
     // Read from Parquet
     let json_strings = read_string_column(&input_path, &column).map_err(|e| {
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
@@ -187,6 +195,7 @@ pub fn normalise_from_parquet(
         );
     }
 
+    tick("read_parquet", &mut t0);
     // Infer schema first (Avro mode)
     let config = SchemaInferenceConfig {
         ignore_outer_array,
@@ -220,11 +229,7 @@ pub fn normalise_from_parquet(
         anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
     }
 
-    // Parse values
-    let values: Vec<serde_json::Value> = json_strings
-        .iter()
-        .map(|s| serde_json::from_str(s).unwrap_or(serde_json::Value::Null))
-        .collect();
+    tick("infer", &mut t0);
 
     // Parse map encoding
     let map_enc = match map_encoding.as_str() {
@@ -239,7 +244,6 @@ pub fn normalise_from_parquet(
         }
     };
 
-    // Normalise
     let norm_config = NormaliseConfig {
         empty_as_null,
         coerce_string: coerce_strings,
@@ -247,13 +251,19 @@ pub fn normalise_from_parquet(
         wrap_root: wrap_root.clone(),
     };
 
-    let normalised = normalise_values(values, &result.schema, &norm_config);
-
-    // Convert back to JSON strings
-    let normalised_strings: Vec<String> = normalised
-        .into_iter()
-        .map(|v| serde_json::to_string(&v).unwrap())
+    // Parse, normalise and re-serialise each row in parallel (order-preserving)
+    let normalised_strings: Vec<String> = json_strings
+        .par_iter()
+        .map(|s| {
+            let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
+            let n = normalise_values(vec![v], &result.schema, &norm_config)
+                .pop()
+                .unwrap();
+            serde_json::to_string(&n).unwrap()
+        })
         .collect();
+    drop(json_strings);
+    tick("parse+normalise+serialise", &mut t0);
 
     // Always write to Parquet
     let col_name = output_column.unwrap_or_else(|| column.clone());
@@ -276,6 +286,7 @@ pub fn normalise_from_parquet(
         |e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e)),
     )?;
 
+    tick("write_parquet", &mut t0);
     if debug {
         anstream::eprintln!(
             "Normalised data written to: {} (column: {})",
