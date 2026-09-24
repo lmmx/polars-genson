@@ -38,7 +38,7 @@ license.workspace = true
 name = "genson-core"
 readme = "README.md"
 repository.workspace = true
-version = "0.7.1"
+version = "0.7.2"
 
 [dev-dependencies]
 criterion = { features = ["html_reports"], version = "0.8" }

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2](https://github.com/lmmx/polars-genson/compare/genson-core-v0.7.1...genson-core-v0.7.2) - 2026-09-24
+
+### <!-- 2 -->Bug Fixes
+
+- map inference fix from Wikidata claims fixtures ([#175](https://github.com/lmmx/polars-genson/pull/175))
+
+### <!-- 3 -->Performance
+
+- convert each row's builder to a schema on the worker thread ([#186](https://github.com/lmmx/polars-genson/pull/186))
+- benchmark genson-rs perf ([#176](https://github.com/lmmx/polars-genson/pull/176))
+
+### <!-- 9 -->Other
+
+- chore/clippy 1.98 ([#187](https://github.com/lmmx/polars-genson/pull/187))
+- tidier debug ([#174](https://github.com/lmmx/polars-genson/pull/174))
+
 ## [0.7.1](https://github.com/lmmx/polars-genson/compare/genson-core-v0.7.0...genson-core-v0.7.1) - 2025-10-12
 
 ### <!-- 4 -->Documentation
