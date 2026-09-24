@@ -60,6 +60,26 @@ impl SchemaBuilder {
         }
     }
 
+    /// Merge `schemas` in order, same result as calling [`add_schema_mut`](Self::add_schema_mut)
+    /// on each, with the merge parallelised across the root object's properties.
+    pub fn add_schemas_mut(&mut self, schemas: &mut [Value]) {
+        for schema in schemas.iter_mut() {
+            let Value::Object(schema_obj) = schema else {
+                panic!("Invalid schema type - must be a valid JSON object")
+            };
+            if schema_obj.contains_key("$schema") && self.schema_uri.is_none() {
+                self.schema_uri = Some(schema_obj["$schema"].as_str().unwrap().to_string());
+                schema_obj.shift_remove("$schema");
+            }
+        }
+        let refs: Vec<&Value> = schemas.iter().collect();
+        if !self.root_node.add_object_schemas_par(&refs) {
+            for schema in refs {
+                self.root_node.add_schema(DataType::Schema(schema));
+            }
+        }
+    }
+
     /// Merge another builder into this one. When this builder is still empty and both
     /// share the same `$schema` handling, takes over its nodes instead of round-tripping
     /// through a schema value.

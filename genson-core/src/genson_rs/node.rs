@@ -7,6 +7,9 @@ use crate::genson_rs::strategy::BasicSchemaStrategy;
 use ordermap::OrderMap;
 use serde_json::{json, Value};
 
+/// Fewest schemas merged into one node at once for which going parallel below it pays off.
+const PAR_MERGE_MIN: usize = 8;
+
 /// Basic schema generator class. SchemaNode objects can be loaded
 /// up with existing schemas and objects before being serialized.
 #[derive(Debug, PartialEq)]
@@ -77,6 +80,76 @@ impl SchemaNode {
             Value::Object(obj) => {
                 matches!(obj.get("anyOf"), Some(Value::Array(_)))
                     || matches!(obj.get("type"), Some(Value::Array(_)))
+            }
+            _ => false,
+        }
+    }
+
+    /// Merge `schemas` in order like repeated `add_schema`, going parallel below this node
+    /// (across properties, and through arrays into their items) when there are enough of them
+    /// to be worth it.
+    pub fn add_schemas_par(&mut self, schemas: &[&Value]) {
+        if schemas.len() >= PAR_MERGE_MIN
+            && (self.add_object_schemas_par(schemas) || self.add_list_schemas_par(schemas))
+        {
+            return;
+        }
+        for schema in schemas {
+            self.add_schema(DataType::Schema(schema));
+        }
+    }
+
+    /// Like `add_object_schemas_par` for plain array schemas whose `items` is an object schema.
+    fn add_list_schemas_par(&mut self, schemas: &[&Value]) -> bool {
+        let plain_lists = schemas.iter().all(|schema| {
+            schema["type"] == "array"
+                && schema["items"].is_object()
+                && !SchemaNode::needs_splitting(schema)
+        });
+        if !plain_lists {
+            return false;
+        }
+        match self.active_strategies.as_slice() {
+            [] => {
+                self.get_or_create_strategy_for_schema(schemas[0]);
+            }
+            [BasicSchemaStrategy::List(_)] => {}
+            _ => return false,
+        }
+        match self.active_strategies.first_mut() {
+            Some(BasicSchemaStrategy::List(strategy)) => {
+                let items: Vec<&Value> = schemas.iter().map(|schema| &schema["items"]).collect();
+                strategy.add_item_schemas_par(&items);
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// Merge `schemas` in order like repeated `add_schema`, but in parallel across the
+    /// properties when they are all plain object schemas merging into an object node. Returns
+    /// false, having merged nothing, when they are not.
+    pub fn add_object_schemas_par(&mut self, schemas: &[&Value]) -> bool {
+        if schemas.is_empty() {
+            return true;
+        }
+        let plain_objects = schemas
+            .iter()
+            .all(|schema| schema["type"] == "object" && !SchemaNode::needs_splitting(schema));
+        if !plain_objects {
+            return false;
+        }
+        match self.active_strategies.as_slice() {
+            [] => {
+                self.get_or_create_strategy_for_schema(schemas[0]);
+            }
+            [BasicSchemaStrategy::Object(_)] => {}
+            _ => return false,
+        }
+        match self.active_strategies.first_mut() {
+            Some(BasicSchemaStrategy::Object(strategy)) => {
+                strategy.add_schemas_par(schemas);
+                true
             }
             _ => false,
         }

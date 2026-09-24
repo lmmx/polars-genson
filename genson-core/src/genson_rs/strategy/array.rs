@@ -49,6 +49,13 @@ impl ListStrategy {
     }
 }
 
+impl ListStrategy {
+    /// Merge the `items` schemas of many array schemas, in order, into the items node.
+    pub(crate) fn add_item_schemas_par(&mut self, item_schemas: &[&Value]) {
+        self.items[0].add_schemas_par(item_schemas);
+    }
+}
+
 impl SchemaStrategy for ListStrategy {
     // TODO: this placeholder is repeated everywhere, how to avoid this?
     fn get_extra_keywords_mut(&mut self) -> &mut Value {
