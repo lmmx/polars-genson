@@ -50,7 +50,7 @@ impl SchemaStrategy for ObjectStrategy {
     }
 
     fn add_object(&mut self, object: &simd_json::BorrowedValue) {
-        let mut properties = HashSet::new();
+        let mut properties: HashSet<&str> = HashSet::new();
         if let simd_json::BorrowedValue::Object(object) = object {
             object.iter().for_each(|(prop, subobj)| {
                 let mut pattern: Option<&str> = None;
@@ -67,7 +67,7 @@ impl SchemaStrategy for ObjectStrategy {
                 }
 
                 if pattern.is_none() {
-                    properties.insert(prop.to_string());
+                    properties.insert(prop.as_ref());
                     if !self.properties.contains_key(prop.as_ref()) {
                         self.properties.insert(prop.to_string(), SchemaNode::new());
                     }
@@ -80,10 +80,12 @@ impl SchemaStrategy for ObjectStrategy {
         }
 
         if self.required_properties.is_none() {
-            self.required_properties = Some(properties);
+            self.required_properties = Some(properties.iter().map(|p| p.to_string()).collect());
         } else if let Some(req) = &mut self.required_properties {
             // take the intersection
-            req.retain(|p| properties.contains(p));
+            if !req.is_empty() {
+                req.retain(|p| properties.contains(p.as_str()));
+            }
         }
     }
 
@@ -98,8 +100,12 @@ impl SchemaStrategy for ObjectStrategy {
                                       prop_key: &str| {
                 if let Some(schema_properties) = schema_object[prop_key].as_object() {
                     schema_properties.iter().for_each(|(prop, sub_schema)| {
-                        let sub_node = properties.entry(prop.to_string()).or_default();
-                        sub_node.add_schema(DataType::Schema(sub_schema));
+                        if let Some(sub_node) = properties.get_mut(prop.as_str()) {
+                            sub_node.add_schema(DataType::Schema(sub_schema));
+                        } else {
+                            let sub_node = properties.entry(prop.to_string()).or_default();
+                            sub_node.add_schema(DataType::Schema(sub_schema));
+                        }
                     });
                 }
             };
@@ -130,7 +136,9 @@ impl SchemaStrategy for ObjectStrategy {
                         self.required_properties = Some(required_fields_set);
                     } else if let Some(req) = &mut self.required_properties {
                         // take the intersection
-                        req.retain(|p| required_fields.contains(&Value::String(p.to_string())));
+                        let incoming: HashSet<&str> =
+                            required_fields.iter().filter_map(|v| v.as_str()).collect();
+                        req.retain(|p| incoming.contains(p.as_str()));
                     }
                 }
             }
