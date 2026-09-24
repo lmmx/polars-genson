@@ -493,9 +493,11 @@ pub(crate) fn rewrite_objects(
                     {
                         let all_same = child_schemas.par_iter().all(|other| other == first);
                         if all_same {
-                            let first_clone = (*first).clone();
+                            let mut first_clone = (*first).clone();
                             obj.shift_remove("properties");
                             obj.shift_remove("required");
+                            // As for the map branch below: the record's own fields get rewritten
+                            rewrite_objects(&mut first_clone, None, config, false);
                             obj.insert("additionalProperties".to_string(), first_clone);
                             return;
                         }
@@ -791,7 +793,7 @@ pub(crate) fn rewrite_objects(
             for (k, v) in obj.iter_mut() {
                 if matches!(
                     k.as_str(),
-                    "items" | "type" | "required" | "$schema" | "namespace" | "name"
+                    "properties" | "items" | "type" | "required" | "$schema" | "namespace" | "name"
                 ) {
                     continue;
                 }
