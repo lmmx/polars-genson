@@ -56,7 +56,7 @@ fn test_basic_schema_inference() {
 
 #[test]
 fn test_empty_input() {
-    let json_strings = vec![];
+    let json_strings: Vec<String> = vec![];
     let result = infer_json_schema_from_strings(&json_strings, SchemaInferenceConfig::default());
 
     assert!(result.is_err());
