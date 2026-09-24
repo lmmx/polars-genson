@@ -366,6 +366,7 @@ fn process_json_strings_parallel(
             }
         }
 
+        let t_par = std::time::Instant::now();
         let chunk_builders: Vec<(usize, Option<(Value, u64)>)> = chunk
             .par_iter()
             .enumerate()
@@ -421,6 +422,8 @@ fn process_json_strings_parallel(
             }
         }
 
+        let par_el = t_par.elapsed();
+        let t_mrg = std::time::Instant::now();
         // Extract and merge schemas from this chunk
         for (_i, item) in chunk_builders {
             let Some((schema, hash)) = item else {
@@ -433,6 +436,7 @@ fn process_json_strings_parallel(
             builder.add_schema(schema);
         }
 
+        profile!(config, "chunk {} parallel {:?} serial-merge {:?}", chunk_idx, par_el, t_mrg.elapsed());
         if config.profile {
             if let Some(rss) = get_rss_bytes() {
                 anstream::eprintln!("📊 RSS after merging chunk: {}", format_bytes(rss));
