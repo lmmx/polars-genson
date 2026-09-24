@@ -45,6 +45,28 @@ impl SchemaStrategy for ObjectStrategy {
         &self.extra_keywords
     }
 
+    /// Like the default, but `properties`, `patternProperties` and `required` only reserve
+    /// their key position: `to_schema` overwrites or removes them, and a deep copy of the
+    /// first sub-schema at every object level is quadratic in depth.
+    fn add_extra_keywords(&mut self, schema: &Value) {
+        let (Value::Object(schema), Value::Object(keywords)) = (schema, &mut self.extra_keywords)
+        else {
+            return;
+        };
+        for (key, value) in schema {
+            if key == "type" || keywords.contains_key(key) {
+                continue;
+            }
+            let value = match key.as_str() {
+                // An empty map in the builder means the first one seen was empty
+                "properties" | "patternProperties" if value.is_object() => json!({}),
+                "required" => Value::Null,
+                _ => value.clone(),
+            };
+            keywords.insert(key.clone(), value);
+        }
+    }
+
     fn match_schema(schema: &Value) -> bool {
         schema["type"] == "object"
     }
