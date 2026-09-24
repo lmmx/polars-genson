@@ -16,6 +16,7 @@ tracing-subscriber = { optional = true, version = "0.3.20" }
 # Vendored from genson-rs
 mimalloc.workspace = true
 ordermap.workspace = true
+rustc-hash.workspace = true
 rayon.workspace = true
 regex.workspace = true
 simd-json.workspace = true

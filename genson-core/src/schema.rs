@@ -1,4 +1,4 @@
-use crate::genson_rs::{build_json_schema, get_builder, BuildConfig};
+use crate::genson_rs::{build_json_schema, build_json_schema_into, get_builder, BuildConfig};
 use crate::{debug, profile, profile_verbose};
 use rayon::prelude::*;
 use serde::de::Error as DeError;
@@ -396,7 +396,7 @@ fn process_json_strings_parallel(
                     };
 
                     let build_start = std::time::Instant::now();
-                    build_json_schema(&mut chunk_builder, &mut bytes, &chunk_build_config);
+                    build_json_schema_into(&mut chunk_builder, &mut bytes, &chunk_build_config);
                     let build_elapsed = build_start.elapsed();
                     profile_verbose!(
                         config,

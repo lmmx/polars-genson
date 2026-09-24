@@ -41,6 +41,10 @@ impl SchemaNode {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.active_strategies.is_empty()
+    }
+
     pub fn add_schema(&mut self, data: DataType) -> &mut Self {
         let schema: Cow<Value> = match data {
             DataType::SchemaNode(node) => Cow::Owned(node.to_schema()),

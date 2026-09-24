@@ -1,6 +1,10 @@
 use ordermap::OrderMap;
 use regex::Regex;
-use std::collections::hash_set::HashSet;
+use rustc_hash::FxBuildHasher;
+use std::collections::HashSet;
+
+type PropMap<V> = OrderMap<String, V, FxBuildHasher>;
+type KeySet<T> = HashSet<T, FxBuildHasher>;
 
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
@@ -14,9 +18,9 @@ use crate::genson_rs::strategy::base::SchemaStrategy;
 pub struct ObjectStrategy {
     // TODO: this is redeclared everywhere, how to avoid this?
     extra_keywords: Value,
-    properties: OrderMap<String, SchemaNode>,
-    pattern_properties: OrderMap<String, SchemaNode>,
-    required_properties: Option<HashSet<String>>,
+    properties: PropMap<SchemaNode>,
+    pattern_properties: PropMap<SchemaNode>,
+    required_properties: Option<KeySet<String>>,
     include_empty_required: bool,
 }
 
@@ -24,8 +28,8 @@ impl ObjectStrategy {
     pub fn new() -> Self {
         ObjectStrategy {
             extra_keywords: json!({}),
-            properties: OrderMap::new(),
-            pattern_properties: OrderMap::new(),
+            properties: PropMap::default(),
+            pattern_properties: PropMap::default(),
             required_properties: None,
             include_empty_required: false,
         }
@@ -50,7 +54,7 @@ impl SchemaStrategy for ObjectStrategy {
     }
 
     fn add_object(&mut self, object: &simd_json::BorrowedValue) {
-        let mut properties: HashSet<&str> = HashSet::new();
+        let mut properties: KeySet<&str> = KeySet::default();
         if let simd_json::BorrowedValue::Object(object) = object {
             object.iter().for_each(|(prop, subobj)| {
                 let mut pattern: Option<&str> = None;
@@ -95,7 +99,7 @@ impl SchemaStrategy for ObjectStrategy {
 
             // properties updater updates the internal properties and pattern_properties with the schema_object,
             // creating schema node as needed for each property
-            let properties_updater = |properties: &mut OrderMap<String, SchemaNode>,
+            let properties_updater = |properties: &mut PropMap<SchemaNode>,
                                       schema_object: &Map<String, Value>,
                                       prop_key: &str| {
                 if let Some(schema_properties) = schema_object[prop_key].as_object() {
@@ -129,14 +133,14 @@ impl SchemaStrategy for ObjectStrategy {
                         self.include_empty_required = true;
                     }
                     if self.required_properties.is_none() {
-                        let required_fields_set: HashSet<String> = required_fields
+                        let required_fields_set: KeySet<String> = required_fields
                             .iter()
                             .map(|v| v.as_str().unwrap().to_string())
                             .collect();
                         self.required_properties = Some(required_fields_set);
                     } else if let Some(req) = &mut self.required_properties {
                         // take the intersection
-                        let incoming: HashSet<&str> =
+                        let incoming: KeySet<&str> =
                             required_fields.iter().filter_map(|v| v.as_str()).collect();
                         req.retain(|p| incoming.contains(p.as_str()));
                     }
@@ -151,9 +155,9 @@ impl SchemaStrategy for ObjectStrategy {
     /// Collects all properties from all schemas first, then merges each property once
     fn add_schemas(&mut self, schemas: &[&Value]) {
         // Phase 1: Collect all properties and required sets from all schemas
-        let mut property_groups: OrderMap<String, Vec<&Value>> = OrderMap::new();
-        let mut pattern_property_groups: OrderMap<String, Vec<&Value>> = OrderMap::new();
-        let mut all_required_sets: Vec<HashSet<String>> = Vec::new();
+        let mut property_groups: PropMap<Vec<&Value>> = PropMap::default();
+        let mut pattern_property_groups: PropMap<Vec<&Value>> = PropMap::default();
+        let mut all_required_sets: Vec<KeySet<String>> = Vec::new();
 
         for schema in schemas {
             if let Value::Object(schema_obj) = schema {
@@ -184,7 +188,7 @@ impl SchemaStrategy for ObjectStrategy {
                     if required.is_empty() {
                         self.include_empty_required = true;
                     }
-                    let required_set: HashSet<String> = required
+                    let required_set: KeySet<String> = required
                         .iter()
                         .filter_map(|v| v.as_str().map(String::from))
                         .collect();
@@ -277,7 +281,7 @@ impl SchemaStrategy for ObjectStrategy {
 }
 
 impl ObjectStrategy {
-    fn properties_to_schema(&self, properties: &OrderMap<String, SchemaNode>) -> Value {
+    fn properties_to_schema(&self, properties: &PropMap<SchemaNode>) -> Value {
         let mut schema_properties = json!({});
         properties.iter().for_each(|(prop, node)| {
             schema_properties[prop] = node.to_schema();
