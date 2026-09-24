@@ -8,7 +8,6 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 use std::panic::{self, AssertUnwindSafe};
 use std::time::{SystemTime, UNIX_EPOCH};
-use xxhash_rust::xxh64::xxh64;
 
 use crate::genson_rs::SchemaBuilder;
 
@@ -328,6 +327,23 @@ fn apply_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
     }
 }
 
+/// xxh64 of the schema's compact JSON, streamed so the string is never materialised.
+fn hash_schema(schema: &Value) -> u64 {
+    struct HashWriter(xxhash_rust::xxh64::Xxh64);
+    impl std::io::Write for HashWriter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.update(buf);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut writer = HashWriter(xxhash_rust::xxh64::Xxh64::new(0));
+    serde_json::to_writer(&mut writer, schema).expect("hashing a Value cannot fail");
+    writer.0.digest()
+}
+
 /// Process all JSON strings in parallel while maintaining order
 fn process_json_strings_parallel(
     json_strings: &[String],
@@ -410,7 +426,7 @@ fn process_json_strings_parallel(
                     let mut schema = chunk_builder.to_schema();
                     drop(chunk_builder);
                     apply_force_field_types(&mut schema, config);
-                    let hash = xxh64(schema.to_string().as_bytes(), 0);
+                    let hash = hash_schema(&schema);
                     Ok((i, Some((schema, hash))))
                 },
             )
