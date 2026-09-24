@@ -54,6 +54,34 @@ impl SchemaStrategy for ObjectStrategy {
     }
 
     fn add_object(&mut self, object: &simd_json::BorrowedValue) {
+        // Without pattern properties every key is a plain property, so skip the per-object
+        // key set and the repeated lookups.
+        if self.pattern_properties.is_empty() {
+            if let simd_json::BorrowedValue::Object(object) = object {
+                for (prop, subobj) in object.iter() {
+                    if let Some(node) = self.properties.get_mut(prop.as_ref()) {
+                        node.add_object(DataType::Object(subobj));
+                    } else {
+                        let mut node = SchemaNode::new();
+                        node.add_object(DataType::Object(subobj));
+                        self.properties.insert(prop.to_string(), node);
+                    }
+                }
+                match &mut self.required_properties {
+                    None => {
+                        self.required_properties =
+                            Some(object.keys().map(|p| p.to_string()).collect());
+                    }
+                    Some(req) => {
+                        if !req.is_empty() {
+                            req.retain(|p| object.contains_key(p.as_str()));
+                        }
+                    }
+                }
+                return;
+            }
+        }
+
         let mut properties: KeySet<&str> = KeySet::default();
         if let simd_json::BorrowedValue::Object(object) = object {
             object.iter().for_each(|(prop, subobj)| {

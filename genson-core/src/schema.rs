@@ -425,7 +425,10 @@ fn process_json_strings_parallel(
                     // instead of piling up until the serial merge below.
                     let mut schema = chunk_builder.to_schema();
                     drop(chunk_builder);
-                    apply_force_field_types(&mut schema, config);
+                    // The walk only ever rewrites forced fields
+                    if !config.force_field_types.is_empty() {
+                        apply_force_field_types(&mut schema, config);
+                    }
                     let hash = hash_schema(&schema);
                     Ok((i, Some((schema, hash))))
                 },
