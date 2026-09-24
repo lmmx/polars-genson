@@ -178,7 +178,7 @@ impl SchemaNode {
         }
 
         if generated_schemas.len() == 1 {
-            generated_schemas[0].clone()
+            generated_schemas.swap_remove(0)
         } else if !generated_schemas.is_empty() {
             json!({"anyOf": generated_schemas})
         } else {

@@ -85,11 +85,12 @@ impl SchemaBuilder {
         let mut base_schema = self.get_base_schema();
 
         let base_schema_map = base_schema.as_object_mut().unwrap();
-        let node_schema = self.root_node.to_schema();
-        let node_schema_map = node_schema.as_object().unwrap();
+        let Value::Object(node_schema_map) = self.root_node.to_schema() else {
+            panic!("node schema must be an object")
+        };
 
-        for (key, value) in node_schema_map.iter() {
-            base_schema_map.insert(key.to_string(), value.clone());
+        for (key, value) in node_schema_map {
+            base_schema_map.insert(key, value);
         }
         base_schema
     }

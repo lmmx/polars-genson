@@ -282,11 +282,11 @@ impl SchemaStrategy for ObjectStrategy {
 
 impl ObjectStrategy {
     fn properties_to_schema(&self, properties: &PropMap<SchemaNode>) -> Value {
-        let mut schema_properties = json!({});
+        let mut schema_properties = Map::with_capacity(properties.len());
         properties.iter().for_each(|(prop, node)| {
-            schema_properties[prop] = node.to_schema();
+            schema_properties.insert(prop.clone(), node.to_schema());
         });
-        schema_properties
+        Value::Object(schema_properties)
     }
 }
 
