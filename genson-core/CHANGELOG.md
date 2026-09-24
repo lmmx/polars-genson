@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3](https://github.com/lmmx/polars-genson/compare/genson-core-v0.7.2...genson-core-v0.7.3) - 2026-09-24
+
+### <!-- 9 -->Other
+
+- Speed up `normalise_from_parquet` (4.5x faster) ([#188](https://github.com/lmmx/polars-genson/pull/188))
+
 ## [0.7.2](https://github.com/lmmx/polars-genson/compare/genson-core-v0.7.1...genson-core-v0.7.2) - 2026-09-24
 
 ### <!-- 2 -->Bug Fixes
