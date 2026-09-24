@@ -47,10 +47,9 @@ pub fn build_json_schema(
     config: &BuildConfig,
 ) -> Schema {
     let json_slice = trim_to_object(json_slice);
-    if is_json_object_array(json_slice) {
-        let array_elements = get_json_array_elements(json_slice);
-        build_multi_json_objects_schema(builder, array_elements, None);
-
+    let is_array = is_json_object_array(json_slice);
+    build_trimmed(builder, json_slice, is_array, config);
+    if is_array {
         if config.ignore_outer_array {
             builder.to_schema()
         } else {
@@ -66,8 +65,33 @@ pub fn build_json_schema(
             }
         }
     } else {
-        build_multi_json_objects_schema(builder, json_slice, config.delimiter);
         builder.to_schema()
+    }
+}
+
+/// Like [`build_json_schema`] but only accumulates into `builder`, skipping the
+/// (otherwise discarded) conversion of the builder to a schema value.
+pub fn build_json_schema_into(
+    builder: &mut SchemaBuilder,
+    json_slice: &mut [u8],
+    config: &BuildConfig,
+) {
+    let json_slice = trim_to_object(json_slice);
+    let is_array = is_json_object_array(json_slice);
+    build_trimmed(builder, json_slice, is_array, config);
+}
+
+fn build_trimmed(
+    builder: &mut SchemaBuilder,
+    json_slice: &mut [u8],
+    is_array: bool,
+    config: &BuildConfig,
+) {
+    if is_array {
+        let array_elements = get_json_array_elements(json_slice);
+        build_multi_json_objects_schema(builder, array_elements, None);
+    } else {
+        build_multi_json_objects_schema(builder, json_slice, config.delimiter);
     }
 }
 
@@ -122,7 +146,7 @@ fn add_schema_from_object_par_iter<'a>(
         })
         .unwrap_or(SchemaBuilder::new(None));
 
-    builder.add_schema(combined_builder.to_schema());
+    builder.absorb(combined_builder);
 }
 
 /// trim the whitespace and non-JSON object characters from the start and end of the data

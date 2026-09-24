@@ -7,6 +7,7 @@ polars-arrow.workspace = true
 polars-jsonschema-bridge.workspace = true
 pyo3.workspace = true
 pyo3-polars.workspace = true
+rayon.workspace = true
 serde = { features = ["derive"], workspace = true }
 serde_json.workspace = true
 

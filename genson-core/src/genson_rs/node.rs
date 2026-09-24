@@ -1,4 +1,5 @@
 use core::panic;
+use std::borrow::Cow;
 use std::collections::HashSet;
 
 use crate::genson_rs::strategy::base::SchemaStrategy;
@@ -40,10 +41,14 @@ impl SchemaNode {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.active_strategies.is_empty()
+    }
+
     pub fn add_schema(&mut self, data: DataType) -> &mut Self {
-        let schema = match data {
-            DataType::SchemaNode(node) => node.to_schema(),
-            DataType::Schema(schema) => schema.clone(),
+        let schema: Cow<Value> = match data {
+            DataType::SchemaNode(node) => Cow::Owned(node.to_schema()),
+            DataType::Schema(schema) => Cow::Borrowed(schema),
             _ => panic!("Invalid schema type"),
         };
 
@@ -60,7 +65,7 @@ impl SchemaNode {
     /// Add multiple schemas at once with optimized batch processing
     pub fn add_schemas(&mut self, schemas: &[Value]) -> &mut Self {
         // Store owned subschemas to avoid lifetime issues
-        let mut all_subschemas: Vec<Value> = Vec::new();
+        let mut all_subschemas: Vec<Cow<Value>> = Vec::new();
         // Map strategy index to indices into all_subschemas
         let mut schema_groups: OrderMap<usize, Vec<usize>> = OrderMap::new();
 
@@ -98,7 +103,7 @@ impl SchemaNode {
                 // Gather references to the subschemas for this strategy
                 let schema_refs: Vec<&Value> = subschema_indices
                     .iter()
-                    .map(|&idx| &all_subschemas[idx])
+                    .map(|&idx| all_subschemas[idx].as_ref())
                     .collect();
                 strategy.add_schemas(&schema_refs);
             }
@@ -107,24 +112,24 @@ impl SchemaNode {
         self
     }
 
-    fn get_subschemas(schema: &Value) -> Vec<Value> {
-        if let Value::Object(schema) = schema {
-            if let Some(Value::Array(anyof)) = schema.get("anyOf") {
+    fn get_subschemas(schema: &Value) -> Vec<Cow<'_, Value>> {
+        if let Value::Object(obj) = schema {
+            if let Some(Value::Array(anyof)) = obj.get("anyOf") {
                 return anyof.iter().flat_map(SchemaNode::get_subschemas).collect();
-            } else if let Some(Value::Array(types)) = schema.get("type") {
+            } else if let Some(Value::Array(types)) = obj.get("type") {
                 return types
                     .iter()
                     .map(|t| {
-                        let mut new_schema = schema.clone();
+                        let mut new_schema = obj.clone();
                         new_schema["type"] = t.clone();
-                        Value::Object(new_schema)
+                        Cow::Owned(Value::Object(new_schema))
                     })
                     .collect();
             } else {
-                return vec![Value::Object(schema.clone())];
+                return vec![Cow::Borrowed(schema)];
             }
         }
-        vec![schema.clone()]
+        vec![Cow::Borrowed(schema)]
     }
 
     /// Modify the schema to accomodate the object.

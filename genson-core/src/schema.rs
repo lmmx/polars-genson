@@ -1,4 +1,4 @@
-use crate::genson_rs::{build_json_schema, get_builder, BuildConfig};
+use crate::genson_rs::{build_json_schema, build_json_schema_into, get_builder, BuildConfig};
 use crate::{debug, profile, profile_verbose};
 use rayon::prelude::*;
 use serde::de::Error as DeError;
@@ -366,6 +366,7 @@ fn process_json_strings_parallel(
             }
         }
 
+        let t_par = std::time::Instant::now();
         let chunk_builders: Vec<(usize, Option<(Value, u64)>)> = chunk
             .par_iter()
             .enumerate()
@@ -395,7 +396,7 @@ fn process_json_strings_parallel(
                     };
 
                     let build_start = std::time::Instant::now();
-                    build_json_schema(&mut chunk_builder, &mut bytes, &chunk_build_config);
+                    build_json_schema_into(&mut chunk_builder, &mut bytes, &chunk_build_config);
                     let build_elapsed = build_start.elapsed();
                     profile_verbose!(
                         config,
@@ -421,6 +422,8 @@ fn process_json_strings_parallel(
             }
         }
 
+        let par_el = t_par.elapsed();
+        let t_mrg = std::time::Instant::now();
         // Extract and merge schemas from this chunk
         for (_i, item) in chunk_builders {
             let Some((schema, hash)) = item else {
@@ -433,6 +436,13 @@ fn process_json_strings_parallel(
             builder.add_schema(schema);
         }
 
+        profile!(
+            config,
+            "chunk {} parallel {:?} serial-merge {:?}",
+            chunk_idx,
+            par_el,
+            t_mrg.elapsed()
+        );
         if config.profile {
             if let Some(rss) = get_rss_bytes() {
                 anstream::eprintln!("📊 RSS after merging chunk: {}", format_bytes(rss));

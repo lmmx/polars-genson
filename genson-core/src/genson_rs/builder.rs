@@ -53,6 +53,18 @@ impl SchemaBuilder {
         }
     }
 
+    /// Merge another builder into this one. When this builder is still empty and both
+    /// share the same `$schema` handling, takes over its nodes instead of round-tripping
+    /// through a schema value.
+    pub fn absorb(&mut self, other: SchemaBuilder) {
+        // `other` with the NULL uri emits no "$schema", so nothing else would be merged.
+        if self.root_node.is_empty() && other.schema_uri.as_deref() == Some(NULL_SCHEMA_URI) {
+            self.root_node = other.root_node;
+        } else {
+            self.add_schema(other.to_schema());
+        }
+    }
+
     /// Merge multiple raw JSON schema objects at once
     pub fn add_schemas(&mut self, schemas: &[Value]) {
         self.root_node.add_schemas(schemas);

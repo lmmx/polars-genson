@@ -1385,6 +1385,7 @@ dependencies = [
  "predicates",
  "rayon",
  "regex",
+ "rustc-hash",
  "serde",
  "serde_json",
  "simd-json 0.17.0",
@@ -2752,6 +2753,7 @@ dependencies = [
  "polars-jsonschema-bridge",
  "pyo3",
  "pyo3-polars",
+ "rayon",
  "serde",
  "serde_json",
 ]
