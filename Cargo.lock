@@ -1357,7 +1357,7 @@ dependencies = [
 
 [[package]]
 name = "genson-cli"
-version = "0.7.6"
+version = "0.7.7"
 dependencies = [
  "anstream",
  "assert_cmd",
@@ -1371,7 +1371,7 @@ dependencies = [
 
 [[package]]
 name = "genson-core"
-version = "0.7.3"
+version = "0.7.4"
 dependencies = [
  "anstream",
  "arrow",
