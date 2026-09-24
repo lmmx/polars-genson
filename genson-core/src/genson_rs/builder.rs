@@ -42,12 +42,19 @@ impl SchemaBuilder {
 
     /// Merge in raw JSON schema object
     pub fn add_schema(&mut self, mut schema: Value) {
-        if let Value::Object(ref mut schema_obj) = schema {
+        self.add_schema_mut(&mut schema);
+    }
+
+    /// Like [`add_schema`](Self::add_schema) but leaves `schema` with the caller, so it can be
+    /// dropped elsewhere (a large schema is costly to free). Removes `$schema` from it when
+    /// that is adopted as this builder's schema URI.
+    pub fn add_schema_mut(&mut self, schema: &mut Value) {
+        if let Value::Object(schema_obj) = schema {
             if schema_obj.contains_key("$schema") && self.schema_uri.is_none() {
                 self.schema_uri = Some(schema_obj["$schema"].as_str().unwrap().to_string());
                 schema_obj.shift_remove("$schema");
             }
-            self.root_node.add_schema(DataType::Schema(&schema));
+            self.root_node.add_schema(DataType::Schema(schema));
         } else {
             panic!("Invalid schema type - must be a valid JSON object")
         }
@@ -85,11 +92,12 @@ impl SchemaBuilder {
         let mut base_schema = self.get_base_schema();
 
         let base_schema_map = base_schema.as_object_mut().unwrap();
-        let node_schema = self.root_node.to_schema();
-        let node_schema_map = node_schema.as_object().unwrap();
+        let Value::Object(node_schema_map) = self.root_node.to_schema() else {
+            panic!("node schema must be an object")
+        };
 
-        for (key, value) in node_schema_map.iter() {
-            base_schema_map.insert(key.to_string(), value.clone());
+        for (key, value) in node_schema_map {
+            base_schema_map.insert(key, value);
         }
         base_schema
     }
