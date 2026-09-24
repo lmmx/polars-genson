@@ -1,7 +1,7 @@
 use ordermap::OrderMap;
 use regex::Regex;
 use rustc_hash::FxBuildHasher;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 type PropMap<V> = OrderMap<String, V, FxBuildHasher>;
 type KeySet<T> = HashSet<T, FxBuildHasher>;
@@ -152,28 +152,7 @@ impl SchemaStrategy for ObjectStrategy {
                     "patternProperties",
                 );
             }
-            if schema_object.contains_key("required") {
-                if let Value::Array(required_fields) = &schema_object["required"] {
-                    if required_fields.is_empty() {
-                        // if the input schema object has required fields being empty, that means
-                        // including empty required fields in the schema is the desired behavior
-                        // and should be followed
-                        self.include_empty_required = true;
-                    }
-                    if self.required_properties.is_none() {
-                        let required_fields_set: KeySet<String> = required_fields
-                            .iter()
-                            .map(|v| v.as_str().unwrap().to_string())
-                            .collect();
-                        self.required_properties = Some(required_fields_set);
-                    } else if let Some(req) = &mut self.required_properties {
-                        // take the intersection
-                        let incoming: KeySet<&str> =
-                            required_fields.iter().filter_map(|v| v.as_str()).collect();
-                        req.retain(|p| incoming.contains(p.as_str()));
-                    }
-                }
-            }
+            self.merge_required(schema_object);
         } else {
             panic!("Invalid schema type - must be a valid JSON object")
         }
@@ -305,6 +284,72 @@ impl SchemaStrategy for ObjectStrategy {
             schema.as_object_mut().unwrap().shift_remove("required");
         }
         schema
+    }
+}
+
+impl ObjectStrategy {
+    /// Intersect the `required` set with the schema object's `required` array.
+    fn merge_required(&mut self, schema_object: &Map<String, Value>) {
+        if schema_object.contains_key("required") {
+            if let Value::Array(required_fields) = &schema_object["required"] {
+                if required_fields.is_empty() {
+                    // if the input schema object has required fields being empty, that means
+                    // including empty required fields in the schema is the desired behavior
+                    // and should be followed
+                    self.include_empty_required = true;
+                }
+                if self.required_properties.is_none() {
+                    let required_fields_set: KeySet<String> = required_fields
+                        .iter()
+                        .map(|v| v.as_str().unwrap().to_string())
+                        .collect();
+                    self.required_properties = Some(required_fields_set);
+                } else if let Some(req) = &mut self.required_properties {
+                    // take the intersection
+                    let incoming: KeySet<&str> =
+                        required_fields.iter().filter_map(|v| v.as_str()).collect();
+                    req.retain(|p| incoming.contains(p.as_str()));
+                }
+            }
+        }
+    }
+
+    /// Merge `schemas` in order, same result as calling `add_schema` on each in turn, but
+    /// with each property's node merged on its own thread (the properties are independent
+    /// subtrees, and every node still sees its sub-schemas in order).
+    pub(crate) fn add_schemas_par(&mut self, schemas: &[&Value]) {
+        if schemas
+            .iter()
+            .any(|schema| schema.get("patternProperties").is_some())
+        {
+            schemas.iter().for_each(|schema| self.add_schema(schema));
+            return;
+        }
+
+        let mut groups: HashMap<&str, Vec<&Value>, FxBuildHasher> = HashMap::default();
+        for schema in schemas {
+            let Value::Object(schema_object) = schema else {
+                panic!("Invalid schema type - must be a valid JSON object")
+            };
+            self.add_extra_keywords(schema);
+            if let Some(Value::Object(props)) = schema_object.get("properties") {
+                for (prop, sub_schema) in props {
+                    if !self.properties.contains_key(prop.as_str()) {
+                        self.properties.insert(prop.clone(), SchemaNode::new());
+                    }
+                    groups.entry(prop.as_str()).or_default().push(sub_schema);
+                }
+            }
+            self.merge_required(schema_object);
+        }
+
+        self.properties.par_iter_mut().for_each(|(prop, node)| {
+            if let Some(sub_schemas) = groups.get(prop.as_str()) {
+                for sub_schema in sub_schemas {
+                    node.add_schema(DataType::Schema(sub_schema));
+                }
+            }
+        });
     }
 }
 

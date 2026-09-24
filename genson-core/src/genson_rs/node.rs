@@ -82,6 +82,35 @@ impl SchemaNode {
         }
     }
 
+    /// Merge `schemas` in order like repeated `add_schema`, but in parallel across the
+    /// properties when they are all plain object schemas merging into an object node. Returns
+    /// false, having merged nothing, when they are not.
+    pub fn add_object_schemas_par(&mut self, schemas: &[&Value]) -> bool {
+        if schemas.is_empty() {
+            return true;
+        }
+        let plain_objects = schemas
+            .iter()
+            .all(|schema| schema["type"] == "object" && !SchemaNode::needs_splitting(schema));
+        if !plain_objects {
+            return false;
+        }
+        match self.active_strategies.as_slice() {
+            [] => {
+                self.get_or_create_strategy_for_schema(schemas[0]);
+            }
+            [BasicSchemaStrategy::Object(_)] => {}
+            _ => return false,
+        }
+        match self.active_strategies.first_mut() {
+            Some(BasicSchemaStrategy::Object(strategy)) => {
+                strategy.add_schemas_par(schemas);
+                true
+            }
+            _ => false,
+        }
+    }
+
     /// Add multiple schemas at once with optimized batch processing
     pub fn add_schemas(&mut self, schemas: &[Value]) -> &mut Self {
         // Store owned subschemas to avoid lifetime issues
