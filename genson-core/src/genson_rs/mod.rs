@@ -13,7 +13,6 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 pub use builder::SchemaBuilder;
 
-
 pub fn get_builder(schema_uri: Option<&str>) -> SchemaBuilder {
     SchemaBuilder::new(schema_uri)
 }

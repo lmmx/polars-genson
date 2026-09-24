@@ -436,7 +436,13 @@ fn process_json_strings_parallel(
             builder.add_schema(schema);
         }
 
-        profile!(config, "chunk {} parallel {:?} serial-merge {:?}", chunk_idx, par_el, t_mrg.elapsed());
+        profile!(
+            config,
+            "chunk {} parallel {:?} serial-merge {:?}",
+            chunk_idx,
+            par_el,
+            t_mrg.elapsed()
+        );
         if config.profile {
             if let Some(rss) = get_rss_bytes() {
                 anstream::eprintln!("📊 RSS after merging chunk: {}", format_bytes(rss));

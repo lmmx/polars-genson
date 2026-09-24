@@ -51,10 +51,10 @@ pyo3-polars = { features = ["derive"], version = "0.24.0" }
 # ], path = "vendor/genson-rs", version = "0.2.0" }
 indexmap = { version = "2.11.4" }
 mimalloc = "0.1.47"
-rustc-hash = "2"
 ordermap = { features = ["rayon"], version = "0.5.9" }
 rayon = "1.11.0"
 regex = "1.11.1"
+rustc-hash = "2"
 simd-json = "0.17.0"
 
 [workspace.package]
