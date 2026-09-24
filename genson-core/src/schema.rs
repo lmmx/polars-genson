@@ -237,8 +237,8 @@ fn prepare_json_bytes<'a>(
 }
 
 /// Process all JSON strings sequentially and build schemas
-fn process_json_strings_sequential(
-    json_strings: &[String],
+fn process_json_strings_sequential<S: AsRef<str>>(
+    json_strings: &[S],
     config: &SchemaInferenceConfig,
     builder: &mut crate::genson_rs::SchemaBuilder,
 ) -> Result<usize, String> {
@@ -254,7 +254,7 @@ fn process_json_strings_sequential(
         profile_verbose!(config, "PROCESSING JSON STRING {}", i);
 
         let prep_start = std::time::Instant::now();
-        let prepared_json = prepare_json_bytes(json_str.as_bytes(), i, config)?;
+        let prepared_json = prepare_json_bytes(json_str.as_ref().as_bytes(), i, config)?;
         let prep_elapsed = prep_start.elapsed();
         profile_verbose!(config, "  Preparation took: {:?}", prep_elapsed);
 
@@ -345,8 +345,8 @@ fn hash_schema(schema: &Value) -> u64 {
 }
 
 /// Process all JSON strings in parallel while maintaining order
-fn process_json_strings_parallel(
-    json_strings: &[String],
+fn process_json_strings_parallel<S: AsRef<str> + Sync>(
+    json_strings: &[S],
     config: &SchemaInferenceConfig,
     builder: &mut SchemaBuilder,
 ) -> Result<usize, String> {
@@ -391,7 +391,7 @@ fn process_json_strings_parallel(
                     profile_verbose!(config, "Thread processing JSON STRING {}", i);
 
                     let prep_start = std::time::Instant::now();
-                    let prepared = prepare_json_bytes(json_str.as_bytes(), i, config)?;
+                    let prepared = prepare_json_bytes(json_str.as_ref().as_bytes(), i, config)?;
                     let prep_elapsed = prep_start.elapsed();
                     profile_verbose!(
                         config,
@@ -580,8 +580,8 @@ fn convert_to_map(schema: &mut Value) {
 }
 
 /// Infer JSON schema from a collection of JSON strings
-pub fn infer_json_schema_from_strings(
-    json_strings: &[String],
+pub fn infer_json_schema_from_strings<S: AsRef<str> + Sync>(
+    json_strings: &[S],
     config: SchemaInferenceConfig,
 ) -> Result<SchemaInferenceResult, String> {
     profile!(

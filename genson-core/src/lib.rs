@@ -14,8 +14,8 @@ pub use schema::{
 };
 
 /// Helper function to infer JSON schema from a collection of JSON strings
-pub fn infer_json_schema(
-    json_strings: &[String],
+pub fn infer_json_schema<S: AsRef<str> + Sync>(
+    json_strings: &[S],
     config: Option<SchemaInferenceConfig>,
 ) -> Result<SchemaInferenceResult, String> {
     #[cfg(feature = "trace")]

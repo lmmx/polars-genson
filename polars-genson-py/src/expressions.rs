@@ -171,7 +171,7 @@ pub fn infer_json_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResul
     let mut json_strings = Vec::new();
     for s in string_chunked.iter().flatten() {
         if !s.trim().is_empty() {
-            json_strings.push(s.to_string());
+            json_strings.push(s);
         }
     }
 
@@ -326,7 +326,7 @@ pub fn infer_polars_schema(inputs: &[Series], kwargs: GensonKwargs) -> PolarsRes
     let mut json_strings = Vec::new();
     for s in string_chunked.iter().flatten() {
         if !s.trim().is_empty() {
-            json_strings.push(s.to_string());
+            json_strings.push(s);
         }
     }
 
@@ -479,7 +479,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         let mut json_strings = Vec::new();
         for s in string_chunked.iter().flatten() {
             if !s.trim().is_empty() {
-                json_strings.push(s.to_string());
+                json_strings.push(s);
             }
         }
 
