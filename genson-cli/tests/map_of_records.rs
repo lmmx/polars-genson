@@ -117,7 +117,11 @@ fn test_map_of_records_infer_jsonschema_kv() {
 
 #[test]
 fn test_map_of_records_infer_avro_kv() {
-    run_genson("avro", "infer__avro_kv", &["--map-encoding", "kv", "--root-map"]);
+    run_genson(
+        "avro",
+        "infer__avro_kv",
+        &["--map-encoding", "kv", "--root-map"],
+    );
 }
 
 #[test]
