@@ -471,14 +471,15 @@ fn test_rewrite_objects_map_of_records() {
     assert!(schema.get("properties").is_none());
     assert!(schema.get("required").is_none());
 
-    // additionalProperties should carry the inner record shape
+    // additionalProperties carries the inner record, itself rewritten: its 2 string
+    // values meet map_threshold 2, so it is a map of strings
     let ap = schema
         .get("additionalProperties")
         .expect("should insert additionalProperties");
 
     assert_eq!(ap["type"], "object");
-    assert_eq!(ap["properties"]["language"], json!({ "type": "string" }));
-    assert_eq!(ap["properties"]["value"], json!({ "type": "string" }));
+    assert!(ap.get("properties").is_none());
+    assert_eq!(ap["additionalProperties"], json!({ "type": "string" }));
 }
 
 #[test]
