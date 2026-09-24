@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.6](https://github.com/lmmx/polars-genson/compare/genson-core-v0.7.5...genson-core-v0.7.6) - 2026-09-24
+
+### <!-- 2 -->Bug Fixes
+
+- respect no_root_map in the map-of-records branch ([#192](https://github.com/lmmx/polars-genson/pull/192))
+
+### <!-- 3 -->Performance
+
+- pass borrowed strings from the Python plugin instead of copying the column ([#193](https://github.com/lmmx/polars-genson/pull/193))
+
 ## [0.7.5](https://github.com/lmmx/polars-genson/compare/genson-core-v0.7.4...genson-core-v0.7.5) - 2026-09-24
 
 ### <!-- 3 -->Performance
