@@ -198,11 +198,6 @@ pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, Stri
     Ok(metadata)
 }
 
-#[cfg(test)]
-mod tests {
-    include!("tests/parquet.rs");
-}
-
 /// Map an Avro type (as inferred in avro mode) to an Arrow type, mirroring
 /// `polars_jsonschema_bridge::avro_type_to_polars_type` so the result reads back as the
 /// dtype `avro_to_polars_schema` gives: maps become `List<Struct{key, value}>` (the `kv`
@@ -327,4 +322,9 @@ pub fn write_struct_column(
         .close()
         .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    include!("tests/parquet.rs");
 }
