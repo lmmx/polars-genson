@@ -648,6 +648,7 @@ def normalise_from_parquet(
     wrap_root: str | None = None,
     no_root_map: bool = True,
     max_builders: int | None = None,
+    typed: bool = False,
 ) -> None:
     """Normalise JSON data from a Parquet column and write back to Parquet.
 
@@ -715,6 +716,11 @@ def normalise_from_parquet(
         Maximum number of schema builders to create in parallel at once.
         Lower values reduce peak memory usage during schema inference.
         If None, processes all strings at once. Default is None.
+    typed : bool, default False
+        If True, write the normalised rows as a typed struct column (the dtype
+        ``avro_to_polars_schema`` gives for the inferred schema) instead of JSON
+        strings, so no ``str.json_decode`` is needed after reading it back.
+        Requires ``map_encoding="kv"``.
 
     Examples:
     --------
@@ -758,6 +764,7 @@ def normalise_from_parquet(
         wrap_root=wrap_root,
         no_root_map=no_root_map,
         max_builders=max_builders,
+        typed=typed,
     )
 
 
