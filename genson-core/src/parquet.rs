@@ -202,3 +202,129 @@ pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, Stri
 mod tests {
     include!("tests/parquet.rs");
 }
+
+/// Map an Avro type (as inferred in avro mode) to an Arrow type, mirroring
+/// `polars_jsonschema_bridge::avro_type_to_polars_type` so the result reads back as the
+/// dtype `avro_to_polars_schema` gives: maps become `List<Struct{key, value}>` (the `kv`
+/// encoding) and a union takes its first non-null branch.
+pub fn avro_to_arrow_type(avro: &serde_json::Value) -> Result<DataType, String> {
+    use serde_json::Value;
+    match avro {
+        Value::String(s) => match s.as_str() {
+            "string" => Ok(DataType::Utf8),
+            "int" | "long" => Ok(DataType::Int64),
+            "float" | "double" => Ok(DataType::Float64),
+            "boolean" => Ok(DataType::Boolean),
+            "null" => Ok(DataType::Null),
+            other => Err(format!("Unsupported Avro type: {}", other)),
+        },
+        Value::Array(branches) => match branches.iter().find(|t| t.as_str() != Some("null")) {
+            Some(branch) => avro_to_arrow_type(branch),
+            None => Ok(DataType::Null),
+        },
+        Value::Object(obj) => match obj.get("type").and_then(Value::as_str) {
+            Some("array") => {
+                let items = match obj.get("items") {
+                    Some(items) => avro_to_arrow_type(items)?,
+                    None => DataType::Utf8,
+                };
+                Ok(DataType::new_list(items, true))
+            }
+            Some("map") => {
+                let values = match obj.get("values") {
+                    Some(values) => avro_to_arrow_type(values)?,
+                    None => DataType::Utf8,
+                };
+                let entry = DataType::Struct(
+                    vec![
+                        Field::new("key", DataType::Utf8, true),
+                        Field::new("value", values, true),
+                    ]
+                    .into(),
+                );
+                Ok(DataType::new_list(entry, true))
+            }
+            Some("record") => Ok(DataType::Struct(avro_record_fields(avro)?)),
+            _ => Err(format!("Unsupported Avro schema element: {}", avro)),
+        },
+        _ => Err(format!("Unsupported Avro schema element: {}", avro)),
+    }
+}
+
+/// The Arrow fields of an Avro record schema, all nullable.
+pub fn avro_record_fields(record: &serde_json::Value) -> Result<arrow::datatypes::Fields, String> {
+    let mut fields = Vec::new();
+    if let Some(avro_fields) = record.get("fields").and_then(|f| f.as_array()) {
+        for f in avro_fields {
+            if let (Some(name), Some(ftype)) =
+                (f.get("name").and_then(|n| n.as_str()), f.get("type"))
+            {
+                fields.push(Field::new(name, avro_to_arrow_type(ftype)?, true));
+            }
+        }
+    }
+    Ok(fields.into())
+}
+
+/// Decode rows (JSON objects matching `fields`) into one struct array, with a null
+/// struct for each `Value::Null` row.
+pub fn values_to_struct_array(
+    rows: &[serde_json::Value],
+    fields: &arrow::datatypes::Fields,
+) -> Result<arrow::array::StructArray, String> {
+    use arrow::array::StructArray;
+    use arrow::buffer::NullBuffer;
+
+    let schema = Arc::new(Schema::new(fields.clone()));
+    let mut decoder = arrow::json::ReaderBuilder::new(schema)
+        .with_batch_size(rows.len().max(1))
+        .build_decoder()
+        .map_err(|e| format!("Failed to build JSON decoder: {}", e))?;
+    let empty = serde_json::Value::Object(Default::default());
+    let valid: Vec<bool> = rows.iter().map(|r| !r.is_null()).collect();
+    let objects: Vec<&serde_json::Value> = rows
+        .iter()
+        .map(|r| if r.is_null() { &empty } else { r })
+        .collect();
+    decoder
+        .serialize(&objects)
+        .map_err(|e| format!("Failed to decode rows to Arrow: {}", e))?;
+    let batch = decoder
+        .flush()
+        .map_err(|e| format!("Failed to decode rows to Arrow: {}", e))?
+        .unwrap_or_else(|| RecordBatch::new_empty(Arc::new(Schema::new(fields.clone()))));
+    let nulls = valid.contains(&false).then(|| NullBuffer::from(valid));
+    StructArray::try_new(fields.clone(), batch.columns().to_vec(), nulls)
+        .map_err(|e| format!("Failed to build struct column: {}", e))
+}
+
+/// Write struct arrays, in order, as one struct column.
+pub fn write_struct_column(
+    path: &str,
+    column_name: &str,
+    arrays: Vec<arrow::array::StructArray>,
+    fields: &arrow::datatypes::Fields,
+    metadata: Option<HashMap<String, String>>,
+) -> Result<(), String> {
+    let field = Field::new(column_name, DataType::Struct(fields.clone()), true);
+    let schema = Arc::new(match metadata {
+        Some(meta) => Schema::new_with_metadata(vec![field], meta),
+        None => Schema::new(vec![field]),
+    });
+    let file = File::create(path)
+        .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
+    let props = WriterProperties::builder().build();
+    let mut writer = ArrowWriter::try_new(file, schema.clone(), Some(props))
+        .map_err(|e| format!("Failed to create Parquet writer: {}", e))?;
+    for array in arrays {
+        let batch = RecordBatch::try_new(schema.clone(), vec![Arc::new(array)])
+            .map_err(|e| format!("Failed to create RecordBatch: {}", e))?;
+        writer
+            .write(&batch)
+            .map_err(|e| format!("Failed to write RecordBatch: {}", e))?;
+    }
+    writer
+        .close()
+        .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
+    Ok(())
+}

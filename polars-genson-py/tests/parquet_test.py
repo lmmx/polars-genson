@@ -226,3 +226,27 @@ def test_normalise_parquet_in_place(claims_parquet_path, tmp_path):
     # Both should be valid JSON
     orjson.loads(original_first_row)
     orjson.loads(normalized_first_row)
+
+
+def test_normalise_from_parquet_typed_matches_json_decode(tmp_path):
+    """typed=True writes the same frame that decoding the JSON string output gives."""
+    from polars_genson import avro_to_polars_schema, read_parquet_metadata
+
+    src = tmp_path / "src.parquet"
+    rows = pl.read_parquet("tests/data/claims_fixture_x4.parquet")["claims"].to_list()
+    pl.DataFrame({"claims": rows + [None, "null"]}).write_parquet(src)
+    opts = dict(map_threshold=0, unify_maps=True, wrap_root="claims")
+
+    normalise_from_parquet(src, "claims", tmp_path / "str.parquet", **opts)
+    str_out = tmp_path / "str.parquet"
+    avro = read_parquet_metadata(str_out)["genson_avro_schema"]
+    dtype = pl.Struct(avro_to_polars_schema(avro))
+    expected = pl.read_parquet(str_out).select(pl.col("claims").str.json_decode(dtype))
+
+    typed_out = tmp_path / "typed.parquet"
+    normalise_from_parquet(src, "claims", typed_out, typed=True, **opts)
+    typed = pl.read_parquet(typed_out)
+    typed_avro = read_parquet_metadata(typed_out)["genson_avro_schema"]
+    assert typed.schema["claims"] == pl.Struct(avro_to_polars_schema(typed_avro))
+    # Key order can differ between the two inference runs, so compare as dicts
+    assert typed.to_dicts() == expected.to_dicts()
