@@ -301,8 +301,8 @@ def test_typed_output_with_float_column_is_readable(tmp_path):
     assert result["x"].to_list() == [1.5, 2.5]
 
 
-def test_normalise_from_parquet_extract_lookup(tmp_path):
-    """extract_lookup removes the fields from the output and writes each subtree once."""
+def test_normalise_from_parquet_extract_invariants(tmp_path):
+    """extract_invariants removes the fields from the output and writes each subtree once."""
     src = tmp_path / "src.parquet"
     rows = [
         '{"id": "Q1", "labels": {"en": "one"}, "n": 1}',
@@ -318,7 +318,7 @@ def test_normalise_from_parquet_extract_lookup(tmp_path):
         "data",
         out,
         typed=True,
-        extract_lookup={"labels": "id"},
+        extract_invariants={"labels": "id"},
         lookup_output_path=lookup,
     )
 
@@ -333,11 +333,11 @@ def test_normalise_from_parquet_extract_lookup(tmp_path):
     ]
 
 
-def test_extract_lookup_requires_output_path(tmp_path):
-    """extract_lookup without lookup_output_path is an error."""
+def test_extract_invariants_requires_output_path(tmp_path):
+    """extract_invariants without lookup_output_path is an error."""
     src = tmp_path / "src.parquet"
     pl.DataFrame({"data": ['{"id": "Q1", "labels": {}}']}).write_parquet(src)
     with pytest.raises(ValueError, match="must be given together"):
         normalise_from_parquet(
-            src, "data", tmp_path / "out.parquet", extract_lookup={"labels": "id"}
+            src, "data", tmp_path / "out.parquet", extract_invariants={"labels": "id"}
         )

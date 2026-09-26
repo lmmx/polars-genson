@@ -653,7 +653,7 @@ def normalise_from_parquet(
     max_builders: int | None = None,
     typed: bool = False,
     keep_columns: list[str] | None = None,
-    extract_lookup: dict[str, str] | None = None,
+    extract_invariants: dict[str, str] | None = None,
     lookup_output_path: str | Path | None = None,
 ) -> None:
     """Normalise JSON data from a Parquet column and write back to Parquet.
@@ -731,13 +731,14 @@ def normalise_from_parquet(
         Input columns (e.g. an ``id``) to copy unchanged into the output file,
         before the normalised column. The output has one row per input row, with
         a null normalised value for each null input row.
-    extract_lookup : dict[str, str], optional
-        Fields to move out of the rows into a lookup table, each mapped to the sibling
-        field that keys it, e.g. ``{"labels": "id"}``. Wherever an object holds both,
-        the field is removed before inference, so the output schema and rows do not
-        contain it. Each distinct ``(field, key)`` subtree is written once to
-        ``lookup_output_path``; a key seen with two different subtrees is an error.
-        Requires ``lookup_output_path``.
+    extract_invariants : dict[str, str], optional
+        Fields that are invariant per key, each mapped to its determinant: the sibling
+        field whose value determines it, e.g. ``{"labels": "id"}`` when every object with
+        the same ``id`` carries the same ``labels``. Wherever an object holds both, the
+        field is removed before inference, so the output schema and rows do not contain
+        it, and each distinct value is written once to ``lookup_output_path``. A field
+        that is not invariant (one determinant value with two different values) is an
+        error. Requires ``lookup_output_path``.
     lookup_output_path : str | Path, optional
         Parquet file for the lookup table, with string columns ``field``, ``key`` and
         ``value`` (the subtree as JSON), in first-seen order.
@@ -786,7 +787,9 @@ def normalise_from_parquet(
         max_builders=max_builders,
         typed=typed,
         keep_columns=keep_columns,
-        extract_lookup=list(extract_lookup.items()) if extract_lookup else None,
+        extract_invariants=(
+            list(extract_invariants.items()) if extract_invariants else None
+        ),
         lookup_output_path=str(lookup_output_path) if lookup_output_path else None,
     )
 

@@ -1,8 +1,8 @@
-//! Move repeated per-key subtrees out of JSON rows into a lookup table.
+//! Move fields that are invariant per key out of JSON rows into a lookup table.
 //!
-//! With `spec = [("labels", "id")]`, every object holding both `labels` and `id` has
-//! `labels` removed, and each distinct `(labels, <id>)` subtree is kept once in the
-//! lookup table, in first-seen order.
+//! With `spec = [("labels", "id")]`, `labels` is declared invariant for its determinant
+//! `id`: every object holding both has `labels` removed, and each distinct `(labels, <id>)`
+//! value is kept once in the lookup table, in first-seen order.
 
 use rayon::prelude::*;
 use serde_json::Value;
@@ -13,7 +13,7 @@ use std::collections::HashMap;
 pub struct LookupEntry {
     /// The removed field's name, e.g. `labels`.
     pub field: String,
-    /// The sibling key field's value, e.g. `Q5`.
+    /// The determinant's value, e.g. `Q5`.
     pub key: String,
     /// The removed subtree.
     pub value: Value,
@@ -34,12 +34,13 @@ struct Lookup {
 }
 
 impl Lookup {
-    fn insert(&mut self, entry: LookupEntry) -> Result<(), String> {
+    fn insert(&mut self, entry: LookupEntry, determinant: &str) -> Result<(), String> {
         let id = (entry.field.clone(), entry.key.clone());
         match self.index.get(&id) {
             Some(&i) if self.entries[i].value != entry.value => Err(format!(
-                "extract_lookup: '{}' for key '{}' differs between rows",
-                entry.field, entry.key
+                "extract_invariants: field '{}' is not invariant for its determinant '{}' \
+                 ('{}' has two different values)",
+                entry.field, determinant, entry.key
             )),
             Some(_) => Ok(()),
             None => {
@@ -51,7 +52,7 @@ impl Lookup {
     }
 }
 
-/// Remove each `field` whose sibling `spec[field]` is present, at any depth.
+/// Remove each `field` whose determinant (its sibling key field) is present, at any depth.
 fn strip(node: &mut Value, spec: &[(String, String)], out: &mut Lookup) -> Result<(), String> {
     match node {
         Value::Object(obj) => {
@@ -66,11 +67,14 @@ fn strip(node: &mut Value, spec: &[(String, String)], out: &mut Lookup) -> Resul
                 };
                 // shift_remove keeps the order of the remaining keys
                 let value = obj.shift_remove(field).unwrap();
-                out.insert(LookupEntry {
-                    field: field.clone(),
-                    key,
-                    value,
-                })?;
+                out.insert(
+                    LookupEntry {
+                        field: field.clone(),
+                        key,
+                        value,
+                    },
+                    key_field,
+                )?;
             }
             obj.values_mut().try_for_each(|v| strip(v, spec, out))
         }
@@ -79,11 +83,11 @@ fn strip(node: &mut Value, spec: &[(String, String)], out: &mut Lookup) -> Resul
     }
 }
 
-/// Extract the `spec` fields, given as `(field, key field)` pairs, from every row. Fields
+/// Extract the `spec` fields, given as `(field, determinant)` pairs, from every row. Fields
 /// found in the same object are recorded in `spec` order. Rows that are not valid JSON
-/// pass through unchanged. Errors if a `(field, key)` pair is seen with two different
-/// subtrees.
-pub fn extract_lookup(
+/// pass through unchanged. Errors if a field is not invariant for its determinant, i.e. one
+/// determinant value is seen with two different values of the field.
+pub fn extract_invariants(
     rows: Vec<Option<String>>,
     spec: &[(String, String)],
 ) -> Result<Extracted, String> {
@@ -114,7 +118,11 @@ pub fn extract_lookup(
     for (rows, part) in chunks {
         slim_rows.extend(rows);
         for entry in part.entries {
-            lookup.insert(entry)?;
+            let determinant = spec
+                .iter()
+                .find(|(f, _)| *f == entry.field)
+                .map_or("", |(_, k)| k.as_str());
+            lookup.insert(entry, determinant)?;
         }
     }
     Ok(Extracted {

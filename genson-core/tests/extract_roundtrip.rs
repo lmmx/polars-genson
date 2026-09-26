@@ -1,4 +1,4 @@
-use genson_core::extract::{extract_lookup, LookupEntry};
+use genson_core::extract::{extract_invariants, LookupEntry};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -54,7 +54,7 @@ fn check(orig: &Value, slim: &Value, lookup: &HashMap<(String, String), Value>) 
 }
 
 #[test]
-fn test_extract_lookup_round_trip_on_claims_fixtures() {
+fn test_extract_invariants_round_trip_on_claims_fixtures() {
     let dir = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/../genson-cli/tests/data/claims"
@@ -71,7 +71,7 @@ fn test_extract_lookup_round_trip_on_claims_fixtures() {
             .filter(|l| !l.trim().is_empty())
             .map(|l| Some(l.to_string()))
             .collect();
-        let out = extract_lookup(rows.clone(), &spec()).unwrap();
+        let out = extract_invariants(rows.clone(), &spec()).unwrap();
         let lookup: HashMap<(String, String), Value> = out
             .lookup
             .iter()

@@ -176,7 +176,7 @@ pub fn write_string_column_with(
     Ok(())
 }
 
-/// Write an `extract_lookup` table: `field`, `key` and `value` (the subtree as JSON).
+/// Write an `extract_invariants` lookup table: `field`, `key` and `value` (as JSON).
 pub fn write_lookup_table(
     path: &str,
     lookup: &[crate::extract::LookupEntry],

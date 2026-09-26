@@ -25,7 +25,7 @@ fn test_removes_fields_at_any_depth_and_dedups() {
         json!({"P31": [{"mainsnak": {"property": "P31", "property-labels": {"en": "instance of"},
             "datavalue": {"id": "Q5", "labels": {"en": "human"}}}}]}),
     ]);
-    let out = extract_lookup(input, &spec()).unwrap();
+    let out = extract_invariants(input, &spec()).unwrap();
 
     let slim = json!({"P31": [{"mainsnak": {"property": "P31", "datavalue": {"id": "Q5"}}}]});
     assert_eq!(parse(&out.rows[0]), slim);
@@ -50,7 +50,7 @@ fn test_removes_fields_at_any_depth_and_dedups() {
 #[test]
 fn test_field_without_key_is_left_in_place() {
     let input = rows(&[json!({"labels": {"en": "x"}, "other": 1})]);
-    let out = extract_lookup(input, &spec()).unwrap();
+    let out = extract_invariants(input, &spec()).unwrap();
     assert_eq!(parse(&out.rows[0]), json!({"labels": {"en": "x"}, "other": 1}));
     assert!(out.lookup.is_empty());
 }
@@ -61,20 +61,23 @@ fn test_conflicting_subtrees_error() {
         json!({"id": "Q5", "labels": {"en": "human"}}),
         json!({"id": "Q5", "labels": {"en": "person"}}),
     ]);
-    let err = extract_lookup(input, &spec()).unwrap_err();
-    assert!(err.contains("'labels' for key 'Q5' differs"), "{err}");
+    let err = extract_invariants(input, &spec()).unwrap_err();
+    assert!(
+        err.contains("field 'labels' is not invariant for its determinant 'id' ('Q5'"),
+        "{err}"
+    );
 }
 
 #[test]
 fn test_null_and_invalid_rows_pass_through() {
     let input = vec![None, Some("not json".to_string())];
-    let out = extract_lookup(input, &spec()).unwrap();
+    let out = extract_invariants(input, &spec()).unwrap();
     assert_eq!(out.rows, vec![None, Some("not json".to_string())]);
 }
 
 #[test]
 fn test_key_order_of_remaining_fields_is_kept() {
     let input = vec![Some(r#"{"b": 1, "labels": {"en": "x"}, "id": "Q1", "a": 2}"#.to_string())];
-    let out = extract_lookup(input, &spec()).unwrap();
+    let out = extract_invariants(input, &spec()).unwrap();
     assert_eq!(out.rows[0].as_deref(), Some(r#"{"b":1,"id":"Q1","a":2}"#));
 }
