@@ -1,7 +1,7 @@
 site_name: Polars Genson
 site_author: Louis Maddox
 site_description: >-
-  Utilities for generating JSON Schema and bridging Polars <-> JSON Schema
+  Infer a schema from JSON string columns and normalise them into typed Polars columns
 site_url: https://polars-genson.vercel.app
 repo_name: lmmx/polars-genson
 repo_url: https://github.com/lmmx/polars-genson
@@ -111,6 +111,31 @@ plugins:
             show_signature_annotations: true
   - search
   - section-index
+  - llmstxt:
+      markdown_description: >-
+        polars-genson infers a schema from a column of JSON strings in a Polars DataFrame or
+        Parquet file, then normalises every row to it, so JSON whose rows differ in shape
+        becomes consistent typed Polars columns.
+      full_output: llms-full.txt
+      sections:
+        Getting started:
+          - get_started.md: Installation and a quickstart
+        Guides:
+          - guides/infer-schema.md: Infer a Polars schema, JSON Schema or Avro schema from a JSON column
+          - guides/normalise.md: Normalise a JSON column into typed columns, a struct column or JSON strings
+          - guides/parquet.md: Normalise a JSON string column in a Parquet file straight to typed Parquet output
+          - guides/extract-invariants.md: Move data repeated per key (embedded copies of referenced records) into a lookup table
+          - guides/large-inputs.md: Speed and memory for large inputs
+        How it works:
+          - concepts/type-mapping.md: Which Polars dtype each kind of JSON value becomes
+          - concepts/nulls-and-empty-values.md: Missing keys, null values, empty arrays and objects, null rows
+          - concepts/maps-and-records.md: When an object becomes a struct or a list of key/value structs
+          - concepts/mixed-types.md: What happens when one field holds different kinds of value
+          - concepts/key-order.md: How fields are ordered, and combining output from several inputs
+        Reference:
+          - api/polars_genson.md: Every public function and DataFrame method
+          - reference/options.md: Every option with its default and the functions that accept it
+          - changelog.md: Release notes
   # - extra-sass   # enable if you actually add scss
 
 nav:
@@ -134,3 +159,4 @@ nav:
       - api/index.md
       - API: api/polars_genson.md
       - Options: reference/options.md
+  - Changelog: changelog.md
