@@ -189,13 +189,37 @@ impl SchemaInferenceResult {
         base_uri: Option<&str>,
         split_top_level: bool,
     ) -> Value {
+        let mut schema = self.schema.clone();
+        type_empty_array_items_as_null(&mut schema);
         avrotize::converter::jsons_to_avro(
-            &self.schema,
+            &schema,
             namespace,
             utility_namespace.unwrap_or(""),
             base_uri.unwrap_or("genson-core"),
             split_top_level,
         )
+    }
+}
+
+/// Give untyped array items (`"items": {}`, from arrays that were empty in every row)
+/// the type `null`. Left untyped, avrotize expands them to a generic union whose first
+/// non-null branch is `boolean`, so the column became `List(Boolean)` and could not be
+/// concatenated with a batch where the array has values.
+#[cfg(feature = "avro")]
+fn type_empty_array_items_as_null(schema: &mut Value) {
+    match schema {
+        Value::Object(obj) => {
+            if obj.get("type").and_then(|t| t.as_str()) == Some("array")
+                && obj
+                    .get("items")
+                    .is_some_and(|i| i.as_object().is_some_and(|o| o.is_empty()))
+            {
+                obj.insert("items".to_string(), serde_json::json!({"type": "null"}));
+            }
+            obj.values_mut().for_each(type_empty_array_items_as_null);
+        }
+        Value::Array(arr) => arr.iter_mut().for_each(type_empty_array_items_as_null),
+        _ => {}
     }
 }
 
