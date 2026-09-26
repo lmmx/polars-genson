@@ -162,7 +162,8 @@ pub fn normalise_value(
 
         Value::String(t) if t == "double" || t == "float" => match value {
             Value::Null => Value::Null,
-            Value::Number(n) if n.is_f64() => Value::Number(n),
+            // JSON integers in a float field (e.g. 1 alongside 1.5) widen to floats
+            Value::Number(n) => n.as_f64().map(|f| json!(f)).unwrap_or(Value::Null),
             Value::String(s) if cfg.coerce_string => {
                 s.parse::<f64>().map(|f| json!(f)).unwrap_or(Value::Null)
             }
@@ -184,6 +185,14 @@ pub fn normalise_value(
         Value::Object(obj) if obj.get("type") == Some(&Value::String("record".into())) => {
             let mut out = serde_json::Map::new();
             if let Some(Value::Array(fields)) = obj.get("fields") {
+                // A promoted record may hold both an integer and a float field; an
+                // integer goes to the integer one when present, so it lands only once
+                let has_int_field = fields.iter().any(|f| {
+                    f.get("name").and_then(|n| n.as_str()).is_some_and(|n| {
+                        n.contains("__")
+                            && matches!(n.rsplit("__").next(), Some("int" | "integer" | "long"))
+                    })
+                });
                 for f in fields {
                     if let (Some(Value::String(name)), Some(field_schema)) =
                         (f.get("name"), f.get("type"))
@@ -195,20 +204,17 @@ pub fn normalise_value(
                                 // If this is a synthetic field that matches the scalar type
                                 if name.contains("__") {
                                     let type_suffix = name.split("__").last().unwrap_or("");
-                                    let matches_type = matches!(
-                                        (scalar_value, type_suffix),
-                                        (Value::String(_), "string")
-                                            | (
-                                                Value::Number(_),
-                                                "int"
-                                                    | "integer"
-                                                    | "long"
-                                                    | "float"
-                                                    | "double"
-                                                    | "number",
-                                            )
-                                            | (Value::Bool(_), "boolean")
-                                    );
+                                    let matches_type = match (scalar_value, type_suffix) {
+                                        (Value::String(_), "string") => true,
+                                        (Value::Bool(_), "boolean") => true,
+                                        (Value::Number(n), "int" | "integer" | "long") => {
+                                            n.is_i64() || n.is_u64()
+                                        }
+                                        (Value::Number(n), "float" | "double" | "number") => {
+                                            n.is_f64() || !has_int_field
+                                        }
+                                        _ => false,
+                                    };
 
                                     if matches_type {
                                         scalar_value.clone()

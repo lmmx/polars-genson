@@ -392,3 +392,13 @@ def test_scalar_object_union_keeps_scalar_by_default():
     assert out[0]["value"]["value__string"] == "plain"
     assert out[1]["value"]["amount"] == 3
     assert out[1]["value"]["value__string"] is None
+
+
+def test_integer_and_float_rows_keep_both():
+    """A number field keeps integer rows (as floats) alongside float rows."""
+    df = pl.DataFrame({"json_data": ['{"x": 1}', '{"x": 1.5}']})
+
+    out = df.genson.normalise_json("json_data")
+
+    assert out.schema == pl.Schema({"x": pl.Float64})
+    assert out["x"].to_list() == [1.0, 1.5]
