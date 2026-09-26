@@ -426,3 +426,20 @@ def test_decode_with_a_known_schema():
 
     assert out.schema == schema
     assert out.to_dicts() == [{"id": 1, "name": "Ada"}, {"id": 2, "name": None}]
+
+
+def test_forced_map_keeps_value_type():
+    """Forcing a field to be a map keeps its values' type (integers stay integers)."""
+    df = pl.DataFrame(
+        {"json_data": ['{"scores": {"maths": 90}}', '{"scores": {"art": 75}}']}
+    )
+
+    out = df.genson.normalise_json("json_data", force_field_types={"scores": "map"})
+
+    assert out.schema["scores"] == pl.List(
+        pl.Struct({"key": pl.String, "value": pl.Int64})
+    )
+    assert out["scores"].to_list() == [
+        [{"key": "maths", "value": 90}],
+        [{"key": "art", "value": 75}],
+    ]
