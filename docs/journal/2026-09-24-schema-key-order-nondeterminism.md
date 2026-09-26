@@ -15,7 +15,4 @@
 - On that branch, `test_wide_object_keeps_key_order` (genson-core/tests/key_order.rs, polars-genson-py/tests/polars_schema_test.py) passes: an object with keys `z … a, Z … A` (52 keys) infers its properties in that order, and the same test gives `c, b, o, Z, z, …` on master.
 - On that branch, the K=40 map repro above gives document order (`f0 … f39`) in 3 of 3 separate processes, and the genson-cli snapshot suite has no changes.
 - `genson-cli` release builds on `x1818_L26.jsonl` (15 MB), best of 7: inference 0.205 s on master against 0.195 s on the branch, and inference with `--avro --normalise --unify-maps --map-threshold 0` 0.807 s against 0.809 s.
-
-## Missing
-
-- A check of `chunk_0-00004` field order across repeated runs on the tape-based build.
+- `chunk_0-00004` claims through `normalise_from_parquet(typed=True)` with the wikidata-pq options, two runs each with and without `extract_invariants` (four outputs per build): the master build gives 4 distinct complete claims dtypes, field order included, and the tape-based build gives 1 — timings 21.92/22.01 s against 21.51/21.75 s without extraction and 4.20/4.20 s against 4.25/4.15 s with it, peak RSS 9.64 GB and 4.16 GB on both.
