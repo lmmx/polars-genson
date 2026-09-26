@@ -415,3 +415,14 @@ def test_always_empty_array_widens_on_relaxed_concat():
     assert a.schema["tags"] == pl.List(pl.Null)
     combined = pl.concat([a, b], how="vertical_relaxed")
     assert combined.schema["tags"] == pl.List(pl.Struct({"text": pl.String}))
+
+
+def test_decode_with_a_known_schema():
+    """A pl.Schema from infer_polars_schema can be passed as decode."""
+    df = pl.DataFrame({"json_data": ['{"id": 1, "name": "Ada"}', '{"id": 2}']})
+    schema = df.genson.infer_polars_schema("json_data")
+
+    out = df.genson.normalise_json("json_data", decode=schema)
+
+    assert out.schema == schema
+    assert out.to_dicts() == [{"id": 1, "name": "Ada"}, {"id": 2, "name": None}]

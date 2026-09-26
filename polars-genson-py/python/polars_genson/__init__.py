@@ -1241,8 +1241,8 @@ class GensonNamespace:
                 )
                 dtype = pl.Struct(schema)
             else:
-                # decode was passed as a Polars Schema directly
-                dtype = decode
+                # decode was passed as a Polars Schema (or a Struct dtype) directly
+                dtype = decode if isinstance(decode, pl.Struct) else pl.Struct(decode)
 
             result = self._df.select(expr.str.json_decode(dtype=dtype))
             if unnest:
