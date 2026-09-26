@@ -402,3 +402,16 @@ def test_integer_and_float_rows_keep_both():
 
     assert out.schema == pl.Schema({"x": pl.Float64})
     assert out["x"].to_list() == [1.0, 1.5]
+
+
+def test_always_empty_array_widens_on_relaxed_concat():
+    """An always-empty array is List(Null), so a later batch's item type can widen it."""
+    first = pl.DataFrame({"json_data": ['{"tags": []}', '{"tags": []}']})
+    later = pl.DataFrame({"json_data": ['{"tags": [{"text": "x"}]}']})
+
+    a = first.genson.normalise_json("json_data")
+    b = later.genson.normalise_json("json_data")
+
+    assert a.schema["tags"] == pl.List(pl.Null)
+    combined = pl.concat([a, b], how="vertical_relaxed")
+    assert combined.schema["tags"] == pl.List(pl.Struct({"text": pl.String}))

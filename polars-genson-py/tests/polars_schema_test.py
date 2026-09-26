@@ -261,11 +261,11 @@ class TestPolarsSchemaInference:
 
         schema = df.genson.infer_polars_schema("json_col")
 
-        # An empty array's items are an untyped union; its first branch is boolean
+        # An array that is empty in every row has no item type to infer
         assert schema == pl.Schema(
             {
                 "empty_obj": pl.Struct({}),
-                "empty_array": pl.List(pl.Boolean),
+                "empty_array": pl.List(pl.Null),
                 "data": pl.Struct({"value": pl.Int64}),
             }
         )
