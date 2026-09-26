@@ -154,6 +154,8 @@ pub fn infer_from_parquet(
     max_builders=None,
     typed=false,
     keep_columns=None,
+    extract_invariants=None,
+    lookup_output_path=None,
 ))]
 #[allow(clippy::too_many_arguments)]
 pub fn normalise_from_parquet(
@@ -181,6 +183,8 @@ pub fn normalise_from_parquet(
     max_builders: Option<usize>,
     typed: bool,
     keep_columns: Option<Vec<String>>,
+    extract_invariants: Option<Vec<(String, String)>>,
+    lookup_output_path: Option<String>,
 ) -> PyResult<()> {
     if typed && map_encoding != "kv" {
         return Err(pyo3::exceptions::PyValueError::new_err(
@@ -194,6 +198,11 @@ pub fn normalise_from_parquet(
             *t = std::time::Instant::now();
         }
     };
+    if extract_invariants.is_some() != lookup_output_path.is_some() {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "extract_invariants and lookup_output_path must be given together",
+        ));
+    }
     // Read from Parquet, one entry per row so null rows stay aligned with `keep`
     let json_strings = read_string_column_opt(&input_path, &column).map_err(|e| {
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
@@ -211,6 +220,19 @@ pub fn normalise_from_parquet(
     }
 
     tick("read_parquet", &mut t0);
+    // Move the extract_invariants fields out of the rows before inference sees them
+    let json_strings = match (&extract_invariants, &lookup_output_path) {
+        (Some(spec), Some(path)) => {
+            let extracted = genson_core::extract::extract_invariants(json_strings, spec)
+                .map_err(pyo3::exceptions::PyValueError::new_err)?;
+            genson_core::parquet::write_lookup_table(path, &extracted.lookup).map_err(|e| {
+                pyo3::exceptions::PyIOError::new_err(format!("Failed to write lookup table: {}", e))
+            })?;
+            tick("extract_invariants", &mut t0);
+            extracted.rows
+        }
+        _ => json_strings,
+    };
     // Infer schema first (Avro mode)
     let config = SchemaInferenceConfig {
         ignore_outer_array,

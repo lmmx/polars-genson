@@ -176,6 +176,25 @@ pub fn write_string_column_with(
     Ok(())
 }
 
+/// Write an `extract_invariants` lookup table: `field`, `key` and `value` (as JSON).
+pub fn write_lookup_table(
+    path: &str,
+    lookup: &[crate::extract::LookupEntry],
+) -> Result<(), String> {
+    let column = |name: &str, values: Vec<&str>| -> (FieldRef, ArrayRef) {
+        (
+            Arc::new(Field::new(name, DataType::Utf8, false)),
+            Arc::new(StringArray::from(values)),
+        )
+    };
+    let keep = [
+        column("field", lookup.iter().map(|e| e.field.as_str()).collect()),
+        column("key", lookup.iter().map(|e| e.key.as_str()).collect()),
+    ];
+    let values = lookup.iter().map(|e| Some(e.value.to_string())).collect();
+    write_string_column_with(path, "value", values, &keep, None)
+}
+
 /// Read whole columns from a Parquet file, to write alongside a normalised column.
 ///
 /// # Errors

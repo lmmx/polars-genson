@@ -299,3 +299,45 @@ def test_typed_output_with_float_column_is_readable(tmp_path):
     result = pl.read_parquet(out).unnest("data")
     assert result.schema == pl.Schema({"x": pl.Float64, "n": pl.Int64})
     assert result["x"].to_list() == [1.5, 2.5]
+
+
+def test_normalise_from_parquet_extract_invariants(tmp_path):
+    """extract_invariants removes the fields from the output and writes each subtree once."""
+    src = tmp_path / "src.parquet"
+    rows = [
+        '{"id": "Q1", "labels": {"en": "one"}, "n": 1}',
+        '{"id": "Q1", "labels": {"en": "one"}, "n": 2}',
+        '{"id": "Q2", "labels": {"en": "two", "fr": "deux"}, "n": 3}',
+        None,
+    ]
+    pl.DataFrame({"data": rows}).write_parquet(src)
+    out, lookup = tmp_path / "out.parquet", tmp_path / "lookup.parquet"
+
+    normalise_from_parquet(
+        src,
+        "data",
+        out,
+        typed=True,
+        extract_invariants={"labels": "id"},
+        lookup_output_path=lookup,
+    )
+
+    result = pl.read_parquet(out).unnest("data")
+    assert result.columns == ["id", "n"]
+    assert result["id"].to_list() == ["Q1", "Q1", "Q2", None]
+    table = pl.read_parquet(lookup)
+    assert table.columns == ["field", "key", "value"]
+    assert table.rows() == [
+        ("labels", "Q1", '{"en":"one"}'),
+        ("labels", "Q2", '{"en":"two","fr":"deux"}'),
+    ]
+
+
+def test_extract_invariants_requires_output_path(tmp_path):
+    """extract_invariants without lookup_output_path is an error."""
+    src = tmp_path / "src.parquet"
+    pl.DataFrame({"data": ['{"id": "Q1", "labels": {}}']}).write_parquet(src)
+    with pytest.raises(ValueError, match="must be given together"):
+        normalise_from_parquet(
+            src, "data", tmp_path / "out.parquet", extract_invariants={"labels": "id"}
+        )
