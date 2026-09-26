@@ -36,6 +36,17 @@ field:
 print(df.genson.normalise_json("json", decode=False).to_list())
 ```
 
+## A schema you already have: `decode=schema`
+
+If you already know the schema, for example from `infer_polars_schema` on an earlier
+batch, pass it as `decode`. genson decodes with it directly and skips inferring the
+schema for decoding:
+
+```python exec="on" source="above" result="text" session="normalise"
+schema = df.genson.infer_polars_schema("json")
+print(df.genson.normalise_json("json", decode=schema))
+```
+
 ## Options that change the output
 
 - `empty_as_null` (default `True`): empty arrays and maps become null. See

@@ -47,9 +47,16 @@ are a known set of fields.
 print(df.genson.infer_polars_schema("j", force_field_types={"scores": "record"}, map_threshold=1))
 ```
 
-Forcing a field to `"map"` gives it string values: `{"maths": 90}` becomes
-`{"key": "maths", "value": "90"}`. For maps with non-string values, lower
-`map_threshold` instead, which keeps the value type.
+Forcing a field to `"map"` makes it a map whatever its number of keys, and its values
+keep their type:
+
+```python exec="on" source="above" result="text" session="maps"
+print(df.genson.infer_polars_schema("j", force_field_types={"scores": "map"}))
+```
+
+If the values differ, genson unifies them the same way as for `unify_maps` below. Only
+values with no common type, such as numbers in some keys and strings in others, fall back
+to strings, so that no value is lost.
 
 `map_max_required_keys` adds a second condition: an object with more than that many keys
 present in *every* row stays a record, however many keys it has in total.

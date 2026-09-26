@@ -3,6 +3,15 @@
 Release notes for earlier versions are on
 [GitHub Releases](https://github.com/lmmx/polars-genson/releases).
 
+## 0.9.1
+
+- **`normalise_json(decode=schema)` accepts a `pl.Schema`,** such as one from
+  `infer_polars_schema`, as its docstring says. It previously raised `TypeError`.
+- **Fields forced to `"map"` keep their values' type.** `force_field_types={"x": "map"}`
+  used to make every value a string; now a map of integers stays a map of integers, and
+  values fall back to strings only when they have no common type. See
+  [Maps and records](concepts/maps-and-records.md).
+
 ## 0.9.0
 
 This release fixes several ways genson silently lost or mistyped data, makes inferred
