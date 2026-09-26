@@ -15,7 +15,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python",
 ]
@@ -23,13 +22,13 @@ dependencies = ["orjson>=3.11.2"]
 description = "A Polars plugin for JSON schema inference using genson-rs."
 name = "polars-genson"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 version = "0.8.1"
 
 [project.optional-dependencies]
 dev = ["pdm-bump>=0.9.10", "pdm>=2.22.3", "pre-commit>=4.1.0", "pytest>=8.3.4"]
-polars = ["polars>=1.32.0,!=1.32.3,!=1.33.0,!=1.33.1"]
-polars-lts-cpu = ["polars-lts-cpu>=1.32.0,!=1.32.3,!=1.33.0,!=1.33.1"]
+polars = ["polars>=1.43.2"]
+rtcompat = ["polars[rtcompat]>=1.43.2"]
 
 [project.urls]
 Homepage = "https://github.com/lmmx/polars-genson"
@@ -52,7 +51,7 @@ default-groups = ["build", "debug", "dev", "doc", "test"]
 [dependency-groups]
 build = ["maturin>=1.15.0", "patchelf>=0.19.1.0"]
 debug = ["pysnooper>=1.2.3"]
-dev = ["pdbpp>=0.11.7", "polars>=1.32.0,!=1.32.3,!=1.33.0,!=1.33.1"]
+dev = ["pdbpp>=0.11.7", "polars>=1.43.2"]
 doc = [
   "livereload>=2.7.1",
   "mdx-truly-sane-lists>=1.3",
