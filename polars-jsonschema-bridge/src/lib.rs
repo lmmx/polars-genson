@@ -7,7 +7,9 @@
 //! # Examples
 //!
 //! ```rust
-//! use polars_jsonschema_bridge::{schema_to_polars_fields, polars_schema_to_json_schema, JsonSchemaOptions};
+//! use polars_jsonschema_bridge::{
+//!     polars_schema_to_json_schema, schema_to_polars_fields, JsonSchemaOptions, SchemaFormat,
+//! };
 //! use polars::prelude::*;
 //! use serde_json::json;
 //!
@@ -19,7 +21,7 @@
 //!         "age": {"type": "integer"}
 //!     }
 //! });
-//! let fields = schema_to_polars_fields(&json_schema, false).unwrap();
+//! let fields = schema_to_polars_fields(&json_schema, SchemaFormat::JsonSchema, false).unwrap();
 //!
 //! // Polars → JSON Schema  
 //! let mut schema = Schema::default();
