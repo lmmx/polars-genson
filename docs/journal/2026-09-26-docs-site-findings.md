@@ -7,9 +7,10 @@
 - An empty object in a record field normalises to a struct with every field null (`{"meta": {}}` gives `{"k": null}`), with `empty_as_null` either `True` or `False` — `empty_as_null` covers empty arrays and empty maps.
 - `infer_json_schema` on the first 50,000 events of GH Archive hour `2024-01-01-12` raised `Genson error: JSON schema inference failed due to invalid JSON input`; whether any of those rows is invalid JSON was not checked.
 - `infer_json_schema_from_strings` runs inference inside `panic::catch_unwind` and reports every caught panic with that same "invalid JSON input" message (genson-core/src/schema.rs:599, 658), so the message does not distinguish invalid input from a panic elsewhere in inference.
+- On `fix/forced-map-value-type`, a field forced to `"map"` takes its values' common schema, via `forced_map_value_schema` (genson-core/src/schema/map_inference.rs), called from `convert_to_map` (genson-core/src/schema.rs): the schema shared by every value (ignoring nullability), else the values unified by `check_unifiable_schemas` unless a key is in `no_unify`, else `string` — a field that is sometimes a map and sometimes a scalar (a type union) still becomes a map of strings.
+- On that branch, `{"scores": {"maths": 90}}` with `force_field_types={"scores": "map"}` normalises to `Int64` values, and the genson-cli snapshots (whose claims fixtures force `labels`, a map of strings, to `"map"`) are unchanged.
 
 ## Missing
 
 - Handling of a `pl.Schema` passed as `decode` in `normalise_json`.
-- Value-type inference for fields forced to `"map"`.
 - A reproduction of the GH Archive failure narrowed to the rows involved, and an error message that keeps the panic's own text.

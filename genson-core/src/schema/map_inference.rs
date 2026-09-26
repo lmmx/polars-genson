@@ -120,6 +120,36 @@ fn contains_anyof(value: &Value) -> bool {
     }
 }
 
+/// Value schema for an object forced to be a map: the values' common schema when they
+/// share one (unified if they differ, unless a key is in `no_unify`), otherwise string,
+/// which holds every value as text so none is lost.
+pub(crate) fn forced_map_value_schema(
+    obj: &serde_json::Map<String, Value>,
+    field_name: Option<&str>,
+    config: &SchemaInferenceConfig,
+) -> Value {
+    let string = || serde_json::json!({ "type": "string" });
+    if let Some(values) = obj.get("additionalProperties").filter(|v| v.is_object()) {
+        return values.clone();
+    }
+    let Some(props) = obj
+        .get("properties")
+        .and_then(|p| p.as_object())
+        .filter(|p| !p.is_empty())
+    else {
+        return string();
+    };
+    let first = non_null_view(props.values().next().unwrap());
+    if props.values().all(|v| non_null_view(v).eq(&first)) {
+        return first.to_value();
+    }
+    if props.keys().any(|k| config.no_unify.contains(k.as_str())) {
+        return string();
+    }
+    let schemas: Vec<&Value> = props.values().collect();
+    check_unifiable_schemas(&schemas, field_name.unwrap_or(""), config).unwrap_or_else(string)
+}
+
 /// Process anyOf unions in a schema recursively
 fn process_anyof_unions(
     schema: &mut Value,
@@ -200,7 +230,8 @@ fn check_force_parent_field_types<'a>(
 ///
 /// # Rules
 /// - If the current field name matches a `force_field_types` override, that wins
-///   (`"map"` rewrites to `additionalProperties`, `"record"` leaves as-is).
+///   (`"map"` rewrites to `additionalProperties` with the values' common schema,
+///   `"record"` leaves as-is).
 /// - Otherwise, applies map inference heuristics based on:
 ///   - Total key cardinality (`map_threshold`)
 ///   - Required key cardinality (`map_max_required_keys`)
@@ -319,13 +350,13 @@ pub(crate) fn rewrite_objects(
                 }
                 match forced.as_str() {
                     "map" => {
+                        let mut values = forced_map_value_schema(obj, field_name, config);
+                        // As for inferred maps, the value schema's own objects get rewritten
+                        rewrite_objects(&mut values, None, config, false);
                         obj.shift_remove("properties");
                         obj.shift_remove("required");
-                        obj.insert(
-                            "additionalProperties".to_string(),
-                            serde_json::json!({ "type": "string" }),
-                        );
-                        return; // no need to apply heuristics or recurse
+                        obj.insert("additionalProperties".to_string(), values);
+                        return; // no need to apply heuristics
                     }
                     "record" => {
                         if let Some(props) =

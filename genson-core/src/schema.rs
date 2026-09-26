@@ -491,7 +491,7 @@ pub(crate) fn preprocess_force_field_types(schema: &mut Value, config: &SchemaIn
                         // Check if this field should be forced to a type
                         if let Some(forced) = config.force_field_types.get(field_name) {
                             if forced == "map" {
-                                convert_to_map(field_schema);
+                                convert_to_map(field_schema, field_name, config);
                             }
                         }
                         // Recurse into the field schema
@@ -525,7 +525,7 @@ pub(crate) fn preprocess_force_field_types(schema: &mut Value, config: &SchemaIn
 }
 
 /// Convert any schema to a Map<string, string> schema
-fn convert_to_map(schema: &mut Value) {
+fn convert_to_map(schema: &mut Value, field_name: &str, config: &SchemaInferenceConfig) {
     // Handle union types first: ["null", {...}] or [Record, "string"]
     if let Value::Array(arr) = schema {
         // Check if it's a nullable union
@@ -562,6 +562,9 @@ fn convert_to_map(schema: &mut Value) {
             .map(|arr| arr.contains(&Value::String("null".into())))
             .unwrap_or(false);
 
+        // The values' common schema (string if they have none), before properties go
+        let values = forced_map_value_schema(obj, Some(field_name), config);
+
         // Convert to map
         obj.shift_remove("properties");
         obj.shift_remove("required");
@@ -572,10 +575,7 @@ fn convert_to_map(schema: &mut Value) {
         } else {
             obj.insert("type".to_string(), serde_json::json!("object"));
         }
-        obj.insert(
-            "additionalProperties".to_string(),
-            serde_json::json!({"type": "string"}),
-        );
+        obj.insert("additionalProperties".to_string(), values);
     }
 }
 
