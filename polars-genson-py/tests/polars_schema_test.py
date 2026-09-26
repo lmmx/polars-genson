@@ -373,3 +373,20 @@ class TestPolarsSchemaInference:
         )
 
         assert schema == expected
+
+    def test_map_matches_normalised_dtype(self):
+        """A map infers as the key/value list dtype that normalise_json produces."""
+        df = pl.DataFrame(
+            {
+                "json_col": [
+                    '{"name": "Alice", "scores": {"maths": 90, "art": 75}}',
+                    '{"name": "Bob", "scores": {"history": 60}}',
+                ]
+            }
+        )
+
+        schema = df.genson.infer_polars_schema("json_col", map_threshold=1)
+        kv = pl.List(pl.Struct({"key": pl.String, "value": pl.Int64}))
+
+        assert schema == pl.Schema({"name": pl.String, "scores": kv})
+        assert schema == df.genson.normalise_json("json_col", map_threshold=1).schema

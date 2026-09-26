@@ -85,9 +85,20 @@ pub fn json_type_to_polars_type(json_schema: &Value) -> Result<String, PolarsErr
                 }
             }
             Some("object") => {
+                let properties = json_schema.get("properties").and_then(|p| p.as_object());
+                // A map (additionalProperties, no fixed properties) → list of {key,value}
+                // structs, the same encoding as the Avro route and the normalised output
+                if properties.is_none_or(|p| p.is_empty()) {
+                    if let Some(values) = json_schema
+                        .get("additionalProperties")
+                        .filter(|v| v.is_object())
+                    {
+                        let value_type = json_type_to_polars_type(values)?;
+                        return Ok(format!("List[Struct[key:String,value:{}]]", value_type));
+                    }
+                }
                 // Handle nested objects/structs
-                if let Some(properties) = json_schema.get("properties").and_then(|p| p.as_object())
-                {
+                if let Some(properties) = properties {
                     let mut struct_fields = Vec::new();
                     for (field_name, field_schema) in properties {
                         let field_type = json_type_to_polars_type(field_schema)?;
@@ -225,5 +236,45 @@ mod tests {
         assert!(result.starts_with("Struct["));
         assert!(result.contains("name:String"));
         assert!(result.contains("age:Int64"));
+    }
+
+    #[test]
+    fn test_map_type() {
+        let map_schema = json!({
+            "type": "object",
+            "additionalProperties": {"type": "integer"}
+        });
+        assert_eq!(
+            json_type_to_polars_type(&map_schema).unwrap(),
+            "List[Struct[key:String,value:Int64]]"
+        );
+    }
+
+    #[test]
+    fn test_map_of_records_type() {
+        let map_schema = json!({
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {"count": {"type": "integer"}}
+            }
+        });
+        assert_eq!(
+            json_type_to_polars_type(&map_schema).unwrap(),
+            "List[Struct[key:String,value:Struct[count:Int64]]]"
+        );
+    }
+
+    #[test]
+    fn test_record_with_additional_properties_stays_struct() {
+        let record_schema = json!({
+            "type": "object",
+            "properties": {"name": {"type": "string"}},
+            "additionalProperties": {"type": "string"}
+        });
+        assert_eq!(
+            json_type_to_polars_type(&record_schema).unwrap(),
+            "Struct[name:String]"
+        );
     }
 }

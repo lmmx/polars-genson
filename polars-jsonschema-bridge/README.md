@@ -152,6 +152,7 @@ assert_eq!(json_schema, json!({
 | `null` | `Null` | |
 | `array` | `List[T]` | Where T is the items' type |
 | `object` | `Struct[...]` | Nested object properties |
+| `object` with `additionalProperties` and no `properties` | `List[Struct[key:String,value:T]]` | A map, encoded as key/value structs as in the Avro mapping |
 
 - Note that we do not have JSON Schema `array` to Polars `Array` conversion (...yet?)
 
