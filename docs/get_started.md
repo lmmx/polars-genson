@@ -33,10 +33,18 @@ uv sync
 
 ### Memory usage exceeds RAM
 
-If memory usage exceeds RAM, try reducing the max. schema builders.
+Schema inference builds a schema for every row in parallel (on a thread pool the size of your
+CPU core count), then merges them into one. By default every row's schema is held in memory until
+that single merge, so peak memory grows with the number of rows.
 
-For example, if you have a DataFrame with 1000 rows, and call `.genson.normalise_json` on it,
-you'll by default get 1000 threads that get scheduled on your available cores. This will mean that
-at one moment in time you will have 1000 `genson-rs` schema "builders" all storing their built
-schemas, before they are all merged in one go. If you limit to 100 builders, they will be merged 100
-at a time, which will reduce the peak RSS (RAM use by the process).
+Pass `max_builders` to cap this: rows are processed in chunks of `max_builders`, and each chunk's
+schemas are merged before the next chunk starts. For example, with 1,000,000 rows and
+`max_builders=1000`, at most 1000 row schemas are held at once.
+
+```python
+schema = df.genson.infer_polars_schema("json_data", max_builders=1000)
+```
+
+`max_builders` is accepted by `infer_json_schema`, `infer_polars_schema`, `normalise_json`,
+`infer_from_parquet` and `normalise_from_parquet`. Smaller values lower peak memory at some cost in
+speed.
