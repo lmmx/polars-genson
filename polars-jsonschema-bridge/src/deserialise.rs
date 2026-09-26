@@ -68,6 +68,20 @@ fn avro_schema_to_polars_fields(avro_schema: &Value) -> Result<Vec<(String, Stri
 
 /// Convert a JSON Schema type definition to Polars DataType string representation.
 pub fn json_type_to_polars_type(json_schema: &Value) -> Result<String, PolarsError> {
+    // A nullable field is written as a type array, e.g. ["null", "integer"]
+    if let Some(types) = json_schema.get("type").and_then(|t| t.as_array()) {
+        let non_null: Vec<&Value> = types.iter().filter(|t| *t != "null").collect();
+        return match non_null.as_slice() {
+            [] => Ok("Null".to_string()),
+            [single] => {
+                let mut schema = json_schema.clone();
+                schema["type"] = (*single).clone();
+                json_type_to_polars_type(&schema)
+            }
+            // Several non-null types have no single Polars dtype
+            _ => Ok("String".to_string()),
+        };
+    }
     if let Some(type_value) = json_schema.get("type") {
         match type_value.as_str() {
             Some("string") => Ok("String".to_string()),
@@ -276,5 +290,43 @@ mod tests {
             json_type_to_polars_type(&record_schema).unwrap(),
             "Struct[name:String]"
         );
+    }
+
+    #[test]
+    fn test_nullable_scalar_type() {
+        let schema = json!({"type": ["null", "integer"]});
+        assert_eq!(json_type_to_polars_type(&schema).unwrap(), "Int64");
+    }
+
+    #[test]
+    fn test_nullable_object_type() {
+        let schema = json!({
+            "type": ["object", "null"],
+            "properties": {"count": {"type": ["null", "number"]}}
+        });
+        assert_eq!(
+            json_type_to_polars_type(&schema).unwrap(),
+            "Struct[count:Float64]"
+        );
+    }
+
+    #[test]
+    fn test_nullable_array_type() {
+        let schema = json!({"type": ["null", "array"], "items": {"type": "string"}});
+        assert_eq!(json_type_to_polars_type(&schema).unwrap(), "List[String]");
+    }
+
+    #[test]
+    fn test_null_only_type_array() {
+        assert_eq!(
+            json_type_to_polars_type(&json!({"type": ["null"]})).unwrap(),
+            "Null"
+        );
+    }
+
+    #[test]
+    fn test_multiple_non_null_types_fall_back_to_string() {
+        let schema = json!({"type": ["integer", "string"]});
+        assert_eq!(json_type_to_polars_type(&schema).unwrap(), "String");
     }
 }
