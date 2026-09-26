@@ -13,6 +13,11 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 pub use builder::SchemaBuilder;
 
+/// A parsed JSON value, read from simd-json's tape so every object's keys are visited in
+/// document order. simd-json's `BorrowedValue` stores objects of more than 32 keys in a
+/// randomly seeded hash map, which scrambled the order of wide objects between runs.
+pub(crate) type JsonValue<'a> = simd_json::tape::Value<'a, 'a>;
+
 pub fn get_builder(schema_uri: Option<&str>) -> SchemaBuilder {
     SchemaBuilder::new(schema_uri)
 }
@@ -31,8 +36,8 @@ pub struct BuildConfig {
 /// * `builder` - the schema builder object
 /// * `object_slice` - the JSON object to parse
 pub fn build_single_json_object_schema(builder: &mut SchemaBuilder, object_slice: &mut [u8]) {
-    let object = simd_json::to_borrowed_value(object_slice).unwrap();
-    builder.add_object(&object);
+    let tape = simd_json::to_tape(object_slice).unwrap();
+    builder.add_object(tape.as_value());
 }
 
 /// Parse a JSON schema from a JSON object or an array of JSON objects and add it to the schema builder.

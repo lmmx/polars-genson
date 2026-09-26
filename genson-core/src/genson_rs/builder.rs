@@ -103,7 +103,7 @@ impl SchemaBuilder {
     }
 
     /// Modify the schema to accomodate the input object
-    pub fn add_object(&mut self, object: &simd_json::BorrowedValue) {
+    pub fn add_object(&mut self, object: super::JsonValue) {
         self.root_node.add_object(DataType::Object(object));
     }
 

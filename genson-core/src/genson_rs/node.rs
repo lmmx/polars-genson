@@ -25,7 +25,7 @@ pub enum DataType<'a> {
     /// SchemaNode represents a JSON schema
     Schema(&'a Value),
     /// Object represents a valid JSON object (array, object, string, number, boolean, null)
-    Object(&'a simd_json::BorrowedValue<'a>),
+    Object(super::JsonValue<'a>),
     /// SchemaNode reference
     SchemaNode(&'a SchemaNode),
 }
@@ -286,7 +286,7 @@ impl SchemaNode {
     /// Get the current active strategy for the object, if not found create a new one.
     fn get_or_create_strategy_for_object(
         &mut self,
-        object: &simd_json::BorrowedValue,
+        object: super::JsonValue,
     ) -> &mut BasicSchemaStrategy {
         if let Some(idx) = self.get_strategy_for_kind(DataType::Object(object)) {
             return &mut self.active_strategies[idx];
@@ -294,7 +294,7 @@ impl SchemaNode {
         if let Some(strategy) = self.create_strategy_for_kind(DataType::Object(object)) {
             return strategy;
         }
-        panic!("Could not find matching schema type for object: {object}")
+        panic!("Could not find matching schema type for object: {object:?}")
     }
 
     /// Get the current active strategy for the schema, if not found create a new one.
@@ -354,7 +354,7 @@ impl SchemaNode {
         schema_or_object: &DataType,
     ) -> bool {
         match schema_or_object {
-            DataType::Object(obj) => strategy.match_object(obj),
+            DataType::Object(obj) => strategy.match_object(*obj),
             DataType::Schema(schema) => strategy.match_schema(schema),
             _ => false,
         }
@@ -365,7 +365,7 @@ impl SchemaNode {
         schema_or_object: &DataType,
     ) -> Option<BasicSchemaStrategy> {
         match schema_or_object {
-            DataType::Object(obj) => BasicSchemaStrategy::new_for_object(obj),
+            DataType::Object(obj) => BasicSchemaStrategy::new_for_object(*obj),
             DataType::Schema(schema) => BasicSchemaStrategy::new_for_schema(schema),
             _ => None,
         }
