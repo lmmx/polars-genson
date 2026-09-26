@@ -81,6 +81,7 @@ extra_css:
 
 plugins:
   - autorefs
+  - markdown-exec
   - mkdocstrings:
       default_handler: python
       handlers:
