@@ -11,9 +11,11 @@
 - The merged value record's field order follows the order in which the map's keys are visited, so the >32-key hash-map iteration in simd-json objects reaches genson's output through map-value unification as well as through `ObjectStrategy::add_object`.
 - 2026-09-26, on the same build: `infer_json_schema` on `chunk_2-00114` claims with the wikidata-pq options gives one raw key order in 6 of 6 separate processes, and on `chunk_0-00004` the `mainsnak.datavalue` field order of `normalise_from_parquet(typed=True)` differed between separate runs on one machine (at least five distinct orders across ten outputs from six runs).
 - Wikidata claims maps are keyed by property id, one key per property an entity has, so entities with more than 32 properties give claims objects of more than 32 keys.
+- On `fix/key-order-determinism`, genson_rs reads each parsed value from simd-json's tape (`simd_json::to_tape`, `simd_json::tape::Value`), whose `Object::iter` walks keys in document order for every object size, instead of from `BorrowedValue` (genson-core/src/genson_rs/mod.rs, builder.rs, node.rs, strategy/*.rs).
+- On that branch, `test_wide_object_keeps_key_order` (genson-core/tests/key_order.rs, polars-genson-py/tests/polars_schema_test.py) passes: an object with keys `z … a, Z … A` (52 keys) infers its properties in that order, and the same test gives `c, b, o, Z, z, …` on master.
+- On that branch, the K=40 map repro above gives document order (`f0 … f39`) in 3 of 3 separate processes, and the genson-cli snapshot suite has no changes.
+- `genson-cli` release builds on `x1818_L26.jsonl` (15 MB), best of 7: inference 0.205 s on master against 0.195 s on the branch, and inference with `--avro --normalise --unify-maps --map-threshold 0` 0.807 s against 0.809 s.
 
 ## Missing
 
-- The `fxhash` feature is not applied on master
-- No comparison of the schema produced with `fxhash` against the 0.5.5 schema for the same input
-- No check of the `fxhash` fix on current master
+- A check of `chunk_0-00004` field order across repeated runs on the tape-based build.
