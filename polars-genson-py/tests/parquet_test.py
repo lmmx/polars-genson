@@ -280,3 +280,22 @@ def test_normalise_from_parquet_keep_column_name_clash(tmp_path):
         normalise_from_parquet(
             src, "claims", tmp_path / "out.parquet", keep_columns=["claims"]
         )
+
+
+def test_typed_output_with_float_column_is_readable(tmp_path):
+    """Typed output with a float column reads back in Polars.
+
+    parquet-rs 60 marks float columns with the IEEE 754 total column order, which
+    Polars before 1.43.2 rejects as invalid thrift; hence the polars>=1.43.2 floor.
+    """
+    src = tmp_path / "src.parquet"
+    pl.DataFrame({"data": ['{"x": 1.5, "n": 1}', '{"x": 2.5, "n": 2}']}).write_parquet(
+        src
+    )
+    out = tmp_path / "out.parquet"
+
+    normalise_from_parquet(src, "data", out, typed=True)
+
+    result = pl.read_parquet(out).unnest("data")
+    assert result.schema == pl.Schema({"x": pl.Float64, "n": pl.Int64})
+    assert result["x"].to_list() == [1.5, 2.5]

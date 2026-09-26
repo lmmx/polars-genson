@@ -14,10 +14,10 @@ A Polars plugin for working with JSON schemas. Infer schemas from JSON data and 
 pip install polars-genson[polars]
 ```
 
-On older CPUs run:
+On older CPUs, use Polars' compatibility runtime:
 
 ```bash
-pip install polars-genson[polars-lts-cpu]
+pip install polars-genson[rtcompat]
 ```
 
 ## Features
