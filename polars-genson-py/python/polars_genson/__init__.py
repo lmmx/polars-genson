@@ -171,8 +171,8 @@ def infer_json_schema(
         failures between scalars and objects. The promoted field name defaults
         to the parent key with a ``__{type}`` suffix, e.g. a string under
         ``"value"`` becomes ``{"value__string": "..."}``.
-    avro: bool, default False
-        Whether to output an Avro schema instead of JSON schema.
+    avro : bool, default False
+        Whether to output an Avro schema instead of a JSON Schema.
     wrap_root : str | None, default None
         If a string, wrap each JSON row under that key before inference.
         If ``None``, leave rows unchanged.
@@ -552,8 +552,8 @@ def infer_from_parquet(
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
         in contexts where other rows provide objects.
-    avro: bool, default False
-        Whether to output an Avro schema instead of JSON schema.
+    avro : bool, default False
+        Whether to output an Avro schema instead of a JSON Schema.
     wrap_root : str | None, default None
         If a string, wrap each JSON row under that key before inference.
         If ``None``, leave rows unchanged.
@@ -1006,8 +1006,8 @@ class GensonNamespace:
             failures between scalars and objects. The promoted field name defaults
             to the parent key with a ``__{type}`` suffix, e.g. a string under
             ``"value"`` becomes ``{"value__string": "..."}``.
-        avro: bool, default False
-            Whether to read the input as an Avro schema instead of JSON schema.
+        avro : bool, default False
+            Whether to output an Avro schema instead of a JSON Schema.
         wrap_root : str | bool | None, default None
             If a string, wrap each JSON row under that key before inference.
             If ``True``, wrap under the column name. If ``None``, leave rows unchanged.

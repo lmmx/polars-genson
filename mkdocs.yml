@@ -130,6 +130,7 @@ nav:
       - Maps and records: concepts/maps-and-records.md
       - Mixed types: concepts/mixed-types.md
       - Field order: concepts/key-order.md
-  - API reference:
+  - Reference:
       - api/index.md
-      - polars_genson: api/polars_genson.md
+      - API: api/polars_genson.md
+      - Options: reference/options.md
