@@ -392,3 +392,12 @@ class TestPolarsSchemaInference:
 
         assert schema == pl.Schema({"name": pl.String, "scores": kv})
         assert schema == df.genson.normalise_json("json_col", map_threshold=1).schema
+
+    def test_nullable_field_json_schema_route(self):
+        """A nullable field keeps its type on the JSON Schema route, as on the Avro route."""
+        df = pl.DataFrame({"json_col": ['{"id": 1, "tz": 0}', '{"id": 2, "tz": null}']})
+
+        json_route = df.genson.infer_polars_schema("json_col", avro=False)
+
+        assert json_route == pl.Schema({"id": pl.Int64, "tz": pl.Int64})
+        assert json_route == df.genson.infer_polars_schema("json_col")
