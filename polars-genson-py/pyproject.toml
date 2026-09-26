@@ -70,7 +70,7 @@ test = ["pyarrow>=21.0.0", "pytest-benchmark>=5.1.0", "pytest>=8.4.1"]
 select = ["D"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google" # or "numpy" if you prefer
+convention = "numpy"
 
 # [tool.uv.sources]
 # polars = { git = "https://github.com/orlp/polars.git", rev = "fix-compat-level", subdirectory = "py-polars" }

@@ -39,24 +39,6 @@ __all__ = [
 ]
 
 
-def json_to_schema(json_str: str) -> pl.Schema:
-    """Convert a JSON string to Polars schema.
-
-    Parameters
-    ----------
-    str
-        JSON string to convert to Polars schema
-
-    Returns:
-    -------
-    schema : pl.Schema
-        The Polars schema representation of the JSON
-    """
-    df = _rust_json_to_schema(json_str)
-    schema = df.schema
-    return schema
-
-
 def schema_to_json(schema: pl.Schema, *, debug: bool = False) -> str:
     """Convert a Polars schema to JSON string representation.
 
@@ -67,7 +49,7 @@ def schema_to_json(schema: pl.Schema, *, debug: bool = False) -> str:
     debug : bool, default False
         Whether to print debug information
 
-    Returns:
+    Returns
     -------
     str
         JSON string representation of the schema
@@ -89,7 +71,7 @@ def json_to_schema(json_str: str, *, debug: bool = False) -> pl.Schema:
     debug : bool, default False
         Whether to print debug information
 
-    Returns:
+    Returns
     -------
     schema : pl.Schema
         The Polars schema representation of the JSON
@@ -201,7 +183,7 @@ def infer_json_schema(
         Lower values reduce peak memory usage during schema inference.
         If None, processes all strings at once. Default is None.
 
-    Returns:
+    Returns
     -------
     pl.Expr
         Expression representing the inferred JSON schema
@@ -318,7 +300,7 @@ def infer_polars_schema(
         Lower values reduce peak memory usage during schema inference.
         If None, processes all strings at once. Default is None.
 
-    Returns:
+    Returns
     -------
     pl.Expr
         Expression yielding the inferred Polars schema (as a struct of {name, dtype} fields).
@@ -442,13 +424,13 @@ def normalise_json(
         Lower values reduce peak memory usage during schema inference.
         If None, processes all strings at once. Default is None.
 
-    Returns:
+    Returns
     -------
     pl.Expr
         An expression producing a new string column, where each row is a
         normalised JSON object matching the inferred Avro schema.
 
-    Examples:
+    Examples
     --------
     >>> df = pl.DataFrame({
     ...     "json_data": [
@@ -579,13 +561,13 @@ def infer_from_parquet(
         Lower values reduce peak memory usage during schema inference.
         If None, processes all strings at once. Default is None.
 
-    Returns:
+    Returns
     -------
     str | dict
         If output_path is given, returns success message.
         If output_path is None, returns schema as dict.
 
-    Examples:
+    Examples
     --------
     >>> # Infer schema and return as dict
     >>> schema = infer_from_parquet("data.parquet", "claims")
@@ -727,7 +709,7 @@ def normalise_from_parquet(
         before the normalised column. The output has one row per input row, with
         a null normalised value for each null input row.
 
-    Examples:
+    Examples
     --------
     >>> # Normalize and write to new file
     >>> normalise_from_parquet(
@@ -784,7 +766,7 @@ class GensonNamespace:
     def schema_to_json(self) -> str:
         """Convert the DataFrame's schema to JSON string representation.
 
-        Returns:
+        Returns
         -------
         str
             JSON string representation of the DataFrame's schema
@@ -876,7 +858,7 @@ class GensonNamespace:
             Lower values reduce peak memory usage during schema inference.
             If None, processes all strings at once. Default is None.
 
-        Returns:
+        Returns
         -------
         pl.Schema | list[pl.Schema]
             The inferred schema (if merge_schemas=True) or list of schemas (if merge_schemas=False)
@@ -1014,7 +996,7 @@ class GensonNamespace:
             Lower values reduce peak memory usage during schema inference.
             If None, processes all strings at once. Default is None.
 
-        Returns:
+        Returns
         -------
         dict | list[dict]
             The inferred JSON schema as a dictionary (if merge_schemas=True) or
@@ -1159,7 +1141,7 @@ class GensonNamespace:
             Lower values reduce peak memory usage during schema inference.
             If None, processes all strings at once. Default is None.
 
-        Returns:
+        Returns
         -------
         pl.Series
             A Series of normalised JSON data. Each row is rewritten to match the
@@ -1238,7 +1220,7 @@ def read_parquet_metadata(path: str | Path) -> dict[str, str]:
     path : str
         Path to the Parquet file
 
-    Returns:
+    Returns
     -------
     dict[str, str]
         Dictionary of metadata key-value pairs
@@ -1256,7 +1238,7 @@ def avro_to_polars_schema(avro_schema_json: str, debug: bool = False) -> pl.Sche
     debug : bool, default False
         Whether to print debug information
 
-    Returns:
+    Returns
     -------
     pl.Schema
         Polars schema representation
