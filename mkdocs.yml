@@ -116,6 +116,13 @@ plugins:
 nav:
   - Home: index.md
   - Getting started: get_started.md
+  - Guides:
+      - guides/index.md
+      - Infer a schema: guides/infer-schema.md
+      - Normalise a column: guides/normalise.md
+      - JSON in Parquet: guides/parquet.md
+      - Factor out repeated data: guides/extract-invariants.md
+      - Large inputs: guides/large-inputs.md
   - How it works:
       - concepts/index.md
       - Type mapping: concepts/type-mapping.md
@@ -123,7 +130,6 @@ nav:
       - Maps and records: concepts/maps-and-records.md
       - Mixed types: concepts/mixed-types.md
       - Field order: concepts/key-order.md
-  - Parquet: parquet.md
   - API reference:
       - api/index.md
       - polars_genson: api/polars_genson.md

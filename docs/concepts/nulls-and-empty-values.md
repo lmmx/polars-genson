@@ -63,4 +63,4 @@ print(df.select("id").hstack(df.genson.normalise_json("j")))
 
 `normalise_from_parquet` does the same, and its `keep_columns` option copies other
 columns (such as an `id`) into the output file alongside the normalised one. See
-[JSON in Parquet files](../parquet.md).
+[Normalise JSON stored in Parquet](../guides/parquet.md).

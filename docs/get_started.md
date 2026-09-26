@@ -54,9 +54,11 @@ null too (pass `empty_as_null=False` to keep it as `[]`).
 
 ## Where to go next
 
+- [Guides](guides/index.md) walk through common tasks: inferring a schema, normalising a
+  column, working with Parquet, factoring out repeated data, and large inputs.
+- [How it works](concepts/index.md) explains the decisions genson makes, such as how
+  JSON types map to Polars dtypes and when an object becomes a map.
 - The [API reference](api/polars_genson.md) lists every function and option.
-- [JSON in Parquet files](parquet.md) covers normalising a Parquet column straight to a
-  typed Parquet file, which is the fastest route for large data.
 
 ## Development install
 
