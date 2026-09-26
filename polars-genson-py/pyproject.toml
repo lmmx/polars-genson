@@ -54,6 +54,8 @@ debug = ["pysnooper>=1.2.3"]
 dev = ["pdbpp>=0.11.7", "polars>=1.43.2"]
 doc = [
   "livereload>=2.7.1",
+  "markdown-exec[ansi]>=1.12.3",
+  "mkdocs-llmstxt>=0.5.0",
   "mdx-truly-sane-lists>=1.3",
   "mkdocs-extra-sass-mathshim>=0.1.1",
   "mkdocs-material[imaging,recommended]>=9.6.18",
@@ -69,7 +71,7 @@ test = ["pyarrow>=21.0.0", "pytest-benchmark>=5.1.0", "pytest>=8.4.1"]
 select = ["D"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google" # or "numpy" if you prefer
+convention = "numpy"
 
 # [tool.uv.sources]
 # polars = { git = "https://github.com/orlp/polars.git", rev = "fix-compat-level", subdirectory = "py-polars" }

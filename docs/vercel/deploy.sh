@@ -30,6 +30,10 @@ uv pip install "urllib3<2"
 # uv pip install  .[docs]
 uv sync --directory $PYPROJ_SUBDIR --no-install-project --only-group doc
 
+# 7b) The docs run their examples at build time (markdown-exec), against the
+#     released polars-genson from PyPI rather than the unbuilt local project.
+uv pip install --directory $PYPROJ_SUBDIR "polars-genson[polars]>=$(uv version --short --project $PYPROJ_SUBDIR)"
+
 # 8) Optionally run mkdocs here if you need it immediately in “deploy”
 #    (e.g., if your older script used ‘pdm run mkdocs’ at this point).
 #    Otherwise, you can defer building to build.sh. For parity with your old deploy script:
