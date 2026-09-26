@@ -7,6 +7,12 @@ repo_name: lmmx/polars-genson
 repo_url: https://github.com/lmmx/polars-genson
 strict: true
 
+# Development notes, not user documentation
+exclude_docs: |
+  JOURNAL.md
+  journal/
+  vercel/
+
 # Rebuild when your Python sources change
 watch:
   - polars-genson-py/python
@@ -109,9 +115,15 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started: get_started.md
+  - Getting started: get_started.md
+  - How it works:
+      - concepts/index.md
+      - Type mapping: concepts/type-mapping.md
+      - Nulls and empty values: concepts/nulls-and-empty-values.md
+      - Maps and records: concepts/maps-and-records.md
+      - Mixed types: concepts/mixed-types.md
+      - Field order: concepts/key-order.md
   - Parquet: parquet.md
-  - Background: background/index.md
-  - API Reference:
+  - API reference:
       - api/index.md
       - polars_genson: api/polars_genson.md
