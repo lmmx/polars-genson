@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.9.1...genson-cli-v0.9.2) - 2026-09-26
+
+### <!-- 9 -->Other
+
+- updated the following local packages: genson-core
+
 ## [0.9.1](https://github.com/lmmx/polars-genson/compare/genson-cli-v0.9.0...genson-cli-v0.9.1) - 2026-09-26
 
 ### <!-- 9 -->Other
