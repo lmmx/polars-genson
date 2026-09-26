@@ -131,19 +131,19 @@ fn process_anyof_unions(
     match schema {
         Value::Object(obj) => {
             // Handle direct anyOf at this level
+            // Scalar/object unions are promoted whenever wrap_scalars is set (checked in
+            // unify_anyof_schemas), independent of unify_maps
             if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
-                if config.unify_maps {
-                    let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
-                    if let Some(unified) = unify_anyof_schemas(&any_of_refs, field_name, config) {
-                        debug!(config, "Successfully unified anyOf schemas");
-                        *schema = unified;
+                let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
+                if let Some(unified) = unify_anyof_schemas(&any_of_refs, field_name, config) {
+                    debug!(config, "Successfully unified anyOf schemas");
+                    *schema = unified;
+                    made_changes = true;
+                    // Recursively process the newly unified schema
+                    if process_anyof_unions(schema, field_name, config) {
                         made_changes = true;
-                        // Recursively process the newly unified schema
-                        if process_anyof_unions(schema, field_name, config) {
-                            made_changes = true;
-                        }
-                        return made_changes;
                     }
+                    return made_changes;
                 }
             }
 
@@ -350,28 +350,28 @@ pub(crate) fn rewrite_objects(
         }
 
         // --- Handle anyOf unions ---
+        // Scalar/object unions are promoted whenever wrap_scalars is set (checked in
+        // unify_anyof_schemas), independent of unify_maps
         if let Some(Value::Array(any_of_schemas)) = obj.get("anyOf") {
-            if config.unify_maps {
-                if config.debug {
-                    debug!(
-                        config,
-                        "Found anyOf union with {} schemas, attempting unification",
-                        any_of_schemas.len()
-                    );
-                }
-                let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
-                if let Some(unified) =
-                    unify_anyof_schemas(&any_of_refs, field_name.unwrap_or(""), config)
-                {
-                    debug!(config, "Successfully unified anyOf schemas");
-                    // Replace the entire schema with the unified result
-                    *schema = unified;
-                    // Recurse into the unified schema to apply further processing
-                    rewrite_objects(schema, field_name, config, is_root);
-                    return;
-                } else {
-                    debug!(config, "Failed to unify anyOf schemas, leaving as-is");
-                }
+            if config.debug {
+                debug!(
+                    config,
+                    "Found anyOf union with {} schemas, attempting unification",
+                    any_of_schemas.len()
+                );
+            }
+            let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
+            if let Some(unified) =
+                unify_anyof_schemas(&any_of_refs, field_name.unwrap_or(""), config)
+            {
+                debug!(config, "Successfully unified anyOf schemas");
+                // Replace the entire schema with the unified result
+                *schema = unified;
+                // Recurse into the unified schema to apply further processing
+                rewrite_objects(schema, field_name, config, is_root);
+                return;
+            } else {
+                debug!(config, "Failed to unify anyOf schemas, leaving as-is");
             }
             // If unification disabled or failed, still recurse into each anyOf branch
             if let Some(any_of_array) = obj.get_mut("anyOf").and_then(|a| a.as_array_mut()) {

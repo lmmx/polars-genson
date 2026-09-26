@@ -374,3 +374,21 @@ def test_normalise_with_wrap_root_true_uses_column_name():
     out = df.genson.normalise_json("json_data", decode=False, wrap_root=True).to_list()
 
     assert out == ['{"json_data":{"foo":"bar"}}']
+
+
+def test_scalar_object_union_keeps_scalar_by_default():
+    """A string/object field keeps the string as value__string without unify_maps."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"value": "plain"}',
+                '{"value": {"amount": 3, "unit": "kg"}}',
+            ]
+        }
+    )
+
+    out = [orjson.loads(s) for s in df.genson.normalise_json("json_data", decode=False)]
+
+    assert out[0]["value"]["value__string"] == "plain"
+    assert out[1]["value"]["amount"] == 3
+    assert out[1]["value"]["value__string"] is None
