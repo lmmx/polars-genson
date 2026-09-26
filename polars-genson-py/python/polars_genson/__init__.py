@@ -649,6 +649,7 @@ def normalise_from_parquet(
     no_root_map: bool = True,
     max_builders: int | None = None,
     typed: bool = False,
+    keep_columns: list[str] | None = None,
 ) -> None:
     """Normalise JSON data from a Parquet column and write back to Parquet.
 
@@ -721,6 +722,10 @@ def normalise_from_parquet(
         ``avro_to_polars_schema`` gives for the inferred schema) instead of JSON
         strings, so no ``str.json_decode`` is needed after reading it back.
         Requires ``map_encoding="kv"``.
+    keep_columns : list[str], optional
+        Input columns (e.g. an ``id``) to copy unchanged into the output file,
+        before the normalised column. The output has one row per input row, with
+        a null normalised value for each null input row.
 
     Examples:
     --------
@@ -765,6 +770,7 @@ def normalise_from_parquet(
         no_root_map=no_root_map,
         max_builders=max_builders,
         typed=typed,
+        keep_columns=keep_columns,
     )
 
 

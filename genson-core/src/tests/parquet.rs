@@ -116,3 +116,29 @@ fn test_metadata_with_complex_json_schema() {
     let parsed: serde_json::Value = serde_json::from_str(schema_json).unwrap();
     assert_eq!(parsed["type"], "object");
 }
+
+#[test]
+fn test_null_rows_and_kept_columns_roundtrip() {
+    let src = NamedTempFile::new().unwrap();
+    let src_path = src.path().to_str().unwrap();
+    let ids: ArrayRef = Arc::new(StringArray::from(vec!["Q1", "Q2", "Q3"]));
+    let id_field: FieldRef = Arc::new(Field::new("id", DataType::Utf8, true));
+    let strings = vec![Some(r#"{"a": 1}"#.to_string()), None, Some("{}".to_string())];
+    let keep = vec![(id_field, ids.clone())];
+    write_string_column_with(src_path, "json", strings.clone(), &keep, None).unwrap();
+
+    // Nulls are kept by the _opt reader and skipped by the plain one
+    assert_eq!(read_string_column_opt(src_path, "json").unwrap(), strings);
+    assert_eq!(read_string_column(src_path, "json").unwrap().len(), 2);
+
+    let kept = read_columns(src_path, &["id".to_string()]).unwrap();
+    assert_eq!(kept.len(), 1);
+    assert_eq!(kept[0].0.name(), "id");
+    assert_eq!(kept[0].1.as_ref(), ids.as_ref());
+
+    // A kept column with the wrong row count is rejected
+    let out = NamedTempFile::new().unwrap();
+    let short = vec![(kept[0].0.clone(), kept[0].1.slice(0, 2))];
+    let err = write_string_column_with(out.path().to_str().unwrap(), "json", strings, &short, None);
+    assert!(err.unwrap_err().contains("has 2 rows"));
+}
