@@ -165,3 +165,44 @@ fn test_map_scalar_fallback_encodings() {
     let val = normalise_value(json!("foo"), &schema, &cfg, None);
     assert_eq!(val, json!([{"key": "__string", "value": "foo"}]));
 }
+
+/// Floats: a JSON integer in a float field widens instead of becoming null.
+#[test]
+fn test_integer_in_float_field() {
+    let cfg = NormaliseConfig::default();
+    for t in ["double", "float"] {
+        let schema = json!(t);
+        assert_eq!(normalise_value(json!(1), &schema, &cfg, None), json!(1.0));
+        assert_eq!(normalise_value(json!(1.5), &schema, &cfg, None), json!(1.5));
+        assert_eq!(
+            normalise_value(json!("x"), &schema, &cfg, None),
+            json!(null)
+        );
+    }
+}
+
+/// Promoted records: each number lands in exactly one promoted field.
+#[test]
+fn test_promoted_number_routing() {
+    let cfg = NormaliseConfig::default();
+    let both = json!({"type": "record", "name": "precision", "fields": [
+        {"name": "precision__integer", "type": ["null", "long"]},
+        {"name": "precision__number", "type": ["null", "double"]}
+    ]});
+    assert_eq!(
+        normalise_value(json!(11), &both, &cfg, None),
+        json!({"precision__integer": 11, "precision__number": null})
+    );
+    assert_eq!(
+        normalise_value(json!(1.5), &both, &cfg, None),
+        json!({"precision__integer": null, "precision__number": 1.5})
+    );
+
+    let number_only = json!({"type": "record", "name": "precision", "fields": [
+        {"name": "precision__number", "type": ["null", "double"]}
+    ]});
+    assert_eq!(
+        normalise_value(json!(11), &number_only, &cfg, None),
+        json!({"precision__number": 11.0})
+    );
+}
