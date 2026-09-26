@@ -13,8 +13,9 @@ find ./ -iname uv -type f 2> /dev/null
 # 3) Make sure ~/.local/bin is on PATH so that 'uv' can be used directly.
 export PATH="$HOME/.local/bin:$PATH"
 
-# 4) Create a Python 3.11 venv using uv’s built-in venv command.
-uv venv --directory $PYPROJ_SUBDIR --python 3.11
+# 4) Create a venv with the Python the build image provides. Vercel restricts which
+#    Pythons uv may download, so pinning a version it doesn't list (e.g. 3.11) fails.
+uv venv --directory $PYPROJ_SUBDIR
 
 # 5) Activate the venv. (Alternatively, you could use $(uv python find) but activating is simpler.)
 source $PYPROJ_SUBDIR/.venv/bin/activate
