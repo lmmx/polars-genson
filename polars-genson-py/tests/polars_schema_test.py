@@ -261,13 +261,15 @@ class TestPolarsSchemaInference:
 
         schema = df.genson.infer_polars_schema("json_col")
 
+        # An empty array's items are an untyped union; its first branch is boolean
         assert schema == pl.Schema(
             {
-                "empty_obj": pl.String,
-                "empty_array": pl.List(pl.String),
+                "empty_obj": pl.Struct({}),
+                "empty_array": pl.List(pl.Boolean),
                 "data": pl.Struct({"value": pl.Int64}),
             }
         )
+        assert schema == df.genson.normalise_json("json_col").schema
 
     def test_decimal_fields_in_schema(self):
         """Test schema inference with decimal numbers that should map to Decimal types."""
