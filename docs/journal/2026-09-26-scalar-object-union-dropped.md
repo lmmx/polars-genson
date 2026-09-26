@@ -11,6 +11,7 @@
 - `force_scalar_promotion` wraps a field whose schema is a plain scalar type (`"type": "string"` etc.) and does not handle `anyOf[object, scalar]` (genson-core/src/schema/map_inference.rs:227-260) — passing `force_scalar_promotion={"value"}` does not keep `"plain"` either.
 - The Wikidata claims pipeline in wikidata-pq passes `unify_maps=True`, so `datavalue` scalars there are promoted to `datavalue__string` and are not affected.
 - Every released version tested (0.2.6, 0.3.0, 0.4.7, 0.5.0, 0.5.8, 0.6.0, 0.6.8, 0.7.0, 0.7.4, 0.7.10, 0.8.1) drops `"plain"` under default options; `unify_maps=True` keeps it as `value__string` from 0.3.0 onwards and drops it in 0.2.6.
+- genson merges the object branches of a field into one object schema before promotion runs — `{"v": "s"}`, `{"v": {"a": 1}}`, `{"v": {"b": "x"}}` with `wrap_scalars=False` infers as `anyOf[{a, b}, string]` — so promoting the scalar without `unify_maps` (#201) adds `v__string` to that one object and merges no further objects.
 
 ## Missing
 
