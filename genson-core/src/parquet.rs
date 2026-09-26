@@ -1,10 +1,10 @@
 //! Parquet file I/O for reading and writing string columns
 
-use arrow::array::{Array, StringArray};
-use arrow::datatypes::{DataType, Field, Schema};
+use arrow::array::{Array, ArrayRef, StringArray};
+use arrow::datatypes::{DataType, Field, FieldRef, Schema, SchemaRef};
 use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
-use parquet::arrow::ArrowWriter;
+use parquet::arrow::{ArrowWriter, ProjectionMask};
 use parquet::file::properties::WriterProperties;
 use std::collections::HashMap;
 use std::fs::File;
@@ -25,6 +25,20 @@ use std::sync::Arc;
 /// - Column doesn't exist
 /// - Column is not a string type (Utf8 or LargeUtf8)
 pub fn read_string_column(path: &str, column_name: &str) -> Result<Vec<String>, String> {
+    Ok(read_string_column_opt(path, column_name)?
+        .into_iter()
+        .flatten()
+        .collect())
+}
+
+/// Read a string column from a Parquet file, one entry per row (`None` for null rows).
+///
+/// # Errors
+/// As for [`read_string_column`].
+pub fn read_string_column_opt(
+    path: &str,
+    column_name: &str,
+) -> Result<Vec<Option<String>>, String> {
     let file =
         File::open(path).map_err(|e| format!("Failed to open Parquet file '{}': {}", path, e))?;
 
@@ -71,7 +85,7 @@ pub fn read_string_column(path: &str, column_name: &str) -> Result<Vec<String>, 
         let column = batch.column(column_index);
 
         // Handle both StringArray and LargeStringArray
-        let strings_in_batch: Vec<String> = match &data_type {
+        let strings_in_batch: Vec<Option<String>> = match &data_type {
             DataType::Utf8 => {
                 let string_array = column
                     .as_any()
@@ -79,13 +93,7 @@ pub fn read_string_column(path: &str, column_name: &str) -> Result<Vec<String>, 
                     .ok_or_else(|| "Failed to downcast column to StringArray".to_string())?;
 
                 (0..string_array.len())
-                    .filter_map(|i| {
-                        if !string_array.is_null(i) {
-                            Some(string_array.value(i).to_string())
-                        } else {
-                            None
-                        }
-                    })
+                    .map(|i| (!string_array.is_null(i)).then(|| string_array.value(i).to_string()))
                     .collect()
             }
             DataType::LargeUtf8 => {
@@ -96,13 +104,7 @@ pub fn read_string_column(path: &str, column_name: &str) -> Result<Vec<String>, 
                     .ok_or_else(|| "Failed to downcast column to LargeStringArray".to_string())?;
 
                 (0..string_array.len())
-                    .filter_map(|i| {
-                        if !string_array.is_null(i) {
-                            Some(string_array.value(i).to_string())
-                        } else {
-                            None
-                        }
-                    })
+                    .map(|i| (!string_array.is_null(i)).then(|| string_array.value(i).to_string()))
                     .collect()
             }
             _ => unreachable!("Type already validated"),
@@ -129,62 +131,157 @@ pub fn write_string_column(
     strings: Vec<String>,
     metadata: Option<HashMap<String, String>>,
 ) -> Result<(), String> {
+    let strings = strings.into_iter().map(Some).collect();
+    write_string_column_with(path, column_name, strings, &[], metadata)
+}
+
+/// Write nullable strings as a string column, after the `keep` columns (see [`read_columns`]).
+///
+/// # Errors
+/// Returns error if file cannot be written, a `keep` column's length differs from
+/// `strings`, or a `keep` column shares `column_name`.
+pub fn write_string_column_with(
+    path: &str,
+    column_name: &str,
+    strings: Vec<Option<String>>,
+    keep: &[(FieldRef, ArrayRef)],
+    metadata: Option<HashMap<String, String>>,
+) -> Result<(), String> {
     // Calculate total byte size to decide between Utf8 and LargeUtf8
-    let total_bytes: usize = strings.iter().map(|s| s.len()).sum();
+    let total_bytes: usize = strings.iter().flatten().map(|s| s.len()).sum();
     let use_large = total_bytes > i32::MAX as usize || strings.len() > i32::MAX as usize;
 
-    // Create schema with appropriate string type
     let data_type = if use_large {
         DataType::LargeUtf8
     } else {
         DataType::Utf8
     };
-
-    let field = Field::new(column_name, data_type.clone(), true);
-
-    // Create schema with metadata if provided
-    let schema = if let Some(meta) = metadata {
-        Schema::new_with_metadata(vec![field], meta)
-    } else {
-        Schema::new(vec![field])
-    };
-
-    let schema_ref = Arc::new(schema);
+    let field = Arc::new(Field::new(column_name, data_type, true));
 
     // Create appropriate string array based on size
-    let array: Arc<dyn Array> = if use_large {
+    let array: ArrayRef = if use_large {
         use arrow::array::LargeStringArray;
         Arc::new(LargeStringArray::from(strings))
     } else {
         Arc::new(StringArray::from(strings))
     };
 
-    // Create RecordBatch
-    let batch = RecordBatch::try_new(schema_ref.clone(), vec![array])
-        .map_err(|e| format!("Failed to create RecordBatch: {}", e))?;
-
-    // Open file for writing
-    let file = File::create(path)
-        .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
-
-    // Configure writer properties
-    let props = WriterProperties::builder().build();
-
-    // Create Arrow writer
-    let mut writer = ArrowWriter::try_new(file, schema_ref, Some(props))
-        .map_err(|e| format!("Failed to create Parquet writer: {}", e))?;
-
-    // Write the batch
-    writer
-        .write(&batch)
-        .map_err(|e| format!("Failed to write RecordBatch: {}", e))?;
-
-    // Close and finalize
+    check_keep_len(keep, array.len())?;
+    let schema = output_schema(field, keep, metadata)?;
+    let mut writer = open_writer(path, schema.clone())?;
+    write_batch(&mut writer, &schema, keep, 0, array)?;
     writer
         .close()
         .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
-
     Ok(())
+}
+
+/// Read whole columns from a Parquet file, to write alongside a normalised column.
+///
+/// # Errors
+/// Returns error if the file cannot be read or a column doesn't exist.
+pub fn read_columns(path: &str, names: &[String]) -> Result<Vec<(FieldRef, ArrayRef)>, String> {
+    if names.is_empty() {
+        return Ok(Vec::new());
+    }
+    let file =
+        File::open(path).map_err(|e| format!("Failed to open Parquet file '{}': {}", path, e))?;
+    let builder = ParquetRecordBatchReaderBuilder::try_new(file)
+        .map_err(|e| format!("Failed to read Parquet file '{}': {}", path, e))?;
+    let schema = builder.schema().clone();
+    let indices = names
+        .iter()
+        .map(|name| {
+            schema
+                .index_of(name)
+                .map_err(|_| format!("Column '{}' not found in Parquet file", name))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let mask = ProjectionMask::roots(builder.parquet_schema(), indices.iter().copied());
+    let reader = builder
+        .with_projection(mask)
+        .build()
+        .map_err(|e| format!("Failed to create Parquet reader: {}", e))?;
+    let batches = reader
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read record batch: {}", e))?;
+    names
+        .iter()
+        .map(|name| {
+            let field = schema.field_with_name(name).map_err(|e| e.to_string())?;
+            let chunks: Vec<&dyn Array> = batches
+                .iter()
+                .map(|b| b.column_by_name(name).unwrap().as_ref())
+                .collect();
+            let array = if chunks.is_empty() {
+                arrow::array::new_empty_array(field.data_type())
+            } else {
+                arrow::compute::concat(&chunks).map_err(|e| e.to_string())?
+            };
+            Ok((Arc::new(field.clone()), array))
+        })
+        .collect()
+}
+
+/// Schema of `keep` fields followed by the output `field`.
+fn output_schema(
+    field: FieldRef,
+    keep: &[(FieldRef, ArrayRef)],
+    metadata: Option<HashMap<String, String>>,
+) -> Result<SchemaRef, String> {
+    if let Some((f, _)) = keep.iter().find(|(f, _)| f.name() == field.name()) {
+        return Err(format!(
+            "Kept column '{}' has the same name as the output column",
+            f.name()
+        ));
+    }
+    let fields: Vec<FieldRef> = keep
+        .iter()
+        .map(|(f, _)| f.clone())
+        .chain(std::iter::once(field))
+        .collect();
+    Ok(Arc::new(Schema::new_with_metadata(
+        fields,
+        metadata.unwrap_or_default(),
+    )))
+}
+
+fn check_keep_len(keep: &[(FieldRef, ArrayRef)], rows: usize) -> Result<(), String> {
+    match keep.iter().find(|(_, a)| a.len() != rows) {
+        Some((f, a)) => Err(format!(
+            "Kept column '{}' has {} rows, but the output column has {}",
+            f.name(),
+            a.len(),
+            rows
+        )),
+        None => Ok(()),
+    }
+}
+
+fn open_writer(path: &str, schema: SchemaRef) -> Result<ArrowWriter<File>, String> {
+    let file = File::create(path)
+        .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
+    let props = WriterProperties::builder().build();
+    ArrowWriter::try_new(file, schema, Some(props))
+        .map_err(|e| format!("Failed to create Parquet writer: {}", e))
+}
+
+/// Write `array` as one batch, with the rows of each `keep` column starting at `offset`.
+fn write_batch(
+    writer: &mut ArrowWriter<File>,
+    schema: &SchemaRef,
+    keep: &[(FieldRef, ArrayRef)],
+    offset: usize,
+    array: ArrayRef,
+) -> Result<(), String> {
+    let len = array.len();
+    let mut columns: Vec<ArrayRef> = keep.iter().map(|(_, a)| a.slice(offset, len)).collect();
+    columns.push(array);
+    let batch = RecordBatch::try_new(schema.clone(), columns)
+        .map_err(|e| format!("Failed to create RecordBatch: {}", e))?;
+    writer
+        .write(&batch)
+        .map_err(|e| format!("Failed to write RecordBatch: {}", e))
 }
 
 pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, String> {
@@ -301,22 +398,32 @@ pub fn write_struct_column(
     fields: &arrow::datatypes::Fields,
     metadata: Option<HashMap<String, String>>,
 ) -> Result<(), String> {
-    let field = Field::new(column_name, DataType::Struct(fields.clone()), true);
-    let schema = Arc::new(match metadata {
-        Some(meta) => Schema::new_with_metadata(vec![field], meta),
-        None => Schema::new(vec![field]),
-    });
-    let file = File::create(path)
-        .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
-    let props = WriterProperties::builder().build();
-    let mut writer = ArrowWriter::try_new(file, schema.clone(), Some(props))
-        .map_err(|e| format!("Failed to create Parquet writer: {}", e))?;
+    write_struct_column_with(path, column_name, arrays, fields, &[], metadata)
+}
+
+/// Write struct arrays, in order, as one struct column after the `keep` columns
+/// (see [`read_columns`]), which must have one row per struct row in total.
+pub fn write_struct_column_with(
+    path: &str,
+    column_name: &str,
+    arrays: Vec<arrow::array::StructArray>,
+    fields: &arrow::datatypes::Fields,
+    keep: &[(FieldRef, ArrayRef)],
+    metadata: Option<HashMap<String, String>>,
+) -> Result<(), String> {
+    check_keep_len(keep, arrays.iter().map(|a| a.len()).sum())?;
+    let field = Arc::new(Field::new(
+        column_name,
+        DataType::Struct(fields.clone()),
+        true,
+    ));
+    let schema = output_schema(field, keep, metadata)?;
+    let mut writer = open_writer(path, schema.clone())?;
+    let mut offset = 0;
     for array in arrays {
-        let batch = RecordBatch::try_new(schema.clone(), vec![Arc::new(array)])
-            .map_err(|e| format!("Failed to create RecordBatch: {}", e))?;
-        writer
-            .write(&batch)
-            .map_err(|e| format!("Failed to write RecordBatch: {}", e))?;
+        let len = array.len();
+        write_batch(&mut writer, &schema, keep, offset, Arc::new(array))?;
+        offset += len;
     }
     writer
         .close()

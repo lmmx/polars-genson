@@ -1,7 +1,7 @@
 use genson_core::normalise::{normalise_values, MapEncoding, NormaliseConfig};
 use genson_core::parquet::{
-    avro_record_fields, read_string_column, values_to_struct_array, write_string_column,
-    write_struct_column,
+    avro_record_fields, read_columns, read_string_column, read_string_column_opt,
+    values_to_struct_array, write_string_column_with, write_struct_column_with,
 };
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use pyo3::prelude::*;
@@ -153,6 +153,7 @@ pub fn infer_from_parquet(
     no_root_map=true,
     max_builders=None,
     typed=false,
+    keep_columns=None,
 ))]
 #[allow(clippy::too_many_arguments)]
 pub fn normalise_from_parquet(
@@ -179,6 +180,7 @@ pub fn normalise_from_parquet(
     no_root_map: bool,
     max_builders: Option<usize>,
     typed: bool,
+    keep_columns: Option<Vec<String>>,
 ) -> PyResult<()> {
     if typed && map_encoding != "kv" {
         return Err(pyo3::exceptions::PyValueError::new_err(
@@ -192,8 +194,11 @@ pub fn normalise_from_parquet(
             *t = std::time::Instant::now();
         }
     };
-    // Read from Parquet
-    let json_strings = read_string_column(&input_path, &column).map_err(|e| {
+    // Read from Parquet, one entry per row so null rows stay aligned with `keep`
+    let json_strings = read_string_column_opt(&input_path, &column).map_err(|e| {
+        pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
+    })?;
+    let keep = read_columns(&input_path, &keep_columns.unwrap_or_default()).map_err(|e| {
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
     })?;
 
@@ -231,9 +236,11 @@ pub fn normalise_from_parquet(
         verbosity: DebugVerbosity::Normal,
     };
 
-    let result = infer_json_schema_from_strings(&json_strings, config).map_err(|e| {
+    let present: Vec<&str> = json_strings.iter().flatten().map(String::as_str).collect();
+    let result = infer_json_schema_from_strings(&present, config).map_err(|e| {
         pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
     })?;
+    drop(present);
 
     if debug {
         anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
@@ -289,11 +296,14 @@ pub fn normalise_from_parquet(
             .map(|chunk| {
                 let rows: Vec<serde_json::Value> = chunk
                     .iter()
-                    .map(|s| {
-                        let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
-                        normalise_values(vec![v], &result.schema, &norm_config)
-                            .pop()
-                            .unwrap()
+                    .map(|s| match s {
+                        Some(s) => {
+                            let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
+                            normalise_values(vec![v], &result.schema, &norm_config)
+                                .pop()
+                                .unwrap()
+                        }
+                        None => serde_json::Value::Null,
                     })
                     .collect();
                 values_to_struct_array(&rows, &fields)
@@ -302,30 +312,44 @@ pub fn normalise_from_parquet(
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
         drop(json_strings);
         tick("parse+normalise+decode", &mut t0);
-        write_struct_column(&output_path, &col_name, arrays, &fields, Some(metadata)).map_err(
-            |e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e)),
-        )?;
+        write_struct_column_with(
+            &output_path,
+            &col_name,
+            arrays,
+            &fields,
+            &keep,
+            Some(metadata),
+        )
+        .map_err(|e| {
+            pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e))
+        })?;
         tick("write_parquet", &mut t0);
         return Ok(());
     }
 
     // Parse, normalise and re-serialise each row in parallel (order-preserving)
-    let normalised_strings: Vec<String> = json_strings
+    let normalised_strings: Vec<Option<String>> = json_strings
         .par_iter()
         .map(|s| {
+            let s = s.as_ref()?;
             let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
             let n = normalise_values(vec![v], &result.schema, &norm_config)
                 .pop()
                 .unwrap();
-            serde_json::to_string(&n).unwrap()
+            Some(serde_json::to_string(&n).unwrap())
         })
         .collect();
     drop(json_strings);
     tick("parse+normalise+serialise", &mut t0);
 
-    write_string_column(&output_path, &col_name, normalised_strings, Some(metadata)).map_err(
-        |e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e)),
-    )?;
+    write_string_column_with(
+        &output_path,
+        &col_name,
+        normalised_strings,
+        &keep,
+        Some(metadata),
+    )
+    .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e)))?;
 
     tick("write_parquet", &mut t0);
     if debug {

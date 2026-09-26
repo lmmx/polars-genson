@@ -250,3 +250,33 @@ def test_normalise_from_parquet_typed_matches_json_decode(tmp_path):
     assert typed.schema["claims"] == pl.Struct(avro_to_polars_schema(typed_avro))
     # Key order can differ between the two inference runs, so compare as dicts
     assert typed.to_dicts() == expected.to_dicts()
+
+
+@pytest.mark.parametrize("typed", [False, True])
+def test_normalise_from_parquet_keeps_null_rows_and_columns(tmp_path, typed):
+    """Null rows stay as null output rows, so kept columns line up with the output."""
+    src = tmp_path / "src.parquet"
+    rows = pl.read_parquet("tests/data/claims_fixture_x4.parquet")["claims"].to_list()
+    rows = rows[:2] + [None] + rows[2:]
+    ids = [f"Q{i}" for i in range(len(rows))]
+    pl.DataFrame({"id": ids, "claims": rows}).write_parquet(src)
+    out = tmp_path / "out.parquet"
+
+    normalise_from_parquet(
+        src, "claims", out, wrap_root="claims", typed=typed, keep_columns=["id"]
+    )
+
+    result = pl.read_parquet(out)
+    assert result.columns == ["id", "claims"]
+    assert result["id"].to_list() == ids
+    assert result["claims"].is_null().to_list() == [r is None for r in rows]
+
+
+def test_normalise_from_parquet_keep_column_name_clash(tmp_path):
+    """A kept column may not share the output column's name."""
+    src = tmp_path / "src.parquet"
+    pl.DataFrame({"id": ["Q1"], "claims": ['{"a": 1}']}).write_parquet(src)
+    with pytest.raises(OSError, match="same name as the output column"):
+        normalise_from_parquet(
+            src, "claims", tmp_path / "out.parquet", keep_columns=["claims"]
+        )
