@@ -89,6 +89,7 @@ plugins:
           paths:
             - polars-genson-py/python
           options:
+            docstring_style: numpy
             members_order: source
             separate_signature: true
             filters: ["!^_"]

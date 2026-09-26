@@ -36,10 +36,7 @@ def parse_into_expr(
 
 
 def parse_version(version: Sequence[str | int]) -> tuple[int, ...]:
-    """Simple version parser; splits a version string like "0.20.16" into a tuple of ints.
-
-    Takes a version string like "0.20.16" and converts it into a tuple of ints (0, 20, 16).
-    """
+    """Split a version string like "0.20.16" into a tuple of ints, e.g. (0, 20, 16)."""
     if isinstance(version, str):
         version = version.split(".")
     return tuple(int(re.sub(r"\D", "", str(v))) for v in version)
