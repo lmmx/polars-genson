@@ -253,7 +253,7 @@ def infer_polars_schema(
     force_parent_field_types: dict[str, str] | None = None,
     force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
-    avro: bool = False,
+    avro: bool = True,
     wrap_root: str | None = None,
     no_root_map: bool = True,
     max_builders: int | None = None,
@@ -306,8 +306,11 @@ def infer_polars_schema(
         failures between scalars and objects. The promoted field name defaults
         to the parent key with a ``__{type}`` suffix, e.g. a string under
         ``"value"`` becomes ``{"value__string": "..."}``.
-    avro: bool, default False
-        Whether to read the input as an Avro schema instead of JSON schema.
+    avro : bool, default True
+        Whether to infer and convert through an Avro schema (the default) or through
+        JSON Schema. The Avro route reports the dtypes that ``normalise_json`` produces
+        (maps as ``List(Struct{key, value})``, one branch of a union). The JSON Schema
+        route falls back to ``String`` for unions and nullable fields.
     wrap_root : str | None, default None
         If a string, wrap each JSON row under that key before inference.
         If ``None``, leave rows unchanged.
@@ -809,7 +812,7 @@ class GensonNamespace:
         force_parent_field_types: dict[str, str] | None = None,
         force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
-        avro: bool = False,
+        avro: bool = True,
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
         max_builders: int | None = None,
@@ -863,9 +866,11 @@ class GensonNamespace:
             failures between scalars and objects. The promoted field name defaults
             to the parent key with a ``__{type}`` suffix, e.g. a string under
             ``"value"`` becomes ``{"value__string": "..."}``.
-        avro : bool, default False
-            Whether to infer using Avro schema semantics (unions, maps, nullability).
-            By default (`False`), JSON Schema mode is used.
+        avro : bool, default True
+            Whether to infer and convert through an Avro schema (the default) or through
+            JSON Schema. The Avro route reports the dtypes that ``normalise_json`` produces
+            (maps as ``List(Struct{key, value})``, one branch of a union). The JSON Schema
+            route falls back to ``String`` for unions and nullable fields.
         wrap_root : str | bool | None, default None
             If a string, wrap each JSON row under that key before inference.
             If ``True``, wrap under the column name. If ``None``, leave rows unchanged.

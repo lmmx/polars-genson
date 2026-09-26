@@ -662,7 +662,7 @@ Infers a native Polars schema from a string column.
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
 * `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`
-* `avro`: Infer using **Avro semantics** (unions, maps, nullability) instead of pure JSON Schema semantics (default: `False`)
+* `avro`: Infer and convert through an Avro schema, so the dtypes match what `normalise_json` produces (default: `True`). With `avro=False` the conversion goes through JSON Schema, which reports unions and nullable fields as `String`
 * `wrap_root`: Control root wrapping.
 
   * `True` → wrap using the **column name**
