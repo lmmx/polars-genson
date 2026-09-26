@@ -13,6 +13,7 @@ info:
 ---
 {
   "$schema": "http://json-schema.org/schema#",
+  "type": "object",
   "properties": {
     "claims": {
       "type": "object",
@@ -221,6 +222,5 @@ info:
   },
   "required": [
     "claims"
-  ],
-  "type": "object"
+  ]
 }

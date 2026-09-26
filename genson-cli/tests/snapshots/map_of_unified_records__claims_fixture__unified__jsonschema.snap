@@ -174,6 +174,7 @@ info:
 ---
 {
   "$schema": "http://json-schema.org/schema#",
+  "type": "object",
   "properties": {
     "claims": {
       "type": "object",
@@ -296,6 +297,7 @@ info:
               "additionalProperties": {
                 "type": "array",
                 "items": {
+                  "type": "object",
                   "properties": {
                     "property": {
                       "type": "string"
@@ -304,8 +306,10 @@ info:
                       "type": "string"
                     },
                     "datavalue": {
+                      "type": "object",
                       "properties": {
                         "value": {
+                          "type": "object",
                           "properties": {
                             "id": {
                               "type": "string"
@@ -320,8 +324,7 @@ info:
                           "required": [
                             "id",
                             "labels"
-                          ],
-                          "type": "object"
+                          ]
                         },
                         "type": {
                           "type": "string"
@@ -330,8 +333,7 @@ info:
                       "required": [
                         "type",
                         "value"
-                      ],
-                      "type": "object"
+                      ]
                     },
                     "property-labels": {
                       "type": "object",
@@ -345,8 +347,7 @@ info:
                     "datavalue",
                     "property",
                     "property-labels"
-                  ],
-                  "type": "object"
+                  ]
                 }
               }
             },
@@ -360,6 +361,7 @@ info:
                 "additionalProperties": {
                   "type": "array",
                   "items": {
+                    "type": "object",
                     "properties": {
                       "property": {
                         "type": "string"
@@ -368,8 +370,10 @@ info:
                         "type": "string"
                       },
                       "datavalue": {
+                        "type": "object",
                         "properties": {
                           "value": {
+                            "type": "object",
                             "properties": {
                               "time": {
                                 "type": "string"
@@ -397,8 +401,7 @@ info:
                               "precision",
                               "time",
                               "timezone"
-                            ],
-                            "type": "object"
+                            ]
                           },
                           "type": {
                             "type": "string"
@@ -407,8 +410,7 @@ info:
                         "required": [
                           "type",
                           "value"
-                        ],
-                        "type": "object"
+                        ]
                       },
                       "property-labels": {
                         "type": "object",
@@ -422,8 +424,7 @@ info:
                       "datavalue",
                       "property",
                       "property-labels"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 }
               }
@@ -439,6 +440,5 @@ info:
   },
   "required": [
     "claims"
-  ],
-  "type": "object"
+  ]
 }

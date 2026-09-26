@@ -291,8 +291,11 @@ pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, Stri
     let builder = ParquetRecordBatchReaderBuilder::try_new(file)
         .map_err(|e| format!("Failed to read Parquet file '{}': {}", path, e))?;
 
-    let metadata = builder.schema().metadata().clone();
-    Ok(metadata)
+    let metadata = builder.schema().metadata();
+    Ok(metadata
+        .iter()
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect())
 }
 
 /// Map an Avro type (as inferred in avro mode) to an Arrow type, mirroring

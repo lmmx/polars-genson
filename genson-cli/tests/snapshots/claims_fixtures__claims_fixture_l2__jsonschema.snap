@@ -14,6 +14,7 @@ info:
 ---
 {
   "$schema": "http://json-schema.org/schema#",
+  "type": "object",
   "properties": {
     "claims": {
       "type": "object",
@@ -164,11 +165,13 @@ info:
               "additionalProperties": {
                 "type": "array",
                 "items": {
+                  "type": "object",
                   "properties": {
                     "property": {
                       "type": "string"
                     },
                     "datavalue": {
+                      "type": "object",
                       "properties": {
                         "id": {
                           "type": "string"
@@ -183,8 +186,7 @@ info:
                       "required": [
                         "id",
                         "labels"
-                      ],
-                      "type": "object"
+                      ]
                     },
                     "datatype": {
                       "type": "string"
@@ -201,8 +203,7 @@ info:
                     "datavalue",
                     "property",
                     "property-labels"
-                  ],
-                  "type": "object"
+                  ]
                 }
               }
             }
@@ -217,6 +218,5 @@ info:
   },
   "required": [
     "claims"
-  ],
-  "type": "object"
+  ]
 }
