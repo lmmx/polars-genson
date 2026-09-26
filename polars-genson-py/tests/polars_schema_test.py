@@ -401,3 +401,14 @@ class TestPolarsSchemaInference:
 
         assert json_route == pl.Schema({"id": pl.Int64, "tz": pl.Int64})
         assert json_route == df.genson.infer_polars_schema("json_col")
+
+    def test_wide_object_keeps_key_order(self):
+        """Keys keep document order beyond 32 keys (neither sorted nor hash order)."""
+        keys = [chr(c) for c in range(ord("z"), ord("a") - 1, -1)]
+        keys += [chr(c) for c in range(ord("Z"), ord("A") - 1, -1)]
+        row = "{" + ", ".join(f'"{k}": {i}' for i, k in enumerate(keys)) + "}"
+        df = pl.DataFrame({"json_col": [row]})
+
+        schema = df.genson.infer_json_schema("json_col")
+
+        assert list(schema["properties"]) == keys

@@ -1,7 +1,5 @@
 use rayon::prelude::*;
 use serde_json::{json, Value};
-use simd_json;
-use simd_json::prelude::TypedArrayValue;
 use std::slice::{Iter, IterMut};
 
 use crate::genson_rs::node::{DataType, SchemaNode};
@@ -26,7 +24,7 @@ pub trait ListSchemaStrategy: SchemaStrategy {
         schema
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: crate::genson_rs::JsonValue) -> bool {
         object.is_array()
     }
 }
@@ -70,12 +68,13 @@ impl SchemaStrategy for ListStrategy {
         schema["type"] == "array" && schema["items"].is_object()
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: crate::genson_rs::JsonValue) -> bool {
         <Self as ListSchemaStrategy>::match_object(object)
     }
 
-    fn add_object(&mut self, object: &simd_json::BorrowedValue) {
-        if let simd_json::BorrowedValue::Array(objects) = object {
+    fn add_object(&mut self, object: crate::genson_rs::JsonValue) {
+        if let Some(objects) = object.as_array() {
+            let objects: Vec<crate::genson_rs::JsonValue> = objects.iter().collect();
             let items = self.get_items_mut();
             items.for_each(|node| {
                 // if the number of objects is less than 10, it is more efficient to
@@ -83,7 +82,7 @@ impl SchemaStrategy for ListStrategy {
                 // of parallel processing
                 if objects.len() < PARALLEL_PROCESSING_BOUNDARY {
                     objects.iter().for_each(|obj| {
-                        node.add_object(DataType::Object(obj));
+                        node.add_object(DataType::Object(*obj));
                     });
                 } else {
                     // when the number of objects are large, it is more efficient to
@@ -93,7 +92,7 @@ impl SchemaStrategy for ListStrategy {
                     let combined_node = objects
                         .par_iter()
                         .fold(SchemaNode::new, |mut temp_node, obj| {
-                            temp_node.add_object(DataType::Object(obj));
+                            temp_node.add_object(DataType::Object(*obj));
                             temp_node
                         })
                         .reduce_with(|mut first_node, next_node| {
@@ -200,12 +199,12 @@ impl SchemaStrategy for TupleStrategy {
         schema["type"] == "array" && schema["items"].is_array()
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: crate::genson_rs::JsonValue) -> bool {
         <Self as ListSchemaStrategy>::match_object(object)
     }
 
-    fn add_object(&mut self, object: &simd_json::BorrowedValue) {
-        if let simd_json::BorrowedValue::Array(objects) = object {
+    fn add_object(&mut self, object: crate::genson_rs::JsonValue) {
+        if let Some(objects) = object.as_array() {
             let items: Vec<DataType> = objects.iter().map(DataType::Object).collect();
             self.add_items(items, |node, obj| {
                 node.add_object(obj);

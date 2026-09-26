@@ -8,8 +8,6 @@ type KeySet<T> = HashSet<T, FxBuildHasher>;
 
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
-use simd_json;
-use simd_json::prelude::TypedObjectValue;
 
 use crate::genson_rs::node::{DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;
@@ -71,17 +69,17 @@ impl SchemaStrategy for ObjectStrategy {
         schema["type"] == "object"
     }
 
-    fn match_object(object: &simd_json::BorrowedValue) -> bool {
+    fn match_object(object: crate::genson_rs::JsonValue) -> bool {
         object.is_object()
     }
 
-    fn add_object(&mut self, object: &simd_json::BorrowedValue) {
+    fn add_object(&mut self, object: crate::genson_rs::JsonValue) {
         // Without pattern properties every key is a plain property, so skip the per-object
         // key set and the repeated lookups.
         if self.pattern_properties.is_empty() {
-            if let simd_json::BorrowedValue::Object(object) = object {
+            if let Some(object) = object.as_object() {
                 for (prop, subobj) in object.iter() {
-                    if let Some(node) = self.properties.get_mut(prop.as_ref()) {
+                    if let Some(node) = self.properties.get_mut(prop) {
                         node.add_object(DataType::Object(subobj));
                     } else {
                         let mut node = SchemaNode::new();
@@ -96,7 +94,8 @@ impl SchemaStrategy for ObjectStrategy {
                     }
                     Some(req) => {
                         if !req.is_empty() {
-                            req.retain(|p| object.contains_key(p.as_str()));
+                            let keys: KeySet<&str> = object.keys().collect();
+                            req.retain(|p| keys.contains(p.as_str()));
                         }
                     }
                 }
@@ -105,10 +104,10 @@ impl SchemaStrategy for ObjectStrategy {
         }
 
         let mut properties: KeySet<&str> = KeySet::default();
-        if let simd_json::BorrowedValue::Object(object) = object {
+        if let Some(object) = object.as_object() {
             object.iter().for_each(|(prop, subobj)| {
                 let mut pattern: Option<&str> = None;
-                if !self.properties.contains_key(prop.as_ref()) {
+                if !self.properties.contains_key(prop) {
                     let pattern_matcher = |p: &str| Regex::new(p).unwrap().is_match(prop);
                     if let Some((p, node)) = self
                         .pattern_properties
@@ -121,12 +120,12 @@ impl SchemaStrategy for ObjectStrategy {
                 }
 
                 if pattern.is_none() {
-                    properties.insert(prop.as_ref());
-                    if !self.properties.contains_key(prop.as_ref()) {
+                    properties.insert(prop);
+                    if !self.properties.contains_key(prop) {
                         self.properties.insert(prop.to_string(), SchemaNode::new());
                     }
                     self.properties
-                        .get_mut(prop.as_ref())
+                        .get_mut(prop)
                         .unwrap()
                         .add_object(DataType::Object(subobj));
                 }
