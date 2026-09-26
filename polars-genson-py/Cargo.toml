@@ -4,6 +4,7 @@ genson-core = { features = ["avro", "parquet"], workspace = true }
 openssl = { optional = true, version = "0.10" }
 polars.workspace = true
 polars-arrow.workspace = true
+polars-expr.workspace = true
 polars-jsonschema-bridge.workspace = true
 pyo3.workspace = true
 pyo3-polars.workspace = true
@@ -30,4 +31,4 @@ publish = false
 version = "0.1.0"
 
 [package.metadata.cargo-machete]
-ignored = ["openssl", "polars-arrow"]
+ignored = ["openssl", "polars-arrow", "polars-expr"]

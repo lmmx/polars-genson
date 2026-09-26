@@ -209,21 +209,19 @@ pub fn polars_dtype_to_json_schema(
         DataType::Decimal(precision, scale) => {
             let mut schema = json!({"type": "number"});
 
-            if let (Some(p), Some(s)) = (precision, scale) {
-                let obj = schema.as_object_mut().unwrap();
-                obj.insert(
-                    "description".to_string(),
-                    json!(format!(
-                        "Decimal number with precision {} and scale {}",
-                        p, s
-                    )),
-                );
+            let obj = schema.as_object_mut().unwrap();
+            obj.insert(
+                "description".to_string(),
+                json!(format!(
+                    "Decimal number with precision {} and scale {}",
+                    precision, scale
+                )),
+            );
 
-                // Add multipleOf for scale constraint
-                if *s > 0 {
-                    let multiple_of = 10_f64.powi(-(*s as i32));
-                    obj.insert("multipleOf".to_string(), json!(multiple_of));
-                }
+            // Add multipleOf for scale constraint
+            if *scale > 0 {
+                let multiple_of = 10_f64.powi(-(*scale as i32));
+                obj.insert("multipleOf".to_string(), json!(multiple_of));
             }
 
             Ok(schema)
@@ -360,7 +358,7 @@ mod tests {
     fn test_decimal_type() {
         let options = &JsonSchemaOptions::default();
 
-        let decimal_dtype = DataType::Decimal(Some(10), Some(2));
+        let decimal_dtype = DataType::Decimal(10, 2);
         let result = polars_dtype_to_json_schema(&decimal_dtype, options).unwrap();
 
         assert_eq!(result["type"], "number");
@@ -377,7 +375,6 @@ mod tests {
 
         // Test categorical type handling
         use polars::prelude::*;
-        use std::sync::Arc;
 
         // Create a categorical type similar to your snapshot test
         let categories = Categories::new(
@@ -386,8 +383,7 @@ mod tests {
             CategoricalPhysical::U8,
         );
 
-        let categorical_dtype =
-            DataType::Categorical(categories, Arc::new(CategoricalMapping::new(255)));
+        let categorical_dtype = DataType::Categorical(categories.clone(), categories.mapping());
 
         let result = polars_dtype_to_json_schema(&categorical_dtype, options).unwrap();
 

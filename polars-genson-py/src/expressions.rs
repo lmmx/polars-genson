@@ -524,7 +524,7 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         };
 
         let mut out = Vec::with_capacity(string_chunked.len());
-        for s in string_chunked {
+        for s in string_chunked.iter() {
             let val = s
                 .and_then(|st| serde_json::from_str::<serde_json::Value>(st).ok())
                 .unwrap_or(serde_json::Value::Null);

@@ -5,11 +5,11 @@ serde_json = { workspace = true }
 xxhash-rust = { workspace = true }
 
 # Optional dependencies
-arrow = { optional = true, version = "53.0.0" }
+arrow = { optional = true, version = "60.0.0" }
 avrotize = { optional = true, version = "0.1.1" }
 crustrace = { features = ["debug"], optional = true, version = "0.1.9" }
 crustrace-mermaid = { optional = true, version = "0.1.6" }
-parquet = { optional = true, version = "53.0.0" }
+parquet = { optional = true, version = "60.0.0" }
 tracing = { optional = true, version = "0.1.41" }
 tracing-subscriber = { optional = true, version = "0.3.20" }
 

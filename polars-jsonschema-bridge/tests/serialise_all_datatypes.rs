@@ -48,17 +48,17 @@ fn snapshot_all_supported_types() {
             ]),
         ),
         Field::new("binary_col".into(), DataType::Binary),
-        Field::new("decimal_col".into(), DataType::Decimal(Some(10), Some(2))),
+        Field::new("decimal_col".into(), DataType::Decimal(10, 2)),
         Field::new("null_col".into(), DataType::Null),
         Field::new(
             "categorical_col".into(),
-            DataType::Categorical(categories.clone(), Arc::new(CategoricalMapping::new(1000))),
+            DataType::Categorical(categories.clone(), categories.mapping()),
         ),
         Field::new(
             "enum_col".into(),
             DataType::Enum(
                 frozen_categories.clone(),
-                Arc::new(CategoricalMapping::new(1000)),
+                frozen_categories.mapping().clone(),
             ),
         ),
     ]);

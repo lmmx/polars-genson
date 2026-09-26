@@ -11,10 +11,14 @@ properties:
     multipleOf: 0.01
   decimal_no_scale:
     type: number
+    description: Decimal number with precision 5 and scale 0
   decimal_no_precision:
     type: number
+    description: Decimal number with precision 38 and scale 3
+    multipleOf: 0.001
   decimal_none:
     type: number
+    description: Decimal number with precision 38 and scale 0
   decimal_high_precision:
     type: number
     description: Decimal number with precision 18 and scale 6

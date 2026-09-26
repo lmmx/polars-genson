@@ -25,15 +25,15 @@ fn test_categorical_physical_types() {
     let schema = Schema::from_iter(vec![
         Field::new(
             "cat_u8".into(),
-            DataType::Categorical(categories_u8, Arc::new(CategoricalMapping::new(255))),
+            DataType::Categorical(categories_u8.clone(), categories_u8.mapping()),
         ),
         Field::new(
             "cat_u16".into(),
-            DataType::Categorical(categories_u16, Arc::new(CategoricalMapping::new(65535))),
+            DataType::Categorical(categories_u16.clone(), categories_u16.mapping()),
         ),
         Field::new(
             "cat_u32".into(),
-            DataType::Categorical(categories_u32, Arc::new(CategoricalMapping::new(100000))),
+            DataType::Categorical(categories_u32.clone(), categories_u32.mapping()),
         ),
     ]);
 
