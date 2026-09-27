@@ -320,6 +320,15 @@ fn get_scalar_type_name(schema: &Value) -> Option<String> {
     None
 }
 
+/// The field name to promote scalars under when unifying the schemas at `path`: its
+/// innermost field, or `value` where there is none (as for the values of a map, which is
+/// where the kv map encoding puts them)
+fn promotion_field_name(path: &str) -> &str {
+    path.rsplit('.')
+        .find(|s| !s.is_empty() && *s != "items" && *s != "additionalProperties")
+        .unwrap_or("value")
+}
+
 /// Attempt to promote a scalar schema to an object by wrapping it under a synthetic field name
 fn try_scalar_promotion(
     object_schema: &Value,
@@ -435,7 +444,7 @@ fn unify_array_schemas(
 
     // Recursively unify the items
     if let Some(unified_items) =
-        check_unifiable_schemas(&items_schemas, &format!("{}.items", path), config)
+        check_unifiable_item_schemas(&items_schemas, &format!("{}.items", path), config)
     {
         debug!(config, "{}: Successfully unified array items", path);
         Some(json!({
@@ -1137,6 +1146,28 @@ pub(crate) fn check_unifiable_schemas(
     }
 
     None
+}
+
+/// Check if the item schemas of several arrays can be unified: as `check_unifiable_schemas`,
+/// but records mixed with scalars are also unified (when `wrap_scalars` is set) by promoting
+/// the scalars. A list's items are all meant to be alike, so a scalar among records is a
+/// record collapsed to a scalar; a record's fields can differ in kind, so this is not done
+/// for them.
+pub(crate) fn check_unifiable_item_schemas(
+    schemas: &[&Value],
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    check_unifiable_schemas(schemas, path, config).or_else(|| {
+        let records_and_scalars = schemas
+            .iter()
+            .all(|&s| is_scalar_schema(s) || is_object_schema(s) || is_empty_record_schema(s));
+        if !(config.wrap_scalars && records_and_scalars) {
+            return None;
+        }
+        debug!(config, "{}: Promoting scalar items among records", path);
+        unify_anyof_schemas(schemas, promotion_field_name(path), config)
+    })
 }
 
 #[cfg(test)]
