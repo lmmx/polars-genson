@@ -283,7 +283,10 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                 .iter()
                 .map(serde_json::to_string)
                 .collect::<Result<_, _>>()?;
-            fs::write(path, lines.iter().map(|l| format!("{l}\n")).collect::<String>())?;
+            fs::write(
+                path,
+                lines.iter().map(|l| format!("{l}\n")).collect::<String>(),
+            )?;
         }
         if !prune.is_empty() {
             anstream::eprintln!("Pruned {} value(s)", pruned.len());
@@ -355,7 +358,9 @@ fn print_help() {
     anstream::println!(
         "                          Example: --force-scalar-promotion precision,datavalue"
     );
-    anstream::println!("    --prune <fields>      Prune records holding these fields (comma-separated)");
+    anstream::println!(
+        "    --prune <fields>      Prune records holding these fields (comma-separated)"
+    );
     anstream::println!("                          Example: --prune mainsnak__string,error");
     anstream::println!("    --prune-output <file> Write the pruned values to this file as JSONL");
     anstream::println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");
@@ -472,7 +477,8 @@ mod tests {
             empty_as_null: true,
             ..NormaliseConfig::default()
         };
-        let normalised = genson_core::normalise::normalise_values(values, &result.schema, &norm_cfg);
+        let normalised =
+            genson_core::normalise::normalise_values(values, &result.schema, &norm_cfg);
 
         anstream::println!(
             "Normalised with empty_as_null: {}",
@@ -504,7 +510,8 @@ mod tests {
             empty_as_null: false,
             ..NormaliseConfig::default()
         };
-        let normalised = genson_core::normalise::normalise_values(values, &result.schema, &norm_cfg);
+        let normalised =
+            genson_core::normalise::normalise_values(values, &result.schema, &norm_cfg);
 
         anstream::println!(
             "Normalised with keep_empty: {}",
