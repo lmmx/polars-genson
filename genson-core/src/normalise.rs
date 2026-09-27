@@ -113,12 +113,18 @@ fn field_value(value: &Value, name: &str, has_int_field: bool) -> Value {
     }
 }
 
-/// Whether a record's input value holds a non-null value for its field `name`.
-fn holds(value: &Value, name: &str, has_int_field: bool) -> bool {
+/// Whether a record's input value holds a non-null value for a field named in `prune`. A
+/// scalar in place of the record holds the field it would be promoted to, e.g. a string
+/// under `mainsnak` holds `mainsnak__string`. The schema may already be pruned, so this
+/// looks at the value only.
+fn holds_pruned(value: &Value, field_name: Option<&str>, prune: &HashSet<String>) -> bool {
     match value {
-        Value::Object(m) => m.get(name).is_some_and(|v| !v.is_null()),
+        Value::Object(m) => m.iter().any(|(k, v)| !v.is_null() && prune.contains(k)),
         Value::Null => false,
-        scalar => promoted_scalar_matches(scalar, name, has_int_field),
+        scalar => prune.contains(&make_promoted_scalar_key(
+            field_name.unwrap_or(""),
+            get_scalar_type_from_value(scalar),
+        )),
     }
 }
 
@@ -230,7 +236,14 @@ pub fn normalise_value(
     cfg: &NormaliseConfig,
     field_name: Option<&str>,
 ) -> Value {
-    match normalise_inner(value, schema, cfg, field_name, &HashSet::new(), &mut Vec::new()) {
+    match normalise_inner(
+        value,
+        schema,
+        cfg,
+        field_name,
+        &HashSet::new(),
+        &mut Vec::new(),
+    ) {
         Outcome::Kept(v) => v,
         // Only reachable with a non-empty `prune`
         Outcome::Pruned(_) | Outcome::Emptied => Value::Null,
@@ -298,17 +311,7 @@ fn normalise_inner(
                             && matches!(n.rsplit("__").next(), Some("int" | "integer" | "long"))
                     })
                 });
-                let is_pruned = |f: &Value| {
-                    f.get("name")
-                        .and_then(Value::as_str)
-                        .is_some_and(|n| prune.contains(n))
-                };
-                if !prune.is_empty()
-                    && fields.iter().any(|f| {
-                        is_pruned(f)
-                            && holds(&value, f["name"].as_str().unwrap(), has_int_field)
-                    })
-                {
+                if !prune.is_empty() && holds_pruned(&value, field_name, prune) {
                     return Outcome::Pruned(value);
                 }
                 let start = pruned.len();
@@ -369,7 +372,14 @@ fn normalise_inner(
                         Kept(Value::Array(out))
                     }
                 }
-                v => normalise_inner(Value::Array(vec![v]), schema, cfg, field_name, prune, pruned),
+                v => normalise_inner(
+                    Value::Array(vec![v]),
+                    schema,
+                    cfg,
+                    field_name,
+                    prune,
+                    pruned,
+                ),
             }
         }
 
@@ -380,9 +390,7 @@ fn normalise_inner(
 
             let entries = match value {
                 Value::Null => return Kept(Value::Null),
-                Value::Object(m) if m.is_empty() && cfg.empty_as_null => {
-                    return Kept(Value::Null)
-                }
+                Value::Object(m) if m.is_empty() && cfg.empty_as_null => return Kept(Value::Null),
                 Value::Object(m) => m,
                 // Scalar fallback: wrap under a promoted key
                 v => {

@@ -1,4 +1,6 @@
-use genson_core::normalise::{normalise_values, MapEncoding, NormaliseConfig};
+use genson_core::normalise::{
+    normalise_values_pruned, prune_schema, MapEncoding, NormaliseConfig, PrunedValue,
+};
 use genson_core::parquet::{
     avro_record_fields, read_columns, read_string_column, read_string_column_opt,
     values_to_struct_array, write_string_column_with, write_struct_column_with,
@@ -6,7 +8,7 @@ use genson_core::parquet::{
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use pyo3::prelude::*;
 use rayon::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[pyfunction]
 #[pyo3(signature = (
@@ -156,6 +158,8 @@ pub fn infer_from_parquet(
     keep_columns=None,
     extract_invariants=None,
     lookup_output_path=None,
+    prune=None,
+    prune_output_path=None,
 ))]
 #[allow(clippy::too_many_arguments)]
 pub fn normalise_from_parquet(
@@ -185,6 +189,8 @@ pub fn normalise_from_parquet(
     keep_columns: Option<Vec<String>>,
     extract_invariants: Option<Vec<(String, String)>>,
     lookup_output_path: Option<String>,
+    prune: Option<Vec<String>>,
+    prune_output_path: Option<String>,
 ) -> PyResult<()> {
     if typed && map_encoding != "kv" {
         return Err(pyo3::exceptions::PyValueError::new_err(
@@ -203,6 +209,12 @@ pub fn normalise_from_parquet(
             "extract_invariants and lookup_output_path must be given together",
         ));
     }
+    if prune.is_some() != prune_output_path.is_some() {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "prune and prune_output_path must be given together",
+        ));
+    }
+    let prune: HashSet<String> = prune.unwrap_or_default().into_iter().collect();
     // Read from Parquet, one entry per row so null rows stay aligned with `keep`
     let json_strings = read_string_column_opt(&input_path, &column).map_err(|e| {
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
@@ -259,10 +271,11 @@ pub fn normalise_from_parquet(
     };
 
     let present: Vec<&str> = json_strings.iter().flatten().map(String::as_str).collect();
-    let result = infer_json_schema_from_strings(&present, config).map_err(|e| {
+    let mut result = infer_json_schema_from_strings(&present, config).map_err(|e| {
         pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
     })?;
     drop(present);
+    prune_schema(&mut result.schema, &prune);
 
     if debug {
         anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
@@ -290,6 +303,36 @@ pub fn normalise_from_parquet(
         wrap_root: wrap_root.clone(),
     };
 
+    // Normalise one row, numbering its pruned values with the row's index
+    let normalise_row = |row: usize, s: &Option<String>| -> (serde_json::Value, Vec<PrunedValue>) {
+        let Some(s) = s else {
+            return (serde_json::Value::Null, Vec::new());
+        };
+        let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
+        let (mut rows, mut pruned) =
+            normalise_values_pruned(vec![v], &result.schema, &norm_config, &prune);
+        pruned.iter_mut().for_each(|p| p.row = row);
+        (rows.pop().unwrap(), pruned)
+    };
+    let write_pruned = |pruned: Vec<PrunedValue>| -> PyResult<()> {
+        let Some(path) = &prune_output_path else {
+            return Ok(());
+        };
+        let rows: Vec<usize> = pruned.iter().map(|p| p.row).collect();
+        let (paths, values) = pruned
+            .iter()
+            .map(|p| {
+                (
+                    Some(serde_json::to_string(&p.path).unwrap()),
+                    Some(p.value.to_string()),
+                )
+            })
+            .unzip();
+        genson_core::parquet::write_pruned_table(path, &rows, paths, values, &keep).map_err(|e| {
+            pyo3::exceptions::PyIOError::new_err(format!("Failed to write pruned table: {}", e))
+        })
+    };
+
     let col_name = output_column.unwrap_or_else(|| column.clone());
     let mut metadata = HashMap::new();
     metadata.insert(
@@ -313,27 +356,23 @@ pub fn normalise_from_parquet(
             .len()
             .div_ceil(rayon::current_num_threads() * 4)
             .max(1);
-        let arrays = json_strings
+        let batches = json_strings
             .par_chunks(batch_rows)
-            .map(|chunk| {
-                let rows: Vec<serde_json::Value> = chunk
+            .enumerate()
+            .map(|(b, chunk)| {
+                let (rows, pruned): (Vec<_>, Vec<_>) = chunk
                     .iter()
-                    .map(|s| match s {
-                        Some(s) => {
-                            let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
-                            normalise_values(vec![v], &result.schema, &norm_config)
-                                .pop()
-                                .unwrap()
-                        }
-                        None => serde_json::Value::Null,
-                    })
-                    .collect();
-                values_to_struct_array(&rows, &fields)
+                    .enumerate()
+                    .map(|(i, s)| normalise_row(b * batch_rows + i, s))
+                    .unzip();
+                values_to_struct_array(&rows, &fields).map(|a| (a, pruned))
             })
             .collect::<Result<Vec<_>, String>>()
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
+        let (arrays, pruned): (Vec<_>, Vec<_>) = batches.into_iter().unzip();
         drop(json_strings);
         tick("parse+normalise+decode", &mut t0);
+        write_pruned(pruned.into_iter().flatten().flatten().collect())?;
         write_struct_column_with(
             &output_path,
             &col_name,
@@ -350,19 +389,20 @@ pub fn normalise_from_parquet(
     }
 
     // Parse, normalise and re-serialise each row in parallel (order-preserving)
-    let normalised_strings: Vec<Option<String>> = json_strings
+    let (normalised_strings, pruned): (Vec<Option<String>>, Vec<Vec<PrunedValue>>) = json_strings
         .par_iter()
-        .map(|s| {
-            let s = s.as_ref()?;
-            let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
-            let n = normalise_values(vec![v], &result.schema, &norm_config)
-                .pop()
-                .unwrap();
-            Some(serde_json::to_string(&n).unwrap())
+        .enumerate()
+        .map(|(row, s)| {
+            let (n, pruned) = normalise_row(row, s);
+            (
+                s.as_ref().map(|_| serde_json::to_string(&n).unwrap()),
+                pruned,
+            )
         })
-        .collect();
+        .unzip();
     drop(json_strings);
     tick("parse+normalise+serialise", &mut t0);
+    write_pruned(pruned.into_iter().flatten().collect())?;
 
     write_string_column_with(
         &output_path,

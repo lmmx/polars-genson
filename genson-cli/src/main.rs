@@ -247,8 +247,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Infer schema - genson-core should handle any panics and return proper errors
-    let result = infer_json_schema(&json_strings, Some(config.clone()))
+    let mut result = infer_json_schema(&json_strings, Some(config.clone()))
         .map_err(|e| format!("Schema inference failed: {}", e))?;
+    prune_schema(&mut result.schema, &prune);
 
     if do_normalise {
         let schema = &result.schema;
@@ -302,9 +303,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         }
     } else {
         // Pretty-print the schema
-        let mut schema = result.schema;
-        prune_schema(&mut schema, &prune);
-        anstream::println!("{}", serde_json::to_string_pretty(&schema)?);
+        anstream::println!("{}", serde_json::to_string_pretty(&result.schema)?);
     }
 
     anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
