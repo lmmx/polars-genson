@@ -1,5 +1,6 @@
 use crate::schema::core::make_promoted_scalar_key;
 use serde_json::{json, Value};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -52,6 +53,92 @@ fn apply_map_encoding(m: serde_json::Map<String, Value>, encoding: MapEncoding) 
                 .collect();
             Value::Array(arr)
         }
+    }
+}
+
+/// A step on the path from a row's root to a value: a record field or map key, or an
+/// array index.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[serde(untagged)]
+pub enum PathSegment {
+    Key(String),
+    Index(usize),
+}
+
+/// A value removed by `prune` (see `normalise_values_pruned`), as it was in the input.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct PrunedValue {
+    pub row: usize,
+    pub path: Vec<PathSegment>,
+    pub value: Value,
+}
+
+/// A value normalised, pruned (carrying its input value up to where it is removed), or
+/// emptied by pruning (its pruned contents are already recorded).
+enum Outcome {
+    Kept(Value),
+    Pruned(Value),
+    Emptied,
+}
+
+/// Add `seg` to the (reversed) paths of the values pruned since `start`.
+fn prefix_paths(pruned: &mut [PrunedValue], start: usize, seg: impl FnOnce() -> PathSegment) {
+    if let Some(new) = pruned.get_mut(start..).filter(|new| !new.is_empty()) {
+        let seg = seg();
+        new.iter_mut().for_each(|p| p.path.push(seg.clone()));
+    }
+}
+
+/// Whether a scalar in place of a record goes to the record's promoted field `name`
+/// (e.g. a string to `mainsnak__string`).
+fn promoted_scalar_matches(scalar: &Value, name: &str, has_int_field: bool) -> bool {
+    if !name.contains("__") {
+        return false;
+    }
+    match (scalar, name.split("__").last().unwrap_or("")) {
+        (Value::String(_), "string") => true,
+        (Value::Bool(_), "boolean") => true,
+        (Value::Number(n), "int" | "integer" | "long") => n.is_i64() || n.is_u64(),
+        (Value::Number(n), "float" | "double" | "number") => n.is_f64() || !has_int_field,
+        _ => false,
+    }
+}
+
+/// The input value of a record's field `name`.
+fn field_value(value: &Value, name: &str, has_int_field: bool) -> Value {
+    match value {
+        Value::Object(m) => m.get(name).cloned().unwrap_or(Value::Null),
+        scalar if promoted_scalar_matches(scalar, name, has_int_field) => scalar.clone(),
+        _ => Value::Null,
+    }
+}
+
+/// Whether a record's input value holds a non-null value for its field `name`.
+fn holds(value: &Value, name: &str, has_int_field: bool) -> bool {
+    match value {
+        Value::Object(m) => m.get(name).is_some_and(|v| !v.is_null()),
+        Value::Null => false,
+        scalar => promoted_scalar_matches(scalar, name, has_int_field),
+    }
+}
+
+/// Remove the record fields named in `prune` from an Avro schema, at any depth.
+pub fn prune_schema(schema: &mut Value, prune: &HashSet<String>) {
+    match schema {
+        Value::Object(obj) => {
+            if obj.get("type") == Some(&Value::String("record".into())) {
+                if let Some(Value::Array(fields)) = obj.get_mut("fields") {
+                    fields.retain(|f| {
+                        !f.get("name")
+                            .and_then(Value::as_str)
+                            .is_some_and(|n| prune.contains(n))
+                    });
+                }
+            }
+            obj.values_mut().for_each(|v| prune_schema(v, prune));
+        }
+        Value::Array(items) => items.iter_mut().for_each(|v| prune_schema(v, prune)),
+        _ => {}
     }
 }
 
@@ -143,24 +230,42 @@ pub fn normalise_value(
     cfg: &NormaliseConfig,
     field_name: Option<&str>,
 ) -> Value {
+    match normalise_inner(value, schema, cfg, field_name, &HashSet::new(), &mut Vec::new()) {
+        Outcome::Kept(v) => v,
+        // Only reachable with a non-empty `prune`
+        Outcome::Pruned(_) | Outcome::Emptied => Value::Null,
+    }
+}
+
+/// `normalise_value`, pruning the records that hold a field named in `prune` into
+/// `pruned` (see `normalise_values_pruned`).
+fn normalise_inner(
+    value: Value,
+    schema: &Value,
+    cfg: &NormaliseConfig,
+    field_name: Option<&str>,
+    prune: &HashSet<String>,
+    pruned: &mut Vec<PrunedValue>,
+) -> Outcome {
+    use Outcome::Kept;
     match schema {
         // Primitive types
-        Value::String(t) if t == "string" => match value {
+        Value::String(t) if t == "string" => Kept(match value {
             Value::Null => Value::Null,
             v @ Value::String(_) => v,
             v => Value::String(v.to_string()),
-        },
+        }),
 
-        Value::String(t) if t == "int" || t == "long" => match value {
+        Value::String(t) if t == "int" || t == "long" => Kept(match value {
             Value::Null => Value::Null,
             Value::Number(n) if n.is_i64() => Value::Number(n),
             Value::String(s) if cfg.coerce_string => {
                 s.parse::<i64>().map(|i| json!(i)).unwrap_or(Value::Null)
             }
             _ => Value::Null,
-        },
+        }),
 
-        Value::String(t) if t == "double" || t == "float" => match value {
+        Value::String(t) if t == "double" || t == "float" => Kept(match value {
             Value::Null => Value::Null,
             // JSON integers in a float field (e.g. 1 alongside 1.5) widen to floats
             Value::Number(n) => n.as_f64().map(|f| json!(f)).unwrap_or(Value::Null),
@@ -168,9 +273,9 @@ pub fn normalise_value(
                 s.parse::<f64>().map(|f| json!(f)).unwrap_or(Value::Null)
             }
             _ => Value::Null,
-        },
+        }),
 
-        Value::String(t) if t == "boolean" => match value {
+        Value::String(t) if t == "boolean" => Kept(match value {
             Value::Null => Value::Null,
             Value::Bool(b) => Value::Bool(b),
             Value::String(s) if cfg.coerce_string => match s.as_str() {
@@ -179,7 +284,7 @@ pub fn normalise_value(
                 _ => Value::Null,
             },
             _ => Value::Null,
-        },
+        }),
 
         // Record
         Value::Object(obj) if obj.get("type") == Some(&Value::String("record".into())) => {
@@ -193,47 +298,46 @@ pub fn normalise_value(
                             && matches!(n.rsplit("__").next(), Some("int" | "integer" | "long"))
                     })
                 });
+                let is_pruned = |f: &Value| {
+                    f.get("name")
+                        .and_then(Value::as_str)
+                        .is_some_and(|n| prune.contains(n))
+                };
+                if !prune.is_empty()
+                    && fields.iter().any(|f| {
+                        is_pruned(f)
+                            && holds(&value, f["name"].as_str().unwrap(), has_int_field)
+                    })
+                {
+                    return Outcome::Pruned(value);
+                }
+                let start = pruned.len();
                 for f in fields {
                     if let (Some(Value::String(name)), Some(field_schema)) =
                         (f.get("name"), f.get("type"))
                     {
-                        let val = match &value {
-                            Value::Object(m) => m.get(name).cloned().unwrap_or(Value::Null),
-                            // Handle scalar promotion case
-                            scalar_value => {
-                                // If this is a synthetic field that matches the scalar type
-                                if name.contains("__") {
-                                    let type_suffix = name.split("__").last().unwrap_or("");
-                                    let matches_type = match (scalar_value, type_suffix) {
-                                        (Value::String(_), "string") => true,
-                                        (Value::Bool(_), "boolean") => true,
-                                        (Value::Number(n), "int" | "integer" | "long") => {
-                                            n.is_i64() || n.is_u64()
-                                        }
-                                        (Value::Number(n), "float" | "double" | "number") => {
-                                            n.is_f64() || !has_int_field
-                                        }
-                                        _ => false,
-                                    };
-
-                                    if matches_type {
-                                        scalar_value.clone()
-                                    } else {
-                                        Value::Null
-                                    }
-                                } else {
-                                    Value::Null
-                                }
+                        if !prune.is_empty() && prune.contains(name) {
+                            continue;
+                        }
+                        let val = field_value(&value, name, has_int_field);
+                        let field_start = pruned.len();
+                        let normalised =
+                            normalise_inner(val, field_schema, cfg, Some(name), prune, pruned);
+                        prefix_paths(pruned, field_start, || PathSegment::Key(name.clone()));
+                        match normalised {
+                            Kept(v) => out.insert(name.clone(), v),
+                            Outcome::Emptied => out.insert(name.clone(), Value::Null),
+                            // A record without one of its fields goes whole, recorded
+                            // once, as itself
+                            Outcome::Pruned(_) => {
+                                pruned.truncate(start);
+                                return Outcome::Pruned(value);
                             }
                         };
-                        out.insert(
-                            name.clone(),
-                            normalise_value(val, field_schema, cfg, Some(name)),
-                        );
                     }
                 }
             }
-            Value::Object(out)
+            Kept(Value::Object(out))
         }
 
         // Array
@@ -241,14 +345,31 @@ pub fn normalise_value(
             let default_items = Value::String("string".into());
             let items_schema = obj.get("items").unwrap_or(&default_items);
             match value {
-                Value::Null => Value::Null,
-                Value::Array(arr) if arr.is_empty() && cfg.empty_as_null => Value::Null,
-                Value::Array(arr) => Value::Array(
-                    arr.into_iter()
-                        .map(|v| normalise_value(v, items_schema, cfg, field_name))
-                        .collect(),
-                ),
-                v => Value::Array(vec![normalise_value(v, items_schema, cfg, field_name)]),
+                Value::Null => Kept(Value::Null),
+                Value::Array(arr) if arr.is_empty() && cfg.empty_as_null => Kept(Value::Null),
+                Value::Array(arr) => {
+                    let len = arr.len();
+                    let mut out = Vec::with_capacity(len);
+                    for (i, v) in arr.into_iter().enumerate() {
+                        let start = pruned.len();
+                        match normalise_inner(v, items_schema, cfg, field_name, prune, pruned) {
+                            Kept(v) => out.push(v),
+                            Outcome::Pruned(v) => pruned.push(PrunedValue {
+                                row: 0,
+                                path: Vec::new(),
+                                value: v,
+                            }),
+                            Outcome::Emptied => {}
+                        }
+                        prefix_paths(pruned, start, || PathSegment::Index(i));
+                    }
+                    if out.is_empty() && len > 0 {
+                        Outcome::Emptied
+                    } else {
+                        Kept(Value::Array(out))
+                    }
+                }
+                v => normalise_inner(Value::Array(vec![v]), schema, cfg, field_name, prune, pruned),
             }
         }
 
@@ -257,44 +378,44 @@ pub fn normalise_value(
             let default_values = Value::String("string".into());
             let values_schema = obj.get("values").unwrap_or(&default_values);
 
-            match value {
-                Value::Null => Value::Null,
-
-                Value::Object(m) if m.is_empty() && cfg.empty_as_null => Value::Null,
-
-                Value::Object(m) => {
-                    let mut out = serde_json::Map::new();
-
-                    if values_schema.get("type") == Some(&Value::String("object".into())) {
-                        // --- Map of records ---
-                        for (k, v) in m {
-                            let normalised_record =
-                                normalise_value(v, values_schema, cfg, Some(&k));
-                            out.insert(k, normalised_record);
-                        }
-                    } else {
-                        // --- Map of scalars (existing behaviour) ---
-                        for (k, v) in m {
-                            let normalised_value = normalise_value(v, values_schema, cfg, Some(&k));
-                            out.insert(k, normalised_value);
-                        }
-                    }
-
-                    apply_map_encoding(out, cfg.map_encoding)
+            let entries = match value {
+                Value::Null => return Kept(Value::Null),
+                Value::Object(m) if m.is_empty() && cfg.empty_as_null => {
+                    return Kept(Value::Null)
                 }
-
+                Value::Object(m) => m,
+                // Scalar fallback: wrap under a promoted key
                 v => {
-                    // Scalar fallback: wrap as {"default": v}
-                    let mut synthetic = serde_json::Map::new();
                     let scalar_type = get_scalar_type_from_value(&v);
                     let wrapped_key =
                         make_promoted_scalar_key(field_name.unwrap_or(""), scalar_type);
-                    synthetic.insert(
-                        wrapped_key,
-                        normalise_value(v, values_schema, cfg, field_name),
-                    );
-                    apply_map_encoding(synthetic, cfg.map_encoding)
+                    std::iter::once((wrapped_key, v)).collect()
                 }
+            };
+            let len = entries.len();
+            let mut out = serde_json::Map::new();
+            for (k, v) in entries {
+                let start = pruned.len();
+                match normalise_inner(v, values_schema, cfg, Some(&k), prune, pruned) {
+                    Kept(v) => {
+                        prefix_paths(pruned, start, || PathSegment::Key(k.clone()));
+                        out.insert(k, v);
+                    }
+                    Outcome::Pruned(v) => {
+                        pruned.push(PrunedValue {
+                            row: 0,
+                            path: Vec::new(),
+                            value: v,
+                        });
+                        prefix_paths(pruned, start, || PathSegment::Key(k));
+                    }
+                    Outcome::Emptied => prefix_paths(pruned, start, || PathSegment::Key(k)),
+                }
+            }
+            if out.is_empty() && len > 0 {
+                Outcome::Emptied
+            } else {
+                Kept(apply_map_encoding(out, cfg.map_encoding))
             }
         }
 
@@ -303,37 +424,80 @@ pub fn normalise_value(
             // Typical Avro union is ["null", T]
             if types.iter().any(|t| t == "null") {
                 if value.is_null() {
-                    Value::Null
+                    Kept(Value::Null)
                 } else {
                     // normalise against the first non-null branch
                     let branch = types.iter().find(|t| *t != "null").unwrap();
-                    normalise_value(value, branch, cfg, field_name)
+                    normalise_inner(value, branch, cfg, field_name, prune, pruned)
                 }
             } else {
                 // pick first type
-                normalise_value(value, &types[0], cfg, field_name)
+                normalise_inner(value, &types[0], cfg, field_name, prune, pruned)
             }
         }
 
         // Fallback: just return value
-        _ => value,
+        _ => Kept(value),
     }
 }
 
 /// Normalise a list of JSON values (e.g. a column in Polars).
 pub fn normalise_values(values: Vec<Value>, schema: &Value, cfg: &NormaliseConfig) -> Vec<Value> {
-    values
+    normalise_values_pruned(values, schema, cfg, &HashSet::new()).0
+}
+
+/// Normalise a list of JSON values, pruning the records that hold a non-null value for a
+/// field named in `prune`. Names are record fields of the schema, at any depth; a scalar
+/// promoted to a record goes by its promoted field (e.g. `mainsnak__string`).
+///
+/// - A pruned record that is a field of another record takes that record with it, up to
+///   an array element or map entry, which is removed on its own. Reaching the root makes
+///   the row null.
+/// - An array or map left empty by pruning is removed from its array or map, or is null
+///   as a record field. One empty in the input is normalised as usual.
+/// - The named fields are left out of every record (see `prune_schema`).
+///
+/// Returns the rows and the removed values, each with its row, its path from the row's
+/// root (after `wrap_root`), and its input value.
+pub fn normalise_values_pruned(
+    values: Vec<Value>,
+    schema: &Value,
+    cfg: &NormaliseConfig,
+    prune: &HashSet<String>,
+) -> (Vec<Value>, Vec<PrunedValue>) {
+    let mut pruned = Vec::new();
+    let rows = values
         .into_iter()
-        .map(|mut v| {
+        .enumerate()
+        .map(|(row, mut v)| {
             // Apply wrap_root if requested
             if let Some(ref field) = cfg.wrap_root {
                 v = Value::Object(
                     std::iter::once((field.clone(), v)).collect::<serde_json::Map<String, Value>>(),
                 );
             }
-            normalise_value(v, schema, cfg, None) // Only the root call passes field name as None
+            let start = pruned.len();
+            // Only the root call passes field name as None
+            let out = match normalise_inner(v, schema, cfg, None, prune, &mut pruned) {
+                Outcome::Kept(v) => v,
+                Outcome::Pruned(v) => {
+                    pruned.push(PrunedValue {
+                        row: 0,
+                        path: Vec::new(),
+                        value: v,
+                    });
+                    Value::Null
+                }
+                Outcome::Emptied => Value::Null,
+            };
+            for p in &mut pruned[start..] {
+                p.row = row;
+                p.path.reverse();
+            }
+            out
         })
-        .collect()
+        .collect();
+    (rows, pruned)
 }
 
 #[cfg(test)]
