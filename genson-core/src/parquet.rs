@@ -195,6 +195,31 @@ pub fn write_lookup_table(
     write_string_column_with(path, "value", values, &keep, None)
 }
 
+/// Write the values removed by `prune`: the `keep` columns at each value's row, its `path`
+/// from the row's root (as a JSON array) and its input `value` (as JSON).
+pub fn write_pruned_table(
+    path: &str,
+    rows: &[usize],
+    paths: Vec<Option<String>>,
+    values: Vec<Option<String>>,
+    keep: &[(FieldRef, ArrayRef)],
+) -> Result<(), String> {
+    let indices = arrow::array::UInt64Array::from_iter_values(rows.iter().map(|&r| r as u64));
+    let mut columns = keep
+        .iter()
+        .map(|(field, array)| {
+            arrow::compute::take(array.as_ref(), &indices, None)
+                .map(|taken| (field.clone(), taken))
+                .map_err(|e| format!("Failed to take kept column '{}': {}", field.name(), e))
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    columns.push((
+        Arc::new(Field::new("path", DataType::Utf8, false)),
+        Arc::new(StringArray::from(paths)),
+    ));
+    write_string_column_with(path, "value", values, &columns, None)
+}
+
 /// Read whole columns from a Parquet file, to write alongside a normalised column.
 ///
 /// # Errors

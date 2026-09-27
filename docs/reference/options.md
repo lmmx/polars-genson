@@ -33,7 +33,7 @@ GROUPS = [
     ("Schema output", ["avro", "merge_schemas", "schema_uri"],
      ("Infer a schema", "../guides/infer-schema.md")),
     ("Parquet output", ["output_path", "output_column", "typed", "keep_columns",
-      "extract_invariants", "lookup_output_path"],
+      "extract_invariants", "lookup_output_path", "prune", "prune_output_path"],
      ("Normalise JSON stored in Parquet", "../guides/parquet.md")),
     ("Performance and diagnostics", ["max_builders", "profile", "debug", "verbosity"],
      ("Process large inputs", "../guides/large-inputs.md")),

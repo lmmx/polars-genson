@@ -3,6 +3,14 @@
 Release notes for earlier versions are on
 [GitHub Releases](https://github.com/lmmx/polars-genson/releases).
 
+## Unreleased
+
+- **`normalise_from_parquet(prune=...)` removes malformed records.** Every record holding
+  one of the named fields is removed during normalisation and written to
+  `prune_output_path`, and the fields are left out of the output schema. See
+  [Remove malformed records](guides/prune.md). genson-cli has `--prune` and
+  `--prune-output`.
+
 ## 0.9.1
 
 - **`normalise_json(decode=schema)` accepts a `pl.Schema`,** such as one from

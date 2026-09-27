@@ -1,10 +1,11 @@
+use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::io::{self, Read};
 
 use genson_core::{
     infer_json_schema,
-    normalise::{normalise_values, MapEncoding, NormaliseConfig},
+    normalise::{normalise_values_pruned, prune_schema, MapEncoding, NormaliseConfig},
     DebugVerbosity, SchemaInferenceConfig,
 };
 use serde_json::Value;
@@ -27,6 +28,8 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     let mut empty_as_null = true; // default ON
     let mut coerce_string = false; // default OFF
     let mut map_encoding = genson_core::normalise::MapEncoding::Mapping; // default
+    let mut prune: HashSet<String> = HashSet::new();
+    let mut prune_output: Option<String> = None;
 
     let mut i = 1;
     while i < args.len() {
@@ -134,6 +137,22 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
                     return Err("Missing value for --force-scalar-promotion".into());
                 }
             }
+            "--prune" => {
+                if i + 1 < args.len() {
+                    prune.extend(args[i + 1].split(',').map(str::to_string));
+                    i += 1;
+                } else {
+                    return Err("Missing value for --prune".into());
+                }
+            }
+            "--prune-output" => {
+                if i + 1 < args.len() {
+                    prune_output = Some(args[i + 1].clone());
+                    i += 1;
+                } else {
+                    return Err("Missing value for --prune-output".into());
+                }
+            }
             "--map-encoding" => {
                 if i + 1 < args.len() {
                     map_encoding = match args[i + 1].as_str() {
@@ -195,6 +214,10 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         i += 1;
     }
 
+    if !prune.is_empty() && !config.avro {
+        return Err("--prune requires --avro or --normalise".into());
+    }
+
     // For CLI, we treat the entire input as one JSON string
     let json_strings = if let Some(ref col_name) = pq_column {
         // Parquet mode
@@ -254,7 +277,20 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             map_encoding,
             wrap_root: config.wrap_root,
         };
-        let normalised = normalise_values(values, schema, &cfg);
+        let (normalised, pruned) = normalise_values_pruned(values, schema, &cfg, &prune);
+        if let Some(path) = prune_output {
+            let lines: Vec<String> = pruned
+                .iter()
+                .map(serde_json::to_string)
+                .collect::<Result<_, _>>()?;
+            fs::write(
+                path,
+                lines.iter().map(|l| format!("{l}\n")).collect::<String>(),
+            )?;
+        }
+        if !prune.is_empty() {
+            anstream::eprintln!("Pruned {} value(s)", pruned.len());
+        }
 
         if config.delimiter == Some(b'\n') {
             // print one line per row
@@ -266,7 +302,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         }
     } else {
         // Pretty-print the schema
-        anstream::println!("{}", serde_json::to_string_pretty(&result.schema)?);
+        let mut schema = result.schema;
+        prune_schema(&mut schema, &prune);
+        anstream::println!("{}", serde_json::to_string_pretty(&schema)?);
     }
 
     anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
@@ -320,6 +358,11 @@ fn print_help() {
     anstream::println!(
         "                          Example: --force-scalar-promotion precision,datavalue"
     );
+    anstream::println!(
+        "    --prune <fields>      Prune records holding these fields (comma-separated)"
+    );
+    anstream::println!("                          Example: --prune error,calibration__string");
+    anstream::println!("    --prune-output <file> Write the pruned values to this file as JSONL");
     anstream::println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");
     anstream::println!("                          mapping = Avro/JSON object (shared dict)");
     anstream::println!(
@@ -434,7 +477,8 @@ mod tests {
             empty_as_null: true,
             ..NormaliseConfig::default()
         };
-        let normalised = normalise_values(values, &result.schema, &norm_cfg);
+        let normalised =
+            genson_core::normalise::normalise_values(values, &result.schema, &norm_cfg);
 
         anstream::println!(
             "Normalised with empty_as_null: {}",
@@ -466,7 +510,8 @@ mod tests {
             empty_as_null: false,
             ..NormaliseConfig::default()
         };
-        let normalised = normalise_values(values, &result.schema, &norm_cfg);
+        let normalised =
+            genson_core::normalise::normalise_values(values, &result.schema, &norm_cfg);
 
         anstream::println!(
             "Normalised with keep_empty: {}",

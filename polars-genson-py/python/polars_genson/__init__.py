@@ -637,6 +637,8 @@ def normalise_from_parquet(
     keep_columns: list[str] | None = None,
     extract_invariants: dict[str, str] | None = None,
     lookup_output_path: str | Path | None = None,
+    prune: set[str] | None = None,
+    prune_output_path: str | Path | None = None,
 ) -> None:
     """Normalise JSON data from a Parquet column and write back to Parquet.
 
@@ -724,6 +726,18 @@ def normalise_from_parquet(
     lookup_output_path : str | Path, optional
         Parquet file for the lookup table, with string columns ``field``, ``key`` and
         ``value`` (the subtree as JSON), in first-seen order.
+    prune : set[str], optional
+        Record fields, at any depth, whose records are pruned: wherever a record holds a
+        non-null value for one, the record is removed, and each removed value is written
+        to ``prune_output_path``. A scalar promoted to a record goes by its promoted
+        field (e.g. ``calibration__string``). A pruned record that is a field of another
+        record takes that record with it, up to an array element or map entry; an array
+        or map left empty is removed too. The fields are left out of the output schema.
+        Requires ``prune_output_path``.
+    prune_output_path : str | Path, optional
+        Parquet file for the pruned values, one row each: the ``keep_columns`` of its
+        row, ``path`` (the keys and indices from the row's root, as a JSON array) and
+        ``value`` (the value as it was in the input, as JSON).
 
     Examples
     --------
@@ -773,6 +787,8 @@ def normalise_from_parquet(
             list(extract_invariants.items()) if extract_invariants else None
         ),
         lookup_output_path=str(lookup_output_path) if lookup_output_path else None,
+        prune=list(prune) if prune else None,
+        prune_output_path=str(prune_output_path) if prune_output_path else None,
     )
 
 

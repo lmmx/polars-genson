@@ -1,0 +1,7 @@
+{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q5"},"datatype":"wikibase-item"},"rank":"normal","qualifiers":{"P580":[{"property":"P580","datavalue":{"time":"+2001-00-00T00:00:00Z"},"datatype":"time"}]},"references":[{"P854":[{"property":"P854","datavalue":{"id":"https://example.org"},"datatype":"url"}]}]}]}
+{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q5"},"datatype":"wikibase-item"},"rank":"normal"}],"P450":[{"mainsnak":"P450","rank":"normal"}]}
+{"P793":[{"mainsnak":{"property":"P793","datavalue":{"id":"Q1"},"datatype":"wikibase-item"},"rank":"normal","qualifiers":{"P450":[{"property":"P450","datavalue":{"value":"Q2","error":"property not found"}}],"P580":[{"property":"P580","datavalue":{"time":"+1990-00-00T00:00:00Z"},"datatype":"time"}]}}]}
+{"P375":[{"mainsnak":{"property":"P375","datavalue":{"id":"Q3"},"datatype":"wikibase-item"},"rank":"normal","qualifiers":{"P450":["P450"]}}]}
+{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q5"},"datatype":"wikibase-item"},"rank":"normal","references":[{"P450":[{"property":"P450","datavalue":{"value":"Q4","error":"property not found"}}]},{"P854":[{"property":"P854","datavalue":{"id":"https://example.org"},"datatype":"url"}]}]}]}
+{"P450":[{"mainsnak":{"property":"P450","datavalue":{"value":"Q6","error":"property not found"}},"rank":"normal"}]}
+{"P31":[{"mainsnak":{"property":"P31","datavalue":{"id":"Q5"},"datatype":"wikibase-item"},"rank":"normal","references":[{"P854":[{"property":"P854","datavalue":{"id":"https://example.org"},"datatype":"url"}],"P450":["P450"]}]}]}
