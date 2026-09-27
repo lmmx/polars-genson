@@ -90,7 +90,7 @@ fn prefix_paths(pruned: &mut [PrunedValue], start: usize, seg: impl FnOnce() -> 
 }
 
 /// Whether a scalar in place of a record goes to the record's promoted field `name`
-/// (e.g. a string to `mainsnak__string`).
+/// (e.g. a string to `calibration__string`).
 fn promoted_scalar_matches(scalar: &Value, name: &str, has_int_field: bool) -> bool {
     if !name.contains("__") {
         return false;
@@ -113,18 +113,12 @@ fn field_value(value: &Value, name: &str, has_int_field: bool) -> Value {
     }
 }
 
-/// Whether a record's input value holds a non-null value for a field named in `prune`. A
-/// scalar in place of the record holds the field it would be promoted to, e.g. a string
-/// under `mainsnak` holds `mainsnak__string`. The schema may already be pruned, so this
-/// looks at the value only.
-fn holds_pruned(value: &Value, field_name: Option<&str>, prune: &HashSet<String>) -> bool {
+/// Whether a record's input value holds a non-null value for its field `name`.
+fn holds(value: &Value, name: &str, has_int_field: bool) -> bool {
     match value {
-        Value::Object(m) => m.iter().any(|(k, v)| !v.is_null() && prune.contains(k)),
+        Value::Object(m) => m.get(name).is_some_and(|v| !v.is_null()),
         Value::Null => false,
-        scalar => prune.contains(&make_promoted_scalar_key(
-            field_name.unwrap_or(""),
-            get_scalar_type_from_value(scalar),
-        )),
+        scalar => promoted_scalar_matches(scalar, name, has_int_field),
     }
 }
 
@@ -311,7 +305,15 @@ fn normalise_inner(
                             && matches!(n.rsplit("__").next(), Some("int" | "integer" | "long"))
                     })
                 });
-                if !prune.is_empty() && holds_pruned(&value, field_name, prune) {
+                // Names are matched against the schema's fields, so a promoted scalar goes by
+                // the name inference gave it
+                if !prune.is_empty()
+                    && fields.iter().any(|f| {
+                        f.get("name")
+                            .and_then(Value::as_str)
+                            .is_some_and(|n| prune.contains(n) && holds(&value, n, has_int_field))
+                    })
+                {
                     return Outcome::Pruned(value);
                 }
                 let start = pruned.len();
@@ -456,7 +458,7 @@ pub fn normalise_values(values: Vec<Value>, schema: &Value, cfg: &NormaliseConfi
 
 /// Normalise a list of JSON values, pruning the records that hold a non-null value for a
 /// field named in `prune`. Names are record fields of the schema, at any depth; a scalar
-/// promoted to a record goes by its promoted field (e.g. `mainsnak__string`).
+/// promoted to a record goes by its promoted field (e.g. `calibration__string`).
 ///
 /// - A pruned record that is a field of another record takes that record with it, up to
 ///   an array element or map entry, which is removed on its own. Reaching the root makes
@@ -464,6 +466,8 @@ pub fn normalise_values(values: Vec<Value>, schema: &Value, cfg: &NormaliseConfi
 /// - An array or map left empty by pruning is removed from its array or map, or is null
 ///   as a record field. One empty in the input is normalised as usual.
 /// - The named fields are left out of every record (see `prune_schema`).
+///
+/// `schema` is the inferred schema, not yet pruned: names are matched against its fields.
 ///
 /// Returns the rows and the removed values, each with its row, its path from the row's
 /// root (after `wrap_root`), and its input value.

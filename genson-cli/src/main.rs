@@ -247,9 +247,8 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Infer schema - genson-core should handle any panics and return proper errors
-    let mut result = infer_json_schema(&json_strings, Some(config.clone()))
+    let result = infer_json_schema(&json_strings, Some(config.clone()))
         .map_err(|e| format!("Schema inference failed: {}", e))?;
-    prune_schema(&mut result.schema, &prune);
 
     if do_normalise {
         let schema = &result.schema;
@@ -303,7 +302,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         }
     } else {
         // Pretty-print the schema
-        anstream::println!("{}", serde_json::to_string_pretty(&result.schema)?);
+        let mut schema = result.schema;
+        prune_schema(&mut schema, &prune);
+        anstream::println!("{}", serde_json::to_string_pretty(&schema)?);
     }
 
     anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
@@ -360,7 +361,7 @@ fn print_help() {
     anstream::println!(
         "    --prune <fields>      Prune records holding these fields (comma-separated)"
     );
-    anstream::println!("                          Example: --prune mainsnak__string,error");
+    anstream::println!("                          Example: --prune error,calibration__string");
     anstream::println!("    --prune-output <file> Write the pruned values to this file as JSONL");
     anstream::println!("    --map-encoding <mode> Choose map encoding (mapping|entries|kv)");
     anstream::println!("                          mapping = Avro/JSON object (shared dict)");

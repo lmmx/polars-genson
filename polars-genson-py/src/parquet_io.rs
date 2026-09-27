@@ -271,11 +271,14 @@ pub fn normalise_from_parquet(
     };
 
     let present: Vec<&str> = json_strings.iter().flatten().map(String::as_str).collect();
-    let mut result = infer_json_schema_from_strings(&present, config).map_err(|e| {
+    let result = infer_json_schema_from_strings(&present, config).map_err(|e| {
         pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
     })?;
     drop(present);
-    prune_schema(&mut result.schema, &prune);
+    // Rows are normalised against the inferred schema (prune names are matched against its
+    // fields) and written with the pruned one
+    let mut out_schema = result.schema.clone();
+    prune_schema(&mut out_schema, &prune);
 
     if debug {
         anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
@@ -337,7 +340,7 @@ pub fn normalise_from_parquet(
     let mut metadata = HashMap::new();
     metadata.insert(
         "genson_avro_schema".to_string(),
-        serde_json::to_string(&result.schema).map_err(|e| {
+        serde_json::to_string(&out_schema).map_err(|e| {
             pyo3::exceptions::PyValueError::new_err(format!("Failed to serialize schema: {}", e))
         })?,
     );
@@ -350,7 +353,7 @@ pub fn normalise_from_parquet(
 
     if typed {
         let fields =
-            avro_record_fields(&result.schema).map_err(pyo3::exceptions::PyValueError::new_err)?;
+            avro_record_fields(&out_schema).map_err(pyo3::exceptions::PyValueError::new_err)?;
         // Several batches per thread so uneven row sizes still spread over the pool
         let batch_rows = json_strings
             .len()

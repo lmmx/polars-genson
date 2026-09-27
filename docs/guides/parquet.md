@@ -98,4 +98,5 @@ schema.
 
 - [Factor out repeated embedded data](extract-invariants.md), for JSON that carries the
   same nested data in many rows.
+- [Remove malformed records](prune.md), for JSON with broken records to leave out.
 - [Process large inputs](large-inputs.md), for memory use on big files.

@@ -161,3 +161,35 @@ fn test_without_prune_bad_snaks_kept() {
     assert!(rows.iter().any(|r| has_field(r, "error")));
     assert_eq!(claims(&rows[5]).len(), 1);
 }
+
+/// Names are the schema's own: a scalar among records in an array goes by the name
+/// inference gives it (`__string` for items of a root-level array), not one derived from
+/// the enclosing field
+#[test]
+fn test_prune_by_inferred_names() {
+    let output = Command::cargo_bin("genson-cli")
+        .unwrap()
+        .args([
+            "--ndjson",
+            "--normalise",
+            "--prune",
+            "error,calibration__string,__string",
+            "tests/data/prune_sensors.jsonl",
+        ])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let rows: Vec<Value> = String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    assert_eq!(
+        rows,
+        vec![
+            json!({"sensor": "a", "readings": [{"t": 1, "value": 3.2, "calibration": {"offset": 0.1}}]}),
+            json!({"sensor": "b", "readings": null}),
+            json!({"sensor": "c", "readings": [{"t": 1, "value": 1.5, "calibration": null}]}),
+        ]
+    );
+}

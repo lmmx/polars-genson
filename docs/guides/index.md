@@ -11,4 +11,6 @@ does, see [How it works](../concepts/index.md).
   Parquet output, keeping other columns alongside.
 - [Factor out repeated embedded data](extract-invariants.md): store data that repeats
   per key once, in a lookup table.
+- [Remove malformed records](prune.md): leave out records holding named fields, and keep
+  them in a separate file.
 - [Process large inputs](large-inputs.md): speed and memory for big files.

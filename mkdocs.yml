@@ -125,6 +125,7 @@ plugins:
           - guides/normalise.md: Normalise a JSON column into typed columns, a struct column or JSON strings
           - guides/parquet.md: Normalise a JSON string column in a Parquet file straight to typed Parquet output
           - guides/extract-invariants.md: Move data repeated per key (embedded copies of referenced records) into a lookup table
+          - guides/prune.md: Remove records holding named fields (malformed entries) and keep them in a separate file
           - guides/large-inputs.md: Speed and memory for large inputs
         How it works:
           - concepts/type-mapping.md: Which Polars dtype each kind of JSON value becomes
@@ -147,6 +148,7 @@ nav:
       - Normalise a column: guides/normalise.md
       - JSON in Parquet: guides/parquet.md
       - Factor out repeated data: guides/extract-invariants.md
+      - Remove malformed records: guides/prune.md
       - Large inputs: guides/large-inputs.md
   - How it works:
       - concepts/index.md

@@ -730,7 +730,7 @@ def normalise_from_parquet(
         Record fields, at any depth, whose records are pruned: wherever a record holds a
         non-null value for one, the record is removed, and each removed value is written
         to ``prune_output_path``. A scalar promoted to a record goes by its promoted
-        field (e.g. ``mainsnak__string``). A pruned record that is a field of another
+        field (e.g. ``calibration__string``). A pruned record that is a field of another
         record takes that record with it, up to an array element or map entry; an array
         or map left empty is removed too. The fields are left out of the output schema.
         Requires ``prune_output_path``.
