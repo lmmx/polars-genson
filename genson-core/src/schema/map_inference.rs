@@ -663,7 +663,7 @@ pub(crate) fn rewrite_objects(
                             }
                             if all_items_ok {
                                 let unify_start = std::time::Instant::now();
-                                if let Some(unified_items) = check_unifiable_schemas(
+                                if let Some(unified_items) = check_unifiable_item_schemas(
                                     &item_schemas,
                                     field_name.unwrap_or(""),
                                     config,
