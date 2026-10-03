@@ -122,7 +122,8 @@ fn contains_anyof(value: &Value) -> bool {
 
 /// Value schema for an object forced to be a map: the values' common schema when they
 /// share one (unified if they differ, unless a key is in `no_unify`), otherwise string,
-/// which holds every value as text so none is lost.
+/// which holds every value as text so none is lost. An object empty in every row has no
+/// values to type: null, as for an always-empty array's items.
 pub(crate) fn forced_map_value_schema(
     obj: &serde_json::Map<String, Value>,
     field_name: Option<&str>,
@@ -137,7 +138,7 @@ pub(crate) fn forced_map_value_schema(
         .and_then(|p| p.as_object())
         .filter(|p| !p.is_empty())
     else {
-        return string();
+        return serde_json::json!({ "type": "null" });
     };
     let first = non_null_view(props.values().next().unwrap());
     if props.values().all(|v| non_null_view(v).eq(&first)) {
@@ -206,6 +207,19 @@ fn process_anyof_unions(
     }
 
     made_changes
+}
+
+/// Whether a schema's `type` is `"object"`, or `["null", "object"]`.
+fn is_object_type(t: Option<&Value>) -> bool {
+    match t {
+        Some(Value::String(s)) => s == "object",
+        Some(Value::Array(ts)) => {
+            ts.len() == 2
+                && ts.contains(&Value::String("null".into()))
+                && ts.contains(&Value::String("object".into()))
+        }
+        _ => false,
+    }
 }
 
 /// Check if an object schema contains any fields specified in force_parent_field_types.
@@ -416,6 +430,32 @@ pub(crate) fn rewrite_objects(
                     }
                 }
             }
+        }
+
+        // --- An object empty in every row, where every object is a map candidate ---
+        // A record with no fields cannot be written (Parquet has no empty struct); as a
+        // map it has no values to type, so null, as for an always-empty array's items
+        if config.map_threshold == 0
+            && !(is_root && config.no_root_map)
+            && is_object_type(obj.get("type"))
+            && obj.get("additionalProperties").is_none()
+            && obj
+                .get("properties")
+                .and_then(|p| p.as_object())
+                .is_none_or(|p| p.is_empty())
+        {
+            debug!(
+                config,
+                "Always-empty object at field {:?} becomes a map of null",
+                field_name.unwrap_or("root")
+            );
+            obj.shift_remove("properties");
+            obj.shift_remove("required");
+            obj.insert(
+                "additionalProperties".to_string(),
+                serde_json::json!({ "type": "null" }),
+            );
+            return;
         }
 
         // --- Heuristic rewrite ---
