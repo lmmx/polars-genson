@@ -99,7 +99,11 @@ fn test_forced_map_of_records_keeps_the_record_in_parallel() {
     let row = r#"{"m": {"enwiki": {"title": "A", "badges": []}}}"#;
     let values = forced_map_values_parallel(&[row; 12]);
     assert_eq!(values["type"], json!("object"), "{values}");
-    assert_eq!(values["properties"]["title"]["type"], json!("string"), "{values}");
+    assert_eq!(
+        values["properties"]["title"]["type"],
+        json!("string"),
+        "{values}"
+    );
 }
 
 /// Empty maps in other strings (Wikidata items without sitelinks) leave the values' type.
@@ -122,7 +126,9 @@ fn test_forced_map_all_empty_is_null_in_parallel() {
 
 #[test]
 fn test_forced_map_integer_values_in_parallel() {
-    let rows: Vec<String> = (0..12).map(|i| format!(r#"{{"m": {{"k{i}": {i}}}}}"#)).collect();
+    let rows: Vec<String> = (0..12)
+        .map(|i| format!(r#"{{"m": {{"k{i}": {i}}}}}"#))
+        .collect();
     let rows: Vec<&str> = rows.iter().map(String::as_str).collect();
     let values = forced_map_values_parallel(&rows);
     assert_eq!(values["type"], json!("integer"), "{values}");

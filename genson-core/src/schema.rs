@@ -307,7 +307,8 @@ fn apply_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
                                         field_obj.shift_remove("properties");
                                         field_obj.shift_remove("required");
                                         field_obj.insert("type".to_string(), json!("object"));
-                                        field_obj.insert("additionalProperties".to_string(), values);
+                                        field_obj
+                                            .insert("additionalProperties".to_string(), values);
                                     }
                                 }
                             }
