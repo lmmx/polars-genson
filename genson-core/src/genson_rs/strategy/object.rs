@@ -18,6 +18,9 @@ pub struct ObjectStrategy {
     extra_keywords: Value,
     properties: PropMap<SchemaNode>,
     pattern_properties: PropMap<SchemaNode>,
+    /// A map's value schema (`additionalProperties` as a schema), merged from every
+    /// schema added like a property, not kept from the first as other keywords are
+    additional_properties: Option<SchemaNode>,
     required_properties: Option<KeySet<String>>,
     include_empty_required: bool,
 }
@@ -28,6 +31,7 @@ impl ObjectStrategy {
             extra_keywords: json!({}),
             properties: PropMap::default(),
             pattern_properties: PropMap::default(),
+            additional_properties: None,
             required_properties: None,
             include_empty_required: false,
         }
@@ -57,7 +61,11 @@ impl SchemaStrategy for ObjectStrategy {
             }
             let value = match key.as_str() {
                 // An empty map in the builder means the first one seen was empty
-                "properties" | "patternProperties" if value.is_object() => json!({}),
+                "properties" | "patternProperties" | "additionalProperties"
+                    if value.is_object() =>
+                {
+                    json!({})
+                }
                 "required" => Value::Null,
                 _ => value.clone(),
             };
@@ -173,6 +181,13 @@ impl SchemaStrategy for ObjectStrategy {
                     "patternProperties",
                 );
             }
+            if let Some(values) = schema_object.get("additionalProperties") {
+                if values.is_object() {
+                    self.additional_properties
+                        .get_or_insert_with(SchemaNode::new)
+                        .add_schema(DataType::Schema(values));
+                }
+            }
             self.merge_required(schema_object);
         } else {
             panic!("Invalid schema type - must be a valid JSON object")
@@ -185,6 +200,7 @@ impl SchemaStrategy for ObjectStrategy {
         // Phase 1: Collect all properties and required sets from all schemas
         let mut property_groups: PropMap<Vec<&Value>> = PropMap::default();
         let mut pattern_property_groups: PropMap<Vec<&Value>> = PropMap::default();
+        let mut additional_properties: Vec<Value> = Vec::new();
         let mut all_required_sets: Vec<KeySet<String>> = Vec::new();
 
         for schema in schemas {
@@ -208,6 +224,13 @@ impl SchemaStrategy for ObjectStrategy {
                             .entry(pattern.clone())
                             .or_default()
                             .push(sub_schema);
+                    }
+                }
+
+                // Collect map value schemas
+                if let Some(values) = schema_obj.get("additionalProperties") {
+                    if values.is_object() {
+                        additional_properties.push(values.clone());
                     }
                 }
 
@@ -261,6 +284,13 @@ impl SchemaStrategy for ObjectStrategy {
             node.add_schemas(&schema_values);
         }
 
+        // Phase 3b: Merge map value schemas
+        if !additional_properties.is_empty() {
+            self.additional_properties
+                .get_or_insert_with(SchemaNode::new)
+                .add_schemas(&additional_properties);
+        }
+
         // Phase 4: Merge required fields (intersection of all sets)
         if !all_required_sets.is_empty() {
             let final_required = all_required_sets
@@ -284,6 +314,9 @@ impl SchemaStrategy for ObjectStrategy {
         }
         if !self.pattern_properties.is_empty() {
             schema["patternProperties"] = self.properties_to_schema(&self.pattern_properties);
+        }
+        if let Some(values) = &self.additional_properties {
+            schema["additionalProperties"] = values.to_schema();
         }
         if self.required_properties.is_some() || self.include_empty_required {
             let mut required_props: Vec<String>;
@@ -348,6 +381,7 @@ impl ObjectStrategy {
         }
 
         let mut groups: HashMap<&str, Vec<&Value>, FxBuildHasher> = HashMap::default();
+        let mut additional_properties: Vec<&Value> = Vec::new();
         for schema in schemas {
             let Value::Object(schema_object) = schema else {
                 panic!("Invalid schema type - must be a valid JSON object")
@@ -361,7 +395,17 @@ impl ObjectStrategy {
                     groups.entry(prop.as_str()).or_default().push(sub_schema);
                 }
             }
+            if let Some(values) = schema_object.get("additionalProperties") {
+                if values.is_object() {
+                    additional_properties.push(values);
+                }
+            }
             self.merge_required(schema_object);
+        }
+        if !additional_properties.is_empty() {
+            self.additional_properties
+                .get_or_insert_with(SchemaNode::new)
+                .add_schemas_par(&additional_properties);
         }
 
         self.properties.par_iter_mut().for_each(|(prop, node)| {
