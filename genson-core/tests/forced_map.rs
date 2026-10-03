@@ -86,3 +86,44 @@ fn test_forced_map_unifies_records_with_only_empty_arrays() {
         "{values}"
     );
 }
+
+/// Above PARALLEL_THRESHOLD (10) strings, each string's schema is built and forced on its
+/// own before they are merged; a forced map keeps its values' type there too.
+fn forced_map_values_parallel(rows: &[&str]) -> Value {
+    assert!(rows.len() >= 10, "needs the parallel path");
+    forced_map_values(rows)
+}
+
+#[test]
+fn test_forced_map_of_records_keeps_the_record_in_parallel() {
+    let row = r#"{"m": {"enwiki": {"title": "A", "badges": []}}}"#;
+    let values = forced_map_values_parallel(&[row; 12]);
+    assert_eq!(values["type"], json!("object"), "{values}");
+    assert_eq!(values["properties"]["title"]["type"], json!("string"), "{values}");
+}
+
+/// Empty maps in other strings (Wikidata items without sitelinks) leave the values' type.
+#[test]
+fn test_forced_map_with_empty_rows_keeps_the_record_in_parallel() {
+    let mut rows = vec![r#"{"m": {}}"#; 10];
+    rows.push(r#"{"m": {"specieswiki": {"title": "A", "badges": []}}}"#);
+    rows.push(r#"{"m": {"enwiki": {"title": "B", "badges": ["Q17437796"]}}}"#);
+    let values = forced_map_values_parallel(&rows);
+    assert_eq!(values["type"], json!("object"), "{values}");
+    let badges = &values["properties"]["badges"];
+    assert_eq!(badges["items"]["type"], json!("string"), "{values}");
+}
+
+#[test]
+fn test_forced_map_all_empty_is_null_in_parallel() {
+    let values = forced_map_values_parallel(&[r#"{"m": {}}"#; 12]);
+    assert_eq!(values, json!({"type": "null"}));
+}
+
+#[test]
+fn test_forced_map_integer_values_in_parallel() {
+    let rows: Vec<String> = (0..12).map(|i| format!(r#"{{"m": {{"k{i}": {i}}}}}"#)).collect();
+    let rows: Vec<&str> = rows.iter().map(String::as_str).collect();
+    let values = forced_map_values_parallel(&rows);
+    assert_eq!(values["type"], json!("integer"), "{values}");
+}

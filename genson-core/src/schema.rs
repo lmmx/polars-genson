@@ -289,14 +289,26 @@ fn apply_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
                         if let Some(forced) = config.force_field_types.get(field_name) {
                             if forced == "map" {
                                 if let Some(field_obj) = field_schema.as_object_mut() {
-                                    // Convert to map schema
-                                    field_obj.shift_remove("properties");
-                                    field_obj.shift_remove("required");
-                                    field_obj.insert("type".to_string(), json!("object"));
-                                    field_obj.insert(
-                                        "additionalProperties".to_string(),
-                                        json!({"type": "string"}),
-                                    );
+                                    // Convert to map schema, keeping its values' schema (as
+                                    // the final rewrite does) so the merge unifies them
+                                    // across strings. An object with no keys in this string
+                                    // is left as it is: it has no values to type, and
+                                    // merges with the other strings' maps as it stands.
+                                    let has_keys = field_obj
+                                        .get("properties")
+                                        .and_then(|p| p.as_object())
+                                        .is_some_and(|p| !p.is_empty());
+                                    if has_keys {
+                                        let values = forced_map_value_schema(
+                                            field_obj,
+                                            Some(field_name.as_str()),
+                                            config,
+                                        );
+                                        field_obj.shift_remove("properties");
+                                        field_obj.shift_remove("required");
+                                        field_obj.insert("type".to_string(), json!("object"));
+                                        field_obj.insert("additionalProperties".to_string(), values);
+                                    }
                                 }
                             }
                         }
