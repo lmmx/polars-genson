@@ -424,10 +424,13 @@ fn unify_array_schemas(
         return None;
     }
 
-    // Extract all items schemas
+    // Extract all items schemas. An array seen only empty has no `items` or empty ones
+    // (`{}`) and constrains nothing, so it unifies with any other array
     let mut items_schemas = Vec::<&Value>::new();
     for (i, &schema) in schemas.iter().enumerate() {
-        if let Some(items) = extract_field_from_nullable_schema(schema, "items") {
+        let items = extract_field_from_nullable_schema(schema, "items")
+            .filter(|items| items.as_object().is_none_or(|o| !o.is_empty()));
+        if let Some(items) = items {
             debug_verbose!(
                 config,
                 "{}: Array schema[{}] items: {}",
@@ -437,9 +440,13 @@ fn unify_array_schemas(
             );
             items_schemas.push(items);
         } else {
-            debug!(config, "{}: Array schema[{}] missing items", path, i);
-            return None;
+            debug!(config, "{}: Array schema[{}] has no items (empty)", path, i);
         }
+    }
+    match items_schemas.as_slice() {
+        [] => return Some(json!({ "type": "array" })),
+        [only] => return Some(json!({ "type": "array", "items": only })),
+        _ => {}
     }
 
     // Recursively unify the items

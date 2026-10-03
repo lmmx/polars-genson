@@ -50,3 +50,39 @@ fn test_forced_map_with_mixed_scalar_values_falls_back_to_string() {
     let values = forced_map_values(&[r#"{"m": {"a": 1, "b": "x"}}"#]);
     assert_eq!(values["type"], json!("string"));
 }
+
+/// A field holding an empty array in some values and items in others unifies to an array
+/// of the items' type (an empty array's schema has no `items`), not a string fallback:
+/// Wikidata sitelinks' `badges`.
+#[test]
+fn test_forced_map_unifies_empty_and_non_empty_arrays() {
+    let separate_rows = forced_map_values(&[
+        r#"{"m": {"enwiki": {"title": "A", "badges": ["Q17437796"]}}}"#,
+        r#"{"m": {"dewiki": {"title": "B", "badges": []}}}"#,
+    ]);
+    let same_row = forced_map_values(&[
+        r#"{"m": {"enwiki": {"title": "A", "badges": ["Q17437796"]}, "dewiki": {"title": "B", "badges": []}}}"#,
+    ]);
+    for values in [separate_rows, same_row] {
+        assert_eq!(values["type"], json!("object"), "{values}");
+        let badges = &values["properties"]["badges"];
+        assert_eq!(badges["type"], json!("array"), "{values}");
+        assert_eq!(badges["items"]["type"], json!("string"), "{values}");
+    }
+}
+
+/// Values that only ever hold empty arrays in a field still unify, keeping the array.
+#[test]
+fn test_forced_map_unifies_records_with_only_empty_arrays() {
+    let values = forced_map_values(&[
+        r#"{"m": {"enwiki": {"title": "A", "badges": []}}}"#,
+        r#"{"m": {"dewiki": {"title": "B", "badges": []}, "frwiki": {"title": "C"}}}"#,
+    ]);
+    assert_eq!(values["type"], json!("object"), "{values}");
+    // Nullable, as one value lacks it
+    assert_eq!(
+        values["properties"]["badges"]["type"],
+        json!(["null", "array"]),
+        "{values}"
+    );
+}

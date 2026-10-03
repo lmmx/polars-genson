@@ -452,6 +452,27 @@ pub(crate) fn rewrite_objects(
                 // If "map" is forced, continue with normal map conversion logic below
             }
 
+            // GUARD: An object holding a force-promoted field is a record: the field is
+            // promoted to an object within it, so its scalar schema here must not make the
+            // fields look homogeneous (all strings) and the object a map
+            if props
+                .keys()
+                .any(|k| config.force_scalar_promotion.contains(k.as_str()))
+                && !field_name.is_some_and(|n| config.force_scalar_promotion.contains(n))
+            {
+                debug!(
+                    config,
+                    "Object at field {:?} holds a force-promoted field, keeping it a record",
+                    field_name.unwrap_or("root")
+                );
+                if let Some(props_mut) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
+                    process_properties_parallel(props_mut, config, |k, v| {
+                        rewrite_objects(v, Some(k), config, false);
+                    });
+                }
+                return;
+            }
+
             // GUARD: Skip map conversion if this field was force-promoted to a scalar wrapper
             if let Some(name) = field_name {
                 if config.force_scalar_promotion.contains(name) {
