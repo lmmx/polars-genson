@@ -47,7 +47,7 @@ info:
                     "labels": {
                       "type": "object",
                       "additionalProperties": {
-                        "type": "string"
+                        "type": "null"
                       }
                     }
                   },
@@ -97,7 +97,7 @@ info:
                           "labels": {
                             "type": "object",
                             "additionalProperties": {
-                              "type": "string"
+                              "type": "null"
                             }
                           }
                         },
