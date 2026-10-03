@@ -9,7 +9,9 @@ use serde_json::{json, Value};
 const ALL_EMPTY: [&str; 2] = [r#"{"aliases": {}}"#, r#"{"aliases": {}}"#];
 
 fn aliases_schema(config: SchemaInferenceConfig) -> Value {
-    let schema = infer_json_schema_from_strings(&ALL_EMPTY, config).unwrap().schema;
+    let schema = infer_json_schema_from_strings(&ALL_EMPTY, config)
+        .unwrap()
+        .schema;
     schema["properties"]["aliases"].clone()
 }
 
@@ -22,7 +24,11 @@ fn test_always_empty_object_is_null_map_at_threshold_zero() {
         map_threshold: 0,
         ..SchemaInferenceConfig::default()
     });
-    assert_eq!(aliases["additionalProperties"], json!({"type": "null"}), "{aliases}");
+    assert_eq!(
+        aliases["additionalProperties"],
+        json!({"type": "null"}),
+        "{aliases}"
+    );
 }
 
 /// The same when the object is forced to be a map (its values were a string fallback).
@@ -32,7 +38,11 @@ fn test_always_empty_forced_map_has_null_values() {
         force_field_types: [("aliases".to_string(), "map".to_string())].into(),
         ..SchemaInferenceConfig::default()
     });
-    assert_eq!(aliases["additionalProperties"], json!({"type": "null"}), "{aliases}");
+    assert_eq!(
+        aliases["additionalProperties"],
+        json!({"type": "null"}),
+        "{aliases}"
+    );
 }
 
 /// Above the threshold (the default 20), an always-empty object is left as it was.
@@ -51,8 +61,13 @@ fn test_always_empty_map_writes_to_parquet() {
         avro: true,
         ..SchemaInferenceConfig::default()
     };
-    let schema = infer_json_schema_from_strings(&ALL_EMPTY, config).unwrap().schema;
-    let rows: Vec<Value> = ALL_EMPTY.iter().map(|r| serde_json::from_str(r).unwrap()).collect();
+    let schema = infer_json_schema_from_strings(&ALL_EMPTY, config)
+        .unwrap()
+        .schema;
+    let rows: Vec<Value> = ALL_EMPTY
+        .iter()
+        .map(|r| serde_json::from_str(r).unwrap())
+        .collect();
     let cfg = NormaliseConfig {
         map_encoding: MapEncoding::KeyValueEntries,
         empty_as_null: false,
@@ -63,7 +78,14 @@ fn test_always_empty_map_writes_to_parquet() {
     let array = values_to_struct_array(&normalised, &fields).unwrap();
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("out.parquet");
-    write_struct_column(path.to_str().unwrap(), "aliases", vec![array], &fields, None).unwrap();
+    write_struct_column(
+        path.to_str().unwrap(),
+        "aliases",
+        vec![array],
+        &fields,
+        None,
+    )
+    .unwrap();
 
     let file = std::fs::File::open(&path).unwrap();
     let reader = parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder::try_new(file)
