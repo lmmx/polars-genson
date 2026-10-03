@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.5](https://github.com/lmmx/polars-genson/compare/genson-core-v0.9.4...genson-core-v0.9.5) - 2026-10-03
+
+### <!-- 2 -->Bug Fixes
+
+- *(map-inference)* keep forced maps' value schema when merging per-string schemas ([#215](https://github.com/lmmx/polars-genson/pull/215))
+
+### <!-- 9 -->Other
+
+- lint
+
 ## [0.9.4](https://github.com/lmmx/polars-genson/compare/genson-core-v0.9.3...genson-core-v0.9.4) - 2026-10-03
 
 ### <!-- 2 -->Bug Fixes
