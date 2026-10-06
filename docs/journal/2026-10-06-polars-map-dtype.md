@@ -8,14 +8,14 @@
 - `map_encoding` defaults to `None` in `normalise_json`, `normalise_from_parquet` and `GensonNamespace.normalise_json`, resolving through `default_map_encoding()` to `"mapping"` on Polars 2+ and `"kv"` on Polars 1.x (dtypes.py:160, __init__.py:467, 777, 1274)
 - `GensonNamespace.normalise_json(decode=...)` normalises with `"mapping"` when the target dtype contains a `pl.Map`, and with `"kv"` otherwise (__init__.py:1262-1270)
 - `map_encoding="kv"` on Polars 2+ rewrites the inferred `pl.Map` dtypes to `List(Struct{key, value})` through `maps_to_entries` before `str.json_decode` (dtypes.py:169, __init__.py:1266)
-- `normalise_from_parquet(typed=True)` accepts `map_encoding` of `"kv"` or `"mapping"`; `"mapping"` writes an Arrow `Map` column, stored as a Parquet map (parquet_io.rs:195, genson-core/src/parquet.rs:350-385)
+- `normalise_from_parquet(typed=True)` accepts `map_encoding` of `"kv"` or `"mapping"`; `"mapping"` writes an Arrow `Map` column, stored as a Parquet map (parquet_io.rs:195, genson-core/src/parquet.rs:373-390)
 - Polars 1.44.2 passes 249 tests with 8 skipped (the `pl.Map`-only tests in map_dtype_test.py); Polars 2.0.0 passes 253 with 4 skipped
 - Tests asserting the entries shape pass `map_encoding="kv"` explicitly (decode_test.py, normalise_test.py, unify_maps_test.py, prune_test.py)
 
 ## Missing
 - No Polars 2.0 entry in the CI matrix, and `polars>=1.43.2` stays the declared lower bound (polars-genson-py/pyproject.toml:30)
 - `schema_to_json` serialises a `pl.Map` column as `List` of `Struct{key, value}`, so a `pl.Map` schema does not round-trip through `schema_to_json` and `json_to_schema` as a `pl.Map`
-- `_dtype_to_dict` has no `pl.Map` branch, so `schema_to_dict` renders a map as the string `Map(String, Int64)` (__init__.py:1308-1316)
+- `_dtype_to_dict` has no `pl.Map` branch, so `schema_to_dict` renders a map as the string `Map(String, Int64)` (__init__.py:1319-1328)
 - genson-cli keeps `kv` as the `--map-encoding` default — the Polars version does not apply to the CLI
 
 ## Divergence
