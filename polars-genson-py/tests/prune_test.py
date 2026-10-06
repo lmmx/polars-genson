@@ -44,6 +44,7 @@ def normalise(src, tmp_path, *, typed, prune=True):
         "claims",
         out,
         typed=typed,
+        map_encoding="kv",
         **CLAIMS_OPTIONS,
         **({"prune": PRUNE, "prune_output_path": pruned} if prune else {}),
     )

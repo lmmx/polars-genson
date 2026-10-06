@@ -377,7 +377,7 @@ class TestPolarsSchemaInference:
         assert schema == expected
 
     def test_map_matches_normalised_dtype(self):
-        """A map infers as the key/value list dtype that normalise_json produces."""
+        """A map infers as the dtype that normalise_json produces (`pl.Map`, if any)."""
         df = pl.DataFrame(
             {
                 "json_col": [
@@ -388,9 +388,12 @@ class TestPolarsSchemaInference:
         )
 
         schema = df.genson.infer_polars_schema("json_col", map_threshold=1)
-        kv = pl.List(pl.Struct({"key": pl.String, "value": pl.Int64}))
+        if hasattr(pl, "Map"):
+            scores = pl.Map(pl.String, pl.Int64)
+        else:
+            scores = pl.List(pl.Struct({"key": pl.String, "value": pl.Int64}))
 
-        assert schema == pl.Schema({"name": pl.String, "scores": kv})
+        assert schema == pl.Schema({"name": pl.String, "scores": scores})
         assert schema == df.genson.normalise_json("json_col", map_threshold=1).schema
 
     def test_nullable_field_json_schema_route(self):

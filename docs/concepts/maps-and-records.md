@@ -6,8 +6,9 @@ A JSON object can play two different roles:
   its own column, so it becomes a Polars **struct**.
 - A **map** has keys that are data, like `{"en": "hello", "fr": "bonjour"}` or scores
   keyed by subject. The keys vary from row to row, so making each key a struct field
-  would give one field per distinct key. genson instead encodes a map as a **list of
-  `{key, value}` structs**, since Polars has no map type.
+  would give one field per distinct key. genson instead makes a map a Polars **`pl.Map`**
+  (Polars 2+), or on Polars 1.x a **list of `{key, value}` structs**, since 1.x has no
+  map type.
 
 genson decides which role an object plays from what it sees across all rows.
 
@@ -85,8 +86,10 @@ To keep particular fields out of this merging, list them in `no_unify`.
 
 ## Map encodings
 
-Typed output always uses the list-of-`{key, value}` encoding. When you ask for JSON
-strings instead (`decode=False`), `map_encoding` chooses how maps are written:
+`map_encoding` chooses how maps are written. It defaults to `"mapping"` on Polars 2+, so
+the typed output holds `pl.Map` columns, and to `"kv"` (a list of `{key, value}` structs)
+on Polars 1.x. Passing `map_encoding="kv"` on Polars 2+ keeps the list-of-structs dtype.
+With `decode=False` the JSON strings are written in the chosen encoding:
 
 ```python exec="on" source="above" result="text" session="maps"
 for encoding in ("kv", "mapping", "entries"):

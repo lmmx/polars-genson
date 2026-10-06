@@ -7,6 +7,6 @@ expression: fields_vec
 - - tags
   - "List[String]"
 - - labels
-  - "List[Struct[key:String,value:String]]"
+  - "Map[String,String]"
 - - active
   - Boolean

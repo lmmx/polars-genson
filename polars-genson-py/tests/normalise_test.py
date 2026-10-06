@@ -220,7 +220,7 @@ def test_normalise_map_threshold_forces_map_kv():
         '{"id":"A","labels":{"en":"Hello"}}',
         '{"id":"B","labels":{"fr":"Bonjour"}}',
     ]
-    out = run_norm(rows, map_threshold=1)
+    out = run_norm(rows, map_threshold=1, map_encoding="kv")
     # Labels stabilised as a map
     assert '"labels":[{"key":"en","value":"Hello"}]' in out[0]
     assert '"labels":[{"key":"fr","value":"Bonjour"}]' in out[1]
@@ -232,7 +232,7 @@ def test_normalise_scalar_to_map_kv():
         '{"id":"A","labels":"foo"}',
         '{"id":"B","labels":{"en":"Hello"}}',
     ]
-    out = run_norm(rows, map_threshold=0)
+    out = run_norm(rows, map_threshold=0, map_encoding="kv")
     # Scalar widened into {"default": ...}
     assert out == [
         '{"id":"A","labels":[{"key":"labels__string","value":"foo"}]}',
@@ -299,7 +299,9 @@ def test_normalise_map_currently_expands_to_struct():
     ]
 
     df = pl.DataFrame({"json_data": rows})
-    out = df.genson.normalise_json("json_data", map_threshold=1).to_dicts()
+    out = df.genson.normalise_json(
+        "json_data", map_threshold=1, map_encoding="kv"
+    ).to_dicts()
 
     # Full output snapshot, not partial assertion
     assert out == [
@@ -336,7 +338,9 @@ def test_normalise_map_readme_demo():
         }
     )
 
-    out = df.genson.normalise_json("json_data", map_threshold=0).to_dicts()
+    out = df.genson.normalise_json(
+        "json_data", map_threshold=0, map_encoding="kv"
+    ).to_dicts()
 
     assert out == [
         {"id": 123, "tags": None, "labels": None, "active": True},
@@ -434,7 +438,9 @@ def test_forced_map_keeps_value_type():
         {"json_data": ['{"scores": {"maths": 90}}', '{"scores": {"art": 75}}']}
     )
 
-    out = df.genson.normalise_json("json_data", force_field_types={"scores": "map"})
+    out = df.genson.normalise_json(
+        "json_data", force_field_types={"scores": "map"}, map_encoding="kv"
+    )
 
     assert out.schema["scores"] == pl.List(
         pl.Struct({"key": pl.String, "value": pl.Int64})

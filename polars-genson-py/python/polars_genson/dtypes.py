@@ -4,6 +4,9 @@ import re
 
 import polars as pl
 
+HAS_MAP_DTYPE = hasattr(pl, "Map")
+"""Whether this Polars has a native Map dtype (2.0+)."""
+
 
 def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
     """Parse a dtype string like 'Struct[id:Int64,name:String]' into actual Polars DataType."""
@@ -54,6 +57,17 @@ def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
         inner_type_str = dtype_str[5:-1]  # Remove "List[" and "]"
         inner_type = _parse_polars_dtype(inner_type_str)
         return pl.List(inner_type)
+
+    # Handle Map[String,ValueType]: a real `pl.Map` on Polars >= 2, otherwise the
+    # list-of-{key,value}-structs encoding that older Polars uses to represent maps
+    if dtype_str.startswith("Map[") and dtype_str.endswith("]"):
+        key_str, value_str = _split_struct_fields(dtype_str[4:-1])
+        value_type = _parse_polars_dtype(value_str)
+        if HAS_MAP_DTYPE:
+            return pl.Map(_parse_polars_dtype(key_str), value_type)
+        return pl.List(
+            pl.Struct([pl.Field("key", pl.Utf8), pl.Field("value", value_type)])
+        )
 
     # Handle Array[ItemType,Size]
     if dtype_str.startswith("Array[") and dtype_str.endswith("]"):
@@ -128,3 +142,47 @@ def _split_struct_fields(fields_str: str) -> list[str]:
         fields.append(current_field.strip())
 
     return fields
+
+
+def contains_map_dtype(dtype: pl.DataType) -> bool:
+    """Whether a dtype is, or nests, a `pl.Map`."""
+    if not HAS_MAP_DTYPE:
+        return False
+    if isinstance(dtype, pl.Map):
+        return True
+    if isinstance(dtype, pl.Struct):
+        return any(contains_map_dtype(f.dtype) for f in dtype.fields)
+    if isinstance(dtype, (pl.List, pl.Array)):
+        return contains_map_dtype(dtype.inner)
+    return False
+
+
+def default_map_encoding() -> str:
+    """The map encoding that matches the dtype of inferred maps on this Polars.
+
+    Maps are `pl.Map` on Polars 2+ (decoded from plain JSON objects, i.e. ``mapping``)
+    and lists of ``{key, value}`` structs before that (``kv``).
+    """
+    return "mapping" if HAS_MAP_DTYPE else "kv"
+
+
+def maps_to_entries(dtype: pl.DataType) -> pl.DataType:
+    """Rewrite each nested `pl.Map` as the list of ``{key, value}`` structs."""
+    if not contains_map_dtype(dtype):
+        return dtype
+    if isinstance(dtype, pl.Map):
+        return pl.List(
+            pl.Struct(
+                [
+                    pl.Field("key", maps_to_entries(dtype.key)),
+                    pl.Field("value", maps_to_entries(dtype.value)),
+                ]
+            )
+        )
+    if isinstance(dtype, pl.Struct):
+        return pl.Struct(
+            [pl.Field(f.name, maps_to_entries(f.dtype)) for f in dtype.fields]
+        )
+    if isinstance(dtype, pl.Array):
+        return pl.Array(maps_to_entries(dtype.inner), dtype.size)
+    return pl.List(maps_to_entries(dtype.inner))
