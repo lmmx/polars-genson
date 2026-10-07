@@ -1,5 +1,6 @@
 """Render the json_to_map explainer, its teleprompter or its captions, from voiceover.txt.
 
+    uv run --group video video/render.py                        # all three
     uv run --group video video/render.py explainer              # video/json_to_map.mp4
     uv run --group video video/render.py teleprompter           # video/teleprompter.mp4
     uv run --group video video/render.py captions               # video/json_to_map.srt
@@ -25,7 +26,7 @@ OUTPUTS = {
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("output", choices=OUTPUTS)
+    parser.add_argument("output", nargs="?", default="all", choices=[*OUTPUTS, "all"])
     parser.add_argument(
         "--pace",
         type=float,
@@ -38,8 +39,15 @@ def main():
     scenes = timeline(args.pace)
     end = scenes[-1].start + scenes[-1].duration
     print(f"{len(scenes)} scenes at {args.pace} words/s: {end:.1f} s")
-    path = HERE / OUTPUTS[args.output]
-    if args.output == "captions":
+    outputs = OUTPUTS if args.output == "all" else [args.output]
+    for output in outputs:
+        render(output, scenes, preview=args.preview)
+
+
+def render(output, scenes, *, preview=False):
+    """Write one output (or, with `preview`, a video's PNG frames)."""
+    path = HERE / OUTPUTS[output]
+    if output == "captions":
         path.write_text(captions(scenes))
         print(path)
         return
@@ -50,13 +58,13 @@ def main():
     import json_to_map_video
     import teleprompter
 
-    module = json_to_map_video if args.output == "explainer" else teleprompter
+    module = json_to_map_video if output == "explainer" else teleprompter
     compiled = module.build(scenes).compile()
-    if args.preview:
+    if preview:
         out = HERE / "preview"
         out.mkdir(exist_ok=True)
         for seconds in module.preview_times(scenes):
-            frame = out / f"{args.output}_{seconds:05.1f}s.png"
+            frame = out / f"{output}_{seconds:05.1f}s.png"
             compiled.save_png(str(frame), index=int(seconds * module.FPS))
             print(frame)
     else:
