@@ -28,8 +28,8 @@ def test_decode_basic_record_schema_and_values():
     ]
 
 
-def test_decode_map_to_kv_struct():
-    """Decode a map field into a list of {key,value} structs (default kv encoding)."""
+def test_decode_map_to_map():
+    """Decode a map field into a `pl.Map` (the default mapping encoding)."""
     df = pl.DataFrame(
         {
             "json_data": [
@@ -39,6 +39,27 @@ def test_decode_map_to_kv_struct():
         }
     )
     out = df.genson.normalise_json("json_data", decode=True, map_threshold=2)
+
+    assert out.schema == {"labels": pl.Map(pl.String, pl.String)}
+    assert out.to_dicts() == [
+        {"labels": {"en": "Hello", "fr": "Bonjour"}},
+        {"labels": {"es": "Hola"}},
+    ]
+
+
+def test_decode_map_to_kv_struct():
+    """Decode a map field into a list of {key,value} structs (kv encoding)."""
+    df = pl.DataFrame(
+        {
+            "json_data": [
+                '{"labels": {"en": "Hello", "fr": "Bonjour"}}',
+                '{"labels": {"es": "Hola"}}',
+            ]
+        }
+    )
+    out = df.genson.normalise_json(
+        "json_data", decode=True, map_threshold=2, map_encoding="kv"
+    )
 
     # Schema should encode map as list of {key,value}
     assert out.schema == {
@@ -93,7 +114,6 @@ def test_decode_with_coerce_strings_enabled():
     assert out.to_dicts() == [{"id": 123}, {"id": 456}]
 
 
-@mark.skip(reason="Not implemented non-kv encodings for infer polars schema")
 def test_decode_map_encoding_mapping():
     """Decode JSON objects as plain Polars Structs when map_encoding='mapping'."""
     df = pl.DataFrame(
@@ -109,7 +129,7 @@ def test_decode_map_encoding_mapping():
     assert out.to_dicts() == [{"labels": {"en": "Hello", "fr": "Bonjour"}}]
 
 
-@mark.skip(reason="Not implemented non-kv encodings for infer polars schema")
+@mark.skip(reason="Not implemented: entries has no Polars dtype")
 def test_decode_map_encoding_entries():
     """Decode JSON objects as a list of single-entry Structs when map_encoding='entries'."""
     df = pl.DataFrame(

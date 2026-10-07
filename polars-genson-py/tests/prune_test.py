@@ -21,6 +21,8 @@ CLAIMS_OPTIONS = {
     "no_unify": {"qualifiers"},
     "wrap_root": "claims",
     "keep_columns": ["id"],
+    # A kv entry's `value` is not a record field, so pruning "value" must leave it
+    "map_encoding": "kv",
 }
 
 

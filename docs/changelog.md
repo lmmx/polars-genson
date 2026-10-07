@@ -5,6 +5,20 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **Polars ≥ 2 is required.** `import polars_genson` raises `ImportError` on Polars 1.x.
+- **Maps are `pl.Map` by default.** `map_encoding` defaults to `"mapping"` throughout
+  the Python package, as in genson-core and genson-cli: `infer_polars_schema`,
+  `avro_to_polars_schema` and `normalise_json(decode=True)` give
+  `pl.Map(pl.String, V)`, JSON string output writes each map as an object
+  (`{"en": "Hello"}`), and `normalise_from_parquet(typed=True)` writes Parquet maps.
+  Pass `map_encoding="kv"` for lists of `{key, value}` structs, as before.
+- **`normalise_json(decode=schema)` decodes maps in the schema's shape:** a `pl.Map`
+  from objects, a list of `{key, value}` structs from key/value lists, unless
+  `map_encoding` is given.
+- **`schema_to_dict` renders a `pl.Map`** as `{"map": {"key": ..., "value": ...}}`.
+- **genson-core's `avro_to_arrow_type` and `avro_record_fields` take `native_map`,**
+  which writes an Avro map as an Arrow `Map` in place of a list of `{key, value}`
+  structs.
 - **`infer_polars_schema` and `avro_to_polars_schema` take `map_encoding`.** Each map
   gets the dtype its encoding decodes to, so a schema can be asked for in the shape the
   data was normalised in. `"kv"`, the default, gives the list of `{key, value}` structs

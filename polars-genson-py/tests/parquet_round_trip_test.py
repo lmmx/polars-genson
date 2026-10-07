@@ -134,39 +134,30 @@ def test_roundtrip_normalize_and_decode(sample_json_parquet, tmp_path):
     decoded = result.select(pl.col("claims").str.json_decode(dtype=dtype))
     assert decoded.unnest("claims").to_dict(as_series=False) == {
         "claims": [
-            [
-                {
-                    "key": "P31",
-                    "value": [
-                        {
-                            "mainsnak": {
-                                "property": "P31",
-                                "datavalue": [{"key": "id", "value": "Q5"}],
-                                "datatype": "wikibase-item",
-                            },
-                            "rank": "normal",
-                        }
-                    ],
-                }
-            ],
-            [
-                {
-                    "key": "P734",
-                    "value": [
-                        {
-                            "mainsnak": {
-                                "property": "P734",
-                                "datavalue": [
-                                    {"key": "text", "value": "Smith"},
-                                    {"key": "language", "value": "en"},
-                                ],
-                                "datatype": "monolingualtext",
-                            },
-                            "rank": "normal",
-                        }
-                    ],
-                }
-            ],
+            {
+                "P31": [
+                    {
+                        "mainsnak": {
+                            "property": "P31",
+                            "datavalue": {"id": "Q5"},
+                            "datatype": "wikibase-item",
+                        },
+                        "rank": "normal",
+                    }
+                ]
+            },
+            {
+                "P734": [
+                    {
+                        "mainsnak": {
+                            "property": "P734",
+                            "datavalue": {"text": "Smith", "language": "en"},
+                            "datatype": "monolingualtext",
+                        },
+                        "rank": "normal",
+                    }
+                ]
+            },
         ]
     }
 

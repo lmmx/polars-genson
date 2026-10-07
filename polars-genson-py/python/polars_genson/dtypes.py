@@ -5,11 +5,11 @@ import re
 import polars as pl
 
 
-def _parse_polars_dtype(dtype_str: str, map_encoding: str = "kv") -> pl.DataType:
+def _parse_polars_dtype(dtype_str: str, map_encoding: str = "mapping") -> pl.DataType:
     """Parse a dtype string like 'Struct[id:Int64,name:String]' into actual Polars DataType.
 
-    A map, ``Map[String,V]``, becomes the dtype its `map_encoding` decodes to: for
-    ``"kv"``, a list of ``{key, value}`` structs.
+    A map, ``Map[String,V]``, becomes the dtype its `map_encoding` decodes to: a
+    ``pl.Map`` for ``"mapping"``, a list of ``{key, value}`` structs for ``"kv"``.
     """
     dtype_str = dtype_str.strip()
 
@@ -61,12 +61,14 @@ def _parse_polars_dtype(dtype_str: str, map_encoding: str = "kv") -> pl.DataType
 
     # Handle Map[KeyType,ValueType]
     if dtype_str.startswith("Map[") and dtype_str.endswith("]"):
-        if map_encoding != "kv":
-            raise ValueError(f"map_encoding={map_encoding!r} has no Polars dtype")
         key_str, value_str = _split_struct_fields(dtype_str[4:-1])
         key_type = _parse_polars_dtype(key_str, map_encoding)
         value_type = _parse_polars_dtype(value_str, map_encoding)
-        return pl.List(pl.Struct({"key": key_type, "value": value_type}))
+        if map_encoding == "mapping":
+            return pl.Map(key_type, value_type)
+        if map_encoding == "kv":
+            return pl.List(pl.Struct({"key": key_type, "value": value_type}))
+        raise ValueError(f"map_encoding={map_encoding!r} has no Polars dtype")
 
     # Handle Array[ItemType,Size]
     if dtype_str.startswith("Array[") and dtype_str.endswith("]"):
@@ -143,3 +145,14 @@ def _split_struct_fields(fields_str: str) -> list[str]:
         fields.append(current_field.strip())
 
     return fields
+
+
+def contains_map(dtype: pl.DataType) -> bool:
+    """Whether a dtype is, or holds, a `pl.Map`."""
+    if isinstance(dtype, pl.Map):
+        return True
+    if isinstance(dtype, pl.Struct):
+        return any(contains_map(field.dtype) for field in dtype.fields)
+    if isinstance(dtype, (pl.List, pl.Array)):
+        return contains_map(dtype.inner)
+    return False

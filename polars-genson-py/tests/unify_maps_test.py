@@ -68,43 +68,19 @@ def test_unify_maps_normalisation():
     # Should have unified structure with null for missing fields
     assert normalised == [
         {
-            "letter": [
-                {
-                    "key": "a",
-                    "value": {
-                        "alphabet": 0,
-                        "frequency": 0.0817,
-                        "vowel": 0,
-                        "consonant": None,
-                    },
-                }
-            ]
+            "letter": {
+                "a": {"alphabet": 0, "frequency": 0.0817, "vowel": 0, "consonant": None}
+            }
         },
         {
-            "letter": [
-                {
-                    "key": "b",
-                    "value": {
-                        "alphabet": 1,
-                        "frequency": 0.0150,
-                        "vowel": None,
-                        "consonant": 0,
-                    },
-                }
-            ]
+            "letter": {
+                "b": {"alphabet": 1, "frequency": 0.0150, "vowel": None, "consonant": 0}
+            }
         },
         {
-            "letter": [
-                {
-                    "key": "e",
-                    "value": {
-                        "alphabet": 4,
-                        "frequency": 0.1270,
-                        "vowel": 4,
-                        "consonant": None,
-                    },
-                }
-            ]
+            "letter": {
+                "e": {"alphabet": 4, "frequency": 0.1270, "vowel": 4, "consonant": None}
+            }
         },
     ]
 
@@ -266,64 +242,40 @@ def test_wrap_scalars_promotes_scalar_to_record_normalisation():
     # Should have unified structure with promoted scalar
     assert normalised == [
         {
-            "letters": [
-                {
-                    "key": "A",
-                    "value": {
-                        "id": 1,
-                        "value": {
-                            "hello": "world",
-                            "foo": None,
-                            "value__string": None,
-                        },
-                    },
+            "letters": {
+                "A": {
+                    "id": 1,
+                    "value": {"hello": "world", "foo": None, "value__string": None},
                 }
-            ]
+            }
         },
         {
-            "letters": [
-                {
-                    "key": "B",
-                    "value": {
-                        "id": 2,
-                        "value": {
-                            "hello": None,
-                            "foo": "bar",
-                            "value__string": None,
-                        },
-                    },
+            "letters": {
+                "B": {
+                    "id": 2,
+                    "value": {"hello": None, "foo": "bar", "value__string": None},
                 }
-            ]
+            }
         },
         {
-            "letters": [
-                {
-                    "key": "C",
-                    "value": {
-                        "id": 3,
-                        "value": {
-                            "hello": None,
-                            "foo": "baz",
-                            "value__string": None,
-                        },
-                    },
+            "letters": {
+                "C": {
+                    "id": 3,
+                    "value": {"hello": None, "foo": "baz", "value__string": None},
                 }
-            ]
+            }
         },
         {
-            "letters": [
-                {
-                    "key": "D",
+            "letters": {
+                "D": {
+                    "id": 4,
                     "value": {
-                        "id": 4,
-                        "value": {
-                            "hello": None,
-                            "foo": None,
-                            "value__string": "scalar-string",
-                        },
+                        "hello": None,
+                        "foo": None,
+                        "value__string": "scalar-string",
                     },
                 }
-            ]
+            }
         },
     ]
 
@@ -398,41 +350,10 @@ def test_wrap_scalars_promotes_scalar_to_map_normalisation():
     # Should have map structure but with consistent key naming
     # Currently produces "default" but should produce "value__string"
     assert normalised == [
-        {
-            "letters": [
-                {
-                    "key": "A",
-                    "value": {
-                        "id": 1,
-                        "value": [{"key": "hello", "value": "world"}],
-                    },
-                }
-            ]
-        },
-        {
-            "letters": [
-                {
-                    "key": "B",
-                    "value": {
-                        "id": 2,
-                        "value": [{"key": "foo", "value": "bar"}],
-                    },
-                }
-            ]
-        },
-        {
-            "letters": [
-                {
-                    "key": "C",
-                    "value": {
-                        "id": 3,
-                        "value": [
-                            {"key": "value__string", "value": "scalar-string"}
-                        ],  # Should be value__string, not default
-                    },
-                }
-            ]
-        },
+        {"letters": {"A": {"id": 1, "value": {"hello": "world"}}}},
+        {"letters": {"B": {"id": 2, "value": {"foo": "bar"}}}},
+        # Should be value__string, not default
+        {"letters": {"C": {"id": 3, "value": {"value__string": "scalar-string"}}}},
     ]
 
 

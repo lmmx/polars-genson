@@ -27,8 +27,8 @@ version = "0.9.7"
 
 [project.optional-dependencies]
 dev = ["pdm-bump>=0.9.10", "pdm>=2.22.3", "pre-commit>=4.1.0", "pytest>=8.3.4"]
-polars = ["polars>=1.43.2"]
-rtcompat = ["polars[rtcompat]>=1.43.2"]
+polars = ["polars>=2.0.0"]
+rtcompat = ["polars[rtcompat]>=2.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/lmmx/polars-genson"
@@ -51,7 +51,7 @@ default-groups = ["build", "debug", "dev", "doc", "test"]
 [dependency-groups]
 build = ["maturin>=1.15.0", "patchelf>=0.19.1.0"]
 debug = ["pysnooper>=1.2.3"]
-dev = ["pdbpp>=0.11.7", "polars>=1.43.2"]
+dev = ["pdbpp>=0.11.7", "polars>=2.0.0"]
 doc = [
   "livereload>=2.7.1",
   "markdown-exec[ansi]>=1.12.3",

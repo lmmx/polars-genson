@@ -17,16 +17,13 @@ from ._polars_genson import json_to_schema as _rust_json_to_schema
 from ._polars_genson import normalise_from_parquet as _rust_normalise_from_parquet
 from ._polars_genson import read_parquet_metadata as _rust_read_parquet_metadata
 from ._polars_genson import schema_to_json as _rust_schema_to_json
-from .dtypes import _parse_polars_dtype
+from .dtypes import _parse_polars_dtype, contains_map
 from .utils import parse_into_expr, parse_version  # noqa: F401
 
-# Determine the correct plugin path
-if parse_version(pl.__version__) < parse_version("0.20.16"):
-    from polars.utils.udfs import _get_shared_lib_location
+if parse_version(pl.__version__) < (2,):
+    raise ImportError(f"polars-genson needs Polars 2 or later, not {pl.__version__}")
 
-    lib: str | Path = _get_shared_lib_location(__file__)
-else:
-    lib = Path(__file__).parent
+lib = Path(__file__).parent
 
 __all__ = [
     "infer_json_schema",
@@ -41,6 +38,10 @@ __all__ = [
 
 def schema_to_json(schema: pl.Schema, *, debug: bool = False) -> str:
     """Convert a Polars schema to JSON string representation.
+
+    A ``pl.Map`` is written as its Arrow storage, a list of ``{key, value}`` structs,
+    as the Rust polars crate has no map dtype, so `json_to_schema` reads it back as
+    that list.
 
     Parameters
     ----------
@@ -291,7 +292,7 @@ def infer_polars_schema(
     avro : bool, default True
         Whether to infer and convert through an Avro schema (the default) or through
         JSON Schema. The Avro route reports the dtypes that ``normalise_json`` produces
-        (maps as ``List(Struct{key, value})``, one branch of a union). The JSON Schema
+        (maps as ``Map[String,V]``, one branch of a union). The JSON Schema
         route falls back to ``String`` for unions and nullable fields.
     wrap_root : str | None, default None
         If a string, wrap each JSON row under that key before inference.
@@ -346,7 +347,7 @@ def normalise_json(
     ndjson: bool = False,
     empty_as_null: bool = True,
     coerce_strings: bool = False,
-    map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+    map_encoding: Literal["entries", "mapping", "kv"] = "mapping",
     profile: bool = False,
     map_threshold: int = 20,
     map_max_required_keys: int | None = None,
@@ -380,11 +381,12 @@ def normalise_json(
     coerce_strings : bool, default False
         If True, attempt to coerce string values into numeric/boolean types
         where the schema expects them. If False, unmatched strings become null.
-    map_encoding : {"mapping", "entries", "kv"}, default "kv"
+    map_encoding : {"mapping", "entries", "kv"}, default "mapping"
         Encoding to use for Avro maps:
-        - "mapping": plain JSON object ({"en":"Hello"})
+        - "mapping": plain JSON object ({"en":"Hello"}), decoded as a ``pl.Map``
         - "entries": list of single-entry objects ([{"en":"Hello"}])
-        - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
+        - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}]),
+          decoded as a list of ``{key, value}`` structs
     profile : bool, default False
         Whether to show timing profile output
     map_threshold : int, default 20
@@ -619,7 +621,7 @@ def normalise_from_parquet(
     ndjson: bool = False,
     empty_as_null: bool = True,
     coerce_strings: bool = False,
-    map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+    map_encoding: Literal["entries", "mapping", "kv"] = "mapping",
     debug: bool = False,
     profile: bool = False,
     map_threshold: int = 20,
@@ -663,11 +665,12 @@ def normalise_from_parquet(
     coerce_strings : bool, default False
         If True, attempt to parse numeric/boolean values from strings
         (e.g. ``"42" → 42``, ``"true" → true``). If False, leave them as strings.
-    map_encoding : {"mapping", "entries", "kv"}, default "kv"
+    map_encoding : {"mapping", "entries", "kv"}, default "mapping"
         Encoding to use for Avro maps:
-        - "mapping": plain JSON object ({"en":"Hello"})
+        - "mapping": plain JSON object ({"en":"Hello"}), decoded as a ``pl.Map``
         - "entries": list of single-entry objects ([{"en":"Hello"}])
-        - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
+        - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}]),
+          decoded as a list of ``{key, value}`` structs
     debug : bool, default False
         Whether to print debug information
     profile : bool, default False
@@ -710,7 +713,8 @@ def normalise_from_parquet(
         If True, write the normalised rows as a typed struct column (the dtype
         ``avro_to_polars_schema`` gives for the inferred schema) instead of JSON
         strings, so no ``str.json_decode`` is needed after reading it back.
-        Requires ``map_encoding="kv"``.
+        Requires ``map_encoding="mapping"``, which writes maps as Parquet maps, or
+        ``"kv"``, which writes them as lists of ``{key, value}`` structs.
     keep_columns : list[str], optional
         Input columns (e.g. an ``id``) to copy unchanged into the output file,
         before the normalised column. The output has one row per input row, with
@@ -828,7 +832,7 @@ class GensonNamespace:
         force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = True,
-        map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+        map_encoding: Literal["entries", "mapping", "kv"] = "mapping",
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
         max_builders: int | None = None,
@@ -885,12 +889,13 @@ class GensonNamespace:
         avro : bool, default True
             Whether to infer and convert through an Avro schema (the default) or through
             JSON Schema. The Avro route reports the dtypes that ``normalise_json`` produces
-            (maps as ``List(Struct{key, value})``, one branch of a union). The JSON Schema
-            route falls back to ``String`` for unions and nullable fields.
-        map_encoding : {"mapping", "entries", "kv"}, default "kv"
+            (maps as ``map_encoding`` decodes them, one branch of a union). The JSON
+            Schema route falls back to ``String`` for unions and nullable fields.
+        map_encoding : {"mapping", "entries", "kv"}, default "mapping"
             The ``map_encoding`` the JSON is normalised with: each map gets the dtype
-            that encoding decodes to. Only "kv" has one, a list of ``{key, value}``
-            structs; any other raises ``ValueError`` if the schema holds a map.
+            that encoding decodes to, a ``pl.Map`` for "mapping" and a list of
+            ``{key, value}`` structs for "kv". "entries" has none, and raises
+            ``ValueError`` if the schema holds a map.
         wrap_root : str | bool | None, default None
             If a string, wrap each JSON row under that key before inference.
             If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
@@ -1092,7 +1097,7 @@ class GensonNamespace:
         ndjson: bool = False,
         empty_as_null: bool = True,
         coerce_strings: bool = False,
-        map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+        map_encoding: Literal["entries", "mapping", "kv"] | None = None,
         profile: bool = False,
         map_threshold: int = 20,
         map_max_required_keys: int | None = None,
@@ -1139,11 +1144,15 @@ class GensonNamespace:
         coerce_strings : bool, default False
             If True, attempt to parse numeric/boolean values from strings
             (e.g. ``"42" → 42``, ``"true" → true``). If False, leave them as strings.
-        map_encoding : {"mapping", "entries", "kv"}, default "kv"
+        map_encoding : {"mapping", "entries", "kv"}, optional
             Encoding to use for Avro maps:
-            - "mapping": plain JSON object ({"en":"Hello"})
-            - "entries": list of single-entry objects ([{"en":"Hello"}])
-            - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
+            - "mapping": plain JSON object ({"en":"Hello"}), decoded as a ``pl.Map``
+            - "entries": list of single-entry objects ([{"en":"Hello"}]), which
+              cannot be decoded
+            - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}]),
+              decoded as a list of ``{key, value}`` structs
+            Defaults to "mapping", or when ``decode`` is a schema, to the encoding its
+            maps decode from: "mapping" if it holds a ``pl.Map``, else "kv".
         profile : bool, default False
             Whether to display timing profile information
         map_threshold : int, default 20
@@ -1193,6 +1202,13 @@ class GensonNamespace:
             corresponding to schema fields.
         """
         wrap_root_field = column if wrap_root is True else wrap_root
+        if not isinstance(decode, bool):
+            # decode was passed as a Polars Schema (or a Struct dtype) directly
+            dtype = decode if isinstance(decode, pl.Struct) else pl.Struct(decode)
+            if map_encoding is None:
+                map_encoding = "mapping" if contains_map(dtype) else "kv"
+        elif map_encoding is None:
+            map_encoding = "mapping"
         expr = normalise_json(
             pl.col(column),
             ignore_outer_array=ignore_outer_array,
@@ -1215,10 +1231,11 @@ class GensonNamespace:
             max_builders=max_builders,
         )
         if decode:
-            if map_encoding != "kv":
-                # Map type fields must be k:v encoded as infer_polars_schema assumes it
+            if map_encoding == "entries":
                 # This could be done, it would always make record fields, ...but why?
-                raise NotImplementedError("map_encoding must be kv to decode to Polars")
+                raise NotImplementedError(
+                    "map_encoding entries cannot decode to Polars"
+                )
 
             if decode is True:
                 # Infer Avro schema and convert it to Polars Schema
@@ -1238,14 +1255,12 @@ class GensonNamespace:
                     ),
                     wrap_scalars=wrap_scalars,
                     avro=True,
+                    map_encoding=map_encoding,
                     wrap_root=wrap_root_field,
                     no_root_map=no_root_map,
                     max_builders=max_builders,
                 )
                 dtype = pl.Struct(schema)
-            else:
-                # decode was passed as a Polars Schema (or a Struct dtype) directly
-                dtype = decode if isinstance(decode, pl.Struct) else pl.Struct(decode)
 
             result = self._df.select(expr.str.json_decode(dtype=dtype))
             if unnest:
@@ -1275,7 +1290,7 @@ def avro_to_polars_schema(
     avro_schema_json: str,
     debug: bool = False,
     *,
-    map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+    map_encoding: Literal["entries", "mapping", "kv"] = "mapping",
 ) -> pl.Schema:
     """Convert an Avro schema to a Polars Schema.
 
@@ -1285,10 +1300,11 @@ def avro_to_polars_schema(
         JSON string containing Avro schema
     debug : bool, default False
         Whether to print debug information
-    map_encoding : {"mapping", "entries", "kv"}, default "kv"
+    map_encoding : {"mapping", "entries", "kv"}, default "mapping"
         The ``map_encoding`` the data is normalised with: each Avro map gets the dtype
-        that encoding decodes to. Only "kv" has one, a list of ``{key, value}``
-        structs; any other raises ``ValueError`` if the schema holds a map.
+        that encoding decodes to, a ``pl.Map`` for "mapping" and a list of
+        ``{key, value}`` structs for "kv". "entries" has none, and raises
+        ``ValueError`` if the schema holds a map.
 
     Returns
     -------
@@ -1315,6 +1331,9 @@ def _dtype_to_dict(dtype: pl.datatypes.DataType):
         return {"list": _dtype_to_dict(dtype.inner)}
     elif isinstance(dtype, pl.Array):
         return {"array": {"inner": _dtype_to_dict(dtype.inner), "size": dtype.size}}
+    elif isinstance(dtype, pl.Map):
+        key, value = _dtype_to_dict(dtype.key), _dtype_to_dict(dtype.value)
+        return {"map": {"key": key, "value": value}}
     else:
         return str(dtype)  # e.g. "Int64", "Utf8", etc.
 
