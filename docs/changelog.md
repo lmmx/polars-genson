@@ -3,7 +3,11 @@
 Release notes for earlier versions are on
 [GitHub Releases](https://github.com/lmmx/polars-genson/releases).
 
-## Unreleased
+## 1.0.0
+
+A JSON object genson infers as a map is now a Polars map, `pl.Map`, wherever genson
+gives Polars data or dtypes, and a Parquet `MAP` in typed output. See
+[Map types](concepts/map-types.md).
 
 - **Polars ≥ 2 is required.** `import polars_genson` raises `ImportError` on Polars 1.x.
 - **Maps are `pl.Map` by default.** `map_encoding` defaults to `"mapping"` throughout
@@ -19,11 +23,17 @@ Release notes for earlier versions are on
 - **genson-core's `avro_to_arrow_type` and `avro_record_fields` take `native_map`,**
   which writes an Avro map as an Arrow `Map` in place of a list of `{key, value}`
   structs.
+
+## 0.9.7
+
 - **`infer_polars_schema` and `avro_to_polars_schema` take `map_encoding`.** Each map
   gets the dtype its encoding decodes to, so a schema can be asked for in the shape the
   data was normalised in. `"kv"`, the default, gives the list of `{key, value}` structs
   as before. polars-jsonschema-bridge now names a map `Map[String,V]` in place of
   `List[Struct[key:String,value:V]]`, which the `infer_polars_schema` expression shows.
+
+## 0.9.3
+
 - **`normalise_from_parquet(prune=...)` removes malformed records.** Every record holding
   one of the named fields is removed during normalisation and written to
   `prune_output_path`, and the fields are left out of the output schema. See
