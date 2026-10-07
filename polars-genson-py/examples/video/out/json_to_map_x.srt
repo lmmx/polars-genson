@@ -1,0 +1,83 @@
+1
+00:00:00,800 --> 00:00:07,040
+Polars 2.0 introduces a Map data type, for objects whose keys are data rather than part of the type.
+
+2
+00:00:08,660 --> 00:00:12,840
+Polars-genson infers the schema of JSON data, including Map types.
+
+3
+00:00:14,880 --> 00:00:17,700
+In some objects, the keys are part of the type.
+
+4
+00:00:18,760 --> 00:00:21,420
+A person's name and date of birth are fields:
+
+5
+00:00:21,940 --> 00:00:25,080
+every person has them, and they hold different types of value:
+
+6
+00:00:26,100 --> 00:00:28,180
+one's a string and one's a date.
+
+7
+00:00:28,760 --> 00:00:32,000
+They can't share one value type, so you'd store them in a struct.
+
+8
+00:00:35,460 --> 00:00:41,520
+In other objects, the keys are data, like these labels from Wikidata, with one label for each language.
+
+9
+00:00:43,360 --> 00:00:50,920
+Wikidata has labels in hundreds of languages, and each city has labels in only some of them, and every label is a string.
+
+10
+00:00:50,920 --> 00:00:52,940
+So that's a map.
+
+11
+00:00:57,040 --> 00:01:08,120
+If you stored these as a struct, with a field for every language, most of the values would be null, and every new language would add another field to the type.
+
+12
+00:01:12,360 --> 00:01:21,660
+If you store them as a map instead, Paris has five labels and Rome has just two, and there are no nulls anywhere.
+
+13
+00:01:22,400 --> 00:01:27,640
+The column is a map with string keys and string values, however many languages there are.
+
+14
+00:01:31,620 --> 00:01:34,560
+polars-genson infers a schema from your JSON.
+
+15
+00:01:35,100 --> 00:01:38,260
+You can choose which fields become maps with force_field_types.
+
+16
+00:01:43,320 --> 00:01:47,040
+Or you can let it decide from the data.
+
+17
+00:01:47,520 --> 00:01:53,840
+An object whose values all share one type and that has more distinct keys than map_threshold becomes a map.
+
+18
+00:01:55,780 --> 00:02:00,700
+The default threshold is 20, so these labels, with 8 keys, stay a struct.
+
+19
+00:02:01,920 --> 00:02:04,000
+Lower it to 5, and they become a map.
+
+20
+00:02:09,440 --> 00:02:14,140
+polars-genson 1.0 supports Polars 2.0, and you can install it from PyPI.
+
+21
+00:02:14,580 --> 00:02:15,880
+See the docs to get started.
