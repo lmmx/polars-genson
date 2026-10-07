@@ -376,17 +376,61 @@ def grid_items(d, *, values=True):
 
 
 def title_scene(s, d):
-    logo_w, gap, version = 379, 28, "2.0"
-    total = logo_w + gap + mono_width(len(version), 72)
-    x = (W - total) / 2
+    """Polars 2.0, big and centred, moves up as its announcement comes in below; the
+    announcement then gives way to polars-genson."""
+    logo_w, logo_h, gap, top = 379, 90, 28, 200
+    version_w = width("2.0", MEDIA / "IBMPlexSans-SemiBold.ttf", 72)
+    x = (W - logo_w - gap - version_w) / 2
+    # Starts twice the size, centred on the frame; settles at the top as the line starts
+    centre_y = top + logo_h / 2
+    settle = dict(duration=0.9, start_at=s.cue(0), easing="ease_in_out")
+    polars = layer(
+        logo("polars_logo_white_text.png", x, top, logo_w, logo_h),
+        text("2.0", x + logo_w + gap, top + 80, size=72, weight=600, fill=BLUE),
+        scale=Tween(from_value=2, to_value=1, **settle),
+        origin=(W / 2, centre_y),
+        position=Position(
+            x=0, y=Tween(from_value=H / 2 - centre_y, to_value=0, **settle)
+        ),
+    )
+    # The release post's Map section, from below the logo until polars-genson comes in
+    shot_h = 600
+    shot_w = shot_h * 2121 / 1933  # the screenshot's aspect ratio
+    shot_x, shot_y, pad = (W - shot_w) / 2, 320, 14
+    announcement = [
+        box(
+            shot_x - pad,
+            shot_y - pad,
+            shot_w + 2 * pad,
+            shot_h + 2 * pad,
+            "#FFFFFF",
+            radius=18,
+        ),
+        layer(
+            Image(
+                source=str(MEDIA / "polars-v2-announcement-screenshot.png"),
+                size=(shot_w, shot_h),
+                fit="contain",
+            ),
+            position=Position(x=shot_x, y=shot_y),
+        ),
+        text(
+            "pola.rs/posts/release-polars-2",
+            W / 2,
+            shot_y + shot_h + pad + 44,
+            size=26,
+            fill=DIM,
+            align="middle",
+        ),
+    ]
     return scene(
         s,
         (
-            logo("polars_logo_white_text.png", x, 200, logo_w, 90),
-            text(version, x + logo_w + gap, 280, size=72, weight=600, fill=BLUE),
+            polars,
+            leave([enter(announcement, s.cue(0) + 0.5, dy=60)], s.cue(3), duration=0.5),
             enter(
                 text("polars-genson", W / 2, 560, size=140, weight=700, align="middle"),
-                0.3,
+                s.cue(3) + 0.3,
             ),
             enter(
                 text(
@@ -396,7 +440,7 @@ def title_scene(s, d):
                     size=60,
                     align="middle",
                 ),
-                s.cue(3),  # "And polars-genson can already infer it from JSON."
+                s.cue(3) + 1.0,
             ),
         ),
         fade_in=False,
