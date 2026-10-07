@@ -88,11 +88,11 @@ adding or removing a `say` row in a scene shifts which line a later visual comes
 | Map keys       | pause   |     0.3 |  |
 | Map keys       | say     |     2.2 | so polars-genson's map keys are strings. |
 | Map keys       | pause   |     3.5 |  |
-| Naming maps    | written |         | To get Map columns from JSON, name the fields that are maps with force_field_types. |
+| Naming maps    | written |         | To get Map columns from JSON, tell polars-genson which fields are maps, with force_field_types. |
 | Naming maps    | pause   |     0.8 |  |
 | Naming maps    | say     |     2.2 | To get Map columns from JSON, |
 | Naming maps    | pause   |     0.3 |  |
-| Naming maps    | say     |     2.2 | name the fields that are maps |
+| Naming maps    | say     |     2.2 | tell polars-genson which fields are maps, |
 | Naming maps    | pause   |     0.3 |  |
 | Naming maps    | say     |     3.0 | with force_field_types. |
 | Naming maps    | pause   |     2.5 |  |
