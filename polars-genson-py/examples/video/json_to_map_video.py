@@ -33,6 +33,8 @@ X = 160  # left margin
 
 BG, PANEL, FG, DIM = "#0B0F19", "#161C2A", "#E8ECF4", "#8A93A6"
 BLUE, CODE, NULL = "#0075FF", "#6CB6FF", "#E5534B"
+JSON_FG = "#C9D1E0"  # JSON text before its keys light up
+NULL_FILL = "#B8BEC9"  # behind a null
 FIELD = "#3DDC84"  # struct fields
 # One pastel per language, in the order of the struct's fields
 TINTS = ("#4C9AFF", "#F2A541", "#E86A92", "#B48CF2", "#4FD1C5", "#F6E05E", "#FF8A65", "#A3B8FF")
@@ -181,19 +183,6 @@ def code_card(lines, x, y, *, size=34, fill=CODE):
     return items
 
 
-def json_line(line, x, y, key_color, size=34):
-    """A JSON object on one line, its keys coloured by `key_color(key)`."""
-    parts, rest = [], line
-    while '"' in rest:
-        before, _, after = rest.partition('"')
-        token, _, rest = after.partition('"')
-        parts.append((before, FG))
-        is_key = rest.lstrip().startswith(":")
-        parts.append((f'"{token}"', key_color(token) if is_key else "#B9C2D3"))
-    parts.append((rest, FG))
-    return mono(tuple(parts), x, y, size)
-
-
 def chip(key, value, x, y, tint, size=32, h=60, pad=16):
     """A map entry: the key on its tint, the value beside it. Returns (items, width)."""
     kw = mono_width(len(key), size) + 2 * pad
@@ -209,10 +198,22 @@ def chip(key, value, x, y, tint, size=32, h=60, pad=16):
 
 
 def cell(value, x, y, w, h=64, size=30, fill=PANEL, color=FG):
-    """A table cell holding `value`, with null shown in red."""
-    shown = "null" if value is None else str(value)
-    color = NULL if value is None else color
+    """A table cell holding `value`; a null is dark text on light grey."""
+    if value is None:
+        shown, fill, color = "null", NULL_FILL, BG
+    else:
+        shown = str(value)
     return [box(x, y, w, h, fill, radius=10), mono(shown, x + 20, y + h / 2 + size * 0.35, size, fill=color)]
+
+
+def light_up(line, x, y, size, key, color, at):
+    """`key` (a JSON key in `line`, drawn at x, y) turning `color` at time `at`."""
+    token, cw, items = f'"{key}":', size * 0.6, []
+    start = line.find(token)
+    while start != -1:
+        items.append(mono(f'"{key}"', x + start * cw, y, size, fill=color))
+        start = line.find(token, start + 1)
+    return enter(items, at, dy=0)
 
 
 # ---------------------------------------------------------------- scenes
@@ -245,54 +246,60 @@ def title_scene(s, d):
     total = logo_w + gap + mono_width(len(version), 72)
     x = (W - total) / 2
     return scene(s, (
-        logo("polars_logo_white_text.png", x, 210, logo_w, 90),
-        text(version, x + logo_w + gap, 290, size=72, weight=600, fill=BLUE),
-        enter(text("JSON → pl.Map", W / 2, 540, size=120, weight=700, align="middle"), 0.3),
-        enter(text("with polars-genson 1.0", W / 2, 640, size=52, fill=DIM, align="middle"), s.cue(1)),
+        logo("polars_logo_white_text.png", x, 200, logo_w, 90),
+        text(version, x + logo_w + gap, 280, size=72, weight=600, fill=BLUE),
+        enter(text("polars-genson", W / 2, 560, size=140, weight=700, align="middle"), 0.3),
+        enter(text((("infers ", FG), ("pl.Map", BLUE), (" columns from JSON", FG)), W / 2, 680, size=60, align="middle"), s.cue(1)),
     ), fade_in=False)
 
 
 def records_scene(s, d):
     people = d["people"]
+    size, cw = 40, 40 * 0.6
     items = [heading("Fields: keys that are part of the type")]
-    width = mono_width(max(map(len, PEOPLE)), 32) + 56
-    for i, line in enumerate(PEOPLE):
-        y = 290 + i * 96
-        items.append(enter((box(X, y - 52, width, 76, PANEL), json_line(line, X + 28, y, lambda k: FIELD, 32)), s.cue(0) + i * 0.3))
-    # The same people as a typed table: a header of fields, then their dtypes
-    widths, top = (440, 320), 470
-    xs = (X, X + widths[0] + 8)
-    names = people.columns
-    dtypes = {pl.String: "str", pl.Date: "date"}
-    header = []
-    for name, x, w in zip(names, xs, widths):
-        header += [box(x, top, w, 64, FIELD, radius=10), mono(name, x + 20, top + 43, 30, weight=600, fill=BG)]
-    items.append(enter(header, s.cue(1)))
-    items.append(enter([mono(dtypes[people.schema[n]], x + 20, top + 104, 28, fill=FIELD) for n, x in zip(names, xs)], s.cue(3)))
-    body = []
-    for i, row in enumerate(people.rows()):
-        y = top + 124 + i * 72
-        for value, x, w in zip(row, xs, widths):
-            body += cell(value, x, y, w)
-    items.append(enter(body, s.cue(2)))
-    struct = str(pl.Struct(people.schema))
-    items.append(enter(mono(((struct, FIELD),), X, 880, 40, weight=600), s.cue(6)))
+    width = mono_width(max(map(len, PEOPLE)), size) + 64
+    rows = ((PEOPLE[0], 360), (PEOPLE[1], 560))
+    for i, (line, y) in enumerate(rows):
+        items.append(enter((box(X, y - 62, width, 90, PANEL), mono(line, X + 32, y, size, fill=JSON_FG)), s.cue(0) + i * 0.3))
+        for k, field in enumerate(people.columns):
+            items.append(light_up(line, X + 32, y, size, field, FIELD, s.cue(1) + 0.6 + k * 0.6))
+    # Under the first row's values, their types
+    line, y = rows[0]
+    dtypes = {pl.String: "String", pl.Date: "Date"}
+    tags = []
+    for field in people.columns:
+        value_at = line.index(":", line.index(f'"{field}"')) + 2
+        value_end = line.index('"', value_at + 1) + 1
+        mid = X + 32 + (value_at + value_end) / 2 * cw
+        name = dtypes[people.schema[field]]
+        tw = mono_width(len(name), 30) + 32
+        tags += [box(mid - tw / 2, y + 44, tw, 50, "#24304A", radius=10), mono(name, mid, y + 79, 30, fill=CODE, align="middle")]
+    items.append(enter(tags, s.cue(4)))
+    struct = [("Struct({", FG)]
+    for k, field in enumerate(people.columns):
+        struct += [(f"'{field}'", FIELD), (f": {dtypes[people.schema[field]]}", FG), (", " if k + 1 < people.width else "", FG)]
+    struct.append(("})", FG))
+    items.append(enter(mono(tuple(struct), X, 800, 48, weight=600), s.cue(6)))
     return scene(s, items)
 
 
 def maps_scene(s, d):
     tint = dict(zip(d["langs"], TINTS))
+    size = 30
     items = [
         heading("Maps: keys that are data"),
         enter(text("Source: Wikidata", W - X, 170, size=30, fill=DIM, align="end"), s.cue(1)),
     ]
+    lines = []
     for i, (id_, row) in enumerate(zip(d["ids"], CITIES)):
         y = 320 + i * 96
         labels = row[row.index('"labels": ') + len('"labels": '):-1]
-        items.append(enter((
-            mono(id_, X, y, 32, fill=DIM),
-            json_line(labels, X + 180, y, lambda k: tint.get(k, FG), 30),
-        ), s.cue(1) + i * 0.35))
+        lines.append((labels, y))
+        items.append(enter((mono(id_, X, y, 32, fill=DIM), mono(labels, X + 180, y, size, fill=JSON_FG)), s.cue(1) + i * 0.3))
+    # Each language lights up in its colour, in every row at once
+    for k, lang in enumerate(d["langs"]):
+        at = s.cue(2) + 0.4 + k * 0.35
+        items += [light_up(labels, X + 180, y, size, lang, tint[lang], at) for labels, y in lines]
     return scene(s, items)
 
 
@@ -350,7 +357,8 @@ def keys_scene(s, d):
         mono("Object", x + 20, 443, 32, fill=NULL),
         box(x + 10, 430, w - 20, 4, NULL, radius=2),
     ), s.cue(2)))
-    items.append(enter(mono((("polars-genson: ", FG), ("Map(String, V)", BLUE)), X, 680, 48, weight=600), s.cue(4)))
+    genson = (("polars-genson:  ", DIM), ("pl.Map(", FG), ("String", BLUE), (", value)", FG))
+    items.append(enter(mono(genson, X, 680, 56, weight=600), s.cue(3)))
     return scene(s, items)
 
 
@@ -368,11 +376,11 @@ def inferring_scene(s, d):
     first = {}
     for (i, key), place in places.items():
         first.setdefault(key, place)
-    counting, flight = s.cue(2) + 0.3, 0.55
+    counting, flight, stagger = s.cue(2) + 0.2, 1.4, 0.45  # several keys in flight at once
     arrivals = []
     for k, key in enumerate(first):
         x, y, _ = first[key]
-        t = counting + k * 0.32
+        t = counting + k * stagger
         chip_items, w = key_chip(key, 0, 0, tint[key], size=24, h=46)
         move = dict(duration=flight, start_at=t, easing="ease_in_out")
         flying = layer(
@@ -426,10 +434,13 @@ def inferring_scene(s, d):
 
 def naming_scene(s, d):
     call = 'df.genson.normalise_json(\n    "json", force_field_types={"labels": "map"}\n)'
+    size = 44
+    lines = call.splitlines()
+    width = mono_width(max(map(len, lines)), size) + 56
     return scene(s, (
         heading("Name the fields that are maps"),
-        enter(code_card(call, X, 280, size=40), s.cue(1)),
-        enter(mono((("labels: ", FG), (d["map_dtype"], BLUE)), X, 560, 52, weight=600), s.cue(2) + 0.8),
+        enter(code_card(call, (W - width) / 2, 330, size=size), s.cue(1)),
+        enter(mono((("labels: ", FG), (d["map_dtype"], BLUE)), W / 2, 760, 64, weight=600, align="middle"), s.cue(2) + 0.8),
     ))
 
 
@@ -483,7 +494,7 @@ def end_scene(s, d):
             text("Code", 620, 700, size=40, weight=600, fill=BLUE),
             text("github.com/lmmx/polars-genson", 780, 700, size=40),
         ), s.cue(2)),
-        enter(text("An independent plugin for Polars 2.0 and later", W / 2, 860, size=32, fill=DIM, align="middle"), s.cue(2) + 0.6),
+        enter(text("For Polars 2.0 and later", W / 2, 860, size=32, fill=DIM, align="middle"), s.cue(2) + 0.6),
     ))
 
 

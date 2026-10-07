@@ -87,7 +87,7 @@ adding or removing a `say` row in a scene shifts which line a later visual comes
 | Map keys       | say     |     2.2 | JSON object keys are always strings, |
 | Map keys       | pause   |     0.3 |  |
 | Map keys       | say     |     2.2 | so polars-genson's map keys are strings. |
-| Map keys       | pause   |     2.5 |  |
+| Map keys       | pause   |     3.5 |  |
 | Naming maps    | written |         | To get Map columns from JSON, name the fields that are maps with force_field_types. |
 | Naming maps    | pause   |     0.8 |  |
 | Naming maps    | say     |     2.2 | To get Map columns from JSON, |
@@ -103,7 +103,7 @@ adding or removing a `say` row in a scene shifts which line a later visual comes
 | Inferring maps | say     |     2.6 | An object with one type of value |
 | Inferring maps | pause   |     0.3 |  |
 | Inferring maps | say     |     4.0 | and more distinct keys than map_threshold becomes a map. |
-| Inferring maps | pause   |     0.3 |  |
+| Inferring maps | pause   |     1.2 |  |
 | Inferring maps | say     |     1.9 | The default threshold is 20, |
 | Inferring maps | pause   |     0.3 |  |
 | Inferring maps | say     |     3.3 | so these labels, with 8 keys, stay a struct. |
