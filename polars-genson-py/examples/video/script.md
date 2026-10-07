@@ -56,70 +56,60 @@ adding or removing a `say` row in a scene shifts which line a later visual comes
 | Maps           | pause   |     0.3 |  |
 | Maps           | say     |     1.1 | That's a map. |
 | Maps           | pause   |     2.5 |  |
-| As a struct    | written |         | You could store the labels as a struct, with a field per language, but most of the fields would be null, and every new language would change the type. |
+| As a struct    | written |         | Stored as a struct, with a field for every language, most of the values are null, and every new language adds a field to the type. |
 | As a struct    | pause   |     0.8 |  |
-| As a struct    | say     |     3.0 | You could store the labels as a struct, |
+| As a struct    | say     |     3.7 | Stored as a struct, with a field for every language, |
 | As a struct    | pause   |     0.3 |  |
-| As a struct    | say     |     1.9 | with a field per language, |
+| As a struct    | say     |     2.2 | most of the values are null, |
 | As a struct    | pause   |     0.3 |  |
-| As a struct    | say     |     3.0 | but most of the fields would be null, |
-| As a struct    | pause   |     0.3 |  |
-| As a struct    | say     |     3.0 | and every new language would change the type. |
+| As a struct    | say     |     3.7 | and every new language adds a field to the type. |
 | As a struct    | pause   |     2.5 |  |
-| As a map       | written |         | As a Map column, each row contains just the labels it has, and the type stays the same however many languages turn up. |
+| As a map       | written |         | Stored as a map, Paris has five labels and Rome has two, with no nulls. The column's type is Map(String, String), however many languages there are. |
 | As a map       | pause   |     0.8 |  |
-| As a map       | say     |     1.5 | As a Map column, |
+| As a map       | say     |     1.5 | Stored as a map, |
 | As a map       | pause   |     0.3 |  |
-| As a map       | say     |     3.0 | each row contains just the labels it has, |
+| As a map       | say     |     3.0 | Paris has five labels and Rome has two, |
 | As a map       | pause   |     0.3 |  |
-| As a map       | say     |     2.2 | and the type stays the same, |
+| As a map       | say     |     1.1 | with no nulls. |
 | As a map       | pause   |     0.3 |  |
-| As a map       | say     |     1.9 | however many languages turn up. |
+| As a map       | say     |     2.2 | The column's type is Map(String, String), |
+| As a map       | pause   |     0.3 |  |
+| As a map       | say     |     1.9 | however many languages there are. |
 | As a map       | pause   |     2.5 |  |
-| Map keys       | written |         | Polars allows map keys of any type that can be row-encoded: anything but Object. JSON keys are always strings, so polars-genson's map keys are strings, for now. |
+| Map keys       | written |         | In Polars, map keys can be any type that can be row-encoded, which is anything except Object. JSON object keys are always strings, so polars-genson's map keys are strings. |
 | Map keys       | pause   |     0.8 |  |
-| Map keys       | say     |     2.6 | Polars allows map keys of any type |
+| Map keys       | say     |     3.0 | In Polars, map keys can be any type |
 | Map keys       | pause   |     0.3 |  |
-| Map keys       | say     |     1.5 | that can be row-encoded: |
+| Map keys       | say     |     1.5 | that can be row-encoded, |
 | Map keys       | pause   |     0.3 |  |
-| Map keys       | say     |     1.1 | anything but Object. |
+| Map keys       | say     |     1.9 | which is anything except Object. |
 | Map keys       | pause   |     0.3 |  |
-| Map keys       | say     |     1.9 | JSON keys are always strings, |
+| Map keys       | say     |     2.2 | JSON object keys are always strings, |
 | Map keys       | pause   |     0.3 |  |
-| Map keys       | say     |     3.0 | so polars-genson's map keys are strings, for now. |
+| Map keys       | say     |     2.2 | so polars-genson's map keys are strings. |
 | Map keys       | pause   |     2.5 |  |
-| Inferring      | written |         | polars-genson reads a column of JSON strings and infers one schema for all of them. Maps are inferred with a heuristic: more distinct keys than a threshold, and one value type. The threshold is a rule of thumb, 20 by default, so with only four cities, the labels stay a struct until you lower it. |
-| Inferring      | pause   |     0.8 |  |
-| Inferring      | say     |     2.6 | polars-genson reads a column of JSON strings |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     3.0 | and infers one schema for all of them. |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     2.2 | Maps are inferred with a heuristic: |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     2.2 | more distinct keys than a threshold, |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     1.5 | and one value type. |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     2.6 | The threshold is a rule of thumb, |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     1.1 | 20 by default, |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     1.9 | so with only four cities, |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     1.9 | the labels stay a struct |
-| Inferring      | pause   |     0.3 |  |
-| Inferring      | say     |     1.5 | until you lower it. |
-| Inferring      | pause   |     2.5 |  |
-| Other ways     | written |         | If you know a field is a map, you can say so with force_field_types. Other options control how maps are inferred, such as unify_maps and map_max_required_keys. |
-| Other ways     | pause   |     0.8 |  |
-| Other ways     | say     |     3.0 | If you know a field is a map, |
-| Other ways     | pause   |     0.3 |  |
-| Other ways     | say     |     3.5 | you can say so with force_field_types. |
-| Other ways     | pause   |     0.3 |  |
-| Other ways     | say     |     2.6 | Other options control how maps are inferred, |
-| Other ways     | pause   |     0.3 |  |
-| Other ways     | say     |     4.0 | such as unify_maps and map_max_required_keys. |
-| Other ways     | pause   |     2.5 |  |
+| Naming maps    | written |         | To get Map columns from JSON, name the fields that are maps with force_field_types. |
+| Naming maps    | pause   |     0.8 |  |
+| Naming maps    | say     |     2.2 | To get Map columns from JSON, |
+| Naming maps    | pause   |     0.3 |  |
+| Naming maps    | say     |     2.2 | name the fields that are maps |
+| Naming maps    | pause   |     0.3 |  |
+| Naming maps    | say     |     3.0 | with force_field_types. |
+| Naming maps    | pause   |     2.5 |  |
+| Inferring maps | written |         | polars-genson can also infer maps. An object with one type of value and more distinct keys than map_threshold becomes a map. The default threshold is 20, so these labels, with 8 keys, stay a struct. Lower it to 5, and they become a map. |
+| Inferring maps | pause   |     0.8 |  |
+| Inferring maps | say     |     1.9 | polars-genson can also infer maps. |
+| Inferring maps | pause   |     0.3 |  |
+| Inferring maps | say     |     2.6 | An object with one type of value |
+| Inferring maps | pause   |     0.3 |  |
+| Inferring maps | say     |     4.0 | and more distinct keys than map_threshold becomes a map. |
+| Inferring maps | pause   |     0.3 |  |
+| Inferring maps | say     |     1.9 | The default threshold is 20, |
+| Inferring maps | pause   |     0.3 |  |
+| Inferring maps | say     |     3.3 | so these labels, with 8 keys, stay a struct. |
+| Inferring maps | pause   |     0.3 |  |
+| Inferring maps | say     |     3.0 | Lower it to 5, and they become a map. |
+| Inferring maps | pause   |     3.5 |  |
 | Why a Map type | written |         | Before Polars 2.0, polars-genson stored maps as lists of key-value structs. To look up one key, you had to filter the list. With a Map column, it's one call. |
 | Why a Map type | pause   |     0.8 |  |
 | Why a Map type | say     |     1.1 | Before Polars 2.0, |
@@ -130,26 +120,16 @@ adding or removing a `say` row in a scene shifts which line a later visual comes
 | Why a Map type | pause   |     0.3 |  |
 | Why a Map type | say     |     2.6 | With a Map column, it's one call. |
 | Why a Map type | pause   |     2.5 |  |
-| Map functions  | written |         | The map namespace looks up keys, lists keys and values, and counts entries: here, how many labels each city has, and whether one is in German. |
+| Map functions  | written |         | The map namespace works on Map columns. map.get looks up a key: here, English, and here, Spanish, which two cities don't have. map.len counts each city's labels. |
 | Map functions  | pause   |     0.8 |  |
-| Map functions  | say     |     2.2 | The map namespace looks up keys, |
+| Map functions  | say     |     2.6 | The map namespace works on Map columns. |
 | Map functions  | pause   |     0.3 |  |
-| Map functions  | say     |     1.5 | lists keys and values, |
+| Map functions  | say     |     2.6 | map.get looks up a key: here, English, |
 | Map functions  | pause   |     0.3 |  |
-| Map functions  | say     |     1.1 | and counts entries: |
+| Map functions  | say     |     3.0 | and here, Spanish, which two cities don't have. |
 | Map functions  | pause   |     0.3 |  |
-| Map functions  | say     |     2.6 | here, how many labels each city has, |
-| Map functions  | pause   |     0.3 |  |
-| Map functions  | say     |     2.2 | and whether one is in German. |
+| Map functions  | say     |     1.9 | map.len counts each city's labels. |
 | Map functions  | pause   |     2.5 |  |
-| Parquet        | written |         | For files, normalise_from_parquet writes typed Parquet. Maps are written as Parquet map columns. |
-| Parquet        | pause   |     0.8 |  |
-| Parquet        | say     |     2.5 | For files, normalise_from_parquet |
-| Parquet        | pause   |     0.3 |  |
-| Parquet        | say     |     1.1 | writes typed Parquet. |
-| Parquet        | pause   |     0.3 |  |
-| Parquet        | say     |     2.6 | Maps are written as Parquet map columns. |
-| Parquet        | pause   |     2.5 |  |
 | End card       | written |         | polars-genson 1.0 supports Polars 2.0, and you can install it from PyPI. See the docs to get started. |
 | End card       | pause   |     0.8 |  |
 | End card       | say     |     1.9 | polars-genson 1.0 supports Polars 2.0, |
