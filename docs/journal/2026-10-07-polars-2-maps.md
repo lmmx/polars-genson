@@ -76,8 +76,9 @@ Each stage is one branch, one PR and one release, merged before the next starts.
   `additionalProperties` object) in place of `List[Struct[key:String,value:V]]`.
 - `_parse_polars_dtype` takes `map_encoding` and turns `Map[String,V]` into
   `List(Struct{key, value})` for `"kv"`; `"mapping"` raises, as `pl.Map` needs Polars 2.
-- `infer_polars_schema` (function and namespace method) and `avro_to_polars_schema`
-  gain `map_encoding`, default `"kv"`.
+- `GensonNamespace.infer_polars_schema` and `avro_to_polars_schema` gain
+  `map_encoding`, default `"kv"`. The `infer_polars_schema` expression returns dtype
+  strings, not dtypes, so it shows `Map[String,V]` and takes no `map_encoding`.
 - Done when: every existing test passes unchanged on Polars 1.44.2, and the bridge
   snapshot and unit tests show the new token.
 - Then wikidata-pq passes `map_encoding="kv"` to its two `normalise_from_parquet`

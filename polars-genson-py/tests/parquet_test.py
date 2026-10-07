@@ -252,6 +252,25 @@ def test_normalise_from_parquet_typed_matches_json_decode(tmp_path):
     assert typed.to_dicts() == expected.to_dicts()
 
 
+def test_typed_dtype_from_metadata(tmp_path):
+    """A typed file's dtype comes from its Avro schema and recorded map encoding."""
+    from polars_genson import avro_to_polars_schema, read_parquet_metadata
+
+    src, out = tmp_path / "src.parquet", tmp_path / "out.parquet"
+    rows = ['{"m": {"a": 1, "b": 2}}', '{"m": {"c": 3}}']
+    pl.DataFrame({"j": rows}).write_parquet(src)
+    normalise_from_parquet(src, "j", out, map_threshold=1, typed=True)
+
+    metadata = read_parquet_metadata(out)
+    map_encoding = json.loads(metadata["genson_normalise_config"])["map_encoding"]
+    dtype = pl.Struct(
+        avro_to_polars_schema(
+            metadata["genson_avro_schema"], map_encoding=map_encoding
+        )
+    )
+    assert pl.read_parquet(out).schema["j"] == dtype
+
+
 @pytest.mark.parametrize("typed", [False, True])
 def test_normalise_from_parquet_keeps_null_rows_and_columns(tmp_path, typed):
     """Null rows stay as null output rows, so kept columns line up with the output."""
