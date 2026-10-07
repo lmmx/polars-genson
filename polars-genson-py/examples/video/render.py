@@ -4,6 +4,7 @@
     uv run --group video video/render.py explainer             # out/json_to_map.mp4
     uv run --group video video/render.py teleprompter          # out/teleprompter.mp4
     uv run --group video video/render.py captions              # out/json_to_map.srt
+    uv run --group video video/render.py vtt                   # out/json_to_map.vtt
     uv run --group video video/render.py explainer --preview   # PNG frames in out/preview
     uv run --group video video/render.py timings               # when each line starts
 
@@ -28,6 +29,7 @@ OUTPUTS = {
     "explainer": "json_to_map.mp4",
     "teleprompter": "teleprompter.mp4",
     "captions": "json_to_map.srt",
+    "vtt": "json_to_map.vtt",
 }
 
 
@@ -51,8 +53,8 @@ def main():
 def render(output, scenes, *, preview=False):
     """Write one output (or, with `preview`, a video's PNG frames) into OUT."""
     path = OUT / OUTPUTS[output]
-    if output == "captions":
-        path.write_text(captions(scenes))
+    if output in ("captions", "vtt"):
+        path.write_text(captions(scenes, "vtt" if output == "vtt" else "srt"))
         print(path)
         return
 

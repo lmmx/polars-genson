@@ -93,8 +93,9 @@ def _words(text):
     return [w for w in re.sub(r"[^\w\s'-]", " ", text.lower()).split() if w]
 
 
-def captions(scenes):
-    """SRT captions: a cue per sentence of the written form, timed by its `say` rows.
+def captions(scenes, form="srt"):
+    """Captions, as SRT or (`form="vtt"`) WebVTT: a cue per sentence of the written
+    form, timed by its `say` rows.
 
     A scene whose `say` rows don't say the same words as its written form gets a cue
     per `say` row instead.
@@ -119,12 +120,14 @@ def captions(scenes):
             for shard in scene.shards:
                 t0 = scene.start + shard.start
                 cues.append((t0, t0 + shard.duration, shard.text))
-    return "\n".join(
-        f"{i}\n{_srt_time(t0)} --> {_srt_time(t1)}\n{text}\n"
+    mark = "," if form == "srt" else "."  # the only difference in the cues
+    body = "\n".join(
+        f"{i}\n{_time(t0, mark)} --> {_time(t1, mark)}\n{text}\n"
         for i, (t0, t1, text) in enumerate(cues, start=1)
     )
+    return body if form == "srt" else "WEBVTT\n\n" + body
 
 
-def _srt_time(seconds):
+def _time(seconds, mark):
     ms = round(seconds * 1000)
-    return f"{ms // 3_600_000:02d}:{ms // 60_000 % 60:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}"
+    return f"{ms // 3_600_000:02d}:{ms // 60_000 % 60:02d}:{ms // 1000 % 60:02d}{mark}{ms % 1000:03d}"
