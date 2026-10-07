@@ -32,6 +32,20 @@ class TestDtypeParsing:
         assert _parse_polars_dtype("List[Int64]") == pl.List(pl.Int64)
         assert _parse_polars_dtype("List[Boolean]") == pl.List(pl.Boolean)
 
+    def test_map_types(self):
+        """A map parses to the dtype its map encoding decodes to."""
+        kv = pl.List(pl.Struct({"key": pl.String, "value": pl.List(pl.Int64)}))
+        assert _parse_polars_dtype("Map[String,List[Int64]]") == kv
+        nested = _parse_polars_dtype("Struct[m:Map[String,List[Int64]]]")
+        assert nested == pl.Struct({"m": kv})
+
+    @pytest.mark.parametrize("map_encoding", ["mapping", "entries"])
+    def test_map_types_without_dtype(self, map_encoding):
+        """A map in an encoding with no Polars dtype raises."""
+        with pytest.raises(ValueError, match="has no Polars dtype"):
+            _parse_polars_dtype("Struct[m:Map[String,Int64]]", map_encoding)
+        assert _parse_polars_dtype("List[Int64]", map_encoding) == pl.List(pl.Int64)
+
     def test_simple_struct_types(self):
         """Test parsing of simple Struct types."""
         struct_type = _parse_polars_dtype("Struct[name:String,age:Int64]")
@@ -392,6 +406,21 @@ class TestPolarsSchemaInference:
 
         assert schema == pl.Schema({"name": pl.String, "scores": kv})
         assert schema == df.genson.normalise_json("json_col", map_threshold=1).schema
+
+    @pytest.mark.parametrize("avro", [True, False])
+    def test_map_encoding(self, avro):
+        """`map_encoding` picks the map dtype on both inference routes."""
+        df = pl.DataFrame({"json_col": ['{"m": {"a": 1, "b": 2}}', '{"m": {"c": 3}}']})
+        kv = pl.List(pl.Struct({"key": pl.String, "value": pl.Int64}))
+
+        schema = df.genson.infer_polars_schema(
+            "json_col", map_threshold=1, avro=avro, map_encoding="kv"
+        )
+        assert schema == pl.Schema({"m": kv})
+        with pytest.raises(ValueError, match="has no Polars dtype"):
+            df.genson.infer_polars_schema(
+                "json_col", map_threshold=1, avro=avro, map_encoding="mapping"
+            )
 
     def test_nullable_field_json_schema_route(self):
         """A nullable field keeps its type on the JSON Schema route, as on the Avro route."""

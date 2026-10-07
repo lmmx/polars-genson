@@ -5,8 +5,12 @@ import re
 import polars as pl
 
 
-def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
-    """Parse a dtype string like 'Struct[id:Int64,name:String]' into actual Polars DataType."""
+def _parse_polars_dtype(dtype_str: str, map_encoding: str = "kv") -> pl.DataType:
+    """Parse a dtype string like 'Struct[id:Int64,name:String]' into actual Polars DataType.
+
+    A map, ``Map[String,V]``, becomes the dtype its `map_encoding` decodes to: for
+    ``"kv"``, a list of ``{key, value}`` structs.
+    """
     dtype_str = dtype_str.strip()
 
     # Handle Decimal(precision, scale)
@@ -52,8 +56,17 @@ def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
     # Handle List[ItemType]
     if dtype_str.startswith("List[") and dtype_str.endswith("]"):
         inner_type_str = dtype_str[5:-1]  # Remove "List[" and "]"
-        inner_type = _parse_polars_dtype(inner_type_str)
+        inner_type = _parse_polars_dtype(inner_type_str, map_encoding)
         return pl.List(inner_type)
+
+    # Handle Map[KeyType,ValueType]
+    if dtype_str.startswith("Map[") and dtype_str.endswith("]"):
+        if map_encoding != "kv":
+            raise ValueError(f"map_encoding={map_encoding!r} has no Polars dtype")
+        key_str, value_str = _split_struct_fields(dtype_str[4:-1])
+        key_type = _parse_polars_dtype(key_str, map_encoding)
+        value_type = _parse_polars_dtype(value_str, map_encoding)
+        return pl.List(pl.Struct({"key": key_type, "value": value_type}))
 
     # Handle Array[ItemType,Size]
     if dtype_str.startswith("Array[") and dtype_str.endswith("]"):
@@ -65,12 +78,14 @@ def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
                 inner_type_str, size_str = parts
                 try:
                     size = int(size_str.strip())
-                    inner_type = _parse_polars_dtype(inner_type_str.strip())
+                    inner_type = _parse_polars_dtype(
+                        inner_type_str.strip(), map_encoding
+                    )
                     return pl.Array(inner_type, size)
                 except ValueError:
                     pass
         # Fallback to List if parsing fails
-        inner_type = _parse_polars_dtype(inner_str)
+        inner_type = _parse_polars_dtype(inner_str, map_encoding)
         return pl.List(inner_type)
 
     # Handle Struct[field1:Type1,field2:Type2,...]
@@ -91,7 +106,7 @@ def _parse_polars_dtype(dtype_str: str) -> pl.DataType:
             field_name, field_type_str = field_part.split(":", 1)
             field_name = field_name.strip()
             field_type_str = field_type_str.strip()
-            field_type = _parse_polars_dtype(field_type_str)
+            field_type = _parse_polars_dtype(field_type_str, map_encoding)
             fields.append(pl.Field(field_name, field_type))
 
         return pl.Struct(fields)

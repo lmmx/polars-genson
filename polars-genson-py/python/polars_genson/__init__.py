@@ -828,6 +828,7 @@ class GensonNamespace:
         force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
         avro: bool = True,
+        map_encoding: Literal["entries", "mapping", "kv"] = "kv",
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
         max_builders: int | None = None,
@@ -886,6 +887,10 @@ class GensonNamespace:
             JSON Schema. The Avro route reports the dtypes that ``normalise_json`` produces
             (maps as ``List(Struct{key, value})``, one branch of a union). The JSON Schema
             route falls back to ``String`` for unions and nullable fields.
+        map_encoding : {"mapping", "entries", "kv"}, default "kv"
+            The ``map_encoding`` the JSON is normalised with: each map gets the dtype
+            that encoding decodes to. Only "kv" has one, a list of ``{key, value}``
+            structs; any other raises ``ValueError`` if the schema holds a map.
         wrap_root : str | bool | None, default None
             If a string, wrap each JSON row under that key before inference.
             If ``True``, wrap under the column name. If ``None``, leave rows unchanged.
@@ -943,7 +948,7 @@ class GensonNamespace:
         schema_fields = result.to_series().item()
         return pl.Schema(
             {
-                field["name"]: _parse_polars_dtype(field["dtype"])
+                field["name"]: _parse_polars_dtype(field["dtype"], map_encoding)
                 for field in schema_fields
             }
         )
@@ -1266,7 +1271,12 @@ def read_parquet_metadata(path: str | Path) -> dict[str, str]:
     return _rust_read_parquet_metadata(str(path))
 
 
-def avro_to_polars_schema(avro_schema_json: str, debug: bool = False) -> pl.Schema:
+def avro_to_polars_schema(
+    avro_schema_json: str,
+    debug: bool = False,
+    *,
+    map_encoding: Literal["entries", "mapping", "kv"] = "kv",
+) -> pl.Schema:
     """Convert an Avro schema to a Polars Schema.
 
     Parameters
@@ -1275,6 +1285,10 @@ def avro_to_polars_schema(avro_schema_json: str, debug: bool = False) -> pl.Sche
         JSON string containing Avro schema
     debug : bool, default False
         Whether to print debug information
+    map_encoding : {"mapping", "entries", "kv"}, default "kv"
+        The ``map_encoding`` the data is normalised with: each Avro map gets the dtype
+        that encoding decodes to. Only "kv" has one, a list of ``{key, value}``
+        structs; any other raises ``ValueError`` if the schema holds a map.
 
     Returns
     -------
@@ -1286,7 +1300,10 @@ def avro_to_polars_schema(avro_schema_json: str, debug: bool = False) -> pl.Sche
 
     # Convert type strings to actual DataType objects
     return pl.Schema(
-        {name: _parse_polars_dtype(dtype_str) for name, dtype_str in fields}
+        {
+            name: _parse_polars_dtype(dtype_str, map_encoding)
+            for name, dtype_str in fields
+        }
     )
 
 

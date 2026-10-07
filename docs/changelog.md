@@ -5,6 +5,11 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **`infer_polars_schema` and `avro_to_polars_schema` take `map_encoding`.** Each map
+  gets the dtype its encoding decodes to, so a schema can be asked for in the shape the
+  data was normalised in. `"kv"`, the default, gives the list of `{key, value}` structs
+  as before. polars-jsonschema-bridge now names a map `Map[String,V]` in place of
+  `List[Struct[key:String,value:V]]`, which the `infer_polars_schema` expression shows.
 - **`normalise_from_parquet(prune=...)` removes malformed records.** Every record holding
   one of the named fields is removed during normalisation and written to
   `prune_output_path`, and the fields are left out of the output schema. See
