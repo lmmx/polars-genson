@@ -82,11 +82,9 @@ print(text.str.json_decode(dtype).struct.unnest())
 ## In Parquet: a `MAP`
 
 `normalise_from_parquet(typed=True)` writes the normalised rows as typed columns, and a
-map as a Parquet `MAP`. Polars reads it back as a `pl.Map`, and other Parquet readers,
-such as pyarrow, see a map too:
+map as a Parquet `MAP`. Polars reads it back as a `pl.Map`:
 
 ```python exec="on" source="above" result="text" session="map-types"
-import pyarrow.parquet as pq
 from polars_genson import normalise_from_parquet
 
 df.write_parquet("labels.parquet")
@@ -94,8 +92,9 @@ normalise_from_parquet(
     "labels.parquet", column="j", output_path="typed.parquet", map_threshold=1, typed=True
 )
 print(pl.read_parquet_schema("typed.parquet")["j"])
-print(pq.read_schema("typed.parquet").field("j").type)
 ```
+
+Other Parquet readers see a map too: pyarrow reads `labels` as `map<string, string>`.
 
 The file's metadata holds the Avro schema and the options it was written with, including
 `map_encoding`, so its dtype can be rebuilt from the file alone:
