@@ -8,6 +8,9 @@ Scene times come from script.md (`render.py timings` lists them), so this cuts a
 scene boundaries, in the pauses where one scene fades into the next. The result is
 re-encoded as H.264 at a constant 30 fps with AAC audio, which X (Twitter) expects.
 X allows 2:20 on a free account; the length of the cut is checked against `--max`.
+
+Captions for the cut are written beside it (`.srt` and `.vtt`): those of the kept
+scenes, moved earlier by whatever was cut before them.
 """
 
 import argparse
@@ -15,7 +18,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from voiceover import timeline
+from voiceover import captions, timeline
 
 OUT = Path(__file__).parent / "out"
 DROP = ("Map keys", "Map functions")
@@ -33,6 +36,16 @@ def segments(scenes, drop):
         else:
             spans.append((start, end))
     return spans
+
+
+def kept_scenes(scenes, drop):
+    """The kept scenes, each moved to start where it falls in the cut."""
+    kept, start = [], 0.0
+    for scene in scenes:
+        if scene.name not in drop:
+            kept.append(scene._replace(start=start))
+            start += scene.duration
+    return kept
 
 
 def main():
@@ -72,6 +85,10 @@ def main():
     ]  # fmt: skip
     subprocess.run(command, check=True)
     print(args.output)
+    for form in ("srt", "vtt"):
+        path = args.output.with_suffix(f".{form}")
+        path.write_text(captions(kept_scenes(scenes, drop), form))
+        print(path)
 
 
 if __name__ == "__main__":
