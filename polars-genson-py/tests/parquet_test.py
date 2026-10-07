@@ -264,9 +264,7 @@ def test_typed_dtype_from_metadata(tmp_path):
     metadata = read_parquet_metadata(out)
     map_encoding = json.loads(metadata["genson_normalise_config"])["map_encoding"]
     dtype = pl.Struct(
-        avro_to_polars_schema(
-            metadata["genson_avro_schema"], map_encoding=map_encoding
-        )
+        avro_to_polars_schema(metadata["genson_avro_schema"], map_encoding=map_encoding)
     )
     assert pl.read_parquet(out).schema["j"] == dtype
 
