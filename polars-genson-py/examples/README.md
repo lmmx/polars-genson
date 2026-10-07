@@ -8,7 +8,9 @@ Standalone scripts using the published `polars-genson`. Run each with `uv run <s
 - `standalone_parquet_demo.py`: infer a schema from a Parquet column of JSON strings and
   normalise it to a new Parquet file.
 - `main.py`: memory use while normalising a larger input.
-- `video/json_to_map_video.py`: renders `json_to_map.py` as a video with
+- `video/json_to_map_video.py`: a 50 second video explaining records, maps, `pl.Map`
+  and how polars-genson infers maps, made with
   [fframes](https://github.com/Scr44gr/fframes-py) (`uv run --group video
-  video/json_to_map_video.py`, or `--preview` for a few PNG frames). Needs Python 3.11+
-  and the DejaVu fonts.
+  video/json_to_map_video.py`, or `--preview` for one PNG per scene). Needs Python 3.11+.
+  `video/media` holds the IBM Plex fonts (SIL Open Font License, `OFL-IBM-Plex.txt`) and
+  the official Polars logos from [pola-rs/polars-static](https://github.com/pola-rs/polars-static).

@@ -1,22 +1,21 @@
-"""Render the json_to_map example as a video with fframes.
+"""Render a short video explaining JSON maps, `pl.Map` and polars-genson, with fframes.
 
     uv run --group video video/json_to_map_video.py            # writes video/json_to_map.mp4
-    uv run --group video video/json_to_map_video.py --preview  # a few PNG frames only
+    uv run --group video video/json_to_map_video.py --preview  # one PNG frame per scene
 
-The tables and values on screen are computed with polars-genson when the script runs.
-Text is set in DejaVu Sans Mono and DejaVu Sans, which must be installed
-(`fc-list | grep DejaVu`).
+Every value on screen is computed with Polars and polars-genson when the script runs.
+Fonts (IBM Plex, OFL) and the Polars logos are in video/media.
 """
 
 import argparse
 import io
-import re
 from pathlib import Path
 
 import polars as pl
 import polars_genson  # noqa: F401  (registers the .genson namespace)
 from fframes.compose import (
     Composition,
+    Image,
     Position,
     Rectangle,
     RenderOptions,
@@ -27,158 +26,323 @@ from fframes.compose import (
 )
 
 HERE = Path(__file__).parent
-W, H, FPS = 1920, 1080, 30
-MONO, SANS = "DejaVu Sans Mono", "DejaVu Sans"
-BG, FG, DIM = "#0F1117", "#E6E6E6", "#7A808C"
-CODE, STRING, NULL, ACCENT = "#6CB6FF", "#8DDB8C", "#E5534B", "#FFD43B"
-X0, SIZE, LEADING = 120, 28, 40
+MEDIA = HERE / "media"
+FONTS = tuple(str(p) for p in sorted(MEDIA.glob("*.ttf")))
+SANS, MONO = "IBM Plex Sans", "IBM Plex Mono"
 
-# Wikidata-style entities: labels keyed by language, and the languages vary
+W, H, FPS = 1920, 1080, 30
+X = 160  # left margin
+
+BG, PANEL, FG, DIM = "#0B0F19", "#161C2A", "#E8ECF4", "#8A93A6"
+BLUE, CODE, NULL = "#0075FF", "#6CB6FF", "#E5534B"
+# One colour per language key, in the order the keys first appear
+TINTS = ("#4C9AFF", "#F2A541", "#E86A92", "#57C785", "#B48CF2", "#4FD1C5", "#F6E05E")
+FIELD = "#F2A541"  # the record keys share one colour
+
+PEOPLE = ['{"name": "Ada", "born": 1815}', '{"name": "Alan", "born": 1912}']
 ROWS = [
     '{"id": "Q64", "labels": {"en": "Berlin", "de": "Berlin", "pl": "Berlin"}}',
     '{"id": "Q90", "labels": {"en": "Paris", "es": "París", "it": "Parigi"}}',
     '{"id": "Q220", "labels": {"en": "Rome", "it": "Roma", "fr": "Rome"}}',
     '{"id": "Q1492", "labels": {"en": "Barcelona", "ca": "Barcelona", "es": "Barcelona"}}',
 ]
+THRESHOLD = 5
 
-# Highlighted tokens: nulls, the map dtype, and quoted strings
-TOKENS = re.compile(r"""(null|Map\(String, String\)|map\[str, str\]|"[^"]*"|'[^']*')""")
+
+# ---------------------------------------------------------------- data
 
 
 def compute():
-    """The struct Polars gives on its own, genson's map rows, and map namespace output."""
+    """Everything the video shows, from Polars and polars-genson."""
+    df = pl.DataFrame({"json": ROWS})
     plain = pl.read_ndjson(io.StringIO("\n".join(ROWS)))
-    entities = pl.DataFrame({"json": ROWS}).genson.normalise_json(
-        "json", force_field_types={"labels": "map"}
-    )
+    grid = plain["labels"].struct.unnest()  # one column per language, nulls elsewhere
+    entities = df.genson.normalise_json("json", map_threshold=THRESHOLD)
+    dtype = entities.schema["labels"]
+    assert dtype == pl.Map(pl.String, pl.String), dtype
     labels = pl.col("labels")
-    ops = entities.select(
-        "id",
-        labels.map.get("en").alias("en"),
-        labels.map.len().alias("languages"),
-        labels.map.contains_key("de").alias("has_de"),
+    ops = entities.select(labels.map.get("en"), labels.map.len().alias("len"))
+    return {
+        "ids": entities["id"].to_list(),
+        "langs": grid.columns,
+        "grid": grid.rows(),
+        "maps": entities["labels"].to_list(),
+        "dtype": str(dtype),
+        "en": ops["labels"].to_list(),
+        "len": ops["len"].to_list(),
+    }
+
+
+# ---------------------------------------------------------------- drawing
+
+
+def text(content, x, y, *, size=44, family=SANS, weight=400, fill=FG, middle=False):
+    """Text with its baseline at `y`; `content` is a string or (text, colour) pairs."""
+    if isinstance(content, str):
+        content = ((content, fill),)
+    runs = tuple(
+        TextRun(content=part.replace(" ", "\u00a0"), fill=color)
+        for part, color in content
+        if part
     )
-    with pl.Config(tbl_hide_dataframe_shape=True, fmt_str_lengths=40):
-        struct_table = str(plain["labels"].struct.unnest()).splitlines()
-        ops_table = str(ops).splitlines()
-    map_rows = [str(entities.schema)]
-    map_rows += [str(row) for row in entities.iter_rows(named=True)]
-    return struct_table, map_rows, ops_table
-
-
-def line(text, y, *, size=SIZE, family=MONO, fill=FG, x=X0, middle=False):
-    """One line of text at baseline `y`, with its tokens highlighted.
-
-    Spaces become no-break spaces so runs of them (table padding) are kept.
-    """
-    runs = []
-    for part in TOKENS.split(text):
-        if not part:
-            continue
-        if part == "null":
-            color = NULL
-        elif part.startswith(("Map(", "map[")):
-            color = ACCENT
-        elif part[0] in "\"'":
-            color = STRING
-        else:
-            color = fill
-        runs.append(TextRun(content=part.replace(" ", "\u00a0"), fill=color))
     return Text(
-        content=tuple(runs),
+        content=runs,
         font_size=size,
         font_family=family,
+        font_weight=weight,
         fill=fill,
         anchor="baseline",
         text_anchor="middle" if middle else "start",
-        position=Position(x=W / 2 if middle else x, y=y),
+        position=Position(x=x, y=y),
     )
 
 
-def appear(item, at):
-    """`item` fading in at local time `at`, held to the end of its scene."""
-    fade = Tween(from_value=0, to_value=1, duration=0.4, easing="ease_out")
-    return Composition(size=(W, H), children=(item,), opacity=fade).at(at)
+def mono_width(chars, size):
+    """Width of `chars` characters of IBM Plex Mono (600 units per em)."""
+    return chars * size * 0.6
 
 
-def scene(start, duration, heading, code=(), lines=(), *, lines_at=1.2, stagger=0.1, note=None):
-    """A heading, code lines and output lines, appearing in turn."""
-    children = [appear(line(heading, 140, size=40, family=SANS), 0)]
-    y = 230
-    for text in code:
-        children.append(appear(line(text, y, fill=CODE), 0.5))
-        y += LEADING
-    if note:
-        children.append(appear(line(note, y, size=22, family=SANS, fill=DIM), 0.8))
-        y += LEADING
-    y += LEADING // 2
-    for i, text in enumerate(lines):
-        children.append(appear(line(text, y + i * LEADING), lines_at + i * stagger))
-    return Composition(size=(W, H), children=tuple(children)).at(start, duration=duration)
+def box(x, y, w, h, fill, radius=14):
+    """A rounded rectangle with its top-left corner at (x, y)."""
+    rect = Rectangle(size=(w, h), radius=radius, fill=fill)
+    return Composition(size=(W, H), children=(rect,), position=Position(x=x, y=y))
+
+
+def logo(name, x, y, w, h):
+    """A Polars logo from video/media."""
+    image = Image(source=str(MEDIA / name), size=(w, h), fit="contain")
+    return Composition(size=(W, H), children=(image,), position=Position(x=x, y=y))
+
+
+def enter(items, at, *, dy=40):
+    """`items` rising `dy` px and fading in at local time `at`."""
+    if not isinstance(items, (list, tuple)):
+        items = (items,)
+    fade = Tween(from_value=0, to_value=1, duration=0.4, start_at=at, easing="ease_out")
+    rise = Tween(from_value=dy, to_value=0, duration=0.5, start_at=at, easing="ease_out")
+    return Composition(
+        size=(W, H), children=tuple(items), opacity=fade, position=Position(x=0, y=rise)
+    )
+
+
+def scene(start, duration, children, *, fade_in=True):
+    """A scene placed at `start`, fading in and out."""
+    fade_out = Tween(
+        from_value=1, to_value=0, duration=0.3, start_at=duration - 0.3, easing="ease_in"
+    )
+    inner = Composition(size=(W, H), children=tuple(children), opacity=fade_out)
+    if fade_in:
+        fade = Tween(from_value=0, to_value=1, duration=0.4, easing="ease_out")
+        inner = Composition(size=(W, H), children=(inner,), opacity=fade)
+    return inner.at(start, duration=duration)
+
+
+def heading(words, at=0.0):
+    return enter(text(words, X, 190, size=60, weight=600), at)
+
+
+def caption(content, at, y=930):
+    return enter(text(content, X, y, size=40, fill=DIM), at)
+
+
+def json_line(line, x, y, key_color, size=36):
+    """A JSON object on one line, its keys coloured by `key_color(key)`."""
+    parts, rest = [], line
+    while '"' in rest:
+        before, _, after = rest.partition('"')
+        token, _, rest = after.partition('"')
+        parts.append((before, FG))
+        is_key = rest.lstrip().startswith(":")
+        color = key_color(token) if is_key else "#B9C2D3"
+        parts.append((f'"{token}"', color))
+    parts.append((rest, FG))
+    return text(tuple(parts), x, y, size=size, family=MONO)
+
+
+def chip(key, value, x, y, tint, size=34):
+    """A map entry: the key on its tint, the value beside it. Returns (items, width)."""
+    pad, h = 18, 64
+    kw = mono_width(len(key), size) + 2 * pad
+    vw = mono_width(len(value), size) + 2 * pad
+    base = y + h / 2 + size * 0.35
+    items = (
+        box(x, y, kw + vw, h, PANEL),
+        box(x, y, kw, h, tint),
+        text(key, x + pad, base, size=size, family=MONO, weight=600, fill=BG),
+        text(value, x + kw + pad, base, size=size, family=MONO),
+    )
+    return items, kw + vw
+
+
+# ---------------------------------------------------------------- scenes
+
+
+def title_scene():
+    return scene(0, 4, (
+        logo("polars_logo_white_text.png", (W - 379) / 2, 250, 379, 90),
+        enter(text("JSON → pl.Map", W / 2, 560, size=120, weight=700, middle=True), 0.2),
+        enter(text("with polars-genson", W / 2, 650, size=48, fill=DIM, middle=True), 0.7),
+    ), fade_in=False)
+
+
+def records_scene():
+    items = [heading("Some JSON objects are records")]
+    for i, line in enumerate(PEOPLE):
+        y = 360 + i * 110
+        items.append(enter((box(X, y - 58, 700, 84, PANEL), json_line(line, X + 28, y, lambda k: FIELD)), 0.6 + i * 0.3))
+    # The same rows as a table: one column per key
+    tx, cw, ch = 1100, 240, 72
+    cells = []
+    for j, name in enumerate(("name", "born")):
+        cells += [box(tx + j * (cw + 8), 302, cw, ch, FIELD), text(name, tx + j * (cw + 8) + 24, 350, size=34, family=MONO, weight=600, fill=BG)]
+    for i, (name, born) in enumerate((("Ada", "1815"), ("Alan", "1912"))):
+        y = 302 + (i + 1) * (ch + 8)
+        for j, value in enumerate((name, born)):
+            cells += [box(tx + j * (cw + 8), y, cw, ch, PANEL), text(value, tx + j * (cw + 8) + 24, y + 48, size=34, family=MONO)]
+    items.append(enter(text("→", 900, 420, size=72, fill=DIM), 1.4, dy=0))
+    items.append(enter(cells, 1.6))
+    items.append(caption((("Same keys in every row, so each ", DIM), ("key", FIELD), (" is a column", DIM)), 2.6))
+    return scene(4, 6, items)
+
+
+def maps_scene(d):
+    tint = dict(zip(d["langs"], TINTS))
+    items = [heading("Others are maps: the keys are data")]
+    for i, (id_, row) in enumerate(zip(d["ids"], ROWS)):
+        y = 340 + i * 110
+        labels = row[row.index('"labels": ') + len('"labels": '):-1]
+        items.append(enter((
+            text(id_, X, y, size=36, family=MONO, fill=DIM),
+            json_line(labels, X + 200, y, lambda k: tint.get(k, FG)),
+        ), 0.6 + i * 0.25))
+    items.append(caption("Each row has its own languages", 2.4))
+    return scene(10, 7, items)
+
+
+def struct_scene(d):
+    tint = dict(zip(d["langs"], TINTS))
+    items = [heading("Read as a struct: a column per key")]
+    gx, gy, cw, ch, gap = X + 200, 290, 176, 72, 8
+    for j, lang in enumerate(d["langs"]):
+        x = gx + j * (cw + gap)
+        header = (box(x, gy, cw, ch, tint[lang]), text(lang, x + cw / 2, gy + 48, size=34, family=MONO, weight=600, fill=BG, middle=True))
+        column = list(header)
+        for i, row in enumerate(d["grid"]):
+            y = gy + (i + 1) * (ch + gap)
+            value = row[j]
+            if value is None:
+                column += [box(x, y, cw, ch, "#1A1F2B"), text("null", x + cw / 2, y + 47, size=28, family=MONO, fill=NULL, middle=True)]
+            else:
+                column += [box(x, y, cw, ch, tint[lang] + "33"), text(value, x + cw / 2, y + 47, size=28, family=MONO, middle=True)]
+        items.append(enter(column, 0.6 + j * 0.12))
+    for i, id_ in enumerate(d["ids"]):
+        items.append(enter(text(id_, X, gy + (i + 1) * (ch + gap) + 47, size=32, family=MONO, fill=DIM), 0.6))
+    nulls = sum(v is None for row in d["grid"] for v in row)
+    cells = len(d["grid"]) * len(d["langs"])
+    items.append(caption(((f"{nulls} of {cells}", NULL), (" cells are null", DIM)), 2.2))
+    return scene(17, 7, items)
+
+
+def map_scene(d):
+    tint = dict(zip(d["langs"], TINTS))
+    items = [heading("Read as a map: each row keeps its own keys")]
+    for i, (id_, labels) in enumerate(zip(d["ids"], d["maps"])):
+        y = 280 + i * 100
+        row = [text(id_, X, y + 45, size=32, family=MONO, fill=DIM)]
+        x = X + 200
+        for key, value in labels.items():
+            chip_items, width = chip(key, value, x, y, tint[key])
+            row += chip_items
+            x += width + 16
+        items.append(enter(row, 0.6 + i * 0.2, dy=0))
+    dtype = d["dtype"]
+    items.append(enter((
+        logo("polars_logo_blue.png", X, 760, 220, 110),
+        text((("labels: ", FG), (dtype, BLUE)), X + 260, 838, size=48, family=MONO, weight=600),
+    ), 2.0))
+    return scene(24, 7, items)
+
+
+def genson_scene(d):
+    tint = dict(zip(d["langs"], TINTS))
+    call = f'df.genson.normalise_json("json", map_threshold={THRESHOLD})'
+    items = [
+        heading("polars-genson tells them apart"),
+        enter((box(X, 250, mono_width(len(call), 36) + 56, 84, PANEL), text(call, X + 28, 306, size=36, family=MONO, fill=CODE)), 0.5),
+        enter(text("distinct label keys", X, 450, size=34, fill=DIM), 1.0),
+    ]
+    cw, gap, y = 136, 16, 490
+    for j, lang in enumerate(d["langs"]):
+        x = X + j * (cw + gap)
+        items.append(enter((box(x, y, cw, 80, tint[lang]), text(lang, x + cw / 2, y + 54, size=36, family=MONO, weight=600, fill=BG, middle=True)), 1.4 + j * 0.35))
+    mark = X + THRESHOLD * (cw + gap) - gap / 2
+    items.append(enter((box(mark - 3, y - 30, 6, 140, FG, radius=3), text(f"map_threshold = {THRESHOLD}", mark, y + 160, size=32, family=MONO, middle=True)), 1.2, dy=0))
+    n = len(d["langs"])
+    verdict = enter(text(((f"{n} > {THRESHOLD}", FG), ("  →  ", DIM), ("map", BLUE)), X, 800, size=56, family=MONO, weight=600), 1.4 + n * 0.35 + 0.3)
+    items.append(verdict)
+    items.append(caption("The default threshold is 20 distinct keys", 4.2, y=930))
+    return scene(31, 7, items)
+
+
+def functions_scene(d):
+    items = [heading("Then use Polars' map functions")]
+    columns = (('labels.map.get("en")', d["en"], X + 200, 420), ("labels.map.len()", d["len"], X + 760, 300))
+    for c, (code, values, x, w) in enumerate(columns):
+        cells = [text(code, x, 320, size=34, family=MONO, fill=CODE)]
+        for i, value in enumerate(values):
+            y = 360 + i * 92
+            cells += [box(x, y, w, 76, PANEL), text(str(value), x + 24, y + 50, size=36, family=MONO)]
+        items.append(enter(cells, 0.7 + c * 0.8))
+    for i, id_ in enumerate(d["ids"]):
+        items.append(enter(text(id_, X, 360 + i * 92 + 50, size=32, family=MONO, fill=DIM), 0.6))
+    items.append(caption("get, keys, values, len, contains_key", 2.4))
+    return scene(38, 7, items)
+
+
+def outro_scene():
+    install = "pip install polars-genson"
+    width = mono_width(len(install), 56) + 80
+    return scene(45, 5, (
+        logo("polars_logo_white_text.png", (W - 379) / 2, 230, 379, 90),
+        enter((box((W - width) / 2, 420, width, 110, PANEL), text(install, W / 2, 496, size=56, family=MONO, weight=600, fill=BLUE, middle=True)), 0.3),
+        enter(text("polars-genson.vercel.app", W / 2, 660, size=44, middle=True), 0.7),
+        enter(text("Polars 2  ·  pola.rs", W / 2, 740, size=36, fill=DIM, middle=True), 1.0),
+    ))
 
 
 def build():
-    """The whole video, about 32 seconds."""
-    struct_table, map_rows, ops_table = compute()
-    title = Composition(
-        size=(W, H),
-        children=(
-            appear(line("JSON → pl.Map", 500, size=96, family=SANS, middle=True), 0),
-            appear(
-                line("polars-genson 1.0 on Polars 2", 590, size=36, family=SANS, fill=DIM, middle=True),
-                0.6,
-            ),
-        ),
-    ).at(0, duration=3.5)
+    d = compute()
     scenes = (
-        title,
-        scene(
-            3.5, 4.5, "Labels keyed by language: the keys are data",
-            code=("rows = [",), lines=[*ROWS, "]"], lines_at=0.8, stagger=0.4,
-        ),
-        scene(
-            8, 7, "Polars alone: a column per language, null where a row lacks it",
-            code=('pl.read_ndjson(rows)["labels"].struct.unnest()',), lines=struct_table,
-        ),
-        scene(
-            15, 7.5, "polars-genson: one Map column, each row holding its own keys",
-            code=('df.genson.normalise_json("json", force_field_types={"labels": "map"})',),
-            note="Only 4 rows, so labels is named as a map (genson infers one above 20 distinct keys)",
-            lines=map_rows, lines_at=1.4, stagger=0.5,
-        ),
-        scene(
-            22.5, 5.5, "Polars' map namespace works on it",
-            code=('labels.map.get("en"), labels.map.len(), labels.map.contains_key("de")',),
-            lines=ops_table,
-        ),
-        Composition(
-            size=(W, H),
-            children=(
-                appear(line("pip install polars-genson[polars]", 470, size=48, fill=ACCENT, middle=True), 0),
-                appear(line("polars-genson.vercel.app/concepts/map-types", 560, size=32, family=SANS, fill=FG, middle=True), 0.5),
-                appear(line("github.com/lmmx/polars-genson", 620, size=32, family=SANS, fill=DIM, middle=True), 0.8),
-            ),
-        ).at(28, duration=4),
+        title_scene(),
+        records_scene(),
+        maps_scene(d),
+        struct_scene(d),
+        map_scene(d),
+        genson_scene(d),
+        functions_scene(d),
+        outro_scene(),
     )
     background = Rectangle(size=(W, H), fill=BG)
     return Video(
-        composition=Composition(duration=32, children=(background, *scenes)),
+        composition=Composition(duration=50, children=(background, *scenes)),
         resolution=(W, H),
         fps=FPS,
+        fonts=FONTS,
+        load_system_fonts=False,
     )
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--preview", action="store_true", help="write PNG frames only")
+    parser.add_argument("--preview", action="store_true", help="write one PNG per scene")
     args = parser.parse_args()
     compiled = build().compile()
     if args.preview:
         out = HERE / "preview"
         out.mkdir(exist_ok=True)
-        for seconds in (2, 7, 12, 19, 26, 30):
-            path = out / f"frame_{seconds:02d}s.png"
-            compiled.save_png(str(path), index=seconds * FPS)
+        for seconds in (2.5, 8.5, 15.5, 22.5, 29.5, 36.5, 43.5, 48.5):
+            path = out / f"frame_{seconds:04.1f}s.png"
+            compiled.save_png(str(path), index=int(seconds * FPS))
             print(path)
     else:
         path = HERE / "json_to_map.mp4"
