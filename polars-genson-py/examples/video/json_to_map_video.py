@@ -716,7 +716,7 @@ def naming_scene(s, d):
     return scene(
         s,
         (
-            heading("Tell polars-genson which fields are maps"),
+            heading("Choose which fields become maps"),
             enter(
                 code_card(call, (W - width) / 2, 330, size=size, marks=marks), s.cue(1)
             ),
@@ -739,7 +739,7 @@ def inferring_scene(s, d):
     tint = dict(zip(d["langs"], TINTS))
     glide = s.cue(5)  # "Lower it to 5, and they become a map."
     n = len(d["langs"])
-    items = [heading("Or let polars-genson infer them")]
+    items = [heading("Or let polars-genson decide")]
 
     # The data, then each distinct key flying from its first appearance into a counter
     rows, places = data_rows(d, 230, 64, size=24, h=46)
