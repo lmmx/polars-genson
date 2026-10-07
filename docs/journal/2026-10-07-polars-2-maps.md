@@ -56,8 +56,7 @@ The branch stays as reference material. Parts of it carry over: the bridge's
    | `"entries"`    | `[{"k": v}]`   | none — decode and typed output refuse it |
 
 2. polars-genson requires Polars 2. On Polars 1.x, `import polars_genson` fails with a
-   message naming the last release that supports it. There is no version branching
-   in the code or the docs.
+   message saying so. There is no version branching in the code or the docs.
 3. The Python default becomes `"mapping"`, the same as genson-core and genson-cli.
 4. `decode=<schema>` takes the map shape from the schema passed: a schema holding a
    `pl.Map` normalises as `"mapping"`, otherwise as `"kv"`, unless `map_encoding` is
@@ -106,6 +105,18 @@ Each stage is one branch, one PR and one release, merged before the next starts.
 - The package READMEs follow.
 - Kept separate from the docs-site rewrite (branch `docs/refresh`), which rebases onto
   it afterwards.
+
+## Progress
+
+- Stage 1 merged as #217 and released in polars-genson 0.9.7, tested on Polars 1.44.2.
+- Stage 2 (branch `polars-2`) passes 262 Python tests on Polars 2.0.0 (3 skipped:
+  `coerce_strings` decoding, `entries` decoding, and one map/record test), and
+  `cargo test` for genson-core (all features), genson-cli and the bridge, `cargo clippy
+  --all-targets --all-features -D warnings` and `cargo fmt --check`.
+- On Polars 1.44.2 the stage 2 package raises `ImportError` at import.
+- `schema_to_json` writes a `pl.Map` as a list of `{key, value}` structs, the Arrow
+  storage, as Rust polars 0.55 has no map dtype — `json_to_schema` reads it back as
+  that list (polars-genson-py/python/polars_genson/__init__.py `schema_to_json`).
 
 ## Current State
 

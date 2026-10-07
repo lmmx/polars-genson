@@ -32,19 +32,24 @@ class TestDtypeParsing:
         assert _parse_polars_dtype("List[Int64]") == pl.List(pl.Int64)
         assert _parse_polars_dtype("List[Boolean]") == pl.List(pl.Boolean)
 
-    def test_map_types(self):
+    @pytest.mark.parametrize(
+        "map_encoding, dtype",
+        [
+            ("mapping", pl.Map(pl.String, pl.List(pl.Int64))),
+            ("kv", pl.List(pl.Struct({"key": pl.String, "value": pl.List(pl.Int64)}))),
+        ],
+    )
+    def test_map_types(self, map_encoding, dtype):
         """A map parses to the dtype its map encoding decodes to."""
-        kv = pl.List(pl.Struct({"key": pl.String, "value": pl.List(pl.Int64)}))
-        assert _parse_polars_dtype("Map[String,List[Int64]]") == kv
-        nested = _parse_polars_dtype("Struct[m:Map[String,List[Int64]]]")
-        assert nested == pl.Struct({"m": kv})
+        assert _parse_polars_dtype("Map[String,List[Int64]]", map_encoding) == dtype
+        nested = _parse_polars_dtype("Struct[m:Map[String,List[Int64]]]", map_encoding)
+        assert nested == pl.Struct({"m": dtype})
 
-    @pytest.mark.parametrize("map_encoding", ["mapping", "entries"])
-    def test_map_types_without_dtype(self, map_encoding):
-        """A map in an encoding with no Polars dtype raises."""
+    def test_map_types_without_dtype(self):
+        """A map in the entries encoding, which has no Polars dtype, raises."""
         with pytest.raises(ValueError, match="has no Polars dtype"):
-            _parse_polars_dtype("Struct[m:Map[String,Int64]]", map_encoding)
-        assert _parse_polars_dtype("List[Int64]", map_encoding) == pl.List(pl.Int64)
+            _parse_polars_dtype("Struct[m:Map[String,Int64]]", "entries")
+        assert _parse_polars_dtype("List[Int64]", "entries") == pl.List(pl.Int64)
 
     def test_simple_struct_types(self):
         """Test parsing of simple Struct types."""
@@ -391,7 +396,7 @@ class TestPolarsSchemaInference:
         assert schema == expected
 
     def test_map_matches_normalised_dtype(self):
-        """A map infers as the key/value list dtype that normalise_json produces."""
+        """A map infers as the dtype that normalise_json produces."""
         df = pl.DataFrame(
             {
                 "json_col": [
@@ -402,9 +407,9 @@ class TestPolarsSchemaInference:
         )
 
         schema = df.genson.infer_polars_schema("json_col", map_threshold=1)
-        kv = pl.List(pl.Struct({"key": pl.String, "value": pl.Int64}))
+        scores = pl.Map(pl.String, pl.Int64)
 
-        assert schema == pl.Schema({"name": pl.String, "scores": kv})
+        assert schema == pl.Schema({"name": pl.String, "scores": scores})
         assert schema == df.genson.normalise_json("json_col", map_threshold=1).schema
 
     @pytest.mark.parametrize("avro", [True, False])
@@ -412,15 +417,14 @@ class TestPolarsSchemaInference:
         """`map_encoding` picks the map dtype on both inference routes."""
         df = pl.DataFrame({"json_col": ['{"m": {"a": 1, "b": 2}}', '{"m": {"c": 3}}']})
         kv = pl.List(pl.Struct({"key": pl.String, "value": pl.Int64}))
+        opts = {"map_threshold": 1, "avro": avro}
 
-        schema = df.genson.infer_polars_schema(
-            "json_col", map_threshold=1, avro=avro, map_encoding="kv"
-        )
+        schema = df.genson.infer_polars_schema("json_col", **opts)
+        assert schema == pl.Schema({"m": pl.Map(pl.String, pl.Int64)})
+        schema = df.genson.infer_polars_schema("json_col", **opts, map_encoding="kv")
         assert schema == pl.Schema({"m": kv})
         with pytest.raises(ValueError, match="has no Polars dtype"):
-            df.genson.infer_polars_schema(
-                "json_col", map_threshold=1, avro=avro, map_encoding="mapping"
-            )
+            df.genson.infer_polars_schema("json_col", **opts, map_encoding="entries")
 
     def test_nullable_field_json_schema_route(self):
         """A nullable field keeps its type on the JSON Schema route, as on the Avro route."""

@@ -220,7 +220,7 @@ def test_normalise_map_threshold_forces_map_kv():
         '{"id":"A","labels":{"en":"Hello"}}',
         '{"id":"B","labels":{"fr":"Bonjour"}}',
     ]
-    out = run_norm(rows, map_threshold=1)
+    out = run_norm(rows, map_threshold=1, map_encoding="kv")
     # Labels stabilised as a map
     assert '"labels":[{"key":"en","value":"Hello"}]' in out[0]
     assert '"labels":[{"key":"fr","value":"Bonjour"}]' in out[1]
@@ -232,7 +232,7 @@ def test_normalise_scalar_to_map_kv():
         '{"id":"A","labels":"foo"}',
         '{"id":"B","labels":{"en":"Hello"}}',
     ]
-    out = run_norm(rows, map_threshold=0)
+    out = run_norm(rows, map_threshold=0, map_encoding="kv")
     # Scalar widened into {"default": ...}
     assert out == [
         '{"id":"A","labels":[{"key":"labels__string","value":"foo"}]}',
@@ -307,25 +307,20 @@ def test_normalise_map_currently_expands_to_struct():
         {
             "id": 456,
             "tags": ["x", "y"],
-            "labels": [
-                {"key": "en", "value": "Hello"},
-            ],
+            "labels": {"en": "Hello"},
             "active": False,
         },
         {
             "id": None,
             "tags": None,
-            "labels": [
-                {"key": "es", "value": "Hola"},
-                {"key": "fr", "value": "Bonjour"},
-            ],
+            "labels": {"es": "Hola", "fr": "Bonjour"},
             "active": None,
         },
     ]
 
 
 def test_normalise_map_readme_demo():
-    """README demo: ids int, tags empty/missing→null, labels as list-of-key/value."""
+    """README demo: ids int, tags empty/missing→null, labels as a map."""
     df = pl.DataFrame(
         {
             "json_data": [
@@ -343,16 +338,13 @@ def test_normalise_map_readme_demo():
         {
             "id": 456,
             "tags": ["x", "y"],
-            "labels": [{"key": "fr", "value": "Bonjour"}],
+            "labels": {"fr": "Bonjour"},
             "active": False,
         },
         {
             "id": 789,
             "tags": None,
-            "labels": [
-                {"key": "en", "value": "Hi"},
-                {"key": "es", "value": "Hola"},
-            ],
+            "labels": {"en": "Hi", "es": "Hola"},
             "active": None,
         },
     ]
@@ -436,10 +428,5 @@ def test_forced_map_keeps_value_type():
 
     out = df.genson.normalise_json("json_data", force_field_types={"scores": "map"})
 
-    assert out.schema["scores"] == pl.List(
-        pl.Struct({"key": pl.String, "value": pl.Int64})
-    )
-    assert out["scores"].to_list() == [
-        [{"key": "maths", "value": 90}],
-        [{"key": "art", "value": 75}],
-    ]
+    assert out.schema["scores"] == pl.Map(pl.String, pl.Int64)
+    assert out["scores"].to_list() == [{"maths": 90}, {"art": 75}]
