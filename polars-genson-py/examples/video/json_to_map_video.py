@@ -43,9 +43,9 @@ PEOPLE = [
 # Labels from Wikidata, a few languages each
 CITIES = [
     '{"id": "Q64", "labels": {"en": "Berlin", "de": "Berlin", "fr": "Berlin", "pl": "Berlin"}}',
+    '{"id": "Q84", "labels": {"en": "London", "ca": "Londres", "es": "Londres"}}',
     '{"id": "Q90", "labels": {"en": "Paris", "fr": "Paris", "es": "París", "it": "Parigi", "pt": "Paris"}}',
     '{"id": "Q220", "labels": {"en": "Rome", "it": "Roma"}}',
-    '{"id": "Q1492", "labels": {"en": "Barcelona", "ca": "Barcelona", "es": "Barcelona"}}',
 ]
 THRESHOLD = 5  # the map_threshold the video lowers to
 AXIS_KEYS = 25  # the number line runs from 0 to this many distinct keys
