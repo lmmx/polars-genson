@@ -1,33 +1,31 @@
-"""Render the json_to_map explainer or its teleprompter, timed by the voiceover.
+"""Render the json_to_map explainer, its teleprompter or its captions, from voiceover.txt.
 
     uv run --group video video/render.py explainer              # video/json_to_map.mp4
     uv run --group video video/render.py teleprompter           # video/teleprompter.mp4
+    uv run --group video video/render.py captions               # video/json_to_map.srt
     uv run --group video video/render.py teleprompter --pace 3  # words per second
     uv run --group video video/render.py explainer --preview    # PNG frames in video/preview
 
-Both videos take their timings from voiceover.py at the given pace, so render them at
-the same pace for a recording made with the teleprompter to line up with the explainer.
+All three are timed from voiceover.txt at the given pace, so use the same pace for each:
+a recording made with the teleprompter then lines up with the explainer.
 """
 
 import argparse
 from pathlib import Path
 
-from fframes.compose import RenderOptions
-
-import json_to_map_video
-import teleprompter
-from voiceover import WORDS_PER_SECOND, timeline
+from voiceover import WORDS_PER_SECOND, captions, timeline
 
 HERE = Path(__file__).parent
-VIDEOS = {
-    "explainer": (json_to_map_video, "json_to_map.mp4"),
-    "teleprompter": (teleprompter, "teleprompter.mp4"),
+OUTPUTS = {
+    "explainer": "json_to_map.mp4",
+    "teleprompter": "teleprompter.mp4",
+    "captions": "json_to_map.srt",
 }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("video", choices=VIDEOS)
+    parser.add_argument("output", choices=OUTPUTS)
     parser.add_argument(
         "--pace",
         type=float,
@@ -37,20 +35,31 @@ def main():
     parser.add_argument("--preview", action="store_true", help="write PNG frames only")
     args = parser.parse_args()
 
-    module, filename = VIDEOS[args.video]
     scenes = timeline(args.pace)
-    end = scenes[-1][1] + scenes[-1][2]
-    print(f"{args.video} at {args.pace} words/s: {end:.1f} s of scenes")
+    end = scenes[-1].start + scenes[-1].duration
+    print(f"{len(scenes)} scenes at {args.pace} words/s: {end:.1f} s")
+    path = HERE / OUTPUTS[args.output]
+    if args.output == "captions":
+        path.write_text(captions(scenes))
+        print(path)
+        return
+
+    # Imported here, so captions don't need fframes
+    from fframes.compose import RenderOptions
+
+    import json_to_map_video
+    import teleprompter
+
+    module = json_to_map_video if args.output == "explainer" else teleprompter
     compiled = module.build(scenes).compile()
     if args.preview:
         out = HERE / "preview"
         out.mkdir(exist_ok=True)
         for seconds in module.preview_times(scenes):
-            path = out / f"{args.video}_{seconds:05.1f}s.png"
-            compiled.save_png(str(path), index=int(seconds * module.FPS))
-            print(path)
+            frame = out / f"{args.output}_{seconds:05.1f}s.png"
+            compiled.save_png(str(frame), index=int(seconds * module.FPS))
+            print(frame)
     else:
-        path = HERE / filename
         compiled.render(str(path), options=RenderOptions(bitrate=8_000_000))
         print(path)
 

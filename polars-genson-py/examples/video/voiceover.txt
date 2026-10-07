@@ -1,0 +1,101 @@
+# The voiceover for the json_to_map video.
+#
+# "## Name" starts a scene. The paragraph after it is the written form (used for the
+# captions file). Each "- " line is a shard: one teleprompter line, spoken in one go.
+# A shard lasts its words divided by the pace (render.py --pace); end it with [2.5s]
+# to give it a fixed length instead. Lines starting with # are comments.
+
+## Title
+Polars 2.0 introduces a Map data type, for objects whose keys are data rather than part of the type.
+- Polars 2.0 introduces a Map data type,
+- for objects whose keys are data,
+- rather than part of the type.
+
+## Records
+Some keys are part of the type. A person's name and date of birth are fields: every person has them, and they hold different types of value, a string and a date, so they can't share one value type. That's a struct.
+- Some keys are part of the type.
+- A person's name and date of birth are fields:
+- every person has them,
+- and they hold different types of value,
+- a string and a date,
+- so they can't share one value type.
+- That's a struct.
+
+## Maps
+Other keys are data. These are labels from Wikidata, keyed by language code. There are thousands of languages, each city has labels in only some of them, and every label is a string. That's a map.
+- Other keys are data.
+- These are labels from Wikidata,
+- keyed by language code.
+- There are thousands of languages,
+- each city has labels in only some of them,
+- and every label is a string.
+- That's a map.
+
+## As a struct
+You could store the labels as a struct, with a field per language, but most of the fields would be null, and every new language would change the type.
+- You could store the labels as a struct,
+- with a field per language,
+- but most of the fields would be null,
+- and every new language would change the type.
+
+## As a map
+As a Map column, each row contains just the labels it has, and the type stays the same however many languages turn up.
+- As a Map column,
+- each row contains just the labels it has,
+- and the type stays the same,
+- however many languages turn up.
+
+## Map keys
+Polars allows map keys of any type that can be row-encoded: anything but Object. JSON keys are always strings, so polars-genson's map keys are strings, for now.
+- Polars allows map keys of any type
+- that can be row-encoded:
+- anything but Object.
+- JSON keys are always strings,
+- so polars-genson's map keys are strings, for now.
+
+## Inferring
+polars-genson reads a column of JSON strings and infers one schema for all of them. Maps are inferred with a heuristic: more distinct keys than a threshold, and one value type. The threshold is a rule of thumb, 20 by default, so with only four cities, the labels stay a struct until you lower it.
+- polars-genson reads a column of JSON strings
+- and infers one schema for all of them.
+- Maps are inferred with a heuristic:
+- more distinct keys than a threshold,
+- and one value type.
+- The threshold is a rule of thumb,
+- 20 by default,
+- so with only four cities,
+- the labels stay a struct
+- until you lower it.
+
+## Other ways
+If you know a field is a map, you can say so with force_field_types. Other options tune the inference, like unify_maps and map_max_required_keys.
+- If you know a field is a map,
+- you can say so with force_field_types.
+- Other options tune the inference,
+- like unify_maps and map_max_required_keys.
+
+## Why a Map type
+Before Polars 2.0, maps were usually lists of key-value structs, and looking up one key meant filtering the list. With a Map column, it's one call.
+- Before Polars 2.0,
+- maps were usually lists of key-value structs,
+- and looking up one key meant filtering the list.
+- With a Map column, it's one call.
+
+## Map functions
+The map namespace looks up keys, lists keys and values, and counts entries: here, how many labels each city has, and whether one is in German.
+- The map namespace looks up keys,
+- lists keys and values,
+- and counts entries:
+- here, how many labels each city has,
+- and whether one is in German.
+
+## Parquet
+For files, normalise_from_parquet writes typed Parquet, with maps stored as Parquet map columns.
+- For files, normalise_from_parquet
+- writes typed Parquet,
+- with maps stored as Parquet map columns.
+
+## End card
+polars-genson 1.0 is out now. Install it with pip, and see the docs to get started.
+- polars-genson 1.0 is out now.
+- Install it with pip,
+- and see the docs to get started.

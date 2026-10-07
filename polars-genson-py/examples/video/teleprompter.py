@@ -1,9 +1,10 @@
-"""A karaoke-style teleprompter for recording the explainer's voiceover. Render it with
-render.py, at the same pace as the explainer.
+"""A karaoke-style teleprompter for recording the explainer's voiceover.
 
-Each word lights up when it should be spoken. A 3 second countdown comes first: start
-recording before it ends, and skip those 3 seconds when adding the recording to the
-video (`Audio(source=..., offset=3)`).
+One shard of voiceover.txt is on screen at a time, its words lighting up when they
+should be spoken, with the shard after it faintly below. A countdown comes first:
+start recording before it ends, and skip it when adding the recording to the
+explainer (`Audio(source=..., offset=COUNTDOWN)`). Render with render.py, at the same
+pace as the explainer.
 """
 
 from pathlib import Path
@@ -17,7 +18,6 @@ from fframes.compose import (
     Tween,
     Video,
 )
-from voiceover import LEAD_IN, LEAD_OUT
 
 HERE = Path(__file__).parent
 MEDIA = HERE / "media"
@@ -27,9 +27,10 @@ SANS, MONO = "IBM Plex Sans", "IBM Plex Mono"
 W, H, FPS = 1920, 1080, 30
 X = 160
 BG, FG, DIM, FAINT, BLUE = "#0B0F19", "#E8ECF4", "#8A93A6", "#3A4152", "#0075FF"
-COUNTDOWN = 3  # seconds before the video's 0:00
-SIZE = 72  # spoken line
-CHARS = 36  # characters per row of the spoken line
+COUNTDOWN = 3  # seconds before the explainer's 0:00
+SIZE, CHARS, ROW = 72, 36, 100  # the shard: font size, characters per row, row height
+UPCOMING = 40  # font size of the shard after
+
 
 def text(content, x, y, *, size=SIZE, family=MONO, weight=400, fill=FG, align="start"):
     """Text with its baseline at `y`; `content` is a string or a TextTemplate."""
@@ -45,22 +46,13 @@ def text(content, x, y, *, size=SIZE, family=MONO, weight=400, fill=FG, align="s
     )
 
 
-def opening(line, chars=60):
-    """The start of `line`, cut at a word to at most `chars` characters."""
-    if len(line) <= chars:
-        return line
-    return line[: line.rfind(" ", 0, chars)] + " …"
-
-
 def layer(*children, **kwargs):
     return Composition(size=(W, H), children=tuple(children), **kwargs)
 
 
 def weight(word):
     """Relative speaking time of a word: its length, plus a pause after punctuation."""
-    pause = 5 if word.endswith((".", ":")) else 3 if word.endswith(",") else 0
-    if word == "—":
-        pause = 4
+    pause = 4 if word.endswith((".", ":")) else 2 if word.endswith(",") else 0
     return len(word.strip(".,:")) + 2 + pause
 
 
@@ -75,65 +67,72 @@ def rows(words):
     return places
 
 
-def line_layer(scene, start, duration, line, next_line):
-    """One scene's line, its words lighting up in turn, from the video's time `start`."""
-    words = line.split()
-    speak_from, speak_to = LEAD_IN, duration - LEAD_OUT
+def shard_layer(shard, upcoming):
+    """One shard, its words lighting up across its duration, from its start."""
+    words = shard.text.split()
     weights = [weight(w) for w in words]
-    per_unit = (speak_to - speak_from) / sum(weights)
+    per_unit = shard.duration / sum(weights)
     cw = SIZE * 0.6  # IBM Plex Mono advance
     places = rows(words)
-    top = 520 - (places[-1][0] * 110) / 2
-    items = [
-        text(f"{int(start) // 60}:{int(start) % 60:02d}  ·  {scene}", X, 170, size=36, family=SANS, fill=DIM),
-    ]
-    t = speak_from
+    top = 560 - places[-1][0] * ROW / 2
+    items, t = [], 0.0
     for word, w, (row, col) in zip(words, weights, places):
-        x, y = X + col * cw, top + row * 110
+        x, y = X + col * cw, top + row * ROW
         lit = Tween(from_value=0, to_value=1, duration=0.12, start_at=t, easing="ease_out")
-        items.append(text(word, x, y, fill=FAINT))
-        items.append(layer(text(word, x, y, weight=600), opacity=lit))
-        span = w * per_unit
+        items += [text(word, x, y, fill=FAINT), layer(text(word, x, y, weight=600), opacity=lit)]
         underline = Rectangle(size=(len(word) * cw, 8), radius=4, fill=BLUE)
+        span = w * per_unit
         items.append(layer(underline, position=Position(x=x, y=y + 22)).at(t, duration=span))
         t += span
-    # The line's time, filling across the bottom
-    bar = Rectangle(
-        size=(Tween(from_value=0.5, to_value=W - 2 * X, duration=duration), 6),
-        radius=3,
-        fill=BLUE,
-    )
-    items.append(layer(Rectangle(size=(W - 2 * X, 6), radius=3, fill=FAINT), position=Position(x=X, y=980)))
-    items.append(layer(bar, position=Position(x=X, y=980)))
-    if next_line:
-        items.append(text("Next: " + opening(next_line), X, 900, size=34, family=SANS, fill=DIM))
-    return layer(*items).at(COUNTDOWN + start, duration=duration)
+    fill = Tween(from_value=0.5, to_value=W - 2 * X, duration=shard.duration)
+    items += [
+        layer(Rectangle(size=(W - 2 * X, 6), radius=3, fill=FAINT), position=Position(x=X, y=980)),
+        layer(Rectangle(size=(fill, 6), radius=3, fill=BLUE), position=Position(x=X, y=980)),
+    ]
+    if upcoming:
+        items.append(text(upcoming, X, 860, size=UPCOMING, fill=FAINT))
+    return layer(*items)
 
 
-def countdown(first_line):
-    """3, 2, 1 before the video's 0:00, with the first line shown to read ahead."""
+def scene_layer(scene, upcoming):
+    """A scene's shards in turn, each held until the next one starts."""
+    shards = scene.shards
+    clock = f"{int(scene.start) // 60}:{int(scene.start) % 60:02d}"
+    items = [text(f"{clock}  ·  {scene.name}", X, 170, size=36, family=SANS, fill=DIM)]
+    for i, shard in enumerate(shards):
+        after = shards[i + 1].text if i + 1 < len(shards) else upcoming
+        until = shards[i + 1].start if i + 1 < len(shards) else scene.duration
+        items.append(shard_layer(shard, after).at(shard.start, duration=until - shard.start))
+    return layer(*items).at(COUNTDOWN + scene.start, duration=scene.duration)
+
+
+def countdown(first):
+    """3, 2, 1 before the explainer's 0:00, with the first shard shown to read ahead."""
     numbers = [
-        layer(text(str(n), W / 2, 600, size=240, family=SANS, weight=700, fill=BLUE, align="middle")).at(i, duration=1)
+        layer(
+            text(str(n), W / 2, 600, size=240, family=SANS, weight=700, fill=BLUE, align="middle")
+        ).at(i, duration=1)
         for i, n in enumerate(range(COUNTDOWN, 0, -1))
     ]
-    first = text("First: " + opening(first_line), X, 900, size=34, family=SANS, fill=DIM)
+    first = text(first, X, 860, size=UPCOMING, fill=FAINT)
     return layer(*numbers, first).at(0, duration=COUNTDOWN)
 
 
 def build(scenes):
     """The teleprompter for `scenes` (from `voiceover.timeline`)."""
-    lines = [
-        line_layer(scene, start, duration, line, scenes[i + 1][3] if i + 1 < len(scenes) else None)
-        for i, (scene, start, duration, line) in enumerate(scenes)
+    layers = [
+        scene_layer(scene, scenes[i + 1].shards[0].text if i + 1 < len(scenes) else None)
+        for i, scene in enumerate(scenes)
     ]
     clock = layer(
         text(TextTemplate(template="{seconds:.1f}s"), W - X, 170, size=36, family=MONO, fill=DIM, align="end")
     ).at(COUNTDOWN)
-    end = scenes[-1][1] + scenes[-1][2]
+    end = scenes[-1].start + scenes[-1].duration
+    background = Rectangle(size=(W, H), fill=BG)
     return Video(
         composition=Composition(
             duration=COUNTDOWN + end,
-            children=(Rectangle(size=(W, H), fill=BG), countdown(scenes[0][3]), *lines, clock),
+            children=(background, countdown(scenes[0].shards[0].text), *layers, clock),
         ),
         resolution=(W, H),
         fps=FPS,
@@ -143,5 +142,8 @@ def build(scenes):
 
 
 def preview_times(scenes):
-    """The countdown, then each scene halfway through its line."""
-    return [1.5, *(COUNTDOWN + start + duration / 2 for _, start, duration, _ in scenes)]
+    """The countdown, then each scene half a second into its second shard."""
+    return [
+        1.5,
+        *(COUNTDOWN + s.start + s.shards[min(1, len(s.shards) - 1)].start + 0.5 for s in scenes),
+    ]
