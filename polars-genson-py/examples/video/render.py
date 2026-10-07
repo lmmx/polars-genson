@@ -9,9 +9,16 @@
 
 All three are timed from script.md, so a recording made with the teleprompter lines up
 with the explainer rendered from the same script.
+
+Each video is rendered losslessly (FFV1, `.mkv`), as fframes-py 0.1.0's Linux wheels
+have no H.264 encoder, then converted to H.264 `.mp4` with the system `ffmpeg` (x264),
+whose grain tuning keeps the background's dithering. Without `ffmpeg` on the PATH, the
+`.mkv` is kept and the command to convert it is printed.
 """
 
 import argparse
+import shutil
+import subprocess
 from pathlib import Path
 
 from voiceover import captions, timeline, timings
@@ -65,9 +72,24 @@ def render(output, scenes, *, preview=False):
             compiled.save_png(str(frame), index=int(seconds * module.FPS))
             print(frame)
     else:
-        # A high bitrate, so dark gradients and the grain over them survive encoding
-        compiled.render(str(path), options=RenderOptions(bitrate=24_000_000))
-        print(path)
+        master = path.with_suffix(".mkv")
+        compiled.render(str(master), options=RenderOptions(encoder="ffv1"))
+        to_mp4(master, path)
+
+
+def to_mp4(master, path):
+    """Convert the lossless `master` to H.264 at `path` with ffmpeg, if it's installed."""
+    command = [
+        "ffmpeg", "-y", "-loglevel", "error", "-i", str(master),
+        "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-tune", "grain",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(path),
+    ]  # fmt: skip
+    if shutil.which("ffmpeg") is None:
+        print(f"{master} (no ffmpeg found; convert it with: {' '.join(command)})")
+        return
+    subprocess.run(command, check=True)
+    master.unlink()
+    print(path)
 
 
 if __name__ == "__main__":

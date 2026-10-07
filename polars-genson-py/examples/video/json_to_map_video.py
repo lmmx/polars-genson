@@ -14,8 +14,11 @@ import polars as pl
 import polars_genson  # noqa: F401  (registers the .genson namespace)
 from fframes.compose import (
     Circle,
+    Close,
     Composition,
     Image,
+    LineTo,
+    MoveTo,
     Pattern,
     Position,
     RadialGradient,
@@ -26,6 +29,7 @@ from fframes.compose import (
     Text,
     TextRun,
     Tween,
+    VectorPath,
     Video,
 )
 from fontmetrics import width
@@ -197,16 +201,18 @@ def flash(items, at, hold=0.15):
     return leave([enter(items, at, dy=0)], at + hold, duration=0.35)
 
 
-def scene(s, children, *, fade_in=True):
-    """Scene `s` of the timeline, fading in and out."""
-    fade_out = Tween(
-        from_value=1,
-        to_value=0,
-        duration=0.3,
-        start_at=s.duration - 0.3,
-        easing="ease_in",
-    )
-    inner = layer(*children, opacity=fade_out)
+def scene(s, children, *, fade_in=True, fade_out=True):
+    """Scene `s` of the timeline, fading in and out (or cutting, for a seamless join)."""
+    inner = layer(*children)
+    if fade_out:
+        out = Tween(
+            from_value=1,
+            to_value=0,
+            duration=0.3,
+            start_at=s.duration - 0.3,
+            easing="ease_in",
+        )
+        inner = layer(inner, opacity=out)
     if fade_in:
         inner = layer(
             inner,
@@ -337,31 +343,30 @@ def grid_cell_at(i, j):
 
 
 def grid_items(d, *, values=True):
-    """The struct grid as (columns, ids): language headers with (with `values`) cells."""
+    """The struct grid as (columns, ids): language headers with (with `values`) cells.
+
+    Its text is the size of the map scene's chips, which it becomes.
+    """
     tint = dict(zip(d["langs"], TINTS))
+    size = 28
     columns = []
     for j, lang in enumerate(d["langs"]):
         x = GRID_X + j * (GRID_W + GRID_GAP)
+        label_y = GRID_Y + GRID_H / 2 + size * 0.35
         column = [
             box(x, GRID_Y, GRID_W, GRID_H, tint[lang], radius=10),
             mono(
-                lang,
-                x + GRID_W / 2,
-                GRID_Y + 57,
-                32,
-                weight=600,
-                fill=BG,
-                align="middle",
+                lang, x + GRID_W / 2, label_y, size, weight=600, fill=BG, align="middle"
             ),
         ]
         if values:
             for i, row in enumerate(d["grid"]):
                 column += cell(
-                    row[j], *grid_cell_at(i, j), GRID_W, GRID_H, 26, tint[lang] + "33"
+                    row[j], *grid_cell_at(i, j), GRID_W, GRID_H, size, tint[lang] + "33"
                 )
         columns.append(column)
     ids = [
-        mono(id_, X, grid_cell_at(i, 0)[1] + 56, 30, fill=DIM)
+        mono(id_, X, grid_cell_at(i, 0)[1] + GRID_H / 2 + 11, 30, fill=DIM)
         for i, id_ in enumerate(d["ids"])
     ]
     return columns, ids
@@ -485,51 +490,129 @@ def struct_scene(s, d):
     nulls = sum(v is None for row in d["grid"] for v in row)
     cells = len(d["grid"]) * len(d["langs"])
     columns, ids = grid_items(d)
-    items = [
-        heading(f"As a struct: {nulls} of {cells} values are null", FIELD),
-        enter(ids, s.cue(0)),
-    ]
+    title = heading(f"As a struct: {nulls} of {cells} values are null", FIELD)
+    items = [leave([title], s.duration - 0.3), enter(ids, s.cue(0))]
     items += [enter(column, s.cue(0) + j * 0.15) for j, column in enumerate(columns)]
-    return scene(s, items)
+    # No fade out: the map scene starts on this frame
+    return scene(s, items, fade_out=False)
 
 
 def map_scene(s, d):
-    """The struct grid melting into map chips: nulls go, values and ids slide into rows."""
+    """The struct grid becoming map chips, in one shot from the struct scene's last frame.
+
+    The nulls fade; each value slides into its city's row as a chip's value, as a copy
+    of its column's language header flies down beside it as the chip's key.
+    """
     tint = dict(zip(d["langs"], TINTS))
-    melt, slide = 0.6, 1.4
-    columns, _ = grid_items(d, values=False)
+    fade_nulls, move_at, move = 0.5, 1.1, 1.5
+    tween = dict(duration=move, start_at=move_at, easing="ease_in_out")
+    size, h, pad, top, step = 28, 64, 16, 300, 106
+    cw = size * 0.6
+    items = [enter(heading("As a map: no nulls"), 0.1)]
+
+    # The headers stay until their keys have left, and the nulls fade first
+    headers, _ = grid_items(d, values=False)
+    items.append(
+        leave(
+            [item for column in headers for item in column], move_at + 0.3, duration=0.6
+        )
+    )
     nulls = [
         item
         for i, row in enumerate(d["grid"])
         for j, value in enumerate(row)
         if value is None
-        for item in cell(None, *grid_cell_at(i, j), GRID_W, GRID_H, 26)
+        for item in cell(None, *grid_cell_at(i, j), GRID_W, GRID_H, size)
     ]
-    items = [
-        heading("As a map: no nulls"),
-        leave(
-            [item for column in columns for item in column], melt + 0.4, duration=0.6
-        ),
-        leave(nulls, melt, duration=0.6),
-    ]
-    move = dict(duration=slide, start_at=melt + 0.3, easing="ease_in_out")
-    top, step, h = 300, 106, 64
+    items.append(leave(nulls, fade_nulls, duration=0.5))
+
     for i, (id_, labels) in enumerate(zip(d["ids"], d["maps"])):
         row_y = top + i * step
-        # The id moves with its row, from beside the grid row to beside the chips
-        grid_y = grid_cell_at(i, 0)[1] + (GRID_H - h) / 2
-        id_at = Position(x=0, y=Tween(from_value=grid_y, to_value=row_y, **move))
-        items.append(layer(mono(id_, X, h / 2 + 11, 30, fill=DIM), position=id_at))
+        grid_row_y = grid_cell_at(i, 0)[1]
+        # The id moves with its row
+        id_y = Tween(
+            from_value=grid_row_y + GRID_H / 2 + 11,
+            to_value=row_y + h / 2 + 11,
+            **tween,
+        )
+        items.append(
+            layer(mono(id_, X, 0, 30, fill=DIM), position=Position(x=0, y=id_y))
+        )
         x = X + 180
         for key, value in labels.items():
-            gx, gy = grid_cell_at(i, d["langs"].index(key))
-            chip_items, width = chip(key, value, 0, 0, tint[key], size=32, h=h)
-            position = Position(
-                x=Tween(from_value=gx, to_value=x, **move),
-                y=Tween(from_value=gy + (GRID_H - h) / 2, to_value=row_y, **move),
+            j = d["langs"].index(key)
+            kw = len(key) * cw + 2 * pad
+            vw = len(value) * cw + 2 * pad
+            gx, gy = grid_cell_at(i, j)
+            # The value: a struct cell shrinking into the chip's value half
+            fill_out = Tween(from_value=1, to_value=0, duration=move, start_at=move_at)
+            fill_in = Tween(from_value=0, to_value=1, duration=move, start_at=move_at)
+            vsize = (
+                Tween(from_value=GRID_W, to_value=vw, **tween),
+                Tween(from_value=GRID_H, to_value=h, **tween),
             )
-            items.append(layer(*chip_items, position=position))
-            x += width + 14
+            value_text = mono(value, 0, 0, size)
+            value_text = layer(
+                value_text,
+                position=Position(
+                    x=Tween(from_value=20, to_value=pad, **tween),
+                    y=Tween(
+                        from_value=GRID_H / 2 + size * 0.35,
+                        to_value=h / 2 + size * 0.35,
+                        **tween,
+                    ),
+                ),
+            )
+            items.append(
+                layer(
+                    layer(
+                        Rectangle(size=vsize, radius=10, fill=tint[key] + "33"),
+                        opacity=fill_out,
+                    ),
+                    layer(
+                        Rectangle(
+                            size=vsize,
+                            radius=10,
+                            fill=PANEL,
+                            stroke=Stroke(color=EDGE, width=2),
+                        ),
+                        opacity=fill_in,
+                    ),
+                    value_text,
+                    position=Position(
+                        x=Tween(from_value=gx, to_value=x + kw, **tween),
+                        y=Tween(from_value=gy, to_value=row_y, **tween),
+                    ),
+                )
+            )
+            # The key: a copy of the language header flying down beside its value
+            hx = GRID_X + j * (GRID_W + GRID_GAP)
+            ksize = (
+                Tween(from_value=GRID_W, to_value=kw, **tween),
+                Tween(from_value=GRID_H, to_value=h, **tween),
+            )
+            key_text = layer(
+                mono(key, 0, 0, size, weight=600, fill=BG, align="middle"),
+                position=Position(
+                    x=Tween(from_value=GRID_W / 2, to_value=kw / 2, **tween),
+                    y=Tween(
+                        from_value=GRID_H / 2 + size * 0.35,
+                        to_value=h / 2 + size * 0.35,
+                        **tween,
+                    ),
+                ),
+            )
+            items.append(
+                layer(
+                    Rectangle(size=ksize, radius=10, fill=tint[key]),
+                    key_text,
+                    position=Position(
+                        x=Tween(from_value=hx, to_value=x, **tween),
+                        y=Tween(from_value=GRID_Y, to_value=row_y, **tween),
+                    ),
+                )
+            )
+            x += kw + vw + 14
     items.append(
         enter(
             (
@@ -545,7 +628,7 @@ def map_scene(s, d):
             s.cue(3),
         )
     )
-    return scene(s, items)
+    return scene(s, items, fade_in=False)
 
 
 def keys_scene(s, d):
@@ -879,59 +962,85 @@ def functions_scene(s, d):
     return scene(s, items)
 
 
-def confetti(cx, cy, at, pieces=160, seconds=4.5, seed=7):
-    """Confetti fired up from (cx, cy) at time `at`, simulated frame by frame.
+# canvas-confetti's "Realistic Look": five bursts of one shot, as (share of the
+# particles, options); and its defaults
+CONFETTI_BURSTS = (
+    (0.25, dict(spread=26, start_velocity=55)),
+    (0.2, dict(spread=60)),
+    (0.35, dict(spread=100, decay=0.91, scalar=0.8)),
+    (0.1, dict(spread=120, start_velocity=25, decay=0.92, scalar=1.2)),
+    (0.1, dict(spread=120, start_velocity=45)),
+)
+CONFETTI_DEFAULTS = dict(
+    angle=90, spread=45, start_velocity=45, decay=0.9, gravity=1, ticks=200, scalar=1
+)
+CONFETTI_COLORS = (
+    "#26ccff",
+    "#a25afd",
+    "#ff5e7e",
+    "#88ff5a",
+    "#fcff42",
+    "#ffa62d",
+    "#ff36ff",
+)
 
-    Each piece launches up and out in a cone, slows under air drag, falls under
-    gravity to a drifting terminal speed, sways from side to side, spins, and tumbles
-    (its height shrinking and growing as it turns edge-on).
+
+def confetti(x0, y0, at, count=200, scale=1.4, seed=7):
+    """A canvas-confetti "Realistic Look" shot from (x0, y0) at time `at`.
+
+    A port of canvas-confetti's particle update (catdad/canvas-confetti, `updateFetti`):
+    run at its 60 ticks a second and sampled at the video's frame rate, each piece is the
+    same wobbling, tilting four-point shape, fading out over its ticks. `scale` sizes
+    the whole effect up from browser pixels to the 1080p frame.
     """
     rng = random.Random(seed)
-    colors = (*TINTS, BLUE, FIELD, "#FFFFFF")
-    gravity, drag, dt = 1500.0, 2.2, 1 / FPS
-    frames = int(seconds * FPS)
+    ticks_per_frame = 60 // FPS
     items = []
-    for _ in range(pieces):
-        angle = math.radians(rng.uniform(-150, -30))  # up, and out to either side
-        speed = rng.uniform(900, 2000)
-        vx, vy = speed * math.cos(angle), speed * math.sin(angle)
-        x, y = cx + rng.uniform(-30, 30), cy + rng.uniform(-10, 10)
-        sway, sway_hz, sway_phase = (
-            rng.uniform(10, 35),
-            rng.uniform(0.8, 1.6),
-            rng.uniform(0, 2 * math.pi),
-        )
-        spin = rng.uniform(-540, 540)
-        flip_hz, flip_phase = rng.uniform(1.5, 4.0), rng.uniform(0, 2 * math.pi)
-        w, h = rng.uniform(12, 22), rng.uniform(7, 12)
-        xs, ys, angles, heights = [], [], [], []
-        for f in range(frames):
-            t = f * dt
-            vx -= vx * drag * dt
-            vy += (gravity - vy * drag) * dt
-            x += vx * dt
-            y += vy * dt
-            xs.append(x + sway * math.sin(2 * math.pi * sway_hz * t + sway_phase))
-            ys.append(y)
-            angles.append(spin * t)
-            heights.append(
-                max(0.5, h * abs(math.cos(2 * math.pi * flip_hz * t + flip_phase)))
+    for share, opts in CONFETTI_BURSTS:
+        o = {**CONFETTI_DEFAULTS, **opts}
+        for _ in range(int(count * share)):
+            angle = -math.radians(o["angle"]) + math.radians(o["spread"]) * (
+                0.5 - rng.random()
             )
-        piece = Rectangle(
-            size=(w, Samples(values=tuple(heights), fps=FPS)),
-            radius=2,
-            fill=rng.choice(colors),
-        )
-        items.append(
-            layer(
-                piece,
-                position=Position(
-                    x=Samples(values=tuple(xs), fps=FPS),
-                    y=Samples(values=tuple(ys), fps=FPS),
+            velocity = o["start_velocity"] * 0.5 + rng.random() * o["start_velocity"]
+            wobble, wobble_speed = (
+                rng.random() * 10,
+                min(0.11, rng.random() * 0.1 + 0.05),
+            )
+            tilt = (rng.random() * 0.5 + 0.25) * math.pi
+            x, y = 0.0, 0.0
+            points = [[] for _ in range(8)]  # x and y of the shape's four corners
+            for tick in range(o["ticks"]):
+                x += math.cos(angle) * velocity
+                y += math.sin(angle) * velocity + o["gravity"] * 3
+                velocity *= o["decay"]
+                wobble += wobble_speed
+                wobble_x = x + 10 * o["scalar"] * math.cos(wobble)
+                wobble_y = y + 10 * o["scalar"] * math.sin(wobble)
+                tilt += 0.1
+                r = rng.random() + 2
+                x1, y1 = x + r * math.cos(tilt), y + r * math.sin(tilt)
+                x2, y2 = wobble_x + r * math.cos(tilt), wobble_y + r * math.sin(tilt)
+                if tick % ticks_per_frame == 0:
+                    for k, v in enumerate((x, y, wobble_x, y1, x2, y2, x1, wobble_y)):
+                        points[k].append(
+                            x0 + v * scale if k % 2 == 0 else y0 + v * scale
+                        )
+            s = [Samples(values=tuple(p), fps=FPS) for p in points]
+            shape = VectorPath(
+                size=(W, H),
+                segments=(
+                    MoveTo(x=s[0], y=s[1]),
+                    LineTo(x=s[2], y=s[3]),
+                    LineTo(x=s[4], y=s[5]),
+                    LineTo(x=s[6], y=s[7]),
+                    Close(),
                 ),
-                rotation=Samples(values=tuple(angles), fps=FPS),
-            ).at(at + rng.uniform(0, 0.12), duration=seconds)
-        )
+                fill=rng.choice(CONFETTI_COLORS),
+            )
+            life = o["ticks"] / 60
+            fade = Tween(from_value=1, to_value=0, duration=life)
+            items.append(layer(shape, opacity=fade).at(at, duration=life))
     return items
 
 
@@ -970,9 +1079,7 @@ def end_scene(s, d):
         (
             enter(name, 0),
             version,
-            *confetti(
-                paired + name_w + gap + version_w / 2, base - 40, version_in + 0.5
-            ),
+            *confetti(W / 2, 0.7 * H, version_in + 0.3),
             enter(
                 (
                     text("for", left, 430, size=40, fill=DIM),
