@@ -14,6 +14,7 @@ Re-render the explainer afterwards (`render.py explainer`), then `add_audio.py`.
 import argparse
 import difflib
 import re
+import subprocess
 from pathlib import Path
 
 from voiceover import SCRIPT, rows
@@ -30,11 +31,37 @@ def tokens(text):
 
 
 def transcribe(path, model="small.en"):
-    """[(token, start, end)] for each spoken word, from faster-whisper."""
+    """[(token, start, end)] for each spoken word, from faster-whisper.
+
+    The audio is decoded with the system ffmpeg (16 kHz mono, as Whisper takes it) and
+    passed as samples, so faster-whisper's own decoder (PyAV) isn't used: its call
+    breaks with newer PyAV releases.
+    """
+    import numpy as np
     from faster_whisper import WhisperModel
 
+    decoded = subprocess.run(
+        [
+            "ffmpeg",
+            "-loglevel",
+            "error",
+            "-i",
+            str(path),
+            "-vn",
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-f",
+            "f32le",
+            "-",
+        ],
+        check=True,
+        capture_output=True,
+    ).stdout
+    audio = np.frombuffer(decoded, dtype=np.float32)
     segments, _ = WhisperModel(model, device="cpu", compute_type="int8").transcribe(
-        str(path), word_timestamps=True, beam_size=5
+        audio, word_timestamps=True, beam_size=5
     )
     out = []
     for segment in segments:
