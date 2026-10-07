@@ -1,11 +1,11 @@
 """A rolling, karaoke-style teleprompter for recording the explainer's voiceover.
 
-The shards of voiceover.txt run down the screen one per line, and roll up steadily so
-the shard being spoken passes the reading line (the blue mark) as its words light up.
+The `say` rows of script.md run down the screen one per line, and roll up steadily so
+the line being spoken passes the reading line (the blue mark) as its words light up.
 The scroll is continuous, so a recording that runs a little ahead or behind still has
 the lines around it on screen. A countdown comes first: start recording before it
 ends, and skip it when adding the recording to the explainer
-(`Audio(source=..., offset=COUNTDOWN)`). Render with render.py, at the explainer's pace.
+(`Audio(source=..., offset=COUNTDOWN)`). Render with render.py.
 """
 
 from pathlib import Path

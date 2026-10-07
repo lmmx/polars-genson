@@ -9,20 +9,16 @@ Standalone scripts using the published `polars-genson`. Run each with `uv run <s
   normalise it to a new Parquet file.
 - `main.py`: memory use while normalising a larger input.
 - `video/`: a video explaining struct and Map columns and how polars-genson infers
-  maps from JSON, with a karaoke-style teleprompter for recording its voiceover, made
-  with [fframes](https://github.com/Scr44gr/fframes-py). Needs Python 3.11+.
+  maps from JSON, with a rolling teleprompter for recording its voiceover, made with
+  [fframes](https://github.com/Scr44gr/fframes-py). Needs Python 3.11+.
 
   ```
-  uv run --group video video/render.py explainer              # video/json_to_map.mp4
-  uv run --group video video/render.py teleprompter           # video/teleprompter.mp4
-  uv run --group video video/render.py captions               # video/json_to_map.srt
-  uv run --group video video/render.py explainer --pace 3     # words per second
-  uv run --group video video/render.py teleprompter --preview # PNG frames only
+  uv run --group video video/render.py                      # all outputs, into video/out
+  uv run --group video video/render.py explainer --preview  # PNG frames only
+  uv run --group video video/render.py timings              # when each line starts
   ```
 
-  The voiceover is `video/voiceover.txt`: per scene, a written paragraph (for the
-  captions) and the shards the teleprompter shows one at a time, each timed by the
-  pace or by a `[2.5s]` at its end. All three outputs are timed from it.
-  `video/media` holds the IBM Plex fonts (SIL Open Font License, `OFL-IBM-Plex.txt`)
-  and the official Polars logos from
+  `video/script.md` is the script and its timing in one table: edit a row's seconds or
+  add pauses there, and every output follows. `video/media` holds the IBM Plex fonts
+  (SIL Open Font License, `OFL-IBM-Plex.txt`) and the official Polars logos from
   [pola-rs/polars-static](https://github.com/pola-rs/polars-static).

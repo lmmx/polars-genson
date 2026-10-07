@@ -1,21 +1,16 @@
-"""The voiceover (voiceover.txt), and the timings of both videos that follow from it.
+"""The script (script.md), and the timings of both videos and the captions from it.
 
-Each shard lasts its words divided by the pace (words per second), unless it gives a
-fixed length; each scene lasts as long as its shards, plus pauses. So editing
-voiceover.txt, or rendering at another `--pace`, re-times both videos together.
+script.md is a table read top to bottom: each `say` row is a teleprompter line lasting
+its `seconds`, each `pause` row a silence, and each `written` row a scene's paragraph
+for the captions. A `say` row with no seconds lasts its words over WORDS_PER_SECOND.
 """
 
-import math
 import re
 from pathlib import Path
 from typing import NamedTuple
 
-TRANSCRIPT = Path(__file__).with_name("voiceover.txt")
-WORDS_PER_SECOND = 2.7  # the default pace
-LEAD_IN, GAP, LEAD_OUT = 0.5, 0.25, 0.8  # seconds before, between and after shards
-MIN_SECONDS = 4.0  # long enough for a scene's visuals to settle
-
-FIXED = re.compile(r"^(?P<text>.*?)\s*\[(?P<seconds>\d+(?:\.\d+)?)s\]$")
+SCRIPT = Path(__file__).with_name("script.md")
+WORDS_PER_SECOND = 2.7  # for `say` rows with no seconds
 
 
 class Shard(NamedTuple):
@@ -32,41 +27,66 @@ class Scene(NamedTuple):
     shards: tuple
 
     def cue(self, i):
-        """When shard `i` starts, in seconds from the start of the scene."""
+        """When the scene's `say` row `i` starts, in seconds from the scene's start."""
         return self.shards[i].start
 
 
-def parse(path=TRANSCRIPT):
-    """[(name, written, [(shard text, fixed seconds or None)])] from the transcript."""
-    scenes = []
-    for raw in path.read_text().splitlines():
-        line = raw.strip()
-        if line.startswith("## "):
-            scenes.append((line[3:].strip(), [], []))
-        elif not line or line.startswith("#"):
+class Row(NamedTuple):
+    scene: str
+    kind: str
+    seconds: float | None
+    text: str
+
+
+def rows(path=SCRIPT):
+    """The table's rows, in order."""
+    out = []
+    for line in path.read_text().splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")] if line.startswith("|") else []
+        if len(cells) < 4 or cells[1] in ("kind", "") or set(cells[1]) <= {"-"}:
             continue
-        elif line.startswith("- "):
-            m = FIXED.match(line[2:])
-            shard = (m["text"], float(m["seconds"])) if m else (line[2:], None)
-            scenes[-1][2].append(shard)
+        scene, kind, seconds, text = cells[0], cells[1], cells[2], "|".join(cells[3:]).strip()
+        if kind not in ("written", "say", "pause"):
+            raise ValueError(f"{path.name}: unknown kind {kind!r} in row: {line}")
+        out.append(Row(scene, kind, float(seconds) if seconds else None, text))
+    return out
+
+
+def timeline(path=SCRIPT):
+    """The scenes of the script, timed by its rows."""
+    scenes, start = [], 0.0
+    for row in rows(path):
+        if not scenes or scenes[-1]["name"] != row.scene:
+            if scenes:
+                start += scenes[-1]["t"]
+            scenes.append({"name": row.scene, "written": "", "start": start, "t": 0.0, "shards": []})
+        scene = scenes[-1]
+        if row.kind == "written":
+            scene["written"] = row.text
+        elif row.kind == "pause":
+            scene["t"] += row.seconds or 0.0
         else:
-            scenes[-1][1].append(line)
-    return [(name, " ".join(written), shards) for name, written, shards in scenes]
+            seconds = row.seconds if row.seconds is not None else len(row.text.split()) / WORDS_PER_SECOND
+            scene["shards"].append(Shard(row.text, scene["t"], seconds))
+            scene["t"] += seconds
+    return tuple(
+        Scene(s["name"], s["written"], s["start"], s["t"], tuple(s["shards"])) for s in scenes
+    )
 
 
-def timeline(words_per_second=WORDS_PER_SECOND, path=TRANSCRIPT):
-    """The scenes of the transcript, timed at the given pace."""
-    start, scenes = 0.0, []
-    for name, written, shards in parse(path):
-        t, timed = LEAD_IN, []
-        for text, fixed in shards:
-            duration = fixed if fixed is not None else len(text.split()) / words_per_second
-            timed.append(Shard(text, t, duration))
-            t += duration + GAP
-        duration = max(MIN_SECONDS, math.ceil((t - GAP + LEAD_OUT) * 10) / 10)
-        scenes.append(Scene(name, written, start, duration, tuple(timed)))
-        start += duration
-    return tuple(scenes)
+def timings(scenes):
+    """Every `say` row with its start and end, in video time, as a readable listing."""
+    lines = []
+    for scene in scenes:
+        lines.append(f"{_clock(scene.start)}  {scene.name}  ({scene.duration:.1f} s)")
+        for i, shard in enumerate(scene.shards):
+            t0 = scene.start + shard.start
+            lines.append(f"  {_clock(t0)}-{_clock(t0 + shard.duration)}  say {i}  {shard.text}")
+    return "\n".join(lines)
+
+
+def _clock(seconds):
+    return f"{int(seconds) // 60}:{seconds % 60:04.1f}"
 
 
 def _words(text):
@@ -74,10 +94,10 @@ def _words(text):
 
 
 def captions(scenes):
-    """SRT captions: a cue per sentence of the written form, timed by its shards.
+    """SRT captions: a cue per sentence of the written form, timed by its `say` rows.
 
-    A scene whose shards don't say the same words as its written form gets a cue per
-    shard instead.
+    A scene whose `say` rows don't say the same words as its written form gets a cue
+    per `say` row instead.
     """
     cues = []
     for scene in scenes:
@@ -89,7 +109,7 @@ def captions(scenes):
                 t0 = scene.start + shard.start + shard.duration * k / n
                 times.append((t0, t0 + shard.duration / n))
         sentences = re.split(r"(?<=[.!?:])\s+", scene.written)
-        if sum(len(_words(s)) for s in sentences) == len(times):
+        if scene.written and sum(len(_words(s)) for s in sentences) == len(times):
             i = 0
             for sentence in sentences:
                 n = len(_words(sentence))

@@ -1,7 +1,6 @@
 """The explainer: struct and Map columns, and how polars-genson infers maps from JSON.
 
-Each scene follows a scene of voiceover.txt, its visuals cued to the shards of the
-voiceover. Every value on screen is computed with Polars and polars-genson when the
+Each scene follows a scene of script.md, its visuals cued to the scene's `say` rows. Every value on screen is computed with Polars and polars-genson when the
 script runs. Fonts (IBM Plex, OFL) and the Polars logos are in video/media. Render with
 render.py.
 """
