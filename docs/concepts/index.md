@@ -16,7 +16,7 @@ real output from genson for small inputs.
 - [Nulls, missing keys and empty values](nulls-and-empty-values.md): what happens to
   absent, null and empty values, and to null rows.
 - [Maps and records](maps-and-records.md): when an object becomes a struct and when a
-  list of `{key, value}` structs, and how to choose.
+  map, and how to choose.
 - [Mixed types](mixed-types.md): what happens when one field holds different kinds of
   value in different rows.
 - [Field order](key-order.md): how genson orders fields, and why that matters when

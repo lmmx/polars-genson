@@ -502,7 +502,7 @@ class TestErrorHandling:
         schema = pl.Schema(
             {
                 "binary_col": pl.Binary,
-                "categorical_col": pl.Categorical(ordering="lexical"),
+                "categorical_col": pl.Categorical(),
                 "null_col": pl.Null,
             }
         )

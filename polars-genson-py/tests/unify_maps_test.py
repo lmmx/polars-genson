@@ -62,7 +62,7 @@ def test_unify_maps_normalisation():
 
     # Normalise with unify_maps enabled
     normalised = df.genson.normalise_json(
-        "json_data", map_threshold=3, unify_maps=True
+        "json_data", map_threshold=3, unify_maps=True, map_encoding="kv"
     ).to_dicts()
 
     # Should have unified structure with null for missing fields
@@ -261,6 +261,7 @@ def test_wrap_scalars_promotes_scalar_to_record_normalisation():
         map_max_required_keys=0,  # Allows letters map (0 required) to become map
         unify_maps=True,
         wrap_scalars=True,
+        map_encoding="kv",
     ).to_dicts()
 
     # Should have unified structure with promoted scalar
@@ -393,6 +394,7 @@ def test_wrap_scalars_promotes_scalar_to_map_normalisation():
         map_max_required_keys=2,  # Allows maps with ≤2 required keys
         unify_maps=True,
         wrap_scalars=True,
+        map_encoding="kv",
     ).to_dicts()
 
     # Should have map structure but with consistent key naming

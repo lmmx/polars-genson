@@ -100,15 +100,15 @@ pub fn json_type_to_polars_type(json_schema: &Value) -> Result<String, PolarsErr
             }
             Some("object") => {
                 let properties = json_schema.get("properties").and_then(|p| p.as_object());
-                // A map (additionalProperties, no fixed properties) → list of {key,value}
-                // structs, the same encoding as the Avro route and the normalised output
+                // A map (additionalProperties, no fixed properties) → `Map[String,V]`, the same
+                // as the Avro route
                 if properties.is_none_or(|p| p.is_empty()) {
                     if let Some(values) = json_schema
                         .get("additionalProperties")
                         .filter(|v| v.is_object())
                     {
                         let value_type = json_type_to_polars_type(values)?;
-                        return Ok(format!("List[Struct[key:String,value:{}]]", value_type));
+                        return Ok(format!("Map[String,{}]", value_type));
                     }
                 }
                 // Handle nested objects/structs
@@ -160,13 +160,14 @@ pub fn avro_type_to_polars_type(avro_schema: &Value) -> Result<String, PolarsErr
             }
         }
 
-        // Map type → represented as list of {key,value} structs in Polars
+        // Map type → `Map[String,V]`; the Python side turns it into `pl.Map` (Polars >= 2)
+        // or, on older Polars, a list of {key,value} structs
         Value::Object(obj) if obj.get("type") == Some(&Value::String("map".into())) => {
             if let Some(values) = obj.get("values") {
                 let value_type = avro_type_to_polars_type(values)?;
-                Ok(format!("List[Struct[key:String,value:{}]]", value_type))
+                Ok(format!("Map[String,{}]", value_type))
             } else {
-                Ok("List[Struct[key:String,value:String]]".to_string()) // fallback default
+                Ok("Map[String,String]".to_string()) // fallback default
             }
         }
 
@@ -260,7 +261,7 @@ mod tests {
         });
         assert_eq!(
             json_type_to_polars_type(&map_schema).unwrap(),
-            "List[Struct[key:String,value:Int64]]"
+            "Map[String,Int64]"
         );
     }
 
@@ -275,7 +276,7 @@ mod tests {
         });
         assert_eq!(
             json_type_to_polars_type(&map_schema).unwrap(),
-            "List[Struct[key:String,value:Struct[count:Int64]]]"
+            "Map[String,Struct[count:Int64]]"
         );
     }
 

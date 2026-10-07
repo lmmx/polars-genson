@@ -192,9 +192,9 @@ pub fn normalise_from_parquet(
     prune: Option<Vec<String>>,
     prune_output_path: Option<String>,
 ) -> PyResult<()> {
-    if typed && map_encoding != "kv" {
+    if typed && !matches!(map_encoding.as_str(), "kv" | "mapping") {
         return Err(pyo3::exceptions::PyValueError::new_err(
-            "typed output requires map_encoding=\"kv\"",
+            "typed output requires map_encoding=\"kv\" or \"mapping\"",
         ));
     }
     let mut t0 = std::time::Instant::now();
@@ -352,8 +352,8 @@ pub fn normalise_from_parquet(
     );
 
     if typed {
-        let fields =
-            avro_record_fields(&out_schema).map_err(pyo3::exceptions::PyValueError::new_err)?;
+        let fields = avro_record_fields(&out_schema, map_encoding == "mapping")
+            .map_err(pyo3::exceptions::PyValueError::new_err)?;
         // Several batches per thread so uneven row sizes still spread over the pool
         let batch_rows = json_strings
             .len()

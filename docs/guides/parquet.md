@@ -44,14 +44,15 @@ normalise_from_parquet(
 print(pl.read_parquet("typed.parquet").unnest("data"))
 ```
 
-- `labels` has varying keys, so with `map_threshold=2` it becomes a map, stored as a list
-  of `{key, value}` structs (see [Maps and records](../concepts/maps-and-records.md)).
+- `labels` has varying keys, so with `map_threshold=2` it becomes a map, stored as a Parquet
+  map (a `pl.Map` in Polars 2+, a list of `{key, value}` structs in Polars 1.x; see [Maps and records](../concepts/maps-and-records.md)).
 - The empty `tags` list is null (see
   [Nulls and empty values](../concepts/nulls-and-empty-values.md)).
 - The null input row stays a null row, so the output has one row per input row and the
   kept `id` column lines up with it.
 
-`typed=True` requires the default `map_encoding="kv"`.
+`typed=True` requires `map_encoding` to be `"mapping"` (the default on Polars 2+, which
+writes native Parquet maps) or `"kv"` (the default on Polars 1.x).
 
 ## Write JSON strings instead
 
