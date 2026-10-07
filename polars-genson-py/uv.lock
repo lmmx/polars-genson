@@ -1,6 +1,10 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.10"
+
+[options]
+exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
+exclude-newer-span = "PT0S"
 
 [[package]]
 name = "annotated-types"
@@ -1339,7 +1343,6 @@ rtcompat = [
 name = "polars-genson"
 version = "0.9.7"
 source = { editable = "." }
-default-groups = ["build", "debug", "dev", "doc", "test"]
 dependencies = [
     { name = "orjson" },
 ]
