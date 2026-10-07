@@ -3,7 +3,7 @@
 import polars as pl
 import pytest
 
-from polars_genson import avro_to_polars_schema
+from polars_genson import avro_to_polars_schema, normalise_from_parquet, schema_to_dict
 
 HAS_MAP = hasattr(pl, "Map")
 needs_map = pytest.mark.skipif(not HAS_MAP, reason="pl.Map needs Polars 2+")
@@ -73,3 +73,30 @@ def test_avro_schema_maps(df):
     )
     expected = pl.Map(pl.String, pl.Int64) if HAS_MAP else KV_LIST
     assert avro_to_polars_schema(avro) == pl.Schema({"m": expected})
+
+
+@pytest.mark.parametrize("map_encoding", [None, "kv", "mapping"])
+def test_typed_parquet_maps(df, tmp_path, map_encoding):
+    """Typed Parquet output reads back as the dtype `avro_to_polars_schema` gives.
+
+    `"mapping"` writes a Parquet map, which Polars 1.x reads as the list of
+    ``{key, value}`` structs, so it gives the same dtype as `"kv"` there.
+    """
+    src, out = tmp_path / "in.parquet", tmp_path / "out.parquet"
+    df.write_parquet(src)
+    normalise_from_parquet(
+        src, "json_data", out, map_threshold=1, typed=True, map_encoding=map_encoding
+    )
+    m = pl.read_parquet(out).unnest("json_data")["m"]
+    as_map = HAS_MAP and map_encoding != "kv"
+    assert m.dtype == (pl.Map(pl.String, pl.Int64) if as_map else KV_LIST)
+    assert m.to_list()[1] == ({"c": 3} if as_map else [{"key": "c", "value": 3}])
+
+
+@needs_map
+def test_schema_to_dict_map():
+    """`schema_to_dict` spells out a map's key and value dtypes."""
+    schema = pl.Schema({"m": pl.Map(pl.String, pl.List(pl.Int64))})
+    assert schema_to_dict(schema) == {
+        "m": {"map": {"key": "String", "value": {"list": "Int64"}}}
+    }

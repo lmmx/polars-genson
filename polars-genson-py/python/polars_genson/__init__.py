@@ -48,6 +48,9 @@ __all__ = [
 def schema_to_json(schema: pl.Schema, *, debug: bool = False) -> str:
     """Convert a Polars schema to JSON string representation.
 
+    A `pl.Map` (Polars 2+) is written as its Arrow storage, a list of ``{key, value}``
+    structs, so `json_to_schema` reads it back as that list.
+
     Parameters
     ----------
     schema : pl.Schema
@@ -388,7 +391,8 @@ def normalise_json(
         where the schema expects them. If False, unmatched strings become null.
     map_encoding : {"mapping", "entries", "kv"}, optional
         Encoding to use for Avro maps. Defaults to "mapping" on Polars 2+, where maps
-        are a native ``pl.Map``, and to "kv" on older Polars:
+        are a native ``pl.Map``, and to "kv" on older Polars, so JSON string output
+        differs between the two unless it is passed:
         - "mapping": plain JSON object ({"en":"Hello"})
         - "entries": list of single-entry objects ([{"en":"Hello"}])
         - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
@@ -672,7 +676,8 @@ def normalise_from_parquet(
         (e.g. ``"42" → 42``, ``"true" → true``). If False, leave them as strings.
     map_encoding : {"mapping", "entries", "kv"}, optional
         Encoding to use for Avro maps. Defaults to "mapping" on Polars 2+, where maps
-        are a native ``pl.Map``, and to "kv" on older Polars:
+        are a native ``pl.Map``, and to "kv" on older Polars, so JSON string output
+        differs between the two unless it is passed:
         - "mapping": plain JSON object ({"en":"Hello"})
         - "entries": list of single-entry objects ([{"en":"Hello"}])
         - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
@@ -1145,7 +1150,8 @@ class GensonNamespace:
             (e.g. ``"42" → 42``, ``"true" → true``). If False, leave them as strings.
         map_encoding : {"mapping", "entries", "kv"}, optional
             Encoding to use for Avro maps. Defaults to "mapping" on Polars 2+, where maps
-            are a native ``pl.Map``, and to "kv" on older Polars:
+            are a native ``pl.Map``, and to "kv" on older Polars, so JSON string output
+            differs between the two unless it is passed:
             - "mapping": plain JSON object ({"en":"Hello"})
             - "entries": list of single-entry objects ([{"en":"Hello"}])
             - "kv":      list of {key,value} dicts ([{"key":"en","value":"Hello"}])
@@ -1324,6 +1330,13 @@ def _dtype_to_dict(dtype: pl.datatypes.DataType):
         return {"list": _dtype_to_dict(dtype.inner)}
     elif isinstance(dtype, pl.Array):
         return {"array": {"inner": _dtype_to_dict(dtype.inner), "size": dtype.size}}
+    elif HAS_MAP_DTYPE and isinstance(dtype, pl.Map):
+        return {
+            "map": {
+                "key": _dtype_to_dict(dtype.key),
+                "value": _dtype_to_dict(dtype.value),
+            }
+        }
     else:
         return str(dtype)  # e.g. "Int64", "Utf8", etc.
 
