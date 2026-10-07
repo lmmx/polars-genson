@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.9.0...polars-jsonschema-bridge-v0.9.1) - 2026-10-07
+
+### <!-- 9 -->Other
+
+- map_encoding picks the map dtype in schema functions ([#217](https://github.com/lmmx/polars-genson/pull/217))
+
 ## [0.9.0](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.6.0...polars-jsonschema-bridge-v0.9.0) - 2025-10-10
 
 ### <!-- 1 -->Features
