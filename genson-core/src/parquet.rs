@@ -344,9 +344,10 @@ pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, Stri
 
 /// Map an Avro type (as inferred in avro mode) to an Arrow type, mirroring
 /// `polars_jsonschema_bridge::avro_type_to_polars_type` so the result reads back as the
-/// dtype `avro_to_polars_schema` gives: maps become `List<Struct{key, value}>` (the `kv`
-/// encoding) and a union takes its first non-null branch.
-pub fn avro_to_arrow_type(avro: &serde_json::Value) -> Result<DataType, String> {
+/// dtype `avro_to_polars_schema` gives: maps become an Arrow `Map` when `native_map` is set
+/// (the `mapping` encoding, a `pl.Map` in Polars 2) or else `List<Struct{key, value}>`
+/// (the `kv` encoding), and a union takes its first non-null branch.
+pub fn avro_to_arrow_type(avro: &serde_json::Value, native_map: bool) -> Result<DataType, String> {
     use serde_json::Value;
     match avro {
         Value::String(s) => match s.as_str() {
@@ -358,22 +359,36 @@ pub fn avro_to_arrow_type(avro: &serde_json::Value) -> Result<DataType, String> 
             other => Err(format!("Unsupported Avro type: {}", other)),
         },
         Value::Array(branches) => match branches.iter().find(|t| t.as_str() != Some("null")) {
-            Some(branch) => avro_to_arrow_type(branch),
+            Some(branch) => avro_to_arrow_type(branch, native_map),
             None => Ok(DataType::Null),
         },
         Value::Object(obj) => match obj.get("type").and_then(Value::as_str) {
             Some("array") => {
                 let items = match obj.get("items") {
-                    Some(items) => avro_to_arrow_type(items)?,
+                    Some(items) => avro_to_arrow_type(items, native_map)?,
                     None => DataType::Utf8,
                 };
                 Ok(DataType::new_list(items, true))
             }
             Some("map") => {
                 let values = match obj.get("values") {
-                    Some(values) => avro_to_arrow_type(values)?,
+                    Some(values) => avro_to_arrow_type(values, native_map)?,
                     None => DataType::Utf8,
                 };
+                if native_map {
+                    // Map keys are never null
+                    let entries = DataType::Struct(
+                        vec![
+                            Field::new("key", DataType::Utf8, false),
+                            Field::new("value", values, true),
+                        ]
+                        .into(),
+                    );
+                    return Ok(DataType::Map(
+                        Arc::new(Field::new("entries", entries, false)),
+                        false,
+                    ));
+                }
                 let entry = DataType::Struct(
                     vec![
                         Field::new("key", DataType::Utf8, true),
@@ -383,7 +398,7 @@ pub fn avro_to_arrow_type(avro: &serde_json::Value) -> Result<DataType, String> 
                 );
                 Ok(DataType::new_list(entry, true))
             }
-            Some("record") => Ok(DataType::Struct(avro_record_fields(avro)?)),
+            Some("record") => Ok(DataType::Struct(avro_record_fields(avro, native_map)?)),
             _ => Err(format!("Unsupported Avro schema element: {}", avro)),
         },
         _ => Err(format!("Unsupported Avro schema element: {}", avro)),
@@ -391,14 +406,21 @@ pub fn avro_to_arrow_type(avro: &serde_json::Value) -> Result<DataType, String> 
 }
 
 /// The Arrow fields of an Avro record schema, all nullable.
-pub fn avro_record_fields(record: &serde_json::Value) -> Result<arrow::datatypes::Fields, String> {
+pub fn avro_record_fields(
+    record: &serde_json::Value,
+    native_map: bool,
+) -> Result<arrow::datatypes::Fields, String> {
     let mut fields = Vec::new();
     if let Some(avro_fields) = record.get("fields").and_then(|f| f.as_array()) {
         for f in avro_fields {
             if let (Some(name), Some(ftype)) =
                 (f.get("name").and_then(|n| n.as_str()), f.get("type"))
             {
-                fields.push(Field::new(name, avro_to_arrow_type(ftype)?, true));
+                fields.push(Field::new(
+                    name,
+                    avro_to_arrow_type(ftype, native_map)?,
+                    true,
+                ));
             }
         }
     }

@@ -56,6 +56,16 @@ fn test_always_empty_object_unchanged_below_threshold() {
 /// Null}>`, one empty list per row.
 #[test]
 fn test_always_empty_map_writes_to_parquet() {
+    write_always_empty_map(MapEncoding::KeyValueEntries, false);
+}
+
+/// The same as a native Arrow `Map<Utf8, Null>`, one empty map per row.
+#[test]
+fn test_always_empty_native_map_writes_to_parquet() {
+    write_always_empty_map(MapEncoding::Mapping, true);
+}
+
+fn write_always_empty_map(map_encoding: MapEncoding, native_map: bool) {
     let config = SchemaInferenceConfig {
         map_threshold: 0,
         avro: true,
@@ -69,12 +79,12 @@ fn test_always_empty_map_writes_to_parquet() {
         .map(|r| serde_json::from_str(r).unwrap())
         .collect();
     let cfg = NormaliseConfig {
-        map_encoding: MapEncoding::KeyValueEntries,
+        map_encoding,
         empty_as_null: false,
         ..NormaliseConfig::default()
     };
     let normalised = normalise_values(rows, &schema, &cfg);
-    let fields = avro_record_fields(&schema).unwrap();
+    let fields = avro_record_fields(&schema, native_map).unwrap();
     let array = values_to_struct_array(&normalised, &fields).unwrap();
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("out.parquet");
