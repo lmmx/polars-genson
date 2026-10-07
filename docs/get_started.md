@@ -39,9 +39,9 @@ print(df.genson.infer_polars_schema("json", map_threshold=1))
 ```
 
 `infer_polars_schema` reads every row and reports one Polars schema that fits them all.
-`scores` becomes a list of `{key, value}` structs, because its keys vary from row to row
-and `map_threshold=1` lets genson treat it as a map rather than a record with fixed
-fields.
+`scores` becomes a `pl.Map` (a list of `{key, value}` structs on Polars 1.x), because its
+keys vary from row to row and `map_threshold=1` lets genson treat it as a map rather than
+a record with fixed fields.
 
 To get the data itself in that shape, use `normalise_json`:
 

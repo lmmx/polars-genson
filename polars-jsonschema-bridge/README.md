@@ -86,7 +86,7 @@ let fields = schema_to_polars_fields(&avro_schema, SchemaFormat::Avro, false)?;
 // Returns: [
 //   ("id", "Int64"),
 //   ("tags", "List[String]"),
-//   ("labels", "List[Struct[key:String,value:String]]"),
+//   ("labels", "Map[String,String]"),
 //   ("active", "Boolean")
 // ]
 ```
@@ -152,9 +152,12 @@ assert_eq!(json_schema, json!({
 | `null` | `Null` | |
 | `array` | `List[T]` | Where T is the items' type |
 | `object` | `Struct[...]` | Nested object properties |
-| `object` with `additionalProperties` and no `properties` | `List[Struct[key:String,value:T]]` | A map, encoded as key/value structs as in the Avro mapping |
+| `object` with `additionalProperties` and no `properties` | `Map[String,T]` | A map, as in the Avro mapping |
 
 - Note that we do not have JSON Schema `array` to Polars `Array` conversion (...yet?)
+- `Map[String,T]` names a Python `pl.Map(pl.String, T)` (Polars 2+). The Rust `polars`
+  crate has no map dtype, and polars-genson reads it as `List[Struct[key:String,value:T]]`
+  on Polars 1.x.
 
 ### Avro → Polars
 
@@ -166,7 +169,7 @@ assert_eq!(json_schema, json!({
 | `"boolean"`                           | `Boolean`                          |                                        |
 | `"null"`                              | `Null`                             |                                        |
 | `{"type": "array", "items": T}`       | `List[T]`                          | T converted recursively                |
-| `{"type": "map", "values": T}`        | `List[Struct[key:String,value:T]]` | Encoded as key/value structs           |
+| `{"type": "map", "values": T}`        | `Map[String,T]`                    | See the note below                     |
 | `{"type": "record", "fields": [...]}` | `Struct[...]`                      | Each field converted recursively       |
 | `[ "null", T, ... ]`                  | `T`                                | Union: first non-null branch is chosen |
 

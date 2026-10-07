@@ -379,10 +379,13 @@ This is especially useful for semi-structured data where fields may be missing, 
 
 By default, Polars cannot store a dynamic JSON object (`{"en":"Hello","fr":"Bonjour"}`)
 without exploding it into a struct with fixed fields padded with nulls.  
-`polars-genson` solves this by normalising maps to a **list of key/value structs**:
+`polars-genson` solves this by normalising maps to a `pl.Map` on Polars 2+, or a **list of
+key/value structs** on Polars 1.x, which has no map type (pass `map_encoding="kv"` to keep
+the list of structs on Polars 2+).
 
-This representation is schema-stable and preserves all map keys without null-padding.
-It matches how Arrow/Parquet model Avro `map` types internally.
+Both representations are schema-stable and preserve all map keys without null-padding.
+They match how Arrow/Parquet model Avro `map` types (a Parquet map is read by Polars 1.x
+as this list of structs). The example below shows the Polars 1.x output.
 
 ```python
 import polars as pl
@@ -688,7 +691,7 @@ Normalises each JSON string in the column against a single, inferred **Avro** sc
 * `ndjson`: Treat input as newline-delimited JSON (default: `False`)
 * `empty_as_null`: Convert empty arrays/maps to `null` (default: `True`)
 * `coerce_strings`: Coerce numeric/boolean strings (e.g. `"42"`, `"true"`) into numbers/booleans where the schema expects them (default: `False`)
-* `map_encoding`: Encoding for Avro maps: `"kv"` (default), `"mapping"`, or `"entries"`
+* `map_encoding`: Encoding for Avro maps: `"mapping"`, `"kv"`, or `"entries"` (default: `"mapping"` on Polars 2+, where maps decode to `pl.Map`, else `"kv"`)
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
 * `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides (`"map"`/`"record"`)

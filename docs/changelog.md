@@ -5,6 +5,15 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **Maps are `pl.Map` on Polars 2+.** `infer_polars_schema`, `avro_to_polars_schema` and
+  `normalise_json(decode=True)` give a `pl.Map(pl.String, V)` for each map, and
+  `normalise_from_parquet(typed=True)` writes it as a Parquet map. `map_encoding` now
+  defaults to `"mapping"` on Polars 2+ so the JSON strings decode to that dtype; pass
+  `map_encoding="kv"` to keep the list of `{key, value}` structs. Nothing changes on
+  Polars 1.x. polars-jsonschema-bridge names a map `Map[String,V]` in place of
+  `List[Struct[key:String,value:V]]`, and genson-core's `avro_to_arrow_type` and
+  `avro_record_fields` take a `native_map` flag. See
+  [Maps and records](concepts/maps-and-records.md).
 - **`normalise_from_parquet(prune=...)` removes malformed records.** Every record holding
   one of the named fields is removed during normalisation and written to
   `prune_output_path`, and the fields are left out of the output schema. See
