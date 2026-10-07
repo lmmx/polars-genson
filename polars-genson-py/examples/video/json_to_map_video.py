@@ -13,6 +13,7 @@ from pathlib import Path
 
 import polars as pl
 import polars_genson  # noqa: F401  (registers the .genson namespace)
+from voiceover import timeline
 from fframes.compose import (
     Composition,
     Image,
@@ -177,15 +178,15 @@ def chip(key, value, x, y, tint, size=34):
 # ---------------------------------------------------------------- scenes
 
 
-def title_scene():
-    return scene(0, 4, (
+def title_scene(start, duration):
+    return scene(start, duration, (
         logo("polars_logo_white_text.png", (W - 379) / 2, 250, 379, 90),
         enter(text("JSON → pl.Map", W / 2, 560, size=120, weight=700, middle=True), 0.2),
         enter(text("with polars-genson", W / 2, 650, size=48, fill=DIM, middle=True), 0.7),
     ), fade_in=False)
 
 
-def records_scene():
+def records_scene(start, duration):
     items = [heading("Some JSON objects are records")]
     for i, line in enumerate(PEOPLE):
         y = 360 + i * 110
@@ -199,13 +200,13 @@ def records_scene():
         y = 302 + (i + 1) * (ch + 8)
         for j, value in enumerate((name, born)):
             cells += [box(tx + j * (cw + 8), y, cw, ch, PANEL), text(value, tx + j * (cw + 8) + 24, y + 48, size=34, family=MONO)]
-    items.append(enter(text("→", 900, 420, size=72, fill=DIM), 1.4, dy=0))
-    items.append(enter(cells, 1.6))
-    items.append(caption((("Same keys in every row, so each ", DIM), ("key", FIELD), (" is a column", DIM)), 2.6))
-    return scene(4, 6, items)
+    items.append(enter(text("→", 900, 420, size=72, fill=DIM), duration * 0.4, dy=0))
+    items.append(enter(cells, duration * 0.45))
+    items.append(caption((("Every ", DIM), ("key", FIELD), (" has a corresponding column", DIM)), duration * 0.65))
+    return scene(start, duration, items)
 
 
-def maps_scene(d):
+def maps_scene(start, duration, d):
     tint = dict(zip(d["langs"], TINTS))
     items = [heading("Others are maps: the keys are data")]
     for i, (id_, row) in enumerate(zip(d["ids"], ROWS)):
@@ -214,14 +215,14 @@ def maps_scene(d):
         items.append(enter((
             text(id_, X, y, size=36, family=MONO, fill=DIM),
             json_line(labels, X + 200, y, lambda k: tint.get(k, FG)),
-        ), 0.6 + i * 0.25))
-    items.append(caption("Each row has its own languages", 2.4))
-    return scene(10, 7, items)
+        ), 1.0 + i * 0.6))
+    items.append(caption("The languages change from row to row", duration * 0.6))
+    return scene(start, duration, items)
 
 
-def struct_scene(d):
+def struct_scene(start, duration, d):
     tint = dict(zip(d["langs"], TINTS))
-    items = [heading("Read as a struct: a column per key")]
+    items = [heading("Read as a struct: a column for every key")]
     gx, gy, cw, ch, gap = X + 200, 290, 176, 72, 8
     for j, lang in enumerate(d["langs"]):
         x = gx + j * (cw + gap)
@@ -234,18 +235,18 @@ def struct_scene(d):
                 column += [box(x, y, cw, ch, "#1A1F2B"), text("null", x + cw / 2, y + 47, size=28, family=MONO, fill=NULL, middle=True)]
             else:
                 column += [box(x, y, cw, ch, tint[lang] + "33"), text(value, x + cw / 2, y + 47, size=28, family=MONO, middle=True)]
-        items.append(enter(column, 0.6 + j * 0.12))
+        items.append(enter(column, 0.8 + j * 0.25))
     for i, id_ in enumerate(d["ids"]):
         items.append(enter(text(id_, X, gy + (i + 1) * (ch + gap) + 47, size=32, family=MONO, fill=DIM), 0.6))
     nulls = sum(v is None for row in d["grid"] for v in row)
     cells = len(d["grid"]) * len(d["langs"])
-    items.append(caption(((f"{nulls} of {cells}", NULL), (" cells are null", DIM)), 2.2))
-    return scene(17, 7, items)
+    items.append(caption(((f"{nulls} of {cells}", NULL), (" cells are null", DIM)), duration * 0.6))
+    return scene(start, duration, items)
 
 
-def map_scene(d):
+def map_scene(start, duration, d):
     tint = dict(zip(d["langs"], TINTS))
-    items = [heading("Read as a map: each row keeps its own keys")]
+    items = [heading("Read as a map: no extra nulls")]
     for i, (id_, labels) in enumerate(zip(d["ids"], d["maps"])):
         y = 280 + i * 100
         row = [text(id_, X, y + 45, size=32, family=MONO, fill=DIM)]
@@ -254,37 +255,38 @@ def map_scene(d):
             chip_items, width = chip(key, value, x, y, tint[key])
             row += chip_items
             x += width + 16
-        items.append(enter(row, 0.6 + i * 0.2, dy=0))
+        items.append(enter(row, 0.8 + i * 0.4, dy=0))
     dtype = d["dtype"]
     items.append(enter((
         logo("polars_logo_blue.png", X, 760, 220, 110),
         text((("labels: ", FG), (dtype, BLUE)), X + 260, 838, size=48, family=MONO, weight=600),
-    ), 2.0))
-    return scene(24, 7, items)
+    ), duration * 0.6))
+    return scene(start, duration, items)
 
 
-def genson_scene(d):
+def genson_scene(start, duration, d):
     tint = dict(zip(d["langs"], TINTS))
     call = f'df.genson.normalise_json("json", map_threshold={THRESHOLD})'
     items = [
-        heading("polars-genson tells them apart"),
+        heading("polars-genson works out which are maps"),
         enter((box(X, 250, mono_width(len(call), 36) + 56, 84, PANEL), text(call, X + 28, 306, size=36, family=MONO, fill=CODE)), 0.5),
-        enter(text("distinct label keys", X, 450, size=34, fill=DIM), 1.0),
+        enter(text("distinct label keys", X, 450, size=34, fill=DIM), duration * 0.3),
     ]
     cw, gap, y = 136, 16, 490
+    keys_at, stagger = duration * 0.35, 0.45
     for j, lang in enumerate(d["langs"]):
         x = X + j * (cw + gap)
-        items.append(enter((box(x, y, cw, 80, tint[lang]), text(lang, x + cw / 2, y + 54, size=36, family=MONO, weight=600, fill=BG, middle=True)), 1.4 + j * 0.35))
+        items.append(enter((box(x, y, cw, 80, tint[lang]), text(lang, x + cw / 2, y + 54, size=36, family=MONO, weight=600, fill=BG, middle=True)), keys_at + j * stagger))
     mark = X + THRESHOLD * (cw + gap) - gap / 2
-    items.append(enter((box(mark - 3, y - 30, 6, 140, FG, radius=3), text(f"map_threshold = {THRESHOLD}", mark, y + 160, size=32, family=MONO, middle=True)), 1.2, dy=0))
+    items.append(enter((box(mark - 3, y - 30, 6, 140, FG, radius=3), text(f"map_threshold = {THRESHOLD}", mark, y + 160, size=32, family=MONO, middle=True)), keys_at - 0.2, dy=0))
     n = len(d["langs"])
-    verdict = enter(text(((f"{n} > {THRESHOLD}", FG), ("  →  ", DIM), ("map", BLUE)), X, 800, size=56, family=MONO, weight=600), 1.4 + n * 0.35 + 0.3)
+    verdict = enter(text(((f"{n} > {THRESHOLD}", FG), ("  →  ", DIM), ("map", BLUE)), X, 800, size=56, family=MONO, weight=600), keys_at + n * stagger + 0.3)
     items.append(verdict)
-    items.append(caption("The default threshold is 20 distinct keys", 4.2, y=930))
-    return scene(31, 7, items)
+    items.append(caption("The default threshold is 20 distinct keys", keys_at + n * stagger + 1.5))
+    return scene(start, duration, items)
 
 
-def functions_scene(d):
+def functions_scene(start, duration, d):
     items = [heading("Then use Polars' map functions")]
     columns = (('labels.map.get("en")', d["en"], X + 200, 420), ("labels.map.len()", d["len"], X + 760, 300))
     for c, (code, values, x, w) in enumerate(columns):
@@ -292,17 +294,17 @@ def functions_scene(d):
         for i, value in enumerate(values):
             y = 360 + i * 92
             cells += [box(x, y, w, 76, PANEL), text(str(value), x + 24, y + 50, size=36, family=MONO)]
-        items.append(enter(cells, 0.7 + c * 0.8))
+        items.append(enter(cells, duration * (0.35 + c * 0.25)))
     for i, id_ in enumerate(d["ids"]):
         items.append(enter(text(id_, X, 360 + i * 92 + 50, size=32, family=MONO, fill=DIM), 0.6))
-    items.append(caption("get, keys, values, len, contains_key", 2.4))
-    return scene(38, 7, items)
+    items.append(caption("get, keys, values, len, contains_key", duration * 0.75))
+    return scene(start, duration, items)
 
 
-def outro_scene():
+def outro_scene(start, duration):
     install = "pip install polars-genson"
     width = mono_width(len(install), 56) + 80
-    return scene(45, 5, (
+    return scene(start, duration, (
         logo("polars_logo_white_text.png", (W - 379) / 2, 230, 379, 90),
         enter((box((W - width) / 2, 420, width, 110, PANEL), text(install, W / 2, 496, size=56, family=MONO, weight=600, fill=BLUE, middle=True)), 0.3),
         enter(text("polars-genson.vercel.app", W / 2, 660, size=44, middle=True), 0.7),
@@ -312,19 +314,21 @@ def outro_scene():
 
 def build():
     d = compute()
+    t = {scene: (start, duration) for scene, start, duration, _ in timeline()}
     scenes = (
-        title_scene(),
-        records_scene(),
-        maps_scene(d),
-        struct_scene(d),
-        map_scene(d),
-        genson_scene(d),
-        functions_scene(d),
-        outro_scene(),
+        title_scene(*t["Title"]),
+        records_scene(*t["Records"]),
+        maps_scene(*t["Maps"], d),
+        struct_scene(*t["As a struct"], d),
+        map_scene(*t["As a map"], d),
+        genson_scene(*t["genson"], d),
+        functions_scene(*t["Map functions"], d),
+        outro_scene(*t["End card"]),
     )
+    end = sum(duration for _, duration in t.values())
     background = Rectangle(size=(W, H), fill=BG)
     return Video(
-        composition=Composition(duration=50, children=(background, *scenes)),
+        composition=Composition(duration=end, children=(background, *scenes)),
         resolution=(W, H),
         fps=FPS,
         fonts=FONTS,
@@ -340,7 +344,9 @@ def main():
     if args.preview:
         out = HERE / "preview"
         out.mkdir(exist_ok=True)
-        for seconds in (2.5, 8.5, 15.5, 22.5, 29.5, 36.5, 43.5, 48.5):
+        # Each scene once everything in it has appeared
+        for _, start, duration, _ in timeline():
+            seconds = start + duration * 0.9
             path = out / f"frame_{seconds:04.1f}s.png"
             compiled.save_png(str(path), index=int(seconds * FPS))
             print(path)

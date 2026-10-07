@@ -21,6 +21,7 @@ from fframes.compose import (
     Tween,
     Video,
 )
+from voiceover import LEAD_IN, LEAD_OUT, timeline
 
 HERE = Path(__file__).parent
 MEDIA = HERE / "media"
@@ -34,18 +35,7 @@ COUNTDOWN = 3  # seconds before the video's 0:00
 SIZE = 72  # spoken line
 CHARS = 36  # characters per row of the spoken line
 
-# (start, duration, scene, line): the scenes of json_to_map_video.py
-SCRIPT = (
-    (0, 4, "Title", "Polars 2 has maps. Let's fill them from JSON."),
-    (4, 6, "Records", "Some JSON objects are records: the same keys every row, each key a column."),
-    (10, 7, "Maps", "Others are maps. Here the keys are languages: they're data, and they change from row to row."),
-    (17, 7, "As a struct", "Read these as a struct, and you get a column for every language — most of them null."),
-    (24, 7, "As a map", "Read them as a map, and each row keeps just its own keys. That's a Polars Map column."),
-    (31, 7, "genson", "polars-genson tells the two apart. When an object has more distinct keys than the threshold, it's a map."),
-    (38, 7, "Map functions", "Then Polars' map functions just work: get a key, count the entries, check what's there."),
-    (45, 5, "End card", "pip install polars-genson, and turn your JSON into maps."),
-)
-LEAD_IN, LEAD_OUT = 0.3, 0.5  # seconds of each scene left silent at its start and end
+SCRIPT = timeline()  # (scene, start, duration, line), from voiceover.py
 
 
 def text(content, x, y, *, size=SIZE, family=MONO, weight=400, fill=FG, align="start"):
@@ -60,6 +50,13 @@ def text(content, x, y, *, size=SIZE, family=MONO, weight=400, fill=FG, align="s
         text_anchor=align,
         position=Position(x=x, y=y),
     )
+
+
+def opening(line, chars=60):
+    """The start of `line`, cut at a word to at most `chars` characters."""
+    if len(line) <= chars:
+        return line
+    return line[: line.rfind(" ", 0, chars)] + " …"
 
 
 def layer(*children, **kwargs):
@@ -85,7 +82,7 @@ def rows(words):
     return places
 
 
-def line_layer(start, duration, scene, line, next_line):
+def line_layer(scene, start, duration, line, next_line):
     """One scene's line, its words lighting up in turn, from the video's time `start`."""
     words = line.split()
     speak_from, speak_to = LEAD_IN, duration - LEAD_OUT
@@ -95,7 +92,7 @@ def line_layer(start, duration, scene, line, next_line):
     places = rows(words)
     top = 520 - (places[-1][0] * 110) / 2
     items = [
-        text(f"{start // 60}:{start % 60:02d}  ·  {scene}", X, 170, size=36, family=SANS, fill=DIM),
+        text(f"{int(start) // 60}:{int(start) % 60:02d}  ·  {scene}", X, 170, size=36, family=SANS, fill=DIM),
     ]
     t = speak_from
     for word, w, (row, col) in zip(words, weights, places):
@@ -116,7 +113,7 @@ def line_layer(start, duration, scene, line, next_line):
     items.append(layer(Rectangle(size=(W - 2 * X, 6), radius=3, fill=FAINT), position=Position(x=X, y=980)))
     items.append(layer(bar, position=Position(x=X, y=980)))
     if next_line:
-        items.append(text(next_line, X, 900, size=34, family=SANS, fill=DIM))
+        items.append(text("Next: " + opening(next_line), X, 900, size=34, family=SANS, fill=DIM))
     return layer(*items).at(COUNTDOWN + start, duration=duration)
 
 
@@ -126,19 +123,19 @@ def countdown():
         layer(text(str(n), W / 2, 600, size=240, family=SANS, weight=700, fill=BLUE, align="middle")).at(i, duration=1)
         for i, n in enumerate(range(COUNTDOWN, 0, -1))
     ]
-    first = text(SCRIPT[0][3], X, 900, size=34, family=SANS, fill=DIM)
+    first = text("First: " + opening(SCRIPT[0][3]), X, 900, size=34, family=SANS, fill=DIM)
     return layer(*numbers, first).at(0, duration=COUNTDOWN)
 
 
 def build():
     lines = [
-        line_layer(start, duration, scene, line, SCRIPT[i + 1][3] if i + 1 < len(SCRIPT) else None)
-        for i, (start, duration, scene, line) in enumerate(SCRIPT)
+        line_layer(scene, start, duration, line, SCRIPT[i + 1][3] if i + 1 < len(SCRIPT) else None)
+        for i, (scene, start, duration, line) in enumerate(SCRIPT)
     ]
     clock = layer(
         text(TextTemplate(template="{seconds:.1f}s"), W - X, 170, size=36, family=MONO, fill=DIM, align="end")
     ).at(COUNTDOWN)
-    end = SCRIPT[-1][0] + SCRIPT[-1][1]
+    end = SCRIPT[-1][1] + SCRIPT[-1][2]
     return Video(
         composition=Composition(
             duration=COUNTDOWN + end,
@@ -159,7 +156,8 @@ def main():
     if args.preview:
         out = HERE / "preview"
         out.mkdir(exist_ok=True)
-        for seconds in (1.5, 5.0, 9.5, 23.0, 37.0, 50.5):
+        # The countdown, then each scene halfway through its line
+        for seconds in (1.5, *(COUNTDOWN + start + duration / 2 for _, start, duration, _ in SCRIPT)):
             path = out / f"teleprompter_{seconds:04.1f}s.png"
             compiled.save_png(str(path), index=int(seconds * FPS))
             print(path)
