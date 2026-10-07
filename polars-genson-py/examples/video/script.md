@@ -110,16 +110,6 @@ adding or removing a `say` row in a scene shifts which line a later visual comes
 | Inferring maps | pause   |     0.3 |  |
 | Inferring maps | say     |     3.0 | Lower it to 5, and they become a map. |
 | Inferring maps | pause   |     3.5 |  |
-| Why a Map type | written |         | Before Polars 2.0, polars-genson stored maps as lists of key-value structs. To look up one key, you had to filter the list. With a Map column, it's one call. |
-| Why a Map type | pause   |     0.8 |  |
-| Why a Map type | say     |     1.1 | Before Polars 2.0, |
-| Why a Map type | pause   |     0.3 |  |
-| Why a Map type | say     |     3.0 | polars-genson stored maps as lists of key-value structs. |
-| Why a Map type | pause   |     0.3 |  |
-| Why a Map type | say     |     4.1 | To look up one key, you had to filter the list. |
-| Why a Map type | pause   |     0.3 |  |
-| Why a Map type | say     |     2.6 | With a Map column, it's one call. |
-| Why a Map type | pause   |     2.5 |  |
 | Map functions  | written |         | The map namespace works on Map columns. map.get looks up a key: here, English, and here, Spanish, which two cities don't have. map.len counts each city's labels. |
 | Map functions  | pause   |     0.8 |  |
 | Map functions  | say     |     2.6 | The map namespace works on Map columns. |

@@ -16,6 +16,7 @@ from fframes.compose import (
     Image,
     Position,
     Rectangle,
+    Stroke,
     Text,
     TextRun,
     Tween,
@@ -49,15 +50,6 @@ CITIES = [
 ]
 THRESHOLD = 5  # the map_threshold the video lowers to
 AXIS_KEYS = 25  # the number line runs from 0 to this many distinct keys
-LIST_LOOKUP = """pl.col("labels")
-  .list.eval(
-    pl.element().filter(
-      pl.element().struct.field("key") == "es"
-    )
-  )
-  .list.first()
-  .struct.field("value")"""
-MAP_LOOKUP = 'pl.col("labels").map.get("es")'
 
 
 # ---------------------------------------------------------------- data
@@ -77,13 +69,9 @@ def compute():
     assert lowered == forced == pl.Map(pl.String, pl.String), (lowered, forced)
 
     cities = df.genson.normalise_json("json", map_threshold=THRESHOLD)
-    as_list = df.genson.normalise_json("json", map_threshold=THRESHOLD, map_encoding="kv")
     labels = pl.col("labels")
-    # The lookups run as shown on screen
-    by_map = cities.select(eval(f"({MAP_LOOKUP})")).to_series().to_list()
     get_en = cities.select(labels.map.get("en")).to_series().to_list()
-    by_list = as_list.select(eval(f"({LIST_LOOKUP})")).to_series().to_list()
-    assert by_map == by_list, (by_map, by_list)
+    get_es = cities.select(labels.map.get("es")).to_series().to_list()
     lengths = cities.select(labels.map.len()).to_series().to_list()
 
     return {
@@ -95,7 +83,7 @@ def compute():
         "default_fields": len(default.fields),
         "map_dtype": str(lowered),
         "get_en": get_en,
-        "get_es": by_map,
+        "get_es": get_es,
         "len": lengths,
     }
 
@@ -230,6 +218,28 @@ def cell(value, x, y, w, h=64, size=30, fill=PANEL, color=FG):
 # ---------------------------------------------------------------- scenes
 
 
+def data_rows(d, top, step, *, size=26, h=52, pad=12, x0=X + 170):
+    """The cities and their labels as chips: (items, {(row, key): (x, y, w)})."""
+    tint = dict(zip(d["langs"], TINTS))
+    items, places = [], {}
+    for i, (id_, labels) in enumerate(zip(d["ids"], d["maps"])):
+        y = top + i * step
+        items.append(mono(id_, X, y + h / 2 + 11, 28, fill=DIM))
+        x = x0
+        for key, value in labels.items():
+            chip_items, width = chip(key, value, x, y, tint[key], size=size, h=h, pad=pad)
+            items += chip_items
+            places[i, key] = (x, y, width)
+            x += width + 10
+    return items, places
+
+
+def key_chip(key, x, y, tint, size=26, h=52, pad=12):
+    """Just a key, on its tint. Returns (items, width)."""
+    w = mono_width(len(key), size) + 2 * pad
+    return [box(x, y, w, h, tint), mono(key, x + pad, y + h / 2 + size * 0.35, size, weight=600, fill=BG)], w
+
+
 def title_scene(s, d):
     logo_w, gap, version = 379, 28, "2.0"
     total = logo_w + gap + mono_width(len(version), 72)
@@ -345,23 +355,43 @@ def keys_scene(s, d):
 
 
 def inferring_scene(s, d):
+    tint = dict(zip(d["langs"], TINTS))
     glide = s.cue(5)  # "Lower it to 5, and they become a map."
     n = len(d["langs"])
-    before = 'df.genson.infer_polars_schema("json")'
-    after = f'df.genson.infer_polars_schema("json", map_threshold={THRESHOLD})'
-    items = [
-        heading("Or let polars-genson infer them"),
-        enter(leave(code_card(before, X, 250), glide), s.cue(3)),
-        enter(leave(mono((("labels: ", FG), (f"Struct({d['default_fields']} fields)", FIELD)), X, 410, 44, weight=600), glide), s.cue(4)),
-        enter(code_card(after, X, 250), glide + 0.3, dy=0),
-        enter(mono((("labels: ", FG), (d["map_dtype"], BLUE)), X, 410, 44, weight=600), glide + 1.2, dy=0),
-    ]
+    items = [heading("Or let polars-genson infer them")]
+
+    # The data, then each distinct key flying from its first appearance into a counter
+    rows, places = data_rows(d, 230, 64, size=24, h=46)
+    items.append(enter(rows, s.cue(0)))
+    cx, cy = 1580, 330  # where the keys land: the counter
+    items.append(enter(text("distinct keys", cx, 290, size=30, fill=DIM, align="middle"), s.cue(2)))
+    first = {}
+    for (i, key), place in places.items():
+        first.setdefault(key, place)
+    counting, flight = s.cue(2) + 0.3, 0.55
+    arrivals = []
+    for k, key in enumerate(first):
+        x, y, _ = first[key]
+        t = counting + k * 0.32
+        chip_items, w = key_chip(key, 0, 0, tint[key], size=24, h=46)
+        move = dict(duration=flight, start_at=t, easing="ease_in_out")
+        flying = layer(
+            *chip_items,
+            position=Position(x=Tween(from_value=x, to_value=cx - w / 2, **move), y=Tween(from_value=y, to_value=cy, **move)),
+            opacity=Tween(from_value=0, to_value=1, duration=0.1, start_at=t),
+        )
+        items.append(leave([flying], t + flight))
+        arrivals.append(t + flight)
+    shown = [s.cue(2), *arrivals, s.duration]
+    for count in range(n + 1):
+        number = text(str(count), cx, 440, size=120, weight=700, align="middle")
+        items.append(layer(number).at(shown[count], duration=shown[count + 1] - shown[count]))
 
     # Distinct keys on a line: struct up to map_threshold, map beyond it
     def px(keys):
         return X + keys * (W - 2 * X) / AXIS_KEYS
 
-    band, band_h, end = 620, 80, px(AXIS_KEYS)
+    band, band_h, end = 580, 70, px(AXIS_KEYS)
     move = dict(duration=1.4, start_at=glide, easing="ease_in_out")
     struct_w = Tween(from_value=px(20) - X, to_value=px(THRESHOLD) - X, **move)
     map_x = Tween(from_value=px(20), to_value=px(THRESHOLD), **move)
@@ -369,18 +399,28 @@ def inferring_scene(s, d):
     line = [
         layer(Rectangle(size=(struct_w, band_h), radius=10, fill=FIELD + "55"), position=Position(x=X, y=band)),
         layer(Rectangle(size=(map_w, band_h), radius=10, fill=BLUE + "77"), position=Position(x=map_x, y=band)),
-        mono("struct", X + 24, band + 52, 32, weight=600),
-        mono("map", end - 24, band + 52, 32, weight=600, align="end"),
-        *(mono(str(k), px(k), band + 130, 28, fill=DIM, align="middle") for k in range(0, AXIS_KEYS + 1, 5)),
+        mono("struct", X + 24, band + 47, 30, weight=600),
+        mono("map", end - 24, band + 47, 30, weight=600, align="end"),
+        *(mono(str(k), px(k), band + 112, 26, fill=DIM, align="middle") for k in range(0, AXIS_KEYS + 1, 5)),
         layer(
-            Rectangle(size=(6, band_h + 40), radius=3, fill=FG),
-            mono("map_threshold", 3, -16, 30, align="middle"),
-            position=Position(x=map_x, y=band - 20),
+            Rectangle(size=(6, band_h + 36), radius=3, fill=FG),
+            mono("map_threshold", 3, -14, 28, align="middle"),
+            position=Position(x=map_x, y=band - 18),
         ),
-        layer(Circle(radius=18, fill=FG), position=Position(x=px(n) - 18, y=band + band_h / 2 - 18)),
-        mono(f"{n} keys", px(n), band - 30, 30, align="middle"),
+        layer(Circle(radius=16, fill=FG), position=Position(x=px(n) - 16, y=band + band_h / 2 - 16)),
+        mono(f"{n} keys", px(n), band - 26, 28, align="middle"),
     ]
-    items.append(enter(line, s.cue(2)))
+    items.append(enter(line, s.cue(3)))
+
+    before = 'df.genson.infer_polars_schema("json")'
+    after = f'df.genson.infer_polars_schema("json", map_threshold={THRESHOLD})'
+    result_x = 1180
+    items += [
+        enter(leave(code_card(before, X, 770, size=28), glide), s.cue(3)),
+        enter(leave(mono((("labels: ", FG), (f"Struct({d['default_fields']} fields)", FIELD)), result_x, 818, 32, weight=600), glide), s.cue(4)),
+        enter(code_card(after, X, 770, size=28), glide + 0.3, dy=0),
+        enter(mono((("labels: ", FG), (d["map_dtype"], BLUE)), result_x, 818, 32, weight=600), glide + 1.2, dy=0),
+    ]
     return scene(s, items)
 
 
@@ -393,44 +433,32 @@ def naming_scene(s, d):
     ))
 
 
-def why_scene(s, d):
-    right = X + 960
-    items = [
-        heading("Why a Map type"),
-        enter(mono("List(Struct({'key': String, 'value': String}))", X, 260, 26, fill=DIM), s.cue(1)),
-        enter(code_card(LIST_LOOKUP, X, 290, size=28), s.cue(2)),
-        enter(mono(d["map_dtype"], right, 260, 26, fill=DIM), s.cue(3)),
-        enter(code_card(MAP_LOOKUP, right, 290, size=28), s.cue(3)),
-    ]
-    values = []
-    for i, value in enumerate(d["get_es"]):
-        values += cell(value, right, 420 + i * 72, 320)
-    items.append(enter(values, s.cue(3) + 0.6))
-    return scene(s, items)
-
-
 def functions_scene(s, d):
     """The cities' labels on the left; on the right, one function's result at a time."""
     tint = dict(zip(d["langs"], TINTS))
-    items = [heading("The map namespace")]
     top, step, h = 300, 92, 56
-    for i, (id_, labels) in enumerate(zip(d["ids"], d["maps"])):
-        y = top + i * step
-        row = [mono(id_, X, y + 40, 30, fill=DIM)]
-        x = X + 170
-        for key, value in labels.items():
-            chip_items, width = chip(key, value, x, y, tint[key], size=26, h=h, pad=12)
-            row += chip_items
-            x += width + 10
-        items.append(enter(row, s.cue(0)))
+    rows, places = data_rows(d, top, step, h=h)
+    items = [heading("The map namespace"), enter(rows, s.cue(0))]
     rx, rw = 1340, 420
     results = (
-        ('labels.map.get("en")', d["get_en"], s.cue(1)),
-        ('labels.map.get("es")', d["get_es"], s.cue(2)),
-        ("labels.map.len()", d["len"], s.cue(3)),
+        ("en", d["get_en"], s.cue(1)),
+        ("es", d["get_es"], s.cue(2)),
+        (None, d["len"], s.cue(3)),
     )
-    for k, (code, values, at) in enumerate(results):
-        column = [mono(code, rx, top - 30, 30, fill=CODE)]
+    for k, (key, values, at) in enumerate(results):
+        if key:  # labels.map.get([key]), the key as on the left, and those keys outlined
+            prefix = "labels.map.get("
+            hx = rx + mono_width(len(prefix), 30)
+            chip_items, w = key_chip(key, hx + 4, top - 72, tint[key], size=28, h=46)
+            header = [mono(prefix, rx, top - 38, 30, fill=CODE), *chip_items, mono(")", hx + w + 8, top - 38, 30, fill=CODE)]
+            header += [
+                layer(Rectangle(size=(pw + 12, h + 12), radius=18, fill=None, stroke=Stroke(color=FG, width=3)), position=Position(x=px_ - 6, y=py - 6))
+                for (i, k_), (px_, py, pw) in places.items()
+                if k_ == key
+            ]
+        else:
+            header = [mono("labels.map.len()", rx, top - 38, 30, fill=CODE)]
+        column = header
         for i, value in enumerate(values):
             column += cell(value, rx, top + i * step, rw, h)
         shown = enter(column, at, dy=0)
@@ -468,7 +496,6 @@ SCENES = {
     "Map keys": keys_scene,
     "Naming maps": naming_scene,
     "Inferring maps": inferring_scene,
-    "Why a Map type": why_scene,
     "Map functions": functions_scene,
     "End card": end_scene,
 }
