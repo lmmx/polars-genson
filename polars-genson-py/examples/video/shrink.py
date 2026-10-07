@@ -56,7 +56,11 @@ def main():
     print(f"{seconds:.1f} s at {video}k video + {args.audio}k audio -> about {args.size} MB")
 
     vf = f"scale=-2:{args.height}:flags=lanczos" + ("" if args.keep_grain else f",{DENOISE}")
-    common = ["-vf", vf, "-c:v", "libx264", "-preset", "slow", "-b:v", f"{video}k"]
+    # Both passes need the same encoder settings, or x264 refuses the second
+    common = [
+        "-vf", vf, "-c:v", "libx264", "-preset", "slow", "-b:v", f"{video}k",
+        "-profile:v", "high", "-level:v", "4.1", "-g", "60", "-pix_fmt", "yuv420p",
+    ]  # fmt: skip
     with tempfile.TemporaryDirectory() as tmp:
         log = str(Path(tmp) / "pass")
         first = [
@@ -66,7 +70,6 @@ def main():
         second = [
             "ffmpeg", "-y", "-loglevel", "error", "-i", str(args.input), *common,
             "-pass", "2", "-passlogfile", log,
-            "-profile:v", "high", "-level:v", "4.1", "-g", "60", "-pix_fmt", "yuv420p",
             "-c:a", "aac", "-b:a", f"{args.audio}k", "-movflags", "+faststart",
             str(output),
         ]  # fmt: skip

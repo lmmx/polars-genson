@@ -1341,7 +1341,7 @@ rtcompat = [
 
 [[package]]
 name = "polars-genson"
-version = "0.9.7"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "orjson" },
