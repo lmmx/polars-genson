@@ -3,6 +3,7 @@
     python video/cut.py                                   # drops Map keys and Map functions
     python video/cut.py --drop "Map keys" "Naming maps"   # drops these instead
     python video/cut.py --keep-all --output out/full.mp4  # just re-encodes
+    python video/cut.py --captions-only                   # just the cut's captions
 
 Scene times come from script.md (`render.py timings` lists them), so this cuts at the
 scene boundaries, in the pauses where one scene fades into the next. The result is
@@ -52,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--drop", nargs="+", default=list(DROP), metavar="SCENE", help="scenes to cut (default: %(default)s)")
     parser.add_argument("--keep-all", action="store_true", help="cut nothing")
+    parser.add_argument("--captions-only", action="store_true", help="write the cut's captions, not the video")
     parser.add_argument("--input", type=Path, default=OUT / "json_to_map_voiced.mp4", help="default: %(default)s")
     parser.add_argument("--output", type=Path, default=OUT / "json_to_map_x.mp4", help="default: %(default)s")
     parser.add_argument("--max", type=float, default=140.0, help="longest allowed, in seconds (default: %(default)s)")
@@ -67,6 +69,9 @@ def main():
     print(f"keeping {len(spans)} span(s), {length:.1f} s: " + ", ".join(f"{a:.1f}-{b:.1f}" for a, b in spans))
     if length > args.max:
         raise SystemExit(f"{length:.1f} s is over the {args.max:.0f} s limit: drop more scenes")
+    if args.captions_only:
+        write_captions(scenes, drop, args.output)
+        return
     if shutil.which("ffmpeg") is None:
         raise SystemExit("ffmpeg isn't on the PATH")
 
@@ -85,8 +90,13 @@ def main():
     ]  # fmt: skip
     subprocess.run(command, check=True)
     print(args.output)
+    write_captions(scenes, drop, args.output)
+
+
+def write_captions(scenes, drop, output):
+    """The cut's captions, as SRT and WebVTT beside `output`."""
     for form in ("srt", "vtt"):
-        path = args.output.with_suffix(f".{form}")
+        path = output.with_suffix(f".{form}")
         path.write_text(captions(kept_scenes(scenes, drop), form))
         print(path)
 
