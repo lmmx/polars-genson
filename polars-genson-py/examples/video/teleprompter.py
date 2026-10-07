@@ -1,27 +1,23 @@
-"""A karaoke-style teleprompter for recording the json_to_map video's voiceover.
-
-    uv run --group video video/teleprompter.py            # writes video/teleprompter.mp4
-    uv run --group video video/teleprompter.py --preview  # a few PNG frames
+"""A karaoke-style teleprompter for recording the explainer's voiceover. Render it with
+render.py, at the same pace as the explainer.
 
 Each word lights up when it should be spoken. A 3 second countdown comes first: start
 recording before it ends, and skip those 3 seconds when adding the recording to the
 video (`Audio(source=..., offset=3)`).
 """
 
-import argparse
 from pathlib import Path
 
 from fframes.compose import (
     Composition,
     Position,
     Rectangle,
-    RenderOptions,
     Text,
     TextTemplate,
     Tween,
     Video,
 )
-from voiceover import LEAD_IN, LEAD_OUT, timeline
+from voiceover import LEAD_IN, LEAD_OUT
 
 HERE = Path(__file__).parent
 MEDIA = HERE / "media"
@@ -34,9 +30,6 @@ BG, FG, DIM, FAINT, BLUE = "#0B0F19", "#E8ECF4", "#8A93A6", "#3A4152", "#0075FF"
 COUNTDOWN = 3  # seconds before the video's 0:00
 SIZE = 72  # spoken line
 CHARS = 36  # characters per row of the spoken line
-
-SCRIPT = timeline()  # (scene, start, duration, line), from voiceover.py
-
 
 def text(content, x, y, *, size=SIZE, family=MONO, weight=400, fill=FG, align="start"):
     """Text with its baseline at `y`; `content` is a string or a TextTemplate."""
@@ -117,29 +110,30 @@ def line_layer(scene, start, duration, line, next_line):
     return layer(*items).at(COUNTDOWN + start, duration=duration)
 
 
-def countdown():
+def countdown(first_line):
     """3, 2, 1 before the video's 0:00, with the first line shown to read ahead."""
     numbers = [
         layer(text(str(n), W / 2, 600, size=240, family=SANS, weight=700, fill=BLUE, align="middle")).at(i, duration=1)
         for i, n in enumerate(range(COUNTDOWN, 0, -1))
     ]
-    first = text("First: " + opening(SCRIPT[0][3]), X, 900, size=34, family=SANS, fill=DIM)
+    first = text("First: " + opening(first_line), X, 900, size=34, family=SANS, fill=DIM)
     return layer(*numbers, first).at(0, duration=COUNTDOWN)
 
 
-def build():
+def build(scenes):
+    """The teleprompter for `scenes` (from `voiceover.timeline`)."""
     lines = [
-        line_layer(scene, start, duration, line, SCRIPT[i + 1][3] if i + 1 < len(SCRIPT) else None)
-        for i, (scene, start, duration, line) in enumerate(SCRIPT)
+        line_layer(scene, start, duration, line, scenes[i + 1][3] if i + 1 < len(scenes) else None)
+        for i, (scene, start, duration, line) in enumerate(scenes)
     ]
     clock = layer(
         text(TextTemplate(template="{seconds:.1f}s"), W - X, 170, size=36, family=MONO, fill=DIM, align="end")
     ).at(COUNTDOWN)
-    end = SCRIPT[-1][1] + SCRIPT[-1][2]
+    end = scenes[-1][1] + scenes[-1][2]
     return Video(
         composition=Composition(
             duration=COUNTDOWN + end,
-            children=(Rectangle(size=(W, H), fill=BG), countdown(), *lines, clock),
+            children=(Rectangle(size=(W, H), fill=BG), countdown(scenes[0][3]), *lines, clock),
         ),
         resolution=(W, H),
         fps=FPS,
@@ -148,24 +142,6 @@ def build():
     )
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--preview", action="store_true", help="write a few PNG frames")
-    args = parser.parse_args()
-    compiled = build().compile()
-    if args.preview:
-        out = HERE / "preview"
-        out.mkdir(exist_ok=True)
-        # The countdown, then each scene halfway through its line
-        for seconds in (1.5, *(COUNTDOWN + start + duration / 2 for _, start, duration, _ in SCRIPT)):
-            path = out / f"teleprompter_{seconds:04.1f}s.png"
-            compiled.save_png(str(path), index=int(seconds * FPS))
-            print(path)
-    else:
-        path = HERE / "teleprompter.mp4"
-        compiled.render(str(path), options=RenderOptions(bitrate=6_000_000))
-        print(path)
-
-
-if __name__ == "__main__":
-    main()
+def preview_times(scenes):
+    """The countdown, then each scene halfway through its line."""
+    return [1.5, *(COUNTDOWN + start + duration / 2 for _, start, duration, _ in scenes)]

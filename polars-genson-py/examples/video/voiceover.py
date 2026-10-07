@@ -1,13 +1,13 @@
 """The voiceover, and the scene timings that follow from it.
 
-Each scene lasts as long as its line takes to say at `WORDS_PER_SECOND`, plus a pause
-before and after, so changing a line here re-times both json_to_map_video.py and
-teleprompter.py.
+Each scene lasts as long as its line takes to say at the pace (words per second), plus
+a pause before and after, so changing a line here re-times both videos. Pass a pace to
+render.py with `--pace` to try one, and set `WORDS_PER_SECOND` to keep it.
 """
 
 import math
 
-WORDS_PER_SECOND = 2.0
+WORDS_PER_SECOND = 2.7  # the default pace
 LEAD_IN, LEAD_OUT = 0.6, 0.8  # silent seconds at the start and end of each scene
 MIN_SECONDS = 4.0  # long enough for a scene's visuals to settle
 
@@ -23,11 +23,11 @@ LINES = (
 )
 
 
-def timeline():
+def timeline(words_per_second=WORDS_PER_SECOND):
     """(scene, start, duration, line) for each scene, durations rounded up to 0.5 s."""
     start, scenes = 0.0, []
     for scene, line in LINES:
-        speaking = len(line.split()) / WORDS_PER_SECOND
+        speaking = len(line.split()) / words_per_second
         duration = max(MIN_SECONDS, math.ceil((LEAD_IN + speaking + LEAD_OUT) * 2) / 2)
         scenes.append((scene, start, duration, line))
         start += duration

@@ -1,25 +1,19 @@
-"""Render a short video explaining JSON maps, `pl.Map` and polars-genson, with fframes.
-
-    uv run --group video video/json_to_map_video.py            # writes video/json_to_map.mp4
-    uv run --group video video/json_to_map_video.py --preview  # one PNG frame per scene
+"""The explainer: JSON maps, `pl.Map` and polars-genson. Render it with render.py.
 
 Every value on screen is computed with Polars and polars-genson when the script runs.
 Fonts (IBM Plex, OFL) and the Polars logos are in video/media.
 """
 
-import argparse
 import io
 from pathlib import Path
 
 import polars as pl
 import polars_genson  # noqa: F401  (registers the .genson namespace)
-from voiceover import timeline
 from fframes.compose import (
     Composition,
     Image,
     Position,
     Rectangle,
-    RenderOptions,
     Text,
     TextRun,
     Tween,
@@ -312,10 +306,11 @@ def outro_scene(start, duration):
     ))
 
 
-def build():
+def build(scenes):
+    """The video, its scenes timed by `scenes` (from `voiceover.timeline`)."""
     d = compute()
-    t = {scene: (start, duration) for scene, start, duration, _ in timeline()}
-    scenes = (
+    t = {scene: (start, duration) for scene, start, duration, _ in scenes}
+    layers = (
         title_scene(*t["Title"]),
         records_scene(*t["Records"]),
         maps_scene(*t["Maps"], d),
@@ -328,7 +323,7 @@ def build():
     end = sum(duration for _, duration in t.values())
     background = Rectangle(size=(W, H), fill=BG)
     return Video(
-        composition=Composition(duration=end, children=(background, *scenes)),
+        composition=Composition(duration=end, children=(background, *layers)),
         resolution=(W, H),
         fps=FPS,
         fonts=FONTS,
@@ -336,25 +331,6 @@ def build():
     )
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--preview", action="store_true", help="write one PNG per scene")
-    args = parser.parse_args()
-    compiled = build().compile()
-    if args.preview:
-        out = HERE / "preview"
-        out.mkdir(exist_ok=True)
-        # Each scene once everything in it has appeared
-        for _, start, duration, _ in timeline():
-            seconds = start + duration * 0.9
-            path = out / f"frame_{seconds:04.1f}s.png"
-            compiled.save_png(str(path), index=int(seconds * FPS))
-            print(path)
-    else:
-        path = HERE / "json_to_map.mp4"
-        compiled.render(str(path), options=RenderOptions(bitrate=8_000_000))
-        print(path)
-
-
-if __name__ == "__main__":
-    main()
+def preview_times(scenes):
+    """Each scene once everything in it has appeared."""
+    return [start + duration * 0.9 for _, start, duration, _ in scenes]

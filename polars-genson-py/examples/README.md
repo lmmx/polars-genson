@@ -8,11 +8,18 @@ Standalone scripts using the published `polars-genson`. Run each with `uv run <s
 - `standalone_parquet_demo.py`: infer a schema from a Parquet column of JSON strings and
   normalise it to a new Parquet file.
 - `main.py`: memory use while normalising a larger input.
-- `video/json_to_map_video.py`: an 80 second video explaining records, maps, `pl.Map`
-  and how polars-genson infers maps, made with
-  [fframes](https://github.com/Scr44gr/fframes-py) (`uv run --group video
-  video/json_to_map_video.py`, or `--preview` for one PNG per scene). Needs Python 3.11+.
-  `video/media` holds the IBM Plex fonts (SIL Open Font License, `OFL-IBM-Plex.txt`) and
-  the official Polars logos from [pola-rs/polars-static](https://github.com/pola-rs/polars-static).
-- `video/teleprompter.py`: a karaoke-style teleprompter for recording its voiceover.
-  The lines and scene timings for both videos are in `video/voiceover.py`.
+- `video/`: a video explaining records, maps, `pl.Map` and how polars-genson infers
+  maps, and a karaoke-style teleprompter for recording its voiceover, made with
+  [fframes](https://github.com/Scr44gr/fframes-py). Needs Python 3.11+.
+
+  ```
+  uv run --group video video/render.py explainer              # video/json_to_map.mp4
+  uv run --group video video/render.py teleprompter           # video/teleprompter.mp4
+  uv run --group video video/render.py explainer --pace 3     # words per second
+  uv run --group video video/render.py teleprompter --preview # PNG frames only
+  ```
+
+  The voiceover lines and default pace are in `video/voiceover.py`, and both videos are
+  timed from them. `video/media` holds the IBM Plex fonts (SIL Open Font License,
+  `OFL-IBM-Plex.txt`) and the official Polars logos from
+  [pola-rs/polars-static](https://github.com/pola-rs/polars-static).
