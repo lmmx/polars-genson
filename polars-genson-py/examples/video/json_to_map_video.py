@@ -206,6 +206,12 @@ def cell(value, x, y, w, h=64, size=30, fill=PANEL, color=FG):
     return [box(x, y, w, h, fill, radius=10), mono(shown, x + 20, y + h / 2 + size * 0.35, size, fill=color)]
 
 
+def outline(x, y, w, h):
+    """A white ring around a chip at (x, y), `w` wide and `h` high."""
+    ring = Rectangle(size=(w + 12, h + 12), radius=18, fill=None, stroke=Stroke(color=FG, width=3))
+    return layer(ring, position=Position(x=x - 6, y=y - 6))
+
+
 def light_up(line, x, y, size, key, color, at):
     """`key` (a JSON key in `line`, drawn at x, y) turning `color` at time `at`."""
     token, cw, items = f'"{key}":', size * 0.6, []
@@ -410,6 +416,8 @@ def inferring_scene(s, d):
         mono("struct", X + 24, band + 47, 30, weight=600),
         mono("map", end - 24, band + 47, 30, weight=600, align="end"),
         *(mono(str(k), px(k), band + 112, 26, fill=DIM, align="middle") for k in range(0, AXIS_KEYS + 1, 5)),
+        mono("default", px(20), band + 142, 24, fill=DIM, align="middle"),
+        box(px(20) - 2, band, 4, band_h, DIM, radius=2),
         layer(
             Rectangle(size=(6, band_h + 36), radius=3, fill=FG),
             mono("map_threshold", 3, -14, 28, align="middle"),
@@ -420,14 +428,32 @@ def inferring_scene(s, d):
     ]
     items.append(enter(line, s.cue(3)))
 
-    before = 'df.genson.infer_polars_schema("json")'
-    after = f'df.genson.infer_polars_schema("json", map_threshold={THRESHOLD})'
+    # The call gains `, map_threshold=5` in place, its `)` moving over, as the slider moves
+    size, cw, top = 28, 28 * 0.6, 770
+    head, added, tail = 'df.genson.infer_polars_schema("json"', f", map_threshold={THRESHOLD}", ")"
+    card_h, base = size * 1.45 + 32, top + 16 + size
+    at = X + 28 + len(head) * cw  # where `added` goes
+    grow = dict(duration=1.4, start_at=glide, easing="ease_in_out")
+    width = (len(head) + len(tail)) * cw + 56
+    call = [
+        layer(
+            Rectangle(size=(Tween(from_value=width, to_value=width + len(added) * cw, **grow), card_h), radius=14, fill=PANEL),
+            position=Position(x=X, y=top),
+        ),
+        mono(head, X + 28, base, size, fill=CODE),
+        layer(mono(tail, 0, base, size, fill=CODE), position=Position(x=Tween(from_value=at, to_value=at + len(added) * cw, **grow), y=0)),
+        layer(
+            box(at - 4, top + 10, len(added) * cw + 8, card_h - 20, FIELD + "40", radius=8),
+            mono(added, at, base, size, weight=600, fill=FIELD),
+            opacity=Tween(from_value=0, to_value=1, duration=0.8, start_at=glide + 0.4, easing="ease_out"),
+        ),
+    ]
     result_x = 1180
     items += [
-        enter(leave(code_card(before, X, 770, size=28), glide), s.cue(3)),
-        enter(leave(mono((("labels: ", FG), (f"Struct({d['default_fields']} fields)", FIELD)), result_x, 818, 32, weight=600), glide), s.cue(4)),
-        enter(code_card(after, X, 770, size=28), glide + 0.3, dy=0),
-        enter(mono((("labels: ", FG), (d["map_dtype"], BLUE)), result_x, 818, 32, weight=600), glide + 1.2, dy=0),
+        enter(call, s.cue(3)),
+        enter(mono("labels:", result_x, base, 32, weight=600), s.cue(4)),
+        enter(leave(mono(f"Struct({d['default_fields']} fields)", result_x + 170, base, 32, weight=600, fill=FIELD), glide), s.cue(4)),
+        enter(mono(d["map_dtype"], result_x + 170, base, 32, weight=600, fill=BLUE), glide + 1.2, dy=0),
     ]
     return scene(s, items)
 
@@ -462,16 +488,22 @@ def functions_scene(s, d):
             hx = rx + mono_width(len(prefix), 30)
             chip_items, w = key_chip(key, hx + 4, top - 72, tint[key], size=28, h=46)
             header = [mono(prefix, rx, top - 38, 30, fill=CODE), *chip_items, mono(")", hx + w + 8, top - 38, 30, fill=CODE)]
-            header += [
-                layer(Rectangle(size=(pw + 12, h + 12), radius=18, fill=None, stroke=Stroke(color=FG, width=3)), position=Position(x=px_ - 6, y=py - 6))
-                for (i, k_), (px_, py, pw) in places.items()
-                if k_ == key
-            ]
-        else:
-            header = [mono("labels.map.len()", rx, top - 38, 30, fill=CODE)]
-        column = header
-        for i, value in enumerate(values):
-            column += cell(value, rx, top + i * step, rw, h)
+            header += [outline(px_, py, pw, h) for (_, k_), (px_, py, pw) in places.items() if k_ == key]
+            column = header
+            for i, value in enumerate(values):
+                column += cell(value, rx, top + i * step, rw, h)
+        else:  # labels.map.len(): each city's labels outlined in turn, counted up from 0
+            column = [mono("labels.map.len()", rx, top - 38, 30, fill=CODE)]
+            for i, value in enumerate(values):
+                y = top + i * step
+                chips = [place for (row, _), place in places.items() if row == i]
+                ticks = [at + 0.6 + j * 0.35 for j in range(len(chips))]
+                column.append(box(rx, y, rw, h, PANEL, radius=10))
+                column += [enter(outline(*place, h), t, dy=0) for place, t in zip(chips, ticks)]
+                shown_from = [at, *ticks, s.duration]
+                for count in range(value + 1):
+                    number = mono(str(count), rx + 20, y + h / 2 + 30 * 0.35, 30)
+                    column.append(layer(number).at(shown_from[count], duration=shown_from[count + 1] - shown_from[count]))
         shown = enter(column, at, dy=0)
         if k + 1 < len(results):
             shown = leave([shown], results[k + 1][2] - 0.35)
