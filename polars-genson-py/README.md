@@ -20,6 +20,8 @@ On older CPUs, use Polars' compatibility runtime:
 pip install polars-genson[rtcompat]
 ```
 
+polars-genson requires Polars 2 or later.
+
 ## Features
 
 ### Schema Inference
@@ -27,6 +29,8 @@ pip install polars-genson[rtcompat]
 - **Polars Schema Inference**: Directly infer Polars data types and schemas from JSON data
 - **Multiple JSON Objects**: Handle columns with varying JSON schemas across rows
 - **Complex Types**: Support for nested objects, arrays, and mixed types
+- **Map Inference**: Recognise objects whose keys are data (IDs, languages, dates) and
+  type them as `pl.Map` columns, instead of structs with a null-padded field per key
 - **Flexible Input**: Support for both single JSON objects and arrays of objects
 
 ### Schema Conversion
@@ -248,11 +252,11 @@ print(normalized[0])
 Output:
 ```python
 {
-  'letter': [
-    {'key': 'a', 'value': {'alphabet': 0, 'frequency': 0.0817, 'vowel': 0, 'consonant': None}},
-    {'key': 'b', 'value': {'alphabet': 1, 'frequency': 0.0150, 'vowel': None, 'consonant': 0}},
-    {'key': 'c', 'value': {'alphabet': 2, 'frequency': 0.0278, 'vowel': None, 'consonant': 1}}
-  ]
+  'letter': {
+    'a': {'alphabet': 0, 'frequency': 0.0817, 'vowel': 0, 'consonant': None},
+    'b': {'alphabet': 1, 'frequency': 0.015, 'vowel': None, 'consonant': 0},
+    'c': {'alphabet': 2, 'frequency': 0.0278, 'vowel': None, 'consonant': 1}
+  }
 }
 ```
 
@@ -375,14 +379,12 @@ This is especially useful for semi-structured data where fields may be missing, 
 * Supports per-field coercion of numeric/boolean strings via `coerce_strings=True`
 * Supports top-level schema evolution with `wrap_root`
 
-### Example: Map Encoding in Polars
+### Example: Maps
 
-By default, Polars cannot store a dynamic JSON object (`{"en":"Hello","fr":"Bonjour"}`)
-without exploding it into a struct with fixed fields padded with nulls.  
-`polars-genson` solves this by normalising maps to a **list of key/value structs**:
-
-This representation is schema-stable and preserves all map keys without null-padding.
-It matches how Arrow/Parquet model Avro `map` types internally.
+A JSON object whose keys are data, like `{"en":"Hello","fr":"Bonjour"}`, would become a
+struct with one field per distinct key, padded with nulls in every row that lacks it.
+`polars-genson` infers such objects as **maps** and normalises them to a `pl.Map`, where
+each row holds only its own keys:
 
 ```python
 import polars as pl
@@ -403,15 +405,15 @@ Output:
 
 ```text
 shape: (3, 4)
-┌─────┬────────────┬──────────────────────────────┬────────┐
-│ id  ┆ tags       ┆ labels                       ┆ active │
-│ --- ┆ ---        ┆ ---                          ┆ ---    │
-│ i64 ┆ list[str]  ┆ list[struct[2]]              ┆ bool   │
-╞═════╪════════════╪══════════════════════════════╪════════╡
-│ 123 ┆ null       ┆ null                         ┆ true   │
-│ 456 ┆ ["x", "y"] ┆ [{"fr","Bonjour"}]           ┆ false  │
-│ 789 ┆ null       ┆ [{"en","Hi"}, {"es","Hola"}] ┆ null   │
-└─────┴────────────┴──────────────────────────────┴────────┘
+┌─────┬────────────┬────────────────────────────┬────────┐
+│ id  ┆ tags       ┆ labels                     ┆ active │
+│ --- ┆ ---        ┆ ---                        ┆ ---    │
+│ i64 ┆ list[str]  ┆ map[str, str]              ┆ bool   │
+╞═════╪════════════╪════════════════════════════╪════════╡
+│ 123 ┆ null       ┆ null                       ┆ true   │
+│ 456 ┆ ["x", "y"] ┆ {"fr": "Bonjour"}          ┆ false  │
+│ 789 ┆ null       ┆ {"en": "Hi", "es": "Hola"} ┆ null   │
+└─────┴────────────┴────────────────────────────┴────────┘
 ```
 
 In the example above, `normalise_json` reshaped jagged JSON into a consistent, schema-aligned form:
@@ -426,14 +428,19 @@ In the example above, `normalise_json` reshaped jagged JSON into a consistent, s
 * **Row 2**
 
   * `tags` had two values (`["x","y"]`) → preserved as a list of strings
-  * `labels` had one entry (`{"fr":"Bonjour"}`) → normalised to a list of **one key:value struct**
+  * `labels` had one entry (`{"fr":"Bonjour"}`) → a map with **one key**
   * `active` stayed `false`
 
 * **Row 3**
 
   * `tags` was missing entirely → injected as `null`
-  * `labels` had two entries (`{"en":"Hi","es":"Hola"}`) → normalised to a list of **two key:value structs**
+  * `labels` had two entries (`{"en":"Hi","es":"Hola"}`) → a map with **two keys**
   * `active` was missing → injected as `null`
+
+To get maps as lists of `{key, value}` structs instead (the form Arrow stores a map in),
+pass `map_encoding="kv"`. The same option gives that form in `infer_polars_schema`,
+`avro_to_polars_schema` and typed Parquet output. See
+[Map types](https://polars-genson.vercel.app/concepts/map-types/) in the docs.
 
 ### Example: Empty Arrays
 
@@ -663,6 +670,7 @@ Infers a native Polars schema from a string column.
 * `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides, values must be `"map"` or `"record"`
 * `avro`: Infer and convert through an Avro schema, so the dtypes match what `normalise_json` produces (default: `True`). With `avro=False` the conversion goes through JSON Schema, which reports unions and nullable fields as `String`
+* `map_encoding`: The dtype for maps: `"mapping"` gives `pl.Map` (default), `"kv"` a list of `{key, value}` structs
 * `wrap_root`: Control root wrapping.
 
   * `True` → wrap using the **column name**
@@ -688,7 +696,7 @@ Normalises each JSON string in the column against a single, inferred **Avro** sc
 * `ndjson`: Treat input as newline-delimited JSON (default: `False`)
 * `empty_as_null`: Convert empty arrays/maps to `null` (default: `True`)
 * `coerce_strings`: Coerce numeric/boolean strings (e.g. `"42"`, `"true"`) into numbers/booleans where the schema expects them (default: `False`)
-* `map_encoding`: Encoding for Avro maps: `"kv"` (default), `"mapping"`, or `"entries"`
+* `map_encoding`: Encoding for Avro maps: `"mapping"` (default, decoded as `pl.Map`), `"kv"` (decoded as lists of `{key, value}` structs), or `"entries"` (JSON only)
 * `map_threshold`: Detect maps when object has more than N keys (default: `20`)
 * `map_max_required_keys`: Maximum required keys for Map inference (default: `None`). Objects with more required keys will be forced to Record type. If `None`, no gating based on required key count.
 * `force_field_types`: Dict of per-field overrides (`"map"`/`"record"`)

@@ -58,9 +58,9 @@ for name, rows, opts in cases:
   the dtype `List(Null)`, since there is no item type to infer.
 - **A value that is sometimes a string and sometimes an array** becomes a list: the
   string is wrapped into a one-item list.
-- **Objects** become structs when their keys are a fixed set (a *record*), or lists of
-  `{key, value}` structs when their keys vary (a *map*). See
-  [Maps and records](maps-and-records.md).
+- **Objects** become structs when their keys are a fixed set (a *record*), or `pl.Map`
+  columns when their keys vary (a *map*). See [Maps and records](maps-and-records.md)
+  and [Map types](map-types.md).
 - **A value that is sometimes a scalar and sometimes an object** becomes a struct, and
   the scalar is kept under a promoted field named after the field and its type (here
   `x__string`). See [Mixed types](mixed-types.md).

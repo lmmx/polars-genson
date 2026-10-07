@@ -155,6 +155,7 @@ nav:
       - Type mapping: concepts/type-mapping.md
       - Nulls and empty values: concepts/nulls-and-empty-values.md
       - Maps and records: concepts/maps-and-records.md
+      - Map types: concepts/map-types.md
       - Mixed types: concepts/mixed-types.md
       - Field order: concepts/key-order.md
   - Reference:
