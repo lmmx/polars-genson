@@ -65,7 +65,8 @@ def render(output, scenes, *, preview=False):
             compiled.save_png(str(frame), index=int(seconds * module.FPS))
             print(frame)
     else:
-        compiled.render(str(path), options=RenderOptions(bitrate=8_000_000))
+        # A high bitrate, so dark gradients and the grain over them survive encoding
+        compiled.render(str(path), options=RenderOptions(bitrate=24_000_000))
         print(path)
 
 

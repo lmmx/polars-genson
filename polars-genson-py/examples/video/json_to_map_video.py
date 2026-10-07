@@ -6,6 +6,7 @@ Fonts (IBM Plex, OFL) and the Polars logos are in video/media. Render with rende
 """
 
 import io
+import math
 import random
 from pathlib import Path
 
@@ -15,9 +16,11 @@ from fframes.compose import (
     Circle,
     Composition,
     Image,
+    Pattern,
     Position,
     RadialGradient,
     Rectangle,
+    Samples,
     Stop,
     Stroke,
     Text,
@@ -25,6 +28,7 @@ from fframes.compose import (
     Tween,
     Video,
 )
+from fontmetrics import width
 
 HERE = Path(__file__).parent
 MEDIA = HERE / "media"
@@ -490,10 +494,10 @@ def struct_scene(s, d):
 
 
 def map_scene(s, d):
-    """The struct grid melting into map chips: nulls go, values slide into rows."""
+    """The struct grid melting into map chips: nulls go, values and ids slide into rows."""
     tint = dict(zip(d["langs"], TINTS))
     melt, slide = 0.6, 1.4
-    columns, ids = grid_items(d, values=False)
+    columns, _ = grid_items(d, values=False)
     nulls = [
         item
         for i, row in enumerate(d["grid"])
@@ -503,33 +507,37 @@ def map_scene(s, d):
     ]
     items = [
         heading("As a map: no nulls"),
-        *ids,
         leave(
             [item for column in columns for item in column], melt + 0.4, duration=0.6
         ),
         leave(nulls, melt, duration=0.6),
     ]
     move = dict(duration=slide, start_at=melt + 0.3, easing="ease_in_out")
-    top, step = 300, 110
-    for i, labels in enumerate(d["maps"]):
+    top, step, h = 300, 106, 64
+    for i, (id_, labels) in enumerate(zip(d["ids"], d["maps"])):
+        row_y = top + i * step
+        # The id moves with its row, from beside the grid row to beside the chips
+        grid_y = grid_cell_at(i, 0)[1] + (GRID_H - h) / 2
+        id_at = Position(x=0, y=Tween(from_value=grid_y, to_value=row_y, **move))
+        items.append(layer(mono(id_, X, h / 2 + 11, 30, fill=DIM), position=id_at))
         x = X + 180
         for key, value in labels.items():
             gx, gy = grid_cell_at(i, d["langs"].index(key))
-            chip_items, width = chip(key, value, 0, 0, tint[key], size=32, h=64)
+            chip_items, width = chip(key, value, 0, 0, tint[key], size=32, h=h)
             position = Position(
                 x=Tween(from_value=gx, to_value=x, **move),
-                y=Tween(from_value=gy, to_value=top + i * step, **move),
+                y=Tween(from_value=gy + (GRID_H - h) / 2, to_value=row_y, **move),
             )
             items.append(layer(*chip_items, position=position))
             x += width + 14
     items.append(
         enter(
             (
-                logo("polars_logo_blue.png", X, 760, 200, 100),
+                logo("polars_logo_blue.png", X, 800, 200, 100),
                 mono(
                     (("labels: ", FG), (d["map_dtype"], BLUE)),
                     X + 240,
-                    830,
+                    870,
                     52,
                     weight=600,
                 ),
@@ -871,17 +879,46 @@ def functions_scene(s, d):
     return scene(s, items)
 
 
-def confetti(cx, cy, at, pieces=110, seed=7):
-    """Confetti bursting from (cx, cy) at time `at`, falling off the bottom."""
+def confetti(cx, cy, at, pieces=160, seconds=4.5, seed=7):
+    """Confetti fired up from (cx, cy) at time `at`, simulated frame by frame.
+
+    Each piece launches up and out in a cone, slows under air drag, falls under
+    gravity to a drifting terminal speed, sways from side to side, spins, and tumbles
+    (its height shrinking and growing as it turns edge-on).
+    """
     rng = random.Random(seed)
-    colors = (*TINTS, BLUE, FIELD)
+    colors = (*TINTS, BLUE, FIELD, "#FFFFFF")
+    gravity, drag, dt = 1500.0, 2.2, 1 / FPS
+    frames = int(seconds * FPS)
     items = []
     for _ in range(pieces):
-        t = at + rng.uniform(0, 0.2)
-        fall = rng.uniform(2.4, 3.6)
-        dx = rng.uniform(-900, 900)
+        angle = math.radians(rng.uniform(-150, -30))  # up, and out to either side
+        speed = rng.uniform(900, 2000)
+        vx, vy = speed * math.cos(angle), speed * math.sin(angle)
+        x, y = cx + rng.uniform(-30, 30), cy + rng.uniform(-10, 10)
+        sway, sway_hz, sway_phase = (
+            rng.uniform(10, 35),
+            rng.uniform(0.8, 1.6),
+            rng.uniform(0, 2 * math.pi),
+        )
+        spin = rng.uniform(-540, 540)
+        flip_hz, flip_phase = rng.uniform(1.5, 4.0), rng.uniform(0, 2 * math.pi)
+        w, h = rng.uniform(12, 22), rng.uniform(7, 12)
+        xs, ys, angles, heights = [], [], [], []
+        for f in range(frames):
+            t = f * dt
+            vx -= vx * drag * dt
+            vy += (gravity - vy * drag) * dt
+            x += vx * dt
+            y += vy * dt
+            xs.append(x + sway * math.sin(2 * math.pi * sway_hz * t + sway_phase))
+            ys.append(y)
+            angles.append(spin * t)
+            heights.append(
+                max(0.5, h * abs(math.cos(2 * math.pi * flip_hz * t + flip_phase)))
+            )
         piece = Rectangle(
-            size=(rng.uniform(10, 20), rng.uniform(6, 11)),
+            size=(w, Samples(values=tuple(heights), fps=FPS)),
             radius=2,
             fill=rng.choice(colors),
         )
@@ -889,92 +926,85 @@ def confetti(cx, cy, at, pieces=110, seed=7):
             layer(
                 piece,
                 position=Position(
-                    x=Tween(
-                        from_value=cx,
-                        to_value=cx + dx,
-                        duration=fall,
-                        start_at=t,
-                        easing="ease_out",
-                    ),
-                    y=Tween(
-                        from_value=cy,
-                        to_value=H + 40,
-                        duration=fall,
-                        start_at=t,
-                        easing="ease_in",
-                    ),
+                    x=Samples(values=tuple(xs), fps=FPS),
+                    y=Samples(values=tuple(ys), fps=FPS),
                 ),
-                rotation=Tween(
-                    from_value=0,
-                    to_value=rng.uniform(-720, 720),
-                    duration=fall,
-                    start_at=t,
-                ),
-                opacity=Tween(from_value=0, to_value=1, duration=0.05, start_at=t),
-            )
+                rotation=Samples(values=tuple(angles), fps=FPS),
+            ).at(at + rng.uniform(0, 0.12), duration=seconds)
         )
     return items
 
 
 def end_scene(s, d):
-    install = "pip install polars-genson"
-    width = mono_width(len(install), 52) + 80
-    mid = W / 2 + 40
-    version_in = s.cue(0) + 0.7
-    slide_in = Tween(
-        from_value=420, to_value=0, duration=0.7, start_at=version_in, easing="ease_out"
+    """polars-genson, centred; 1.0 slides in beside it, with confetti; then the links."""
+    bold = MEDIA / "IBMPlexSans-Bold.ttf"
+    size, gap, base = 110, 32, 300
+    name_w, version_w = width("polars-genson", bold, size), width("1.0", bold, size)
+    alone = (W - name_w) / 2  # polars-genson centred on its own
+    paired = (W - name_w - gap - version_w) / 2  # and centred with 1.0 beside it
+    version_in = s.cue(0) + 0.8
+    shift = dict(duration=0.8, start_at=version_in, easing="ease_out")
+    name = layer(
+        text("polars-genson", 0, base, size=size, weight=700),
+        position=Position(x=Tween(from_value=alone, to_value=paired, **shift), y=0),
     )
-    logo_w = 263
+    version = layer(
+        text("1.0", 0, base, size=size, weight=700, fill=BLUE),
+        position=Position(
+            x=Tween(from_value=W, to_value=paired + name_w + gap, **shift), y=0
+        ),
+        opacity=Tween(from_value=0, to_value=1, duration=0.3, start_at=version_in),
+    )
+    # "for [Polars] 2.0", centred
+    regular = MEDIA / "IBMPlexSans-Regular.ttf"
+    logo_w, logo_h = 263, 62
+    for_w, two_w = (
+        width("for ", regular, 40),
+        width("2.0", MEDIA / "IBMPlexSans-SemiBold.ttf", 48),
+    )
+    left = (W - for_w - logo_w - 16 - two_w) / 2
+    install = "pip install polars-genson"
+    box_w = mono_width(len(install), 52) + 80
     return scene(
         s,
         (
-            enter(
-                text("polars-genson", mid, 300, size=110, weight=700, align="end"), 0
+            enter(name, 0),
+            version,
+            *confetti(
+                paired + name_w + gap + version_w / 2, base - 40, version_in + 0.5
             ),
-            layer(
-                text("1.0", mid + 30, 300, size=110, weight=700, fill=BLUE),
-                position=Position(x=slide_in, y=0),
-                opacity=Tween(
-                    from_value=0, to_value=1, duration=0.3, start_at=version_in
-                ),
-            ),
-            *confetti(mid + 120, 260, version_in + 0.55),
             enter(
                 (
-                    text("for", W / 2 - logo_w / 2 - 70, 420, size=40, fill=DIM),
+                    text("for", left, 430, size=40, fill=DIM),
                     logo(
-                        "polars_logo_white_text.png",
-                        W / 2 - logo_w / 2,
-                        368,
-                        logo_w,
-                        62,
+                        "polars_logo_white_text.png", left + for_w, 378, logo_w, logo_h
                     ),
                     text(
                         "2.0",
-                        W / 2 + logo_w / 2 + 20,
-                        420,
+                        left + for_w + logo_w + 16,
+                        430,
                         size=48,
                         weight=600,
                         fill=BLUE,
                     ),
                 ),
-                s.cue(0) + 1.6,
+                s.cue(0) + 1.8,
             ),
             enter(
                 (
-                    panel((W - width) / 2, 500, width, 104),
+                    panel((W - box_w) / 2, 510, box_w, 104),
                     mono(
-                        install, W / 2, 570, 52, weight=600, fill=BLUE, align="middle"
+                        install, W / 2, 580, 52, weight=600, fill=BLUE, align="middle"
                     ),
                 ),
                 s.cue(1),
             ),
             enter(
                 (
-                    text("Docs", 620, 730, size=40, weight=600, fill=BLUE),
-                    text("polars-genson.vercel.app", 780, 730, size=40),
-                    text("Code", 620, 810, size=40, weight=600, fill=BLUE),
-                    text("github.com/lmmx/polars-genson", 780, 810, size=40),
+                    text("Docs", 620, 740, size=40, weight=600, fill=BLUE),
+                    text("polars-genson.vercel.app", 780, 740, size=40),
+                    text("Code", 620, 820, size=40, weight=600, fill=BLUE),
+                    text("github.com/lmmx/polars-genson", 780, 820, size=40),
                 ),
                 s.cue(2),
             ),
@@ -1003,8 +1033,12 @@ def build(scenes):
     end = scenes[-1].start + scenes[-1].duration
     glow = RadialGradient(stops=(Stop(offset=0, color=GLOW), Stop(offset=1, color=BG)))
     background = Rectangle(size=(W, H), fill=glow)
+    # Faint grain over the glow, so its shades dither rather than band once encoded
+    grain = Rectangle(
+        size=(W, H), fill=Pattern(source=str(MEDIA / "grain.png"), size=(256, 256))
+    )
     return Video(
-        composition=Composition(duration=end, children=(background, *layers)),
+        composition=Composition(duration=end, children=(background, grain, *layers)),
         resolution=(W, H),
         fps=FPS,
         fonts=FONTS,
