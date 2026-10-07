@@ -84,6 +84,7 @@ def to_mp4(master, path):
     command = [
         "ffmpeg", "-y", "-loglevel", "error", "-i", str(master),
         "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-tune", "grain",
+        "-profile:v", "high", "-level:v", "4.1", "-g", "60",
         "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(path),
     ]  # fmt: skip
     if shutil.which("ffmpeg") is None:

@@ -85,6 +85,7 @@ def main():
         "ffmpeg", "-y", "-loglevel", "error", "-i", str(args.input),
         "-filter_complex", graph, "-map", "[v]", "-map", "[a]",
         "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", "-r", "30",
+        "-profile:v", "high", "-level:v", "4.1", "-g", "60",
         "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
         str(args.output),
     ]  # fmt: skip
