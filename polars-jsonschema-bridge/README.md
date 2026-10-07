@@ -156,8 +156,9 @@ assert_eq!(json_schema, json!({
 
 - Note that we do not have JSON Schema `array` to Polars `Array` conversion (...yet?)
 - `Map[String,T]` names a map from string keys to `T`. The Rust `polars` crate has no map
-  dtype, so the caller chooses how to represent it: polars-genson gives
-  `List[Struct[key:String,value:T]]` for its `map_encoding="kv"`.
+  dtype, so the caller chooses how to represent it: polars-genson gives a Python
+  `pl.Map(pl.String, T)` for its `map_encoding="mapping"` and
+  `List[Struct[key:String,value:T]]` for `"kv"`.
 
 ### Avro → Polars
 

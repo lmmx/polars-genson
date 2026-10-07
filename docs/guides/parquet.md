@@ -44,14 +44,16 @@ normalise_from_parquet(
 print(pl.read_parquet("typed.parquet").unnest("data"))
 ```
 
-- `labels` has varying keys, so with `map_threshold=2` it becomes a map, stored as a list
-  of `{key, value}` structs (see [Maps and records](../concepts/maps-and-records.md)).
+- `labels` has varying keys, so with `map_threshold=2` it becomes a map, stored as a
+  Parquet `MAP` and read back as a `pl.Map` (see
+  [Map types](../concepts/map-types.md)).
 - The empty `tags` list is null (see
   [Nulls and empty values](../concepts/nulls-and-empty-values.md)).
 - The null input row stays a null row, so the output has one row per input row and the
   kept `id` column lines up with it.
 
-`typed=True` requires the default `map_encoding="kv"`.
+`typed=True` takes `map_encoding="mapping"` (the default) or `"kv"`, which stores maps
+as lists of `{key, value}` structs.
 
 ## Write JSON strings instead
 
@@ -69,6 +71,9 @@ dtype = pl.Struct(avro_to_polars_schema(meta["genson_avro_schema"]))
 decoded = pl.read_parquet("strings.parquet").select(pl.col("data").str.json_decode(dtype))
 print(decoded.unnest("data"))
 ```
+
+If the strings were written with `map_encoding="kv"`, pass the same to
+`avro_to_polars_schema`; the file's `genson_normalise_config` metadata records it.
 
 This gives the same values as the typed output. Typed output skips writing every row as
 JSON and parsing it again, so it's faster and needs less memory; use strings when you

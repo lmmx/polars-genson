@@ -53,8 +53,10 @@ print(df.genson.normalise_json("json", decode=schema))
   [Nulls and empty values](../concepts/nulls-and-empty-values.md).
 - `coerce_strings`: parse numbers and booleans written as strings. See
   [Mixed types](../concepts/mixed-types.md).
-- `map_threshold`, `force_field_types`, `unify_maps`, `map_encoding`: how objects become
-  maps or records. See [Maps and records](../concepts/maps-and-records.md).
+- `map_threshold`, `force_field_types`, `unify_maps`: how objects become maps or
+  records. See [Maps and records](../concepts/maps-and-records.md).
+- `map_encoding`: how maps are written as JSON, and the dtype they decode to. See
+  [Map types](../concepts/map-types.md).
 - `wrap_scalars` and `force_scalar_promotion`: how scalars that collide with objects are
   kept. See [Mixed types](../concepts/mixed-types.md).
 

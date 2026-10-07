@@ -6,8 +6,8 @@ A JSON object can play two different roles:
   its own column, so it becomes a Polars **struct**.
 - A **map** has keys that are data, like `{"en": "hello", "fr": "bonjour"}` or scores
   keyed by subject. The keys vary from row to row, so making each key a struct field
-  would give one field per distinct key. genson instead encodes a map as a **list of
-  `{key, value}` structs**, since Polars has no map type.
+  would give one field per distinct key. genson instead makes it a Polars **map**,
+  `pl.Map`, where each row holds only its own keys.
 
 genson decides which role an object plays from what it sees across all rows.
 
@@ -83,16 +83,11 @@ print(letters.genson.normalise_json("j", map_threshold=1, unify_maps=True)["lett
 
 To keep particular fields out of this merging, list them in `no_unify`.
 
-## Map encodings
+## How a map is stored
 
-Typed output always uses the list-of-`{key, value}` encoding. When you ask for JSON
-strings instead (`decode=False`), `map_encoding` chooses how maps are written:
-
-```python exec="on" source="above" result="text" session="maps"
-for encoding in ("kv", "mapping", "entries"):
-    out = df.genson.normalise_json("j", map_threshold=1, map_encoding=encoding, decode=False)
-    print(f"{encoding:8s}", out[0])
-```
+A map is a `pl.Map` in Polars and a `MAP` in typed Parquet output. In JSON text it's
+written as an object by default, and `map_encoding="kv"` gives lists of `{key, value}`
+structs instead, in the text and the dtypes alike. See [Map types](map-types.md).
 
 Empty maps become null by default, like empty arrays; see
 [Nulls, missing keys and empty values](nulls-and-empty-values.md).

@@ -103,20 +103,26 @@ Each stage is one branch, one PR and one release, merged before the next starts.
 - The maps concept page explains one map as Avro `map`, `pl.Map`, Parquet/Arrow MAP
   and the `kv` list, and how genson moves between them.
 - The package READMEs follow.
-- Kept separate from the docs-site rewrite (branch `docs/refresh`), which rebases onto
-  it afterwards.
+- The docs site rewrite (branch `docs/site`) merged as #210 on 2026-09-26, so the pages
+  are edited in place; `docs/refresh` was an earlier draft of it, closed unmerged.
 
 ## Progress
 
 - Stage 1 merged as #217 and released in polars-genson 0.9.7, tested on Polars 1.44.2.
-- Stage 2 (branch `polars-2`) passes 262 Python tests on Polars 2.0.0 (3 skipped:
-  `coerce_strings` decoding, `entries` decoding, and one map/record test), and
-  `cargo test` for genson-core (all features), genson-cli and the bridge, `cargo clippy
+- Stage 2 merged as #218, having passed 262 Python tests on Polars 2.0.0 (3 skipped:
+  `coerce_strings` decoding, `entries` decoding, and one map/record test), `cargo test`
+  for genson-core (all features), genson-cli and the bridge, `cargo clippy
   --all-targets --all-features -D warnings` and `cargo fmt --check`.
 - On Polars 1.44.2 the stage 2 package raises `ImportError` at import.
 - `schema_to_json` writes a `pl.Map` as a list of `{key, value}` structs, the Arrow
   storage, as Rust polars 0.55 has no map dtype — `json_to_schema` reads it back as
   that list (polars-genson-py/python/polars_genson/__init__.py `schema_to_json`).
+- Stage 3 (branch `map-docs`) adds the Map types page (docs/concepts/map-types.md) and
+  updates the pages and READMEs that described maps as `{key, value}` lists; `mkdocs
+  build --strict` passes with every example run on Polars 2.0.0.
+- The docs build runs its examples against polars-genson from PyPI, not the local
+  project (docs/vercel/deploy.sh step 7b) — the site shows `pl.Map` output once stages 2
+  and 3 are released.
 
 ## Current State
 
