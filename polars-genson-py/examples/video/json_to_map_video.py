@@ -396,7 +396,7 @@ def title_scene(s, d):
                     size=60,
                     align="middle",
                 ),
-                s.cue(1),
+                s.cue(3),  # "And polars-genson can already infer it from JSON."
             ),
         ),
         fade_in=False,

@@ -16,13 +16,15 @@ adding or removing a `say` row in a scene shifts which line a later visual comes
 
 | scene          | kind    | seconds | text |
 |----------------|---------|---------|------|
-| Title          | written |         | Polars 2.0 introduces a Map data type, for objects whose keys are data rather than part of the type. |
+| Title          | written |         | Polars 2.0 introduces a Map data type, for objects whose keys are data rather than part of the type. And polars-genson can already infer it from JSON. |
 | Title          | pause   |     0.8 |  |
 | Title          | say     |     2.6 | Polars 2.0 introduces a Map data type, |
 | Title          | pause   |     0.3 |  |
 | Title          | say     |     2.2 | for objects whose keys are data, |
 | Title          | pause   |     0.3 |  |
 | Title          | say     |     2.2 | rather than part of the type. |
+| Title          | pause   |     0.3 |  |
+| Title          | say     |     3.0 | And polars-genson can already infer it from JSON. |
 | Title          | pause   |     2.5 |  |
 | Records        | written |         | In some objects, the keys are part of the type. A person's name and date of birth are fields: every person has them, and they hold different types of value: one's a string and one's a date. They can't share one value type, so you'd store them in a struct. |
 | Records        | pause   |     0.8 |  |
