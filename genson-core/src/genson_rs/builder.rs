@@ -88,7 +88,31 @@ impl SchemaBuilder {
         if self.root_node.is_empty() && other.schema_uri.as_deref() == Some(NULL_SCHEMA_URI) {
             self.root_node = other.root_node;
         } else {
-            self.add_schema(other.to_schema());
+            self.add_builder(other);
+        }
+    }
+
+    /// Merge another builder into this one, with the same result as
+    /// `self.add_schema(other.to_schema())` but merging its nodes directly.
+    pub fn add_builder(&mut self, other: SchemaBuilder) {
+        match other.emitted_schema_uri() {
+            None => self.root_node.absorb(other.root_node),
+            // `add_schema_mut` adopts the `$schema` and merges the rest
+            Some(uri) if self.schema_uri.is_none() => {
+                self.schema_uri = Some(uri.to_string());
+                self.root_node.absorb(other.root_node);
+            }
+            // Otherwise the `$schema` keyword itself is merged into the root
+            Some(_) => self.add_schema(other.to_schema()),
+        }
+    }
+
+    /// The `$schema` that `to_schema` writes, if any.
+    fn emitted_schema_uri(&self) -> Option<&str> {
+        match self.schema_uri.as_deref() {
+            Some(NULL_SCHEMA_URI) => None,
+            Some(uri) => Some(uri),
+            None => Some(DEFAULT_SCHEMA_URI),
         }
     }
 

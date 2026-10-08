@@ -75,6 +75,71 @@ impl SchemaNode {
         self
     }
 
+    /// Merge `other` into this node, with the same result as
+    /// `self.add_schema(DataType::Schema(&other.to_schema()))`: its subtrees are moved in, or
+    /// merged node by node, rather than written out as a schema and read back.
+    pub fn absorb(&mut self, other: SchemaNode) {
+        if other.active_strategies.is_empty() {
+            // An empty node's schema is `{}`, which only ever adds a typeless strategy
+            self.absorb_strategy(BasicSchemaStrategy::Typeless(TypelessStrategy::new()));
+            return;
+        }
+        for strategy in Self::schema_order(other.active_strategies) {
+            self.absorb_strategy(strategy);
+        }
+    }
+
+    /// A node holding `node` as `SchemaNode::new()` plus `add_schema(node.to_schema())` builds it:
+    /// the same schema, with each strategy's extra keywords recording the keys it has.
+    pub(crate) fn round_tripped(node: SchemaNode) -> SchemaNode {
+        let mut fresh = SchemaNode::new();
+        fresh.absorb(node);
+        fresh
+    }
+
+    /// The strategies in the order `to_schema` lists them: those whose schema has more than a
+    /// `type` first, as they stand, then the bare types in the type list's (sorted) order.
+    fn schema_order(strategies: Vec<BasicSchemaStrategy>) -> Vec<BasicSchemaStrategy> {
+        let (mut bare, mut ordered): (Vec<_>, Vec<_>) = strategies
+            .into_iter()
+            .partition(|strategy| strategy.bare_type().is_some());
+        bare.sort_by_key(|strategy| strategy.bare_type());
+        ordered.extend(bare);
+        ordered
+    }
+
+    /// As `add_schema` with the one subschema `strategy` writes: merged into the strategy of
+    /// the same kind, or added the way `create_strategy_for_kind` adds one.
+    fn absorb_strategy(&mut self, strategy: BasicSchemaStrategy) {
+        if let Some(existing) = self
+            .active_strategies
+            .iter_mut()
+            .find(|existing| existing.same_kind(&strategy))
+        {
+            existing.absorb(strategy);
+            return;
+        }
+        if let BasicSchemaStrategy::Typeless(typeless) = strategy {
+            // A typeless schema matches no new strategy, so it goes to the first one
+            if self.active_strategies.is_empty() {
+                self.active_strategies
+                    .push(BasicSchemaStrategy::Typeless(TypelessStrategy::new()));
+            }
+            self.active_strategies[0].add_schema(&typeless.to_schema());
+            return;
+        }
+        let mut created = strategy.new_of_same_kind();
+        if let Some(BasicSchemaStrategy::Typeless(typeless)) = self.active_strategies.last() {
+            created.add_schema(&typeless.to_schema());
+            self.active_strategies.pop();
+        }
+        created.absorb(strategy);
+        if self.active_strategies.is_empty() {
+            self.active_strategies.reserve_exact(1);
+        }
+        self.active_strategies.push(created);
+    }
+
     fn needs_splitting(schema: &Value) -> bool {
         match schema {
             Value::Object(obj) => {
@@ -386,4 +451,9 @@ impl SchemaNode {
             _ => (),
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    include!("../tests/node.rs");
 }

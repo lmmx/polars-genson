@@ -342,6 +342,102 @@ impl SchemaStrategy for ObjectStrategy {
 }
 
 impl ObjectStrategy {
+    /// Whether `to_schema` writes `required`: when some key is required, or an empty
+    /// `required` was asked for.
+    fn writes_required(&self) -> bool {
+        self.include_empty_required
+            || self
+                .required_properties
+                .as_ref()
+                .is_some_and(|r| !r.is_empty())
+    }
+
+    /// Whether `to_schema` writes its own value for `key`, in place of any extra keyword.
+    fn writes(&self, key: &str) -> bool {
+        match key {
+            "properties" => !self.properties.is_empty(),
+            "patternProperties" => !self.pattern_properties.is_empty(),
+            "additionalProperties" => self.additional_properties.is_some(),
+            "required" => self.writes_required(),
+            _ => false,
+        }
+    }
+
+    /// The keys of `to_schema`'s output besides `type`, in their order: the extra keywords,
+    /// then the structural keywords written that are not among them.
+    fn schema_keys(&self) -> Vec<&str> {
+        let Value::Object(keywords) = &self.extra_keywords else {
+            unreachable!("extra keywords are always an object")
+        };
+        let written = [
+            "properties",
+            "patternProperties",
+            "additionalProperties",
+            "required",
+        ]
+        .into_iter()
+        .filter(|key| self.writes(key) && !keywords.contains_key(*key));
+        keywords
+            .keys()
+            .map(String::as_str)
+            .filter(|key| *key != "required" || self.writes_required())
+            .chain(written)
+            .collect()
+    }
+
+    /// Whether `to_schema` gives nothing but `{"type": "object"}`.
+    pub(crate) fn is_bare(&self) -> bool {
+        self.schema_keys().is_empty()
+    }
+
+    /// Merge `other` into this strategy, with the same result as
+    /// `self.add_schema(&other.to_schema())`: properties new to this strategy are moved in,
+    /// the rest merge node by node.
+    pub(crate) fn absorb(&mut self, mut other: ObjectStrategy) {
+        // The keywords `add_extra_keywords` would record from `other`'s schema
+        let keywords: Vec<(String, Value)> = other
+            .schema_keys()
+            .into_iter()
+            .map(|key| {
+                let placeholder = match key {
+                    "properties" | "patternProperties" | "additionalProperties"
+                        if other.writes(key) || other.extra_keywords[key].is_object() =>
+                    {
+                        json!({})
+                    }
+                    "required" => Value::Null,
+                    _ => other.extra_keywords[key].clone(),
+                };
+                (key.to_string(), placeholder)
+            })
+            .collect();
+        if let Value::Object(own) = &mut self.extra_keywords {
+            for (key, placeholder) in keywords {
+                own.entry(key).or_insert(placeholder);
+            }
+        }
+
+        let writes_required = other.writes_required();
+        let required = other.required_properties.take().unwrap_or_default();
+        absorb_properties(&mut self.properties, other.properties);
+        absorb_properties(&mut self.pattern_properties, other.pattern_properties);
+        if let Some(values) = other.additional_properties {
+            match &mut self.additional_properties {
+                Some(own) => own.absorb(values),
+                None => self.additional_properties = Some(SchemaNode::round_tripped(values)),
+            }
+        }
+        if writes_required {
+            if required.is_empty() {
+                self.include_empty_required = true;
+            }
+            match &mut self.required_properties {
+                None => self.required_properties = Some(required),
+                Some(own) => own.retain(|p| required.contains(p)),
+            }
+        }
+    }
+
     /// Intersect the `required` set with the schema object's `required` array.
     fn merge_required(&mut self, schema_object: &Map<String, Value>) {
         if schema_object.contains_key("required") {
@@ -413,6 +509,19 @@ impl ObjectStrategy {
                 node.add_schemas_par(sub_schemas);
             }
         });
+    }
+}
+
+/// Merge each of `other`'s property nodes into the same-named one in `properties`, or add it
+/// (round-tripped, as `add_schema` would build it) after the existing ones.
+fn absorb_properties(properties: &mut PropMap<SchemaNode>, other: PropMap<SchemaNode>) {
+    for (name, node) in other {
+        match properties.get_mut(&name) {
+            Some(own) => own.absorb(node),
+            None => {
+                properties.insert(name, SchemaNode::round_tripped(node));
+            }
+        }
     }
 }
 

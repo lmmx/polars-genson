@@ -67,6 +67,65 @@ impl BasicSchemaStrategy {
         }
     }
 
+    pub fn same_kind(&self, other: &BasicSchemaStrategy) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+
+    /// A new, empty strategy of the same kind.
+    pub fn new_of_same_kind(&self) -> Self {
+        match self {
+            BasicSchemaStrategy::Object(_) => BasicSchemaStrategy::Object(ObjectStrategy::new()),
+            BasicSchemaStrategy::List(_) => BasicSchemaStrategy::List(ListStrategy::new()),
+            BasicSchemaStrategy::Tuple(_) => BasicSchemaStrategy::Tuple(TupleStrategy::new()),
+            BasicSchemaStrategy::Null(_) => BasicSchemaStrategy::Null(NullStrategy::new()),
+            BasicSchemaStrategy::Boolean(_) => BasicSchemaStrategy::Boolean(BooleanStrategy::new()),
+            BasicSchemaStrategy::Number(_) => BasicSchemaStrategy::Number(NumberStrategy::new()),
+            BasicSchemaStrategy::String(_) => BasicSchemaStrategy::String(StringStrategy::new()),
+            BasicSchemaStrategy::Typeless(_) => {
+                BasicSchemaStrategy::Typeless(TypelessStrategy::new())
+            }
+        }
+    }
+
+    /// The type, when this strategy's schema is nothing but `{"type": <type>}` (such schemas
+    /// are collapsed into one type list by `SchemaNode::to_schema`).
+    pub fn bare_type(&self) -> Option<&'static str> {
+        let no_keywords = |keywords: &Value| keywords.as_object().is_some_and(|k| k.is_empty());
+        match self {
+            BasicSchemaStrategy::Object(strategy) => strategy.is_bare().then_some("object"),
+            BasicSchemaStrategy::List(_)
+            | BasicSchemaStrategy::Tuple(_)
+            | BasicSchemaStrategy::Typeless(_) => None,
+            BasicSchemaStrategy::Null(strategy) => {
+                no_keywords(strategy.get_extra_keywords()).then_some("null")
+            }
+            BasicSchemaStrategy::Boolean(strategy) => {
+                no_keywords(strategy.get_extra_keywords()).then_some("boolean")
+            }
+            BasicSchemaStrategy::Number(strategy) => {
+                no_keywords(strategy.get_extra_keywords()).then(|| strategy.number_type())
+            }
+            BasicSchemaStrategy::String(strategy) => {
+                no_keywords(strategy.get_extra_keywords()).then_some("string")
+            }
+        }
+    }
+
+    /// Merge `other`, of the same kind, into this strategy: the same as
+    /// `self.add_schema(&other.to_schema())`. Objects and lists merge their child nodes
+    /// directly; the other kinds hold no more than a few keywords, so take that route.
+    pub fn absorb(&mut self, other: BasicSchemaStrategy) {
+        match (self, other) {
+            (BasicSchemaStrategy::Object(strategy), BasicSchemaStrategy::Object(other)) => {
+                strategy.absorb(other)
+            }
+            (BasicSchemaStrategy::List(strategy), BasicSchemaStrategy::List(other)) => {
+                strategy.absorb(other)
+            }
+            (strategy, other) => strategy.add_schema(&other.to_schema()),
+        }
+    }
+
     pub fn to_schema(&self) -> Value {
         match self {
             BasicSchemaStrategy::Object(strategy) => strategy.to_schema(),

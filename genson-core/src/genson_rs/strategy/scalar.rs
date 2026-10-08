@@ -136,6 +136,13 @@ impl NumberStrategy {
     }
 }
 
+impl NumberStrategy {
+    /// `"integer"`, or `"number"` once any value or schema added was not an integer.
+    pub fn number_type(&self) -> &'static str {
+        self.number_type
+    }
+}
+
 impl ScalarSchemaStrategy for NumberStrategy {
     fn js_type() -> &'static str {
         "integer|number"

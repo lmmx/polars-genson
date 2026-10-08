@@ -48,6 +48,13 @@ impl ListStrategy {
 }
 
 impl ListStrategy {
+    /// Merge `other` into this strategy, as `add_schema(&other.to_schema())` does: its items
+    /// node merges into this one's.
+    pub(crate) fn absorb(&mut self, other: ListStrategy) {
+        let [items] = other.items;
+        self.items[0].absorb(items);
+    }
+
     /// Merge the `items` schemas of many array schemas, in order, into the items node.
     pub(crate) fn add_item_schemas_par(&mut self, item_schemas: &[&Value]) {
         self.items[0].add_schemas_par(item_schemas);
@@ -96,11 +103,11 @@ impl SchemaStrategy for ListStrategy {
                             temp_node
                         })
                         .reduce_with(|mut first_node, next_node| {
-                            first_node.add_schema(DataType::SchemaNode(&next_node));
+                            first_node.absorb(next_node);
                             first_node
                         })
-                        .unwrap_or(SchemaNode::new());
-                    node.add_schema(DataType::SchemaNode(&combined_node));
+                        .unwrap_or_default();
+                    node.absorb(combined_node);
                 }
             });
         }

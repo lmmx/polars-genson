@@ -146,7 +146,7 @@ fn add_schema_from_object_par_iter<'a>(
             },
         )
         .reduce_with(|mut builder1, builder2| {
-            builder1.add_schema(builder2.to_schema());
+            builder1.add_builder(builder2);
             builder1
         })
         .unwrap_or(SchemaBuilder::new(None));
