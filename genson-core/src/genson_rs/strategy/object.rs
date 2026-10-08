@@ -2,6 +2,7 @@ use ordermap::OrderMap;
 use regex::Regex;
 use rustc_hash::FxBuildHasher;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hasher;
 
 type PropMap<V> = OrderMap<String, V, FxBuildHasher>;
 type KeySet<T> = HashSet<T, FxBuildHasher>;
@@ -9,7 +10,7 @@ type KeySet<T> = HashSet<T, FxBuildHasher>;
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
 
-use crate::genson_rs::node::{DataType, SchemaNode};
+use crate::genson_rs::node::{hash_value, DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 
 #[derive(Debug, PartialEq)]
@@ -394,7 +395,52 @@ impl ObjectStrategy {
     /// `self.add_schema(&other.to_schema())`: properties new to this strategy are moved in,
     /// the rest merge node by node.
     pub(crate) fn absorb(&mut self, mut other: ObjectStrategy) {
-        // The keywords `add_extra_keywords` would record from `other`'s schema
+        self.absorb_keywords_and_required(&mut other);
+        absorb_properties(&mut self.properties, other.properties);
+        absorb_properties(&mut self.pattern_properties, other.pattern_properties);
+        if let Some(values) = other.additional_properties {
+            match &mut self.additional_properties {
+                Some(own) => own.absorb(values),
+                None => self.additional_properties = Some(SchemaNode::round_tripped(values)),
+            }
+        }
+    }
+
+    /// `absorb` each of `others` in turn, with each property's nodes merged on its own
+    /// thread (the properties are independent subtrees, and each still takes its nodes in
+    /// order).
+    pub(crate) fn absorb_all(&mut self, others: Vec<ObjectStrategy>) {
+        let mut groups: HashMap<String, Vec<SchemaNode>, FxBuildHasher> = HashMap::default();
+        let mut values: Vec<SchemaNode> = Vec::new();
+        for mut other in others {
+            self.absorb_keywords_and_required(&mut other);
+            for (name, node) in other.properties {
+                if !self.properties.contains_key(&name) {
+                    // Absorbed into a new node, as `absorb` would round-trip it
+                    self.properties.insert(name.clone(), SchemaNode::new());
+                }
+                groups.entry(name).or_default().push(node);
+            }
+            absorb_properties(&mut self.pattern_properties, other.pattern_properties);
+            values.extend(other.additional_properties);
+        }
+        let work: Vec<(&mut SchemaNode, Vec<SchemaNode>)> = self
+            .properties
+            .iter_mut()
+            .filter_map(|(name, node)| groups.remove(name).map(|nodes| (node, nodes)))
+            .collect();
+        work.into_par_iter()
+            .for_each(|(node, nodes)| node.absorb_all(nodes));
+        if !values.is_empty() {
+            self.additional_properties
+                .get_or_insert_with(SchemaNode::new)
+                .absorb_all(values);
+        }
+    }
+
+    /// The part of `absorb` besides the child nodes: the keywords `add_extra_keywords`
+    /// records from `other`'s schema, and the intersection of the `required` sets.
+    fn absorb_keywords_and_required(&mut self, other: &mut ObjectStrategy) {
         let keywords: Vec<(String, Value)> = other
             .schema_keys()
             .into_iter()
@@ -417,23 +463,59 @@ impl ObjectStrategy {
             }
         }
 
-        let writes_required = other.writes_required();
-        let required = other.required_properties.take().unwrap_or_default();
-        absorb_properties(&mut self.properties, other.properties);
-        absorb_properties(&mut self.pattern_properties, other.pattern_properties);
-        if let Some(values) = other.additional_properties {
-            match &mut self.additional_properties {
-                Some(own) => own.absorb(values),
-                None => self.additional_properties = Some(SchemaNode::round_tripped(values)),
-            }
+        if !other.writes_required() {
+            return;
         }
-        if writes_required {
-            if required.is_empty() {
-                self.include_empty_required = true;
-            }
-            match &mut self.required_properties {
-                None => self.required_properties = Some(required),
-                Some(own) => own.retain(|p| required.contains(p)),
+        let required = other.required_properties.take().unwrap_or_default();
+        if required.is_empty() {
+            self.include_empty_required = true;
+        }
+        match &mut self.required_properties {
+            None => self.required_properties = Some(required),
+            Some(own) => own.retain(|p| required.contains(p)),
+        }
+    }
+
+    /// Feed `hasher` what identifies `to_schema`'s output, without building it: the
+    /// keywords in order, with the child nodes' own hashes in place of their schemas.
+    pub(crate) fn hash_schema<H: Hasher>(&self, hasher: &mut H) {
+        for key in self.schema_keys() {
+            hasher.write(key.as_bytes());
+            hasher.write_u8(0xff);
+            match key {
+                "properties" | "patternProperties" if self.writes(key) => {
+                    let properties = if key == "properties" {
+                        &self.properties
+                    } else {
+                        &self.pattern_properties
+                    };
+                    hasher.write_usize(properties.len());
+                    for (name, node) in properties {
+                        hasher.write(name.as_bytes());
+                        hasher.write_u8(0xff);
+                        node.hash_schema(hasher);
+                    }
+                }
+                "additionalProperties" if self.writes(key) => {
+                    if let Some(values) = &self.additional_properties {
+                        values.hash_schema(hasher);
+                    }
+                }
+                "required" => {
+                    let mut required: Vec<&str> = self
+                        .required_properties
+                        .iter()
+                        .flatten()
+                        .map(String::as_str)
+                        .collect();
+                    required.sort_unstable();
+                    hasher.write_usize(required.len());
+                    for name in required {
+                        hasher.write(name.as_bytes());
+                        hasher.write_u8(0xff);
+                    }
+                }
+                _ => hash_value(&self.extra_keywords[key], hasher),
             }
         }
     }

@@ -1,4 +1,5 @@
 use serde_json::{json, Value};
+use std::hash::Hasher;
 
 use crate::genson_rs::node::{DataType, SchemaNode};
 
@@ -105,6 +106,41 @@ impl SchemaBuilder {
             // Otherwise the `$schema` keyword itself is merged into the root
             Some(_) => self.add_schema(other.to_schema()),
         }
+    }
+
+    /// Merge `others` in order, with the same result as `add_builder` on each in turn but
+    /// with the roots that are objects merged in parallel across their properties.
+    pub fn add_builders(&mut self, others: Vec<SchemaBuilder>) {
+        let mut objects = Vec::with_capacity(others.len());
+        let mut kept_uri = None;
+        for other in others {
+            if !other.root_node.is_object() {
+                self.root_node.absorb_all(std::mem::take(&mut objects));
+                self.add_builder(other);
+                continue;
+            }
+            match (other.emitted_schema_uri(), &self.schema_uri) {
+                (Some(uri), None) => self.schema_uri = Some(uri.to_string()),
+                // `add_schema` merges an unadopted `$schema` into the root as a keyword
+                (Some(uri), Some(_)) => kept_uri = kept_uri.or(Some(uri.to_string())),
+                (None, _) => {}
+            }
+            objects.push(other.root_node);
+        }
+        self.root_node.absorb_all(objects);
+        if let Some(uri) = kept_uri {
+            self.root_node.add_object_keyword("$schema", uri.into());
+        }
+    }
+
+    /// A hash of the schema `to_schema` gives, computed without building it: builders with
+    /// equal schemas hash equal.
+    pub fn schema_hash(&self) -> u64 {
+        let mut hasher = xxhash_rust::xxh64::Xxh64::new(0);
+        hasher.write(self.emitted_schema_uri().unwrap_or_default().as_bytes());
+        hasher.write_u8(0xff);
+        self.root_node.hash_schema(&mut hasher);
+        hasher.finish()
     }
 
     /// The `$schema` that `to_schema` writes, if any.

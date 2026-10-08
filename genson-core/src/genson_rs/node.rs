@@ -1,5 +1,6 @@
 use core::panic;
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
+use std::hash::Hasher;
 
 use crate::genson_rs::strategy::base::SchemaStrategy;
 use crate::genson_rs::strategy::scalar::TypelessStrategy;
@@ -9,6 +10,21 @@ use serde_json::{json, Value};
 
 /// Fewest schemas merged into one node at once for which going parallel below it pays off.
 const PAR_MERGE_MIN: usize = 8;
+
+/// Feed `hasher` a JSON value, as its compact serialisation.
+pub(crate) fn hash_value<H: Hasher>(value: &Value, hasher: &mut H) {
+    struct Writer<'a, H>(&'a mut H);
+    impl<H: Hasher> std::io::Write for Writer<'_, H> {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.write(buf);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    serde_json::to_writer(Writer(hasher), value).expect("hashing a Value cannot fail");
+}
 
 /// Basic schema generator class. SchemaNode objects can be loaded
 /// up with existing schemas and objects before being serialized.
@@ -45,6 +61,24 @@ impl SchemaNode {
 
     pub fn is_empty(&self) -> bool {
         self.active_strategies.is_empty()
+    }
+
+    /// Whether the node is an object schema and nothing else.
+    pub fn is_object(&self) -> bool {
+        matches!(
+            self.active_strategies.as_slice(),
+            [BasicSchemaStrategy::Object(_)]
+        )
+    }
+
+    /// Record `key` as an extra keyword of the node's object strategy, unless it has one.
+    pub(crate) fn add_object_keyword(&mut self, key: &str, value: Value) {
+        for strategy in &mut self.active_strategies {
+            if let BasicSchemaStrategy::Object(object) = strategy {
+                object.add_extra_keywords(&json!({ key: value }));
+                return;
+            }
+        }
     }
 
     pub fn add_schema(&mut self, data: DataType) -> &mut Self {
@@ -99,13 +133,75 @@ impl SchemaNode {
 
     /// The strategies in the order `to_schema` lists them: those whose schema has more than a
     /// `type` first, as they stand, then the bare types in the type list's (sorted) order.
-    fn schema_order(strategies: Vec<BasicSchemaStrategy>) -> Vec<BasicSchemaStrategy> {
+    fn schema_order<S: Borrow<BasicSchemaStrategy>>(strategies: Vec<S>) -> Vec<S> {
         let (mut bare, mut ordered): (Vec<_>, Vec<_>) = strategies
             .into_iter()
-            .partition(|strategy| strategy.bare_type().is_some());
-        bare.sort_by_key(|strategy| strategy.bare_type());
+            .partition(|strategy| strategy.borrow().bare_type().is_some());
+        bare.sort_by_key(|strategy| strategy.borrow().bare_type());
         ordered.extend(bare);
         ordered
+    }
+
+    /// `absorb` each of `others` in turn. When there are enough of them, and they are all
+    /// objects (or all lists) merging into one of the same, the merge goes parallel below
+    /// this node: across the properties, or through the items.
+    pub fn absorb_all(&mut self, mut others: Vec<SchemaNode>) {
+        let sole_kind = |node: &SchemaNode| match node.active_strategies.as_slice() {
+            [strategy @ (BasicSchemaStrategy::Object(_) | BasicSchemaStrategy::List(_))] => {
+                Some(std::mem::discriminant(strategy))
+            }
+            _ => None,
+        };
+        let kind = others.first().and_then(sole_kind);
+        let parallel = others.len() >= PAR_MERGE_MIN
+            && kind.is_some()
+            && others.iter().all(|other| sole_kind(other) == kind)
+            && (self.is_empty() || sole_kind(self) == kind);
+        if !parallel {
+            others.into_iter().for_each(|other| self.absorb(other));
+            return;
+        }
+        if self.is_empty() {
+            let created = others[0].active_strategies[0].new_of_same_kind();
+            self.active_strategies.reserve_exact(1);
+            self.active_strategies.push(created);
+        }
+        let strategies = others
+            .iter_mut()
+            .filter_map(|other| other.active_strategies.pop());
+        match &mut self.active_strategies[0] {
+            BasicSchemaStrategy::Object(own) => own.absorb_all(
+                strategies
+                    .filter_map(|strategy| match strategy {
+                        BasicSchemaStrategy::Object(object) => Some(object),
+                        _ => None,
+                    })
+                    .collect(),
+            ),
+            BasicSchemaStrategy::List(own) => own.absorb_all(
+                strategies
+                    .filter_map(|strategy| match strategy {
+                        BasicSchemaStrategy::List(list) => Some(list),
+                        _ => None,
+                    })
+                    .collect(),
+            ),
+            _ => unreachable!("only objects and lists merge in parallel"),
+        }
+    }
+
+    /// Feed `hasher` what identifies `to_schema`'s output, without building it, so that
+    /// nodes with equal schemas hash equal.
+    pub fn hash_schema<H: Hasher>(&self, hasher: &mut H) {
+        // A typeless strategy without keywords writes `{}`, as no strategy at all does
+        let written = self.active_strategies.iter().filter(|strategy| {
+            !matches!(strategy, BasicSchemaStrategy::Typeless(t) if t.to_schema() == json!({}))
+        });
+        let ordered = Self::schema_order(written.collect());
+        hasher.write_usize(ordered.len());
+        for strategy in ordered {
+            strategy.hash_schema(hasher);
+        }
     }
 
     /// As `add_schema` with the one subschema `strategy` writes: merged into the strategy of

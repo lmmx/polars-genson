@@ -362,6 +362,13 @@ fn hash_schema(schema: &Value) -> u64 {
     writer.0.digest()
 }
 
+/// One string's schema, ready to merge: its builder, or its schema value when that has to
+/// be rewritten first (`apply_force_field_types`).
+enum RowSchema {
+    Builder(SchemaBuilder),
+    Value(Value),
+}
+
 /// Process all JSON strings in parallel while maintaining order
 fn process_json_strings_parallel<S: AsRef<str> + Sync>(
     json_strings: &[S],
@@ -385,6 +392,9 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
 
     let mut processed_count = 0;
     let mut seen_hashes = HashSet::new();
+    // A field forced to be a map is rewritten in each string's schema value before the
+    // merge; otherwise the strings' schema nodes merge as they are.
+    let forces_maps = config.force_field_types.values().any(|t| t == "map");
 
     for (chunk_idx, chunk) in json_strings.chunks(chunk_size).enumerate() {
         profile!(
@@ -401,11 +411,11 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
         }
 
         let t_par = std::time::Instant::now();
-        let chunk_builders: Vec<(usize, Option<(Value, u64)>)> = chunk
+        let rows: Vec<Option<(RowSchema, u64)>> = chunk
             .par_iter()
             .enumerate()
             .map(
-                |(i, json_str)| -> Result<(usize, Option<(Value, u64)>), String> {
+                |(i, json_str)| -> Result<Option<(RowSchema, u64)>, String> {
                     profile_verbose!(config, "Thread processing JSON STRING {}", i);
 
                     let prep_start = std::time::Instant::now();
@@ -419,7 +429,7 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
                     );
 
                     if prepared.is_empty() {
-                        return Ok((i, None));
+                        return Ok(None);
                     }
 
                     let mut chunk_builder = get_builder(config.schema_uri.as_deref());
@@ -439,16 +449,17 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
                         build_elapsed
                     );
 
+                    if !forces_maps {
+                        let hash = chunk_builder.schema_hash();
+                        return Ok(Some((RowSchema::Builder(chunk_builder), hash)));
+                    }
                     // Convert on the worker thread so the builder is dropped here
                     // instead of piling up until the serial merge below.
                     let mut schema = chunk_builder.to_schema();
                     drop(chunk_builder);
-                    // The walk only ever rewrites forced fields
-                    if !config.force_field_types.is_empty() {
-                        apply_force_field_types(&mut schema, config);
-                    }
+                    apply_force_field_types(&mut schema, config);
                     let hash = hash_schema(&schema);
-                    Ok((i, Some((schema, hash))))
+                    Ok(Some((RowSchema::Value(schema), hash)))
                 },
             )
             .collect::<Result<Vec<_>, String>>()?;
@@ -461,22 +472,29 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
 
         let par_el = t_par.elapsed();
         let t_mrg = std::time::Instant::now();
-        // Extract and merge schemas from this chunk
-        let mut merged: Vec<Value> = Vec::with_capacity(chunk_builders.len());
-        for (_i, item) in chunk_builders {
-            let Some((schema, hash)) = item else {
-                continue;
-            };
+        // Merge each distinct schema of this chunk, in order
+        let mut builders = Vec::with_capacity(rows.len());
+        let mut schemas = Vec::new();
+        let mut duplicates = Vec::new();
+        for (row, hash) in rows.into_iter().flatten() {
             if !seen_hashes.insert(hash) {
+                duplicates.push(row);
                 continue;
             }
             processed_count += 1;
-            merged.push(schema);
+            match row {
+                RowSchema::Builder(row_builder) => builders.push(row_builder),
+                RowSchema::Value(schema) => schemas.push(schema),
+            }
         }
-        builder.add_schemas_mut(&mut merged);
-        // Freeing the merged schemas is a large share of the serial merge, so spread it
-        // over the rayon pool.
-        merged.into_par_iter().for_each(drop);
+        builder.add_builders(builders);
+        builder.add_schemas_mut(&mut schemas);
+        // Freeing what was merged is a large share of the serial merge, so spread it over
+        // the rayon pool.
+        rayon::join(
+            || schemas.into_par_iter().for_each(drop),
+            || duplicates.into_par_iter().for_each(drop),
+        );
 
         profile!(
             config,

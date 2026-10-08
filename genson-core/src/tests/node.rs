@@ -91,3 +91,62 @@ fn test_absorb_matches_adding_the_schema() {
         assert_eq!(absorbed, by_schema, "{target:?} absorbing {other:?}");
     }
 }
+
+/// `absorb_all` leaves the same node as `absorb` of each node in turn, with enough nodes
+/// to take the parallel path, and documents that are mostly objects so that it is taken.
+#[test]
+fn test_absorb_all_matches_absorbing_in_turn() {
+    let mut rng = Rng(0x0123_4567_89ab_cdef);
+    for _ in 0..300 {
+        let n = PAR_MERGE_MIN + rng.below(8) as usize;
+        let rows: Vec<Vec<String>> = (0..n)
+            .map(|_| {
+                let fields: Vec<String> = (0..rng.below(4))
+                    .map(|_| {
+                        let key = ["a", "b", "c"][rng.below(3) as usize];
+                        format!("\"{key}\": {}", random_json(&mut rng, 2))
+                    })
+                    .collect();
+                vec![format!("{{{}}}", fields.join(", "))]
+            })
+            .collect();
+        let from_schema = rng.below(3) == 0;
+        let target: Vec<String> = random_documents(&mut rng);
+
+        let mut in_turn = build(&target, from_schema);
+        for row in &rows {
+            in_turn.absorb(node_of(row));
+        }
+        let mut all = build(&target, from_schema);
+        all.absorb_all(rows.iter().map(|row| node_of(row)).collect());
+        assert_eq!(all, in_turn, "{target:?} absorbing {rows:?}");
+
+        let mut from_empty = SchemaNode::new();
+        from_empty.absorb_all(rows.iter().map(|row| node_of(row)).collect());
+        let mut in_turn = SchemaNode::new();
+        rows.iter().for_each(|row| in_turn.absorb(node_of(row)));
+        assert_eq!(from_empty, in_turn, "absorbing {rows:?}");
+    }
+}
+
+/// Two nodes hash equal exactly when their schemas are equal.
+#[test]
+fn test_hash_schema_matches_schema_equality() {
+    let hash = |node: &SchemaNode| {
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        node.hash_schema(&mut hasher);
+        std::hash::Hasher::finish(&hasher)
+    };
+    let mut rng = Rng(0xfeed_beef_dead_cafe);
+    let mut equal = 0;
+    for _ in 0..20000 {
+        let (a, b) = (random_documents(&mut rng), random_documents(&mut rng));
+        let (a, b) = (build(&a, rng.below(3) == 0), build(&b, rng.below(3) == 0));
+        // Compared as text: `Value` equality ignores the order of an object's keys
+        let text = |node: &SchemaNode| serde_json::to_string(&node.to_schema()).unwrap();
+        let same_schema = text(&a) == text(&b);
+        assert_eq!(hash(&a) == hash(&b), same_schema, "{} vs {}", a.to_schema(), b.to_schema());
+        equal += same_schema as usize;
+    }
+    assert!(equal > 100, "too few equal pairs ({equal}) to test anything");
+}

@@ -55,6 +55,19 @@ impl ListStrategy {
         self.items[0].absorb(items);
     }
 
+    pub(crate) fn items_node(&self) -> &SchemaNode {
+        &self.items[0]
+    }
+
+    /// `absorb` each of `others` in turn.
+    pub(crate) fn absorb_all(&mut self, others: Vec<ListStrategy>) {
+        let items = others.into_iter().map(|other| {
+            let [items] = other.items;
+            items
+        });
+        self.items[0].absorb_all(items.collect());
+    }
+
     /// Merge the `items` schemas of many array schemas, in order, into the items node.
     pub(crate) fn add_item_schemas_par(&mut self, item_schemas: &[&Value]) {
         self.items[0].add_schemas_par(item_schemas);

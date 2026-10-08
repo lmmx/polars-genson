@@ -126,6 +126,24 @@ impl BasicSchemaStrategy {
         }
     }
 
+    /// Feed `hasher` what identifies this strategy's schema (see `SchemaNode::hash_schema`).
+    pub fn hash_schema<H: std::hash::Hasher>(&self, hasher: &mut H) {
+        match self {
+            BasicSchemaStrategy::Object(strategy) => {
+                hasher.write_u8(b'O');
+                strategy.hash_schema(hasher);
+            }
+            BasicSchemaStrategy::List(strategy) => {
+                hasher.write_u8(b'L');
+                strategy.items_node().hash_schema(hasher);
+            }
+            _ => {
+                hasher.write_u8(b'S');
+                crate::genson_rs::node::hash_value(&self.to_schema(), hasher);
+            }
+        }
+    }
+
     pub fn to_schema(&self) -> Value {
         match self {
             BasicSchemaStrategy::Object(strategy) => strategy.to_schema(),
