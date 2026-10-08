@@ -330,6 +330,11 @@ impl SchemaNode {
                 );
                 self.active_strategies.pop();
             }
+            // Most nodes only ever hold one strategy, and a strategy is a few hundred bytes,
+            // so don't let the first push reserve room for four
+            if self.active_strategies.is_empty() {
+                self.active_strategies.reserve_exact(1);
+            }
             self.active_strategies.push(strategy);
             return Some(self.active_strategies.last_mut().unwrap());
         }
