@@ -122,7 +122,9 @@ impl SchemaNode {
 
     /// Merge `other` into this node, with the same result as
     /// `self.add_schema(DataType::Schema(&other.to_schema()))`: its subtrees are moved in, or
-    /// merged node by node, rather than written out as a schema and read back.
+    /// merged node by node, rather than written out as a schema and read back. The one
+    /// difference: an object that saw no key in all of its values limits `required` to
+    /// nothing, where its schema, which has no `required`, would not limit it at all.
     pub fn absorb(&mut self, other: SchemaNode) {
         if other.active_strategies.is_empty() {
             // An empty node's schema is `{}`, which only ever adds a typeless strategy

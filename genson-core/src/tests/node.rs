@@ -18,8 +18,8 @@ impl Rng {
 }
 
 /// A random JSON document over a few keys, so that documents overlap: objects (empty ones
-/// too), arrays (empty, of scalars, of objects, mixed; under 10 items, the most
-/// `ListStrategy::add_object` merges serially), and every scalar type.
+/// too), arrays (empty, of scalars, of objects, mixed; some of 10 items or more, which
+/// `ListStrategy::add_object` merges in parallel), and every scalar type.
 fn random_json(rng: &mut Rng, depth: u32) -> String {
     let pick = if depth == 0 { 4 + rng.below(5) } else { rng.below(9) };
     match pick {
@@ -34,7 +34,7 @@ fn random_json(rng: &mut Rng, depth: u32) -> String {
             format!("{{{}}}", fields.join(", "))
         }
         2 | 3 => {
-            let n = [0, 1, 2, 9][rng.below(4) as usize];
+            let n = [0, 1, 2, 12][rng.below(4) as usize];
             let items: Vec<String> = (0..n).map(|_| random_json(rng, depth - 1)).collect();
             format!("[{}]", items.join(", "))
         }
@@ -72,23 +72,51 @@ fn build(documents: &[String], from_schema: bool) -> SchemaNode {
     by_schema
 }
 
-/// `absorb` leaves the same node as `add_schema` of the absorbed node's schema, whether the
-/// nodes were built from data or from schemas.
+/// `absorb` leaves the same node as `add_schema` of the absorbed node's schema, for a node
+/// built from a schema (which holds no `required` set its schema leaves out).
 #[test]
 fn test_absorb_matches_adding_the_schema() {
     let mut rng = Rng(0x9e37_79b9_7f4a_7c15);
     for _ in 0..5000 {
         let (target, other) = (random_documents(&mut rng), random_documents(&mut rng));
-        let (target_from_schema, other_from_schema) = (rng.below(3) == 0, rng.below(3) == 0);
+        let target_from_schema = rng.below(3) == 0;
 
         let mut by_schema = build(&target, target_from_schema);
-        let schema = build(&other, other_from_schema).to_schema();
-        by_schema.add_schema(DataType::Schema(&schema));
+        by_schema.add_schema(DataType::Schema(&build(&other, true).to_schema()));
 
         let mut absorbed = build(&target, target_from_schema);
-        absorbed.absorb(build(&other, other_from_schema));
+        absorbed.absorb(build(&other, true));
 
         assert_eq!(absorbed, by_schema, "{target:?} absorbing {other:?}");
+    }
+}
+
+/// Absorbing the node built from some documents gives the schema that building from all the
+/// documents does (up to the order of keywords), `required` included: a key is required
+/// only when every object seen holds it.
+#[test]
+fn test_absorb_matches_adding_the_documents() {
+    let mut rng = Rng(0x5851_f42d_4c95_7f2d);
+    for _ in 0..5000 {
+        let (target, other) = (random_documents(&mut rng), random_documents(&mut rng));
+        let mut absorbed = node_of(&target);
+        absorbed.absorb(node_of(&other));
+        let together = node_of(&[target.clone(), other.clone()].concat());
+        assert_eq!(
+            absorbed.to_schema(),
+            together.to_schema(),
+            "{target:?} absorbing {other:?}"
+        );
+    }
+}
+
+/// An object with none of a key, seen in one merged node, leaves that key not required.
+#[test]
+fn test_absorb_keeps_a_key_missing_from_an_empty_object_not_required() {
+    for (first, second) in [("{\"a\": 1}", "{}"), ("{}", "{\"a\": 1}")] {
+        let mut absorbed = node_of(&[first.to_string()]);
+        absorbed.absorb(node_of(&[second.to_string()]));
+        assert_eq!(absorbed.to_schema().get("required"), None, "{first} then {second}");
     }
 }
 

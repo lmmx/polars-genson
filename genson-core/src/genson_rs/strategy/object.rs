@@ -392,8 +392,8 @@ impl ObjectStrategy {
     }
 
     /// Merge `other` into this strategy, with the same result as
-    /// `self.add_schema(&other.to_schema())`: properties new to this strategy are moved in,
-    /// the rest merge node by node.
+    /// `self.add_schema(&other.to_schema())` (but see `SchemaNode::absorb` on `required`):
+    /// properties new to this strategy are moved in, the rest merge node by node.
     pub(crate) fn absorb(&mut self, mut other: ObjectStrategy) {
         self.absorb_keywords_and_required(&mut other);
         absorb_properties(&mut self.properties, other.properties);
@@ -463,11 +463,15 @@ impl ObjectStrategy {
             }
         }
 
-        if !other.writes_required() {
-            return;
-        }
-        let required = other.required_properties.take().unwrap_or_default();
-        if required.is_empty() {
+        // The keys present in every object `other` has seen: those are what limits this
+        // strategy's `required`, including when there are none (which `to_schema` does not
+        // write, so merging the schema value would take no account of it)
+        let required = match other.required_properties.take() {
+            Some(required) => required,
+            None if other.include_empty_required => KeySet::default(),
+            None => return,
+        };
+        if required.is_empty() && other.include_empty_required {
             self.include_empty_required = true;
         }
         match &mut self.required_properties {

@@ -1254,3 +1254,30 @@ fn test_simd_json_iteration_determinism() {
         panic!("Not an object");
     }
 }
+
+/// A key missing from some objects is not required, whichever order the objects come in,
+/// and whether they are separate strings (merged in parallel) or lines of one string.
+#[test]
+fn test_key_missing_from_an_empty_object_is_not_required() {
+    let with_key = r#"{"x": {"a": 1}}"#;
+    let empty = r#"{"x": {}}"#;
+    let orders = [
+        [vec![with_key; 6], vec![empty; 6]].concat(),
+        [vec![empty; 6], vec![with_key; 6]].concat(),
+    ];
+    for rows in orders {
+        let as_strings = infer_json_schema_from_strings(&rows, SchemaInferenceConfig::default());
+        let as_lines = infer_json_schema_from_strings(
+            &[rows.join("\n")],
+            SchemaInferenceConfig {
+                delimiter: Some(b'\n'),
+                ..Default::default()
+            },
+        );
+        for result in [as_strings, as_lines] {
+            let x = &result.unwrap().schema["properties"]["x"];
+            assert_eq!(x["properties"]["a"]["type"], "integer");
+            assert_eq!(x.get("required"), None, "{rows:?}");
+        }
+    }
+}
