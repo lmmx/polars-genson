@@ -1,4 +1,4 @@
-use crate::genson_rs::{build_json_schema, build_json_schema_into, get_builder, BuildConfig};
+use crate::genson_rs::{build_json_schema_into, get_builder, BuildConfig};
 use crate::{debug, profile, profile_verbose};
 use rayon::prelude::*;
 use serde::de::Error as DeError;
@@ -202,38 +202,43 @@ fn prepare_json_bytes<'a>(
         ));
     }
 
-    // Safe: JSON is valid, now hand off to genson-rs
-    if let Some(ref field) = config.wrap_root {
-        if config.delimiter == Some(b'\n') {
-            // NDJSON: wrap each line separately
-            let mut wrapped_bytes = Vec::new();
-            for line in json_str.lines() {
-                let trimmed = line.trim();
-                if trimmed.is_empty() {
-                    continue;
-                }
-                let inner_val: Value = serde_json::from_str(trimmed)
-                    .map_err(|e| format!("Failed to parse NDJSON line before wrap_root: {}", e))?;
-
-                if !wrapped_bytes.is_empty() {
-                    wrapped_bytes.push(b'\n');
-                }
-                serde_json::to_writer(&mut wrapped_bytes, &json!({ field: inner_val }))
-                    .map_err(|e| format!("Failed to serialize wrapped NDJSON: {}", e))?;
-            }
-            Ok(Cow::Owned(wrapped_bytes))
-        } else {
-            // Single JSON doc
-            let inner_val: Value = serde_json::from_str(json_str)
-                .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
-            let wrapped_bytes = serde_json::to_vec(&json!({ field: inner_val }))
-                .map_err(|e| format!("Failed to serialize wrapped JSON: {}", e))?;
-            Ok(Cow::Owned(wrapped_bytes))
-        }
-    } else {
-        // No wrapping needed - just borrow the original bytes
-        Ok(Cow::Borrowed(json_bytes))
+    match &config.wrap_root {
+        Some(field) => Ok(Cow::Owned(wrap_documents(
+            json_str,
+            field,
+            config.delimiter.is_some(),
+        ))),
+        None => Ok(Cow::Borrowed(json_bytes)),
     }
+}
+
+/// `{"<field>": <document>}` for the input (each line of it, when `ndjson`), written around
+/// the document's own bytes: the input has already been validated, so there is no need to
+/// parse it into a value and serialise that again.
+fn wrap_documents(json_str: &str, field: &str, ndjson: bool) -> Vec<u8> {
+    let key = serde_json::to_string(field).expect("a string always serialises");
+    let documents: Vec<&str> = if ndjson {
+        json_str
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .collect()
+    } else {
+        vec![json_str]
+    };
+    let wrapping = key.len() + 3; // `{`, `:`, `}`
+    let mut wrapped = Vec::with_capacity(json_str.len() + documents.len() * (wrapping + 1));
+    for (i, document) in documents.into_iter().enumerate() {
+        if i > 0 {
+            wrapped.push(b'\n');
+        }
+        wrapped.push(b'{');
+        wrapped.extend_from_slice(key.as_bytes());
+        wrapped.push(b':');
+        wrapped.extend_from_slice(document.as_bytes());
+        wrapped.push(b'}');
+    }
+    wrapped
 }
 
 /// Process all JSON strings sequentially and build schemas
@@ -266,7 +271,7 @@ fn process_json_strings_sequential<S: AsRef<str>>(
 
         // Build schema incrementally - this is where panics happen
         let build_start = std::time::Instant::now();
-        let _schema = build_json_schema(builder, &mut bytes, &build_config);
+        build_json_schema_into(builder, &mut bytes, &build_config);
         let build_elapsed = build_start.elapsed();
         profile_verbose!(config, "  Schema building took: {:?}", build_elapsed);
 

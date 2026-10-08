@@ -430,6 +430,37 @@ fn test_wrap_root_inserts_single_required_field() {
 }
 
 #[test]
+fn test_wrap_documents_escapes_the_field_and_skips_blank_lines() {
+    let wrapped = wrap_documents("{\"a\": 1}\n\n  [2]  \n", "x\"y", true);
+    assert_eq!(
+        String::from_utf8(wrapped).unwrap(),
+        "{\"x\\\"y\":{\"a\": 1}}\n{\"x\\\"y\":[2]}"
+    );
+    let wrapped = wrap_documents(" {\"a\": 1} ", "x", false);
+    assert_eq!(String::from_utf8(wrapped).unwrap(), "{\"x\": {\"a\": 1} }");
+}
+
+#[test]
+fn test_wrap_root_ndjson_matches_wrapping_by_hand() {
+    let rows = ["{\"a\": 1, \"b\": [1.5]}\n\n{\"a\": \"s\"}".to_string()];
+    let wrapped_by_hand = ["{\"claims\": {\"a\": 1, \"b\": [1.5]}}\n{\"claims\": {\"a\": \"s\"}}".to_string()];
+    let cfg = SchemaInferenceConfig {
+        delimiter: Some(b'\n'),
+        ..Default::default()
+    };
+    let wrapped = infer_json_schema_from_strings(
+        &rows,
+        SchemaInferenceConfig {
+            wrap_root: Some("claims".to_string()),
+            ..cfg.clone()
+        },
+    )
+    .unwrap();
+    let by_hand = infer_json_schema_from_strings(&wrapped_by_hand, cfg).unwrap();
+    assert_eq!(wrapped.schema, by_hand.schema);
+}
+
+#[test]
 fn test_rewrite_objects_map_of_records() {
     use serde_json::json;
 
