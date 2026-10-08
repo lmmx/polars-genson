@@ -133,6 +133,10 @@ impl SchemaBuilder {
         }
     }
 
+    pub(crate) fn root_node_mut(&mut self) -> &mut SchemaNode {
+        &mut self.root_node
+    }
+
     /// A hash of the schema `to_schema` gives, computed without building it: builders with
     /// equal schemas hash equal.
     pub fn schema_hash(&self) -> u64 {

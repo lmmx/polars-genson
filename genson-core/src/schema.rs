@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::panic::{self, AssertUnwindSafe};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::genson_rs::SchemaBuilder;
+use crate::genson_rs::{DataType, SchemaBuilder, SchemaNode};
 
 pub(crate) mod core;
 pub use core::*;
@@ -345,28 +345,22 @@ fn apply_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
     }
 }
 
-/// xxh64 of the schema's compact JSON, streamed so the string is never materialised.
-fn hash_schema(schema: &Value) -> u64 {
-    struct HashWriter(xxhash_rust::xxh64::Xxh64);
-    impl std::io::Write for HashWriter {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            self.0.update(buf);
-            Ok(buf.len())
+/// `apply_force_field_types` on schema nodes: each property forced to be a map is written
+/// out as a schema, rewritten, and read back. The rest of the tree is left as it is.
+fn apply_force_field_types_to_node(node: &mut SchemaNode, config: &SchemaInferenceConfig) {
+    node.visit_properties_mut(&mut |name, property| {
+        if config.force_field_types.get(name).map(String::as_str) != Some("map") {
+            return true;
         }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-    let mut writer = HashWriter(xxhash_rust::xxh64::Xxh64::new(0));
-    serde_json::to_writer(&mut writer, schema).expect("hashing a Value cannot fail");
-    writer.0.digest()
-}
-
-/// One string's schema, ready to merge: its builder, or its schema value when that has to
-/// be rewritten first (`apply_force_field_types`).
-enum RowSchema {
-    Builder(SchemaBuilder),
-    Value(Value),
+        // Rewritten within an object holding just this property, so that it is
+        // recognised by name; that also rewrites the forced fields within it
+        let mut holder = json!({ "properties": { name: property.to_schema() } });
+        apply_force_field_types(&mut holder, config);
+        let mut forced = SchemaNode::new();
+        forced.add_schema(DataType::Schema(&holder["properties"][name]));
+        *property = forced;
+        false
+    });
 }
 
 /// Process all JSON strings in parallel while maintaining order
@@ -392,8 +386,7 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
 
     let mut processed_count = 0;
     let mut seen_hashes = HashSet::new();
-    // A field forced to be a map is rewritten in each string's schema value before the
-    // merge; otherwise the strings' schema nodes merge as they are.
+    // A field forced to be a map is rewritten in each string's schema before the merge
     let forces_maps = config.force_field_types.values().any(|t| t == "map");
 
     for (chunk_idx, chunk) in json_strings.chunks(chunk_size).enumerate() {
@@ -411,11 +404,11 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
         }
 
         let t_par = std::time::Instant::now();
-        let rows: Vec<Option<(RowSchema, u64)>> = chunk
+        let rows: Vec<Option<(SchemaBuilder, u64)>> = chunk
             .par_iter()
             .enumerate()
             .map(
-                |(i, json_str)| -> Result<Option<(RowSchema, u64)>, String> {
+                |(i, json_str)| -> Result<Option<(SchemaBuilder, u64)>, String> {
                     profile_verbose!(config, "Thread processing JSON STRING {}", i);
 
                     let prep_start = std::time::Instant::now();
@@ -449,17 +442,11 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
                         build_elapsed
                     );
 
-                    if !forces_maps {
-                        let hash = chunk_builder.schema_hash();
-                        return Ok(Some((RowSchema::Builder(chunk_builder), hash)));
+                    if forces_maps {
+                        apply_force_field_types_to_node(chunk_builder.root_node_mut(), config);
                     }
-                    // Convert on the worker thread so the builder is dropped here
-                    // instead of piling up until the serial merge below.
-                    let mut schema = chunk_builder.to_schema();
-                    drop(chunk_builder);
-                    apply_force_field_types(&mut schema, config);
-                    let hash = hash_schema(&schema);
-                    Ok(Some((RowSchema::Value(schema), hash)))
+                    let hash = chunk_builder.schema_hash();
+                    Ok(Some((chunk_builder, hash)))
                 },
             )
             .collect::<Result<Vec<_>, String>>()?;
@@ -474,27 +461,19 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
         let t_mrg = std::time::Instant::now();
         // Merge each distinct schema of this chunk, in order
         let mut builders = Vec::with_capacity(rows.len());
-        let mut schemas = Vec::new();
         let mut duplicates = Vec::new();
-        for (row, hash) in rows.into_iter().flatten() {
-            if !seen_hashes.insert(hash) {
-                duplicates.push(row);
-                continue;
-            }
-            processed_count += 1;
-            match row {
-                RowSchema::Builder(row_builder) => builders.push(row_builder),
-                RowSchema::Value(schema) => schemas.push(schema),
+        for (row_builder, hash) in rows.into_iter().flatten() {
+            if seen_hashes.insert(hash) {
+                processed_count += 1;
+                builders.push(row_builder);
+            } else {
+                duplicates.push(row_builder);
             }
         }
         builder.add_builders(builders);
-        builder.add_schemas_mut(&mut schemas);
-        // Freeing what was merged is a large share of the serial merge, so spread it over
+        // Freeing the duplicates is a large share of the serial merge, so spread it over
         // the rayon pool.
-        rayon::join(
-            || schemas.into_par_iter().for_each(drop),
-            || duplicates.into_par_iter().for_each(drop),
-        );
+        duplicates.into_par_iter().for_each(drop);
 
         profile!(
             config,

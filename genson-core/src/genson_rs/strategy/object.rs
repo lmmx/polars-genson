@@ -476,6 +476,21 @@ impl ObjectStrategy {
         }
     }
 
+    /// See `SchemaNode::visit_properties_mut`.
+    pub(crate) fn visit_properties_mut<F>(&mut self, f: &mut F)
+    where
+        F: FnMut(&str, &mut SchemaNode) -> bool,
+    {
+        for (name, node) in self.properties.iter_mut() {
+            if f(name, node) {
+                node.visit_properties_mut(f);
+            }
+        }
+        if let Some(values) = &mut self.additional_properties {
+            values.visit_properties_mut(f);
+        }
+    }
+
     /// Feed `hasher` what identifies `to_schema`'s output, without building it: the
     /// keywords in order, with the child nodes' own hashes in place of their schemas.
     pub(crate) fn hash_schema<H: Hasher>(&self, hasher: &mut H) {

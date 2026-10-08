@@ -71,6 +71,17 @@ impl SchemaNode {
         )
     }
 
+    /// Call `f(name, node)` on every property node below this one (through objects' values
+    /// and lists' items too), walking into a property only when `f` returns true.
+    pub(crate) fn visit_properties_mut<F>(&mut self, f: &mut F)
+    where
+        F: FnMut(&str, &mut SchemaNode) -> bool,
+    {
+        for strategy in &mut self.active_strategies {
+            strategy.visit_properties_mut(f);
+        }
+    }
+
     /// Record `key` as an extra keyword of the node's object strategy, unless it has one.
     pub(crate) fn add_object_keyword(&mut self, key: &str, value: Value) {
         for strategy in &mut self.active_strategies {

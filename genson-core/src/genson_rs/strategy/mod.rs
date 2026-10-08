@@ -11,6 +11,7 @@ use object::ObjectStrategy;
 use scalar::{BooleanStrategy, NullStrategy, NumberStrategy, StringStrategy, TypelessStrategy};
 
 use self::array::ListSchemaStrategy;
+use crate::genson_rs::node::SchemaNode;
 
 #[derive(Debug, PartialEq)]
 pub enum BasicSchemaStrategy {
@@ -123,6 +124,23 @@ impl BasicSchemaStrategy {
                 strategy.absorb(other)
             }
             (strategy, other) => strategy.add_schema(&other.to_schema()),
+        }
+    }
+
+    /// See `SchemaNode::visit_properties_mut`.
+    pub fn visit_properties_mut<F>(&mut self, f: &mut F)
+    where
+        F: FnMut(&str, &mut SchemaNode) -> bool,
+    {
+        match self {
+            BasicSchemaStrategy::Object(strategy) => strategy.visit_properties_mut(f),
+            BasicSchemaStrategy::List(strategy) => strategy.get_items_mut().for_each(|node| {
+                node.visit_properties_mut(f);
+            }),
+            BasicSchemaStrategy::Tuple(strategy) => strategy.get_items_mut().for_each(|node| {
+                node.visit_properties_mut(f);
+            }),
+            _ => {}
         }
     }
 
