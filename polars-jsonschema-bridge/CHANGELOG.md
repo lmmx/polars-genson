@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.1](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.9.0...polars-jsonschema-bridge-v0.9.1) - 2026-10-07
+## [1.0.0](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.9.0...polars-jsonschema-bridge-v1.0.0) - 2026-10-07
 
 ### <!-- 9 -->Other
 
