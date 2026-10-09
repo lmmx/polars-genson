@@ -12,6 +12,7 @@ use serde_json::json;
 static GLOBAL: MiMalloc = MiMalloc;
 
 pub use builder::SchemaBuilder;
+pub(crate) use node::{DataType, SchemaNode};
 
 /// A parsed JSON value, read from simd-json's tape so every object's keys are visited in
 /// document order. simd-json's `BorrowedValue` stores objects of more than 32 keys in a
@@ -146,7 +147,7 @@ fn add_schema_from_object_par_iter<'a>(
             },
         )
         .reduce_with(|mut builder1, builder2| {
-            builder1.add_schema(builder2.to_schema());
+            builder1.add_builder(builder2);
             builder1
         })
         .unwrap_or(SchemaBuilder::new(None));

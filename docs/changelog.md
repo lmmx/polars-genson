@@ -3,6 +3,18 @@
 Release notes for earlier versions are on
 [GitHub Releases](https://github.com/lmmx/polars-genson/releases).
 
+## Unreleased
+
+- **A key missing from some objects is no longer required.** When a field's objects
+  were merged, those holding no key in common were not counted, so a key could be
+  marked required (and its Avro field non-nullable) although some rows lack it, and
+  which keys were required could depend on the order of the rows or vary from run to
+  run. Schemas change only by keys dropped from `required`.
+- **`wrap_root` wraps each document as written.** Duplicate keys and number formatting
+  now reach inference unchanged, as without `wrap_root`.
+- **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
+  on large rows with default options. See [How inference works](concepts/inference.md).
+
 ## 1.0.0
 
 A JSON object genson infers as a map is now a Polars map, `pl.Map`, wherever genson

@@ -430,6 +430,37 @@ fn test_wrap_root_inserts_single_required_field() {
 }
 
 #[test]
+fn test_wrap_documents_escapes_the_field_and_skips_blank_lines() {
+    let wrapped = wrap_documents("{\"a\": 1}\n\n  [2]  \n", "x\"y", true);
+    assert_eq!(
+        String::from_utf8(wrapped).unwrap(),
+        "{\"x\\\"y\":{\"a\": 1}}\n{\"x\\\"y\":[2]}"
+    );
+    let wrapped = wrap_documents(" {\"a\": 1} ", "x", false);
+    assert_eq!(String::from_utf8(wrapped).unwrap(), "{\"x\": {\"a\": 1} }");
+}
+
+#[test]
+fn test_wrap_root_ndjson_matches_wrapping_by_hand() {
+    let rows = ["{\"a\": 1, \"b\": [1.5]}\n\n{\"a\": \"s\"}".to_string()];
+    let wrapped_by_hand = ["{\"claims\": {\"a\": 1, \"b\": [1.5]}}\n{\"claims\": {\"a\": \"s\"}}".to_string()];
+    let cfg = SchemaInferenceConfig {
+        delimiter: Some(b'\n'),
+        ..Default::default()
+    };
+    let wrapped = infer_json_schema_from_strings(
+        &rows,
+        SchemaInferenceConfig {
+            wrap_root: Some("claims".to_string()),
+            ..cfg.clone()
+        },
+    )
+    .unwrap();
+    let by_hand = infer_json_schema_from_strings(&wrapped_by_hand, cfg).unwrap();
+    assert_eq!(wrapped.schema, by_hand.schema);
+}
+
+#[test]
 fn test_rewrite_objects_map_of_records() {
     use serde_json::json;
 
@@ -1221,5 +1252,32 @@ fn test_simd_json_iteration_determinism() {
         assert_eq!(keys[0], "P31", "Expected first key to be P31");
     } else {
         panic!("Not an object");
+    }
+}
+
+/// A key missing from some objects is not required, whichever order the objects come in,
+/// and whether they are separate strings (merged in parallel) or lines of one string.
+#[test]
+fn test_key_missing_from_an_empty_object_is_not_required() {
+    let with_key = r#"{"x": {"a": 1}}"#;
+    let empty = r#"{"x": {}}"#;
+    let orders = [
+        [vec![with_key; 6], vec![empty; 6]].concat(),
+        [vec![empty; 6], vec![with_key; 6]].concat(),
+    ];
+    for rows in orders {
+        let as_strings = infer_json_schema_from_strings(&rows, SchemaInferenceConfig::default());
+        let as_lines = infer_json_schema_from_strings(
+            &[rows.join("\n")],
+            SchemaInferenceConfig {
+                delimiter: Some(b'\n'),
+                ..Default::default()
+            },
+        );
+        for result in [as_strings, as_lines] {
+            let x = &result.unwrap().schema["properties"]["x"];
+            assert_eq!(x["properties"]["a"]["type"], "integer");
+            assert_eq!(x.get("required"), None, "{rows:?}");
+        }
     }
 }

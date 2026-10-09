@@ -1,4 +1,5 @@
 use serde_json::{json, Value};
+use std::hash::Hasher;
 
 use crate::genson_rs::node::{DataType, SchemaNode};
 
@@ -88,7 +89,70 @@ impl SchemaBuilder {
         if self.root_node.is_empty() && other.schema_uri.as_deref() == Some(NULL_SCHEMA_URI) {
             self.root_node = other.root_node;
         } else {
-            self.add_schema(other.to_schema());
+            self.add_builder(other);
+        }
+    }
+
+    /// Merge another builder into this one, with the same result as
+    /// `self.add_schema(other.to_schema())` but merging its nodes directly.
+    pub fn add_builder(&mut self, other: SchemaBuilder) {
+        match other.emitted_schema_uri() {
+            None => self.root_node.absorb(other.root_node),
+            // `add_schema_mut` adopts the `$schema` and merges the rest
+            Some(uri) if self.schema_uri.is_none() => {
+                self.schema_uri = Some(uri.to_string());
+                self.root_node.absorb(other.root_node);
+            }
+            // Otherwise the `$schema` keyword itself is merged into the root
+            Some(_) => self.add_schema(other.to_schema()),
+        }
+    }
+
+    /// Merge `others` in order, with the same result as `add_builder` on each in turn but
+    /// with the roots that are objects merged in parallel across their properties.
+    pub fn add_builders(&mut self, others: Vec<SchemaBuilder>) {
+        let mut objects = Vec::with_capacity(others.len());
+        let mut kept_uri = None;
+        for other in others {
+            if !other.root_node.is_object() {
+                self.root_node.absorb_all(std::mem::take(&mut objects));
+                self.add_builder(other);
+                continue;
+            }
+            match (other.emitted_schema_uri(), &self.schema_uri) {
+                (Some(uri), None) => self.schema_uri = Some(uri.to_string()),
+                // `add_schema` merges an unadopted `$schema` into the root as a keyword
+                (Some(uri), Some(_)) => kept_uri = kept_uri.or(Some(uri.to_string())),
+                (None, _) => {}
+            }
+            objects.push(other.root_node);
+        }
+        self.root_node.absorb_all(objects);
+        if let Some(uri) = kept_uri {
+            self.root_node.add_object_keyword("$schema", uri.into());
+        }
+    }
+
+    pub(crate) fn root_node_mut(&mut self) -> &mut SchemaNode {
+        &mut self.root_node
+    }
+
+    /// A hash of the schema `to_schema` gives, computed without building it: builders with
+    /// equal schemas hash equal.
+    pub fn schema_hash(&self) -> u64 {
+        let mut hasher = xxhash_rust::xxh64::Xxh64::new(0);
+        hasher.write(self.emitted_schema_uri().unwrap_or_default().as_bytes());
+        hasher.write_u8(0xff);
+        self.root_node.hash_schema(&mut hasher);
+        hasher.finish()
+    }
+
+    /// The `$schema` that `to_schema` writes, if any.
+    fn emitted_schema_uri(&self) -> Option<&str> {
+        match self.schema_uri.as_deref() {
+            Some(NULL_SCHEMA_URI) => None,
+            Some(uri) => Some(uri),
+            None => Some(DEFAULT_SCHEMA_URI),
         }
     }
 

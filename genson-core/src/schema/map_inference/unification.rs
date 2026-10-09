@@ -5,319 +5,182 @@ use crate::{
 };
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
+use std::borrow::Cow;
 
-/// Normalize a schema that may be wrapped in one or more layers of
-/// `["null", <type>]` union arrays.
-///
-/// During inference, schemas often get wrapped in a nullable-union
-/// more than once (e.g. `["null", ["null", {"type": "string"}]]`).
-/// This helper strips away *all* redundant layers of `["null", ...]`
-/// until only the innermost non-null schema remains.
-///
-/// This ensures that equality checks and recursive unification don't
-/// spuriously fail due to extra layers of null-wrapping.
-fn normalise_nullable(v: &Value) -> &Value {
-    let mut current = v;
-    loop {
-        if let Some(arr) = current.as_array() {
-            if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
-                // peel off the non-null element
-                current = arr
-                    .iter()
-                    .find(|x| *x != &Value::String("null".to_string()))
-                    .unwrap();
-                continue;
-            }
+/// The scalar types: a schema of one of these unifies with another of the same type, and is
+/// promoted (`wrap_scalars`) when it meets a record.
+const SCALAR_TYPES: [&str; 4] = ["string", "number", "integer", "boolean"];
+
+/// The schema inside any number of legacy nullable wrappers, `["null", <schema>]`.
+fn normalise_nullable(mut schema: &Value) -> &Value {
+    while let Value::Array(pair) = schema {
+        match pair.as_slice() {
+            [a, b] if a == "null" => schema = b,
+            [a, b] if b == "null" => schema = a,
+            _ => break,
         }
-        return current;
+    }
+    schema
+}
+
+/// The type a schema has besides null: `T` for `{"type": T}` or `{"type": ["null", T]}`.
+fn base_type(schema: &Value) -> Option<&str> {
+    match schema.get("type")? {
+        Value::String(t) => Some(t),
+        _ => nullable_type(schema)?.as_str(),
     }
 }
 
-/// Try to make a nullable union from a null type and a typed schema
+/// The type of a scalar schema (`string`, `number`, `integer` or `boolean`, nullable or not).
+fn get_scalar_type_name(schema: &Value) -> Option<&str> {
+    base_type(schema).filter(|t| SCALAR_TYPES.contains(t))
+}
+
+/// Whether a schema is a scalar one, also inside legacy nullable wrappers.
+fn is_scalar_schema(schema: &Value) -> bool {
+    get_scalar_type_name(normalise_nullable(schema)).is_some()
+}
+
+/// Whether a schema is an array one, also inside legacy nullable wrappers.
+fn is_array_schema(schema: &Value) -> bool {
+    base_type(normalise_nullable(schema)) == Some("array")
+}
+
+/// Whether a schema is a record: an object with `properties`.
+fn is_object_schema(schema: &Value) -> bool {
+    base_type(schema) == Some("object") && schema.get("properties").is_some()
+}
+
+/// Whether a schema is a map: an object with `additionalProperties`.
+fn is_map_schema(schema: &Value) -> bool {
+    base_type(schema) == Some("object") && schema.get("additionalProperties").is_some()
+}
+
+/// Whether a schema is a record with no fields: an object whose `properties` are absent or
+/// empty, and which is not a map (`additionalProperties` a schema or `true`).
+fn is_empty_record_schema(schema: &Value) -> bool {
+    if base_type(schema) != Some("object") {
+        return false;
+    }
+    let values = schema.get("additionalProperties");
+    if values.is_some_and(|v| v.is_object() || *v == Value::Bool(true)) {
+        return false;
+    }
+    match schema.get("properties") {
+        None => true,
+        Some(properties) => properties.as_object().is_some_and(|p| p.is_empty()),
+    }
+}
+
+/// For a nullable schema, `{"type": ["null", T], ...}`, its `T`.
+fn nullable_type(schema: &Value) -> Option<&Value> {
+    match schema.get("type")? {
+        Value::Array(types) if types.len() == 2 && types.iter().any(|t| t == "null") => {
+            types.iter().find(|t| *t != "null")
+        }
+        _ => None,
+    }
+}
+
+/// The non-null schema of a nullable schema (`{"type": ["null", T]}` or the legacy
+/// `["null", {...}]`), without copying it: a schema plus the `type` that replaces its own.
+pub(super) struct NonNullView<'a> {
+    schema: &'a Value,
+    type_override: Option<&'a Value>,
+}
+
+pub(super) fn non_null_view(schema: &Value) -> NonNullView<'_> {
+    if let Value::Array(arr) = schema {
+        if arr.len() == 2 && arr.iter().any(|v| v == "null") {
+            if let Some(inner) = arr.iter().find(|v| *v != "null") {
+                return NonNullView {
+                    schema: inner,
+                    type_override: None,
+                };
+            }
+        }
+    }
+    NonNullView {
+        schema,
+        type_override: nullable_type(schema),
+    }
+}
+
+impl NonNullView<'_> {
+    fn field<'b>(&'b self, key: &str, value: &'b Value) -> &'b Value {
+        match self.type_override {
+            Some(t) if key == "type" => t,
+            _ => value,
+        }
+    }
+
+    /// Equality of the two non-null schemas.
+    pub(super) fn eq(&self, other: &NonNullView) -> bool {
+        if self.type_override.is_none() && other.type_override.is_none() {
+            return self.schema == other.schema;
+        }
+        let (Value::Object(a), Value::Object(b)) = (self.schema, other.schema) else {
+            return false;
+        };
+        a.len() == b.len()
+            && a.iter().all(|(k, v)| {
+                b.get(k)
+                    .is_some_and(|w| self.field(k, v) == other.field(k, w))
+            })
+    }
+
+    pub(super) fn to_value(&self) -> Value {
+        let mut schema = self.schema.clone();
+        if let (Some(t), Some(obj)) = (self.type_override, schema.as_object_mut()) {
+            obj.insert("type".to_string(), t.clone());
+        }
+        schema
+    }
+}
+
+/// `b` made nullable, when `a` is the null schema and `b` has a type.
 fn try_make_nullable_union(a: &Value, b: &Value) -> Option<Value> {
-    if a.get("type") == Some(&Value::String("null".into())) {
-        if let Some(other_type) = b.get("type") {
-            if other_type != &Value::String("null".into()) {
-                let mut result = b.clone();
-                result
-                    .as_object_mut()?
-                    .insert("type".to_string(), json!(["null", other_type]));
-                return Some(result);
-            }
-        }
+    if a.get("type")? != "null" {
+        return None;
     }
-    None
+    let other_type = b.get("type").filter(|t| *t != "null")?;
+    let mut result = b.clone();
+    result
+        .as_object_mut()?
+        .insert("type".to_string(), json!(["null", other_type]));
+    Some(result)
 }
 
-/// Helper function to check if two schemas are compatible (handling nullable vs non-nullable)
+/// The two schemas as one when they differ at most in nullability: equal, one of them
+/// the null schema, or equal once `["null", T]` types are read as `T` (then nullable).
 fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
     if existing == new {
         return Some(existing.clone());
     }
-
-    // Handle null vs non-null type: create union
     if let Some(result) =
         try_make_nullable_union(existing, new).or_else(|| try_make_nullable_union(new, existing))
     {
         return Some(result);
     }
-
-    // Handle new JSON Schema nullable format: {"type": ["null", "string"]}
-    let extract_nullable_info = |schema: &Value| -> (bool, Value) {
-        if let Some(Value::Array(type_arr)) = schema.get("type") {
-            if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-                if let Some(non_null_type) = type_arr
-                    .iter()
-                    .find(|t| *t != &Value::String("null".into()))
-                {
-                    // Create a new schema with the non-null type, preserving other properties
-                    let mut non_null_schema = schema.clone();
-                    if let Some(obj) = non_null_schema.as_object_mut() {
-                        obj.insert("type".to_string(), non_null_type.clone());
-                        (true, non_null_schema)
-                    } else {
-                        (false, schema.clone())
-                    }
-                } else {
-                    // Malformed nullable schema (e.g., ["null", "null"])
-                    (false, schema.clone())
-                }
-            } else {
-                (false, schema.clone())
-            }
-        } else {
-            (false, schema.clone())
-        }
+    // Read without the `null` in their types. Without it in either, they are unequal.
+    let without_null = |schema| NonNullView {
+        schema,
+        type_override: nullable_type(schema),
     };
-
-    let (existing_nullable, existing_inner) = extract_nullable_info(existing);
-    let (new_nullable, new_inner) = extract_nullable_info(new);
-
-    // If the inner schemas match (including all properties), return the nullable version
-    if existing_inner == new_inner {
-        if existing_nullable || new_nullable {
-            // Create the nullable version by taking the non-nullable schema and making the type nullable
-            let mut nullable_schema = existing_inner.clone();
-            if let Some(inner_type) = existing_inner.get("type") {
-                if let Some(obj) = nullable_schema.as_object_mut() {
-                    obj.insert("type".to_string(), json!(["null", inner_type]));
-                }
-            }
-            return Some(nullable_schema);
-        } else {
-            return Some(existing_inner);
-        }
+    let (existing_view, new_view) = (without_null(existing), without_null(new));
+    if existing_view
+        .type_override
+        .or(new_view.type_override)
+        .is_none()
+        || !existing_view.eq(&new_view)
+    {
+        return None;
     }
-
-    None
-}
-
-/// Check if a schema represents a scalar type (not an object or array)
-fn is_scalar_schema(schema: &Value) -> bool {
-    // Handle old legacy format first: ["null", {"type": "string"}]
-    if let Value::Array(arr) = schema {
-        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
-            let inner_schema = arr
-                .iter()
-                .find(|v| *v != &Value::String("null".to_string()))
-                .unwrap();
-            return is_scalar_schema(inner_schema); // Recursive call
-        }
+    let mut nullable = existing_view.to_value();
+    if let Some(inner_type) = nullable.get("type").cloned() {
+        nullable["type"] = json!(["null", inner_type]);
     }
-
-    // Check direct type field
-    if let Some(type_val) = schema.get("type") {
-        if let Some(type_str) = type_val.as_str() {
-            return matches!(type_str, "string" | "number" | "integer" | "boolean");
-        }
-
-        // Handle nullable format: {"type": ["null", "string"]}
-        if let Some(arr) = type_val.as_array() {
-            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
-                let non_null_type = arr
-                    .iter()
-                    .find(|t| *t != &Value::String("null".into()))
-                    .and_then(|t| t.as_str());
-                return matches!(
-                    non_null_type,
-                    Some("string" | "number" | "integer" | "boolean")
-                );
-            }
-        }
-    }
-
-    false
-}
-
-/// Check if a schema represents an object type (record with properties)
-fn is_object_schema(schema: &Value) -> bool {
-    // Check direct type field
-    if let Some(type_val) = schema.get("type") {
-        if let Some(type_str) = type_val.as_str() {
-            return type_str == "object" && schema.get("properties").is_some();
-        }
-
-        // Handle nullable format: {"type": ["null", "object"]}
-        if let Some(arr) = type_val.as_array() {
-            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
-                let non_null_type = arr
-                    .iter()
-                    .find(|t| *t != &Value::String("null".into()))
-                    .and_then(|t| t.as_str());
-                return non_null_type == Some("object") && schema.get("properties").is_some();
-            }
-        }
-    }
-
-    false
-}
-
-/// Check if a schema represents an empty record (object with no/empty properties)
-fn is_empty_record_schema(schema: &Value) -> bool {
-    if let Some(obj) = schema.as_object() {
-        if let Some(type_val) = obj.get("type") {
-            if let Some(type_str) = type_val.as_str() {
-                if type_str == "object" {
-                    // Must NOT be a map (additionalProperties must not be an object/true)
-                    if let Some(additional_props) = obj.get("additionalProperties") {
-                        // If additionalProperties is an object or true, it's a map
-                        if additional_props.is_object() || additional_props == &Value::Bool(true) {
-                            return false;
-                        }
-                        // If it's false, continue checking - it's not a map
-                    }
-
-                    // Empty if: no properties field, OR properties exists but is empty
-                    match obj.get("properties") {
-                        None => return true, // No properties field at all
-                        Some(props) => {
-                            if let Some(props_obj) = props.as_object() {
-                                return props_obj.is_empty(); // Empty properties
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Handle nullable format: {"type": ["null", "object"]}
-            if let Some(arr) = type_val.as_array() {
-                if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
-                    let non_null_type = arr
-                        .iter()
-                        .find(|t| *t != &Value::String("null".into()))
-                        .and_then(|t| t.as_str());
-                    if non_null_type == Some("object") {
-                        // Must NOT be a map
-                        if let Some(additional_props) = obj.get("additionalProperties") {
-                            if additional_props.is_object()
-                                || additional_props == &Value::Bool(true)
-                            {
-                                return false;
-                            }
-                        }
-
-                        match obj.get("properties") {
-                            None => return true,
-                            Some(props) => {
-                                if let Some(props_obj) = props.as_object() {
-                                    return props_obj.is_empty();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    false
-}
-
-/// Check if a schema represents a map type (object with additionalProperties)
-fn is_map_schema(schema: &Value) -> bool {
-    // Check direct type field
-    if let Some(type_val) = schema.get("type") {
-        if let Some(type_str) = type_val.as_str() {
-            return type_str == "object" && schema.get("additionalProperties").is_some();
-        }
-
-        // Handle nullable format: {"type": ["null", "object"]}
-        if let Some(arr) = type_val.as_array() {
-            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
-                let non_null_type = arr
-                    .iter()
-                    .find(|t| *t != &Value::String("null".into()))
-                    .and_then(|t| t.as_str());
-                return non_null_type == Some("object")
-                    && schema.get("additionalProperties").is_some();
-            }
-        }
-    }
-
-    false
-}
-
-/// Check if a schema represents an array type
-fn is_array_schema(schema: &Value) -> bool {
-    // Handle old legacy format first: ["null", {"type": "array"}]
-    if let Value::Array(arr) = schema {
-        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
-            let inner_schema = arr
-                .iter()
-                .find(|v| *v != &Value::String("null".to_string()))
-                .unwrap();
-            return is_array_schema(inner_schema); // Recursive call to handle nested nullability
-        }
-    }
-
-    // Check direct type field
-    if let Some(type_val) = schema.get("type") {
-        if let Some(type_str) = type_val.as_str() {
-            return type_str == "array";
-        }
-
-        // Handle nullable format: {"type": ["null", "array"]}
-        if let Some(arr) = type_val.as_array() {
-            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
-                let non_null_type = arr
-                    .iter()
-                    .find(|t| *t != &Value::String("null".into()))
-                    .and_then(|t| t.as_str());
-                return non_null_type == Some("array");
-            }
-        }
-    }
-
-    false
-}
-
-/// Extract the scalar type name from a schema
-fn get_scalar_type_name(schema: &Value) -> Option<String> {
-    if let Some(type_val) = schema.get("type") {
-        if let Some(type_str) = type_val.as_str() {
-            if matches!(type_str, "string" | "number" | "integer" | "boolean") {
-                return Some(type_str.to_string());
-            }
-        }
-
-        // Handle nullable format: {"type": ["null", "string"]}
-        if let Some(arr) = type_val.as_array() {
-            if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
-                let non_null_type = arr
-                    .iter()
-                    .find(|t| *t != &Value::String("null".into()))
-                    .and_then(|t| t.as_str());
-                if matches!(
-                    non_null_type,
-                    Some("string" | "number" | "integer" | "boolean")
-                ) {
-                    return non_null_type.map(|s| s.to_string());
-                }
-            }
-        }
-    }
-
-    None
+    Some(nullable)
 }
 
 /// The field name to promote scalars under when unifying the schemas at `path`: its
@@ -343,7 +206,7 @@ fn try_scalar_promotion(
         return None;
     };
 
-    let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
+    let wrapped_key = make_promoted_scalar_key(field_name, scalar_type);
 
     debug!(
         config,
@@ -353,18 +216,15 @@ fn try_scalar_promotion(
         wrapped_key
     );
 
-    let mut wrapped_props = Map::new();
-    wrapped_props.insert(wrapped_key, scalar_schema.clone());
-
     let promoted = json!({
         "type": "object",
-        "properties": wrapped_props
+        "properties": { wrapped_key: scalar_schema }
     });
 
     // Recursively unify with the object schema
     let mut result = check_unifiable_schemas(
-        &[&object_schema.clone(), &promoted],
-        &format!("{path}.{}", field_name),
+        &[object_schema, &promoted],
+        &format!("{path}.{field_name}"),
         config,
     )?;
 
@@ -376,35 +236,12 @@ fn try_scalar_promotion(
     Some(result)
 }
 
-/// Recursively unwrap nullable schema wrappers and extract a specific field.
-///
-/// Handles both legacy format `["null", {...}]` and modern format `{"type": ["null", "..."]}`.
-/// Recursively unwraps multiple layers of nullable wrapping to find the inner schema,
-/// then extracts the specified field from it.
+/// A keyword of a schema, also inside legacy nullable wrappers.
 fn extract_field_from_nullable_schema<'a>(
     schema: &'a Value,
     field_name: &str,
 ) -> Option<&'a Value> {
-    // Handle legacy format: ["null", {...}]
-    if let Value::Array(arr) = schema {
-        if arr.len() == 2 && arr.contains(&Value::String("null".to_string())) {
-            let inner_schema = arr
-                .iter()
-                .find(|v| *v != &Value::String("null".to_string()))?;
-            return extract_field_from_nullable_schema(inner_schema, field_name);
-        }
-    }
-
-    // Handle modern nullable format: {"type": ["null", "array"]}
-    if let Some(Value::Array(type_arr)) = schema.get("type") {
-        if type_arr.len() == 2 && type_arr.contains(&Value::String("null".into())) {
-            // For modern nullable, the field should be directly on this schema
-            return schema.get(field_name);
-        }
-    }
-
-    // Direct field extraction
-    schema.get(field_name)
+    normalise_nullable(schema).get(field_name)
 }
 
 /// Unify array schemas by unifying their items
@@ -464,6 +301,7 @@ fn unify_array_schemas(
     }
 }
 
+/// Unify scalar schemas of one type (nullable or not) into that type, nullable.
 fn unify_scalar_schemas(
     schemas: &[&Value],
     path: &str,
@@ -473,49 +311,21 @@ fn unify_scalar_schemas(
         debug!(config, "Empty schema at {}", path);
         return None;
     }
-
-    // Extract all the scalar types
-    let mut base_types = std::collections::HashSet::new();
-
-    for &schema in schemas {
-        if let Some(type_val) = schema.get("type") {
-            if let Some(type_str) = type_val.as_str() {
-                // Direct scalar type
-                base_types.insert(type_str.to_string());
-            } else if let Some(arr) = type_val.as_array() {
-                // Nullable scalar: ["null", "string"]
-                if arr.len() == 2 && arr.contains(&Value::String("null".into())) {
-                    if let Some(non_null_type) = arr
-                        .iter()
-                        .find(|t| *t != &Value::String("null".into()))
-                        .and_then(|t| t.as_str())
-                    {
-                        base_types.insert(non_null_type.to_string());
-                    }
-                }
-            }
-        }
-    }
-
-    // If all schemas have the same base type, create a nullable version
-    if base_types.len() == 1 {
-        let base_type = base_types.iter().next().unwrap();
+    let base_types: std::collections::BTreeSet<&str> = schemas
+        .iter()
+        .filter_map(|&schema| base_type(schema))
+        .collect();
+    if let (1, Some(base_type)) = (base_types.len(), base_types.first()) {
         debug!(
             config,
             "{}: Unified scalar schemas to nullable {}", path, base_type
         );
         return Some(json!({"type": ["null", base_type]}));
     }
-
-    // Multiple incompatible scalar types
-    if config.debug {
-        let mut sorted_types: Vec<_> = base_types.into_iter().collect();
-        sorted_types.sort();
-        debug!(
-            config,
-            "{}: Cannot unify incompatible scalar types: {:?}", path, sorted_types
-        );
-    }
+    debug!(
+        config,
+        "{}: Cannot unify incompatible scalar types: {:?}", path, base_types
+    );
     None
 }
 
@@ -536,28 +346,17 @@ fn unify_map_schemas(
         return None;
     }
 
-    // Extract all additionalProperties schemas
-    let mut additional_props_schemas = Vec::<&Value>::new();
-    for (i, &schema) in schemas.iter().enumerate() {
-        if let Some(additional_props) =
-            extract_field_from_nullable_schema(schema, "additionalProperties")
-        {
-            debug_verbose!(
-                config,
-                "{}: Map schema[{}] additionalProperties: {}",
-                path,
-                i,
-                serde_json::to_string(additional_props).unwrap_or_default()
-            );
-            additional_props_schemas.push(additional_props);
-        } else {
-            debug!(
-                config,
-                "{}: Map schema[{}] missing additionalProperties", path, i
-            );
-            return None;
-        }
-    }
+    let Some(additional_props_schemas) = schemas
+        .iter()
+        .map(|&schema| extract_field_from_nullable_schema(schema, "additionalProperties"))
+        .collect::<Option<Vec<&Value>>>()
+    else {
+        debug!(
+            config,
+            "{}: A map schema is missing additionalProperties", path
+        );
+        return None;
+    };
 
     // Recursively unify the additionalProperties
     if let Some(unified_additional_props) = check_unifiable_schemas(
@@ -579,148 +378,97 @@ fn unify_map_schemas(
     }
 }
 
-/// Sequential pairwise unification with full scalar promotion support
+/// Unify one field's schemas pairwise in order, promoting scalars that meet records (or
+/// other scalars) when `wrap_scalars` is set.
 fn unify_field_schemas_sequential(
     field_name: &str,
     schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
-) -> (String, Option<Value>) {
-    if schemas.len() == 1 {
-        return (field_name.to_string(), Some(schemas[0].clone()));
+) -> Option<Value> {
+    let (&first, rest) = schemas.split_first()?;
+    if rest.iter().all(|&s| s == first) {
+        return Some(first.clone());
     }
-
-    let first = schemas[0];
-    if schemas.iter().all(|&s| s == first) {
-        return (field_name.to_string(), Some(first.clone()));
+    let field_path = format!("{path}.{field_name}");
+    let mut unified = first.clone();
+    for &new in rest {
+        unified = unify_field_pair(unified, new, field_name, &field_path, path, config)?;
     }
-
-    let mut unified = schemas[0].clone();
-
-    for &new in &schemas[1..] {
-        if let Some(compatible) = schemas_compatible(&unified, new) {
-            unified = compatible;
-            continue;
-        }
-
-        if (is_array_schema(&unified) && is_array_schema(new))
-            || ((is_object_schema(&unified) || is_empty_record_schema(&unified))
-                && (is_object_schema(new) || is_empty_record_schema(new)))
-        {
-            if let Some(result) = check_unifiable_schemas(
-                &[&unified, new],
-                &format!("{}.{}", path, field_name),
-                config,
-            ) {
-                unified = result;
-                continue;
-            } else {
-                return (field_name.to_string(), None);
-            }
-        }
-
-        if config.wrap_scalars {
-            let unified_is_obj = is_object_schema(&unified);
-            let unified_is_scalar = is_scalar_schema(&unified);
-            let new_is_obj = is_object_schema(new);
-            let new_is_scalar = is_scalar_schema(new);
-
-            if unified_is_obj && new_is_scalar {
-                if let Some(result) =
-                    try_scalar_promotion(&unified, new, field_name, "new", path, config)
-                {
-                    unified = result;
-                    continue;
-                }
-            } else if new_is_obj && unified_is_scalar {
-                if let Some(result) =
-                    try_scalar_promotion(new, &unified, field_name, "existing", path, config)
-                {
-                    unified = result;
-                    continue;
-                }
-            } else if unified_is_scalar && new_is_scalar {
-                if let Some(result) =
-                    try_mixed_scalar_promotion(&unified, new, field_name, path, config)
-                {
-                    unified = result;
-                    continue;
-                }
-            }
-        }
-
-        return (field_name.to_string(), None);
-    }
-
-    (field_name.to_string(), Some(unified))
+    Some(unified)
 }
 
-/// Divide-and-conquer parallel unification (no scalar promotion)
+/// One step of `unify_field_schemas_sequential`: the field's schema so far with the next.
+fn unify_field_pair(
+    unified: Value,
+    new: &Value,
+    field_name: &str,
+    field_path: &str,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    if let Some(compatible) = schemas_compatible(&unified, new) {
+        return Some(compatible);
+    }
+    let record_like = |s: &Value| is_object_schema(s) || is_empty_record_schema(s);
+    if (is_array_schema(&unified) && is_array_schema(new))
+        || (record_like(&unified) && record_like(new))
+    {
+        return check_unifiable_schemas(&[&unified, new], field_path, config);
+    }
+    if !config.wrap_scalars {
+        return None;
+    }
+    if is_object_schema(&unified) && is_scalar_schema(new) {
+        try_scalar_promotion(&unified, new, field_name, "new", path, config)
+    } else if is_object_schema(new) && is_scalar_schema(&unified) {
+        try_scalar_promotion(new, &unified, field_name, "existing", path, config)
+    } else if is_scalar_schema(&unified) && is_scalar_schema(new) {
+        try_mixed_scalar_promotion(&unified, new, field_name, path, config)
+    } else {
+        None
+    }
+}
+
+/// Unify one field's schemas by halves in parallel (no scalar promotion across the halves).
 fn unify_field_schemas_parallel(
     field_name: &str,
     schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
-) -> (String, Option<Value>) {
-    if schemas.is_empty() {
-        return (field_name.to_string(), None);
-    }
-    if schemas.len() == 1 {
-        return (field_name.to_string(), Some(schemas[0].clone()));
-    }
+) -> Option<Value> {
     if schemas.len() < 10 {
-        // Small sets: use sequential to avoid overhead
         return unify_field_schemas_sequential(field_name, schemas, path, config);
     }
-
-    // Split and recurse in parallel
-    let mid = schemas.len() / 2;
-    let (left, right) = schemas.split_at(mid);
-
-    let ((_l_name, l_res), (_r_name, r_res)) = rayon::join(
+    let (left, right) = schemas.split_at(schemas.len() / 2);
+    let (left, right) = rayon::join(
         || unify_field_schemas_parallel(field_name, left, path, config),
         || unify_field_schemas_parallel(field_name, right, path, config),
     );
-
-    // Merge the two halves
-    let merged = match (l_res, r_res) {
-        (Some(lv), Some(rv)) => {
-            check_unifiable_schemas(&[&lv, &rv], &format!("{}.{}", path, field_name), config)
-        }
-        _ => None,
-    };
-
-    (field_name.to_string(), merged)
+    check_unifiable_schemas(&[&left?, &right?], &format!("{path}.{field_name}"), config)
 }
 
-/// Main entry point: choose strategy based on field characteristics
+/// Unify one field's schemas: pairwise in order when there are few of them or scalars may
+/// need promoting among records, otherwise by halves in parallel.
 fn unify_field_schemas(
     field_name: &str,
     schemas: &[&Value],
     path: &str,
     config: &SchemaInferenceConfig,
-) -> (String, Option<Value>) {
-    if schemas.len() == 1 {
-        return (field_name.to_string(), Some(schemas[0].clone()));
-    }
-
-    // Check if we need scalar promotion for this field
-    let needs_scalar_promo = config.wrap_scalars && {
-        let has_scalars = schemas.iter().any(|&s| is_scalar_schema(s));
-        let has_objects = schemas.iter().any(|&s| is_object_schema(s));
-        has_scalars && has_objects
-    };
-
+) -> Option<Value> {
+    let needs_scalar_promo = config.wrap_scalars
+        && schemas.iter().any(|&s| is_scalar_schema(s))
+        && schemas.iter().any(|&s| is_object_schema(s));
     if needs_scalar_promo || schemas.len() < 50 {
-        // Use sequential (preserves scalar promotion, good for small/mixed sets)
         unify_field_schemas_sequential(field_name, schemas, path, config)
     } else {
-        // Use parallel divide-and-conquer (faster for large homogeneous sets)
         unify_field_schemas_parallel(field_name, schemas, path, config)
     }
 }
 
-/// Unify record schemas by merging their properties
+/// Unify record schemas by merging their properties: each field's schemas are unified, a
+/// field in every record stays as it is (and required), and one missing from some becomes
+/// nullable.
 fn unify_record_schemas(
     schemas: &[&Value],
     path: &str,
@@ -733,192 +481,103 @@ fn unify_record_schemas(
         schemas.len()
     );
 
-    // Step 1: Extract all properties from all schemas IN PARALLEL (if large enough)
-    let schema_properties: Vec<Option<serde_json::Map<String, Value>>> = if schemas.len() >= 50 {
-        schemas
-            .par_iter()
-            .map(|&schema| {
-                extract_field_from_nullable_schema(schema, "properties")
-                    .and_then(|v| v.as_object())
-                    .cloned()
-                    .or_else(|| {
-                        // Handle empty objects without properties field
-                        if is_empty_record_schema(schema) {
-                            Some(serde_json::Map::new())
-                        } else {
-                            None
-                        }
-                    })
-            })
-            .collect()
-    } else {
-        schemas
-            .iter()
-            .map(|&schema| {
-                extract_field_from_nullable_schema(schema, "properties")
-                    .and_then(|v| v.as_object())
-                    .cloned()
-                    .or_else(|| {
-                        // Handle empty objects without properties field
-                        if is_empty_record_schema(schema) {
-                            Some(serde_json::Map::new())
-                        } else {
-                            None
-                        }
-                    })
-            })
-            .collect()
-    };
-
-    // Step 2: Collect all schemas for each field
-    let mut field_schemas: ordermap::OrderMap<String, Vec<&Value>> = ordermap::OrderMap::new();
-    let mut field_counts = ordermap::OrderMap::new();
-    let mut unified_anyof_values: Vec<Value> = Vec::new();
-    // Track which fields need unified anyOf values
-    let mut anyof_indices: Vec<(String, usize)> = Vec::new();
-
-    for (i, props_opt) in schema_properties.iter().enumerate() {
-        let Some(props) = props_opt else {
-            debug!(config, "Schema[{i}] has no properties object");
-            return None;
+    // Each field's schemas, in order of first appearance, and how many records hold it. A
+    // field schema that is an `anyOf` goes in unified (by scalar promotion) after all the
+    // others, so a field seen only as one comes after the rest.
+    let mut fields: ordermap::OrderMap<&str, Vec<&Value>> = ordermap::OrderMap::new();
+    let mut counts: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+    let mut unified_anyofs: Vec<(&str, Value)> = Vec::new();
+    for (i, &schema) in schemas.iter().enumerate() {
+        let properties = match extract_field_from_nullable_schema(schema, "properties") {
+            Some(Value::Object(properties)) => Some(properties),
+            _ if is_empty_record_schema(schema) => None,
+            _ => {
+                debug!(config, "Schema[{i}] has no properties object");
+                return None;
+            }
         };
-
-        for (field_name, field_schema) in props {
-            *field_counts.entry(field_name.clone()).or_insert(0) += 1;
-
-            let normalized = normalise_nullable(field_schema);
-
-            // Handle anyOf before storing
-            if let Some(Value::Array(any_of_schemas)) = normalized.get("anyOf") {
-                let any_of_refs: Vec<&Value> = any_of_schemas.iter().collect();
-                if let Some(unified) = unify_anyof_schemas(&any_of_refs, field_name, config) {
-                    let idx = unified_anyof_values.len();
-                    unified_anyof_values.push(unified);
-                    anyof_indices.push((field_name.clone(), idx));
-                    continue; // Skip the normal push
+        for (name, field_schema) in properties.into_iter().flatten() {
+            *counts.entry(name.as_str()).or_default() += 1;
+            let field_schema = normalise_nullable(field_schema);
+            if let Some(Value::Array(any_of)) = field_schema.get("anyOf") {
+                let any_of: Vec<&Value> = any_of.iter().collect();
+                if let Some(unified) = unify_anyof_schemas(&any_of, name, config) {
+                    unified_anyofs.push((name.as_str(), unified));
+                    continue;
                 }
             }
-
-            // Normal path: store the normalized reference
-            field_schemas
-                .entry(field_name.clone())
-                .or_default()
-                .push(normalized);
+            fields.entry(name.as_str()).or_default().push(field_schema);
         }
     }
-
-    // Now add all the unified anyOf references
-    for (field_name, idx) in anyof_indices {
-        field_schemas
-            .entry(field_name)
-            .or_default()
-            .push(&unified_anyof_values[idx]);
+    for (name, unified) in &unified_anyofs {
+        fields.entry(name).or_default().push(unified);
     }
 
-    // Step 3: Unify schemas for each field
     let merge_start = std::time::Instant::now();
-    let field_names: Vec<_> = field_schemas.keys().cloned().collect();
-
-    let unified_fields: Vec<(String, Option<Value>)> = if field_names.len() >= 10 {
-        field_names
-            .par_iter()
-            .map(|field_name| {
-                unify_field_schemas(field_name, &field_schemas[field_name], path, config)
-            })
-            .collect()
-    } else {
-        field_names
-            .iter()
-            .map(|field_name| {
-                unify_field_schemas(field_name, &field_schemas[field_name], path, config)
-            })
-            .collect()
+    let unify = |name: &'_ str, field_schemas: &[&Value]| {
+        unify_field_schemas(name, field_schemas, path, config)
     };
-
-    // Build all_fields from results
-    let mut all_fields = ordermap::OrderMap::new();
-    for (field_name, unified_opt) in unified_fields {
-        if let Some(unified) = unified_opt {
-            all_fields.insert(field_name, unified);
-        } else {
-            debug!(config, "Failed to unify field schemas");
-            return None;
-        }
-    }
-
+    let unified: Option<Vec<Value>> = if fields.len() >= 10 {
+        fields.par_iter().map(|(name, s)| unify(name, s)).collect()
+    } else {
+        fields.iter().map(|(name, s)| unify(name, s)).collect()
+    };
+    let Some(unified) = unified else {
+        debug!(config, "Failed to unify field schemas");
+        return None;
+    };
     if config.profile && schemas.len() > 50 {
         anstream::eprintln!("  Merge loop took {:?}", merge_start.elapsed());
     }
 
-    let total_schemas = schemas.len();
-    let mut unified_properties = Map::new();
-    let mut required_fields = Vec::new();
-
-    // Required in all -> non-nullable AND add to required array
-    for (field_name, field_type) in &all_fields {
-        let count = field_counts.get(field_name).unwrap_or(&0);
-        if *count == total_schemas {
-            debug_verbose!(
-                config,
-                "Field `{field_name}` present in all schemas → keeping non-nullable"
-            );
-            unified_properties.insert(field_name.clone(), field_type.clone());
-            required_fields.push(field_name.clone()); // Add to required array
-        }
+    // Fields in every record first, as they are and required; then the rest, nullable
+    let (in_all, in_some): (Vec<_>, Vec<_>) = fields
+        .keys()
+        .zip(unified)
+        .map(|(&name, field_schema)| (name, counts[name], field_schema))
+        .partition(|(_, count, _)| *count == schemas.len());
+    let required: Vec<&str> = in_all.iter().map(|(name, _, _)| *name).collect();
+    let mut properties = Map::new();
+    for (name, _, field_schema) in in_all {
+        debug_verbose!(
+            config,
+            "Field `{name}` present in all schemas → keeping non-nullable"
+        );
+        properties.insert(name.to_string(), field_schema);
     }
-
-    // Missing in some -> nullable
-    for (field_name, field_type) in &all_fields {
-        let count = field_counts.get(field_name).unwrap_or(&0);
-        if *count < total_schemas {
-            debug_verbose!(
-                config,
-                "Field `{field_name}` missing in {}/{} schemas → making nullable",
-                total_schemas - count,
-                total_schemas
-            );
-
-            // Create proper JSON Schema nullable syntax
-            if let Some(type_str) = field_type.get("type").and_then(|t| t.as_str()) {
-                if type_str == "null" {
-                    // Already null - don't double-wrap
-                    unified_properties.insert(field_name.clone(), field_type.clone());
-                } else {
-                    // Make non-null type nullable
-                    let mut nullable_field = field_type.clone();
-                    nullable_field["type"] = json!(["null", type_str]);
-                    unified_properties.insert(field_name.clone(), nullable_field);
-                }
-            } else if let Some(_type_arr) = field_type.get("type").and_then(|t| t.as_array()) {
-                // Already nullable - use as is
-                unified_properties.insert(field_name.clone(), field_type.clone());
-            } else {
-                // Complex schema - create proper anyOf union
-                let nullable_schema = json!({
-                    "anyOf": [
-                        {"type": "null"},
-                        field_type
-                    ]
-                });
-                unified_properties.insert(field_name.clone(), nullable_schema);
-            }
-        }
+    for (name, count, field_schema) in in_some {
+        debug_verbose!(
+            config,
+            "Field `{name}` missing in {}/{} schemas → making nullable",
+            schemas.len() - count,
+            schemas.len()
+        );
+        properties.insert(name.to_string(), make_nullable(field_schema));
     }
 
     debug!(config, "{}: Record schemas unified successfully", path);
-
-    // Build the final schema with required fields
     let mut result = json!({
         "type": "object",
-        "properties": unified_properties
+        "properties": properties
     });
-
-    // Only add required array if there are required fields
-    if !required_fields.is_empty() {
-        result["required"] = json!(required_fields);
+    if !required.is_empty() {
+        result["required"] = json!(required);
     }
-
     Some(result)
+}
+
+/// A field schema made nullable: a type `T` becomes `["null", T]` (a nullable or null type
+/// stays as it is), and a schema without a type becomes `anyOf` null and itself.
+fn make_nullable(mut schema: Value) -> Value {
+    match schema.get("type") {
+        Some(Value::String(t)) if t != "null" => {
+            let t = t.clone();
+            schema["type"] = json!(["null", t]);
+            schema
+        }
+        Some(Value::String(_) | Value::Array(_)) => schema,
+        _ => json!({ "anyOf": [{ "type": "null" }, schema] }),
+    }
 }
 
 /// Handle mixed scalar promotion when the same field has different scalar types
@@ -947,21 +606,14 @@ fn try_mixed_scalar_promotion(
         field_name
     );
 
-    // Create promoted schemas
-    let existing_key = make_promoted_scalar_key(field_name, &existing_type);
-    let new_key = make_promoted_scalar_key(field_name, &new_type);
-
-    let mut properties = Map::new();
-    properties.insert(existing_key.clone(), existing.clone());
-    properties.insert(new_key.clone(), new.clone());
-
-    let promoted = json!({
+    // No required array: each promoted field holds a value in only some rows
+    Some(json!({
         "type": "object",
-        "properties": properties
-        // No required array - all promoted fields should be nullable
-    });
-
-    Some(promoted)
+        "properties": {
+            make_promoted_scalar_key(field_name, existing_type): existing,
+            make_promoted_scalar_key(field_name, new_type): new,
+        }
+    }))
 }
 
 pub(crate) fn unify_anyof_schemas(
@@ -986,27 +638,22 @@ pub(crate) fn unify_anyof_schemas(
         "anyOf unification: promoting scalars for field '{}'", field_name
     );
 
-    let mut promoted_schemas = Vec::new();
-
-    for &schema in schemas {
-        if is_scalar_schema(schema) {
-            let scalar_type = get_scalar_type_name(schema)?;
-            let wrapped_key = make_promoted_scalar_key(field_name, &scalar_type);
-            let promoted = json!({
+    // Each scalar wrapped as a record of one field, then all unified as records
+    let promoted = schemas
+        .iter()
+        .map(|&schema| {
+            if !is_scalar_schema(schema) {
+                return Some(Cow::Borrowed(schema));
+            }
+            let wrapped_key = make_promoted_scalar_key(field_name, get_scalar_type_name(schema)?);
+            Some(Cow::Owned(json!({
                 "type": "object",
-                "properties": {
-                    wrapped_key: schema.clone()
-                }
-            });
-            promoted_schemas.push(promoted);
-        } else {
-            promoted_schemas.push(schema.clone());
-        }
-    }
-
-    // Now unify the promoted schemas (all objects), after converting to references
-    let promoted_refs: Vec<&Value> = promoted_schemas.iter().collect();
-    check_unifiable_schemas(&promoted_refs, field_name, config)
+                "properties": { wrapped_key: schema }
+            })))
+        })
+        .collect::<Option<Vec<Cow<Value>>>>()?;
+    let promoted: Vec<&Value> = promoted.iter().map(Cow::as_ref).collect();
+    check_unifiable_schemas(&promoted, field_name, config)
 }
 
 /// Check if a collection of schemas can be unified into a single schema.
@@ -1085,24 +732,16 @@ pub(crate) fn check_unifiable_schemas(
                 "type": "object",
                 "additionalProperties": {"type": "string"}
             }));
-        } else if map_schemas.len() < schemas.len() {
-            // Some maps, some empty records - unify the maps (empty records contribute nothing)
-            debug!(
-                config,
-                "{}: Mix of {} maps and {} empty records, unifying maps only",
-                path,
-                map_schemas.len(),
-                schemas.len() - map_schemas.len()
-            );
-            return unify_map_schemas(&map_schemas, path, config);
-        } else {
-            // All maps, no empty records
-            debug!(
-                config,
-                "{}: All schemas are maps, attempting map unification", path
-            );
-            return unify_map_schemas(&map_schemas, path, config);
         }
+        // The empty records among them contribute nothing
+        debug!(
+            config,
+            "{}: Unifying {} maps ({} empty records left out)",
+            path,
+            map_schemas.len(),
+            schemas.len() - map_schemas.len()
+        );
+        return unify_map_schemas(&map_schemas, path, config);
     }
 
     // Check if all are record schemas (objects with properties) OR empty records

@@ -1,4 +1,4 @@
-use crate::genson_rs::{build_json_schema, build_json_schema_into, get_builder, BuildConfig};
+use crate::genson_rs::{build_json_schema_into, get_builder, BuildConfig};
 use crate::{debug, profile, profile_verbose};
 use rayon::prelude::*;
 use serde::de::Error as DeError;
@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::panic::{self, AssertUnwindSafe};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::genson_rs::SchemaBuilder;
+use crate::genson_rs::{DataType, SchemaBuilder, SchemaNode};
 
 pub(crate) mod core;
 pub use core::*;
@@ -202,38 +202,43 @@ fn prepare_json_bytes<'a>(
         ));
     }
 
-    // Safe: JSON is valid, now hand off to genson-rs
-    if let Some(ref field) = config.wrap_root {
-        if config.delimiter == Some(b'\n') {
-            // NDJSON: wrap each line separately
-            let mut wrapped_bytes = Vec::new();
-            for line in json_str.lines() {
-                let trimmed = line.trim();
-                if trimmed.is_empty() {
-                    continue;
-                }
-                let inner_val: Value = serde_json::from_str(trimmed)
-                    .map_err(|e| format!("Failed to parse NDJSON line before wrap_root: {}", e))?;
-
-                if !wrapped_bytes.is_empty() {
-                    wrapped_bytes.push(b'\n');
-                }
-                serde_json::to_writer(&mut wrapped_bytes, &json!({ field: inner_val }))
-                    .map_err(|e| format!("Failed to serialize wrapped NDJSON: {}", e))?;
-            }
-            Ok(Cow::Owned(wrapped_bytes))
-        } else {
-            // Single JSON doc
-            let inner_val: Value = serde_json::from_str(json_str)
-                .map_err(|e| format!("Failed to parse JSON before wrap_root: {}", e))?;
-            let wrapped_bytes = serde_json::to_vec(&json!({ field: inner_val }))
-                .map_err(|e| format!("Failed to serialize wrapped JSON: {}", e))?;
-            Ok(Cow::Owned(wrapped_bytes))
-        }
-    } else {
-        // No wrapping needed - just borrow the original bytes
-        Ok(Cow::Borrowed(json_bytes))
+    match &config.wrap_root {
+        Some(field) => Ok(Cow::Owned(wrap_documents(
+            json_str,
+            field,
+            config.delimiter.is_some(),
+        ))),
+        None => Ok(Cow::Borrowed(json_bytes)),
     }
+}
+
+/// `{"<field>": <document>}` for the input (each line of it, when `ndjson`), written around
+/// the document's own bytes: the input has already been validated, so there is no need to
+/// parse it into a value and serialise that again.
+fn wrap_documents(json_str: &str, field: &str, ndjson: bool) -> Vec<u8> {
+    let key = serde_json::to_string(field).expect("a string always serialises");
+    let documents: Vec<&str> = if ndjson {
+        json_str
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .collect()
+    } else {
+        vec![json_str]
+    };
+    let wrapping = key.len() + 3; // `{`, `:`, `}`
+    let mut wrapped = Vec::with_capacity(json_str.len() + documents.len() * (wrapping + 1));
+    for (i, document) in documents.into_iter().enumerate() {
+        if i > 0 {
+            wrapped.push(b'\n');
+        }
+        wrapped.push(b'{');
+        wrapped.extend_from_slice(key.as_bytes());
+        wrapped.push(b':');
+        wrapped.extend_from_slice(document.as_bytes());
+        wrapped.push(b'}');
+    }
+    wrapped
 }
 
 /// Process all JSON strings sequentially and build schemas
@@ -266,7 +271,7 @@ fn process_json_strings_sequential<S: AsRef<str>>(
 
         // Build schema incrementally - this is where panics happen
         let build_start = std::time::Instant::now();
-        let _schema = build_json_schema(builder, &mut bytes, &build_config);
+        build_json_schema_into(builder, &mut bytes, &build_config);
         let build_elapsed = build_start.elapsed();
         profile_verbose!(config, "  Schema building took: {:?}", build_elapsed);
 
@@ -340,21 +345,22 @@ fn apply_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
     }
 }
 
-/// xxh64 of the schema's compact JSON, streamed so the string is never materialised.
-fn hash_schema(schema: &Value) -> u64 {
-    struct HashWriter(xxhash_rust::xxh64::Xxh64);
-    impl std::io::Write for HashWriter {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            self.0.update(buf);
-            Ok(buf.len())
+/// `apply_force_field_types` on schema nodes: each property forced to be a map is written
+/// out as a schema, rewritten, and read back. The rest of the tree is left as it is.
+fn apply_force_field_types_to_node(node: &mut SchemaNode, config: &SchemaInferenceConfig) {
+    node.visit_properties_mut(&mut |name, property| {
+        if config.force_field_types.get(name).map(String::as_str) != Some("map") {
+            return true;
         }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-    let mut writer = HashWriter(xxhash_rust::xxh64::Xxh64::new(0));
-    serde_json::to_writer(&mut writer, schema).expect("hashing a Value cannot fail");
-    writer.0.digest()
+        // Rewritten within an object holding just this property, so that it is
+        // recognised by name; that also rewrites the forced fields within it
+        let mut holder = json!({ "properties": { name: property.to_schema() } });
+        apply_force_field_types(&mut holder, config);
+        let mut forced = SchemaNode::new();
+        forced.add_schema(DataType::Schema(&holder["properties"][name]));
+        *property = forced;
+        false
+    });
 }
 
 /// Process all JSON strings in parallel while maintaining order
@@ -380,6 +386,8 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
 
     let mut processed_count = 0;
     let mut seen_hashes = HashSet::new();
+    // A field forced to be a map is rewritten in each string's schema before the merge
+    let forces_maps = config.force_field_types.values().any(|t| t == "map");
 
     for (chunk_idx, chunk) in json_strings.chunks(chunk_size).enumerate() {
         profile!(
@@ -396,11 +404,11 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
         }
 
         let t_par = std::time::Instant::now();
-        let chunk_builders: Vec<(usize, Option<(Value, u64)>)> = chunk
+        let rows: Vec<Option<(SchemaBuilder, u64)>> = chunk
             .par_iter()
             .enumerate()
             .map(
-                |(i, json_str)| -> Result<(usize, Option<(Value, u64)>), String> {
+                |(i, json_str)| -> Result<Option<(SchemaBuilder, u64)>, String> {
                     profile_verbose!(config, "Thread processing JSON STRING {}", i);
 
                     let prep_start = std::time::Instant::now();
@@ -414,7 +422,7 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
                     );
 
                     if prepared.is_empty() {
-                        return Ok((i, None));
+                        return Ok(None);
                     }
 
                     let mut chunk_builder = get_builder(config.schema_uri.as_deref());
@@ -434,16 +442,11 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
                         build_elapsed
                     );
 
-                    // Convert on the worker thread so the builder is dropped here
-                    // instead of piling up until the serial merge below.
-                    let mut schema = chunk_builder.to_schema();
-                    drop(chunk_builder);
-                    // The walk only ever rewrites forced fields
-                    if !config.force_field_types.is_empty() {
-                        apply_force_field_types(&mut schema, config);
+                    if forces_maps {
+                        apply_force_field_types_to_node(chunk_builder.root_node_mut(), config);
                     }
-                    let hash = hash_schema(&schema);
-                    Ok((i, Some((schema, hash))))
+                    let hash = chunk_builder.schema_hash();
+                    Ok(Some((chunk_builder, hash)))
                 },
             )
             .collect::<Result<Vec<_>, String>>()?;
@@ -456,22 +459,21 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
 
         let par_el = t_par.elapsed();
         let t_mrg = std::time::Instant::now();
-        // Extract and merge schemas from this chunk
-        let mut merged: Vec<Value> = Vec::with_capacity(chunk_builders.len());
-        for (_i, item) in chunk_builders {
-            let Some((schema, hash)) = item else {
-                continue;
-            };
-            if !seen_hashes.insert(hash) {
-                continue;
+        // Merge each distinct schema of this chunk, in order
+        let mut builders = Vec::with_capacity(rows.len());
+        let mut duplicates = Vec::new();
+        for (row_builder, hash) in rows.into_iter().flatten() {
+            if seen_hashes.insert(hash) {
+                processed_count += 1;
+                builders.push(row_builder);
+            } else {
+                duplicates.push(row_builder);
             }
-            processed_count += 1;
-            merged.push(schema);
         }
-        builder.add_schemas_mut(&mut merged);
-        // Freeing the merged schemas is a large share of the serial merge, so spread it
-        // over the rayon pool.
-        merged.into_par_iter().for_each(drop);
+        builder.add_builders(builders);
+        // Freeing the duplicates is a large share of the serial merge, so spread it over
+        // the rayon pool.
+        duplicates.into_par_iter().for_each(drop);
 
         profile!(
             config,
