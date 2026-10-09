@@ -133,6 +133,7 @@ plugins:
           - concepts/maps-and-records.md: When an object becomes a struct or a list of key/value structs
           - concepts/mixed-types.md: What happens when one field holds different kinds of value
           - concepts/key-order.md: How fields are ordered, and combining output from several inputs
+          - concepts/inference.md: How genson builds one schema from the rows, then rewrites it into maps and records
         Reference:
           - api/polars_genson.md: Every public function and DataFrame method
           - reference/options.md: Every option with its default and the functions that accept it
@@ -158,6 +159,7 @@ nav:
       - Map types: concepts/map-types.md
       - Mixed types: concepts/mixed-types.md
       - Field order: concepts/key-order.md
+      - How inference works: concepts/inference.md
   - Reference:
       - api/index.md
       - API: api/polars_genson.md

@@ -23,3 +23,5 @@ real output from genson for small inputs.
   value in different rows.
 - [Field order](key-order.md): how genson orders fields, and why that matters when
   combining output from several inputs.
+- [How inference works](inference.md): the algorithm behind all of the above, from
+  reading the rows to deciding which objects are maps.
