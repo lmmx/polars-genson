@@ -42,3 +42,16 @@ in general and moves to genson-core from 05 onwards.
   builder (`strategy/object.rs`, `node.rs`). Proposes `u32` key symbols, and lists other
   changes by effort, including a u64 row-dedup hash that drops a row's schema on a
   collision. Ends with an order: 3 → 4 → 1/2 → interning → 5 → 6.
+
+## meta/
+
+- `meta/brief.md` — an agent brief from Fable, written after reviewing this outline.
+  Splits the avenues from 08, 10 and 12 into 14 work packages (WP0–WP13) in four phases:
+  safety net, output-preserving fixes, determinism, and structure, plus an in-tree spec.
+  Gives each one an effort size, whether it can run in parallel, and acceptance
+  criteria, and ends with a schedule and a "What not to do" list that rules out search
+  and backtracking.
+- `meta/response.md` — Fable's note sent with the brief. Names WP0 (snapshot corpus)
+  and WP10 (shape fingerprint before building) as the two additions beyond the chat,
+  advises WP0, WP2, WP3 and WP13 on a low quota, and says "What not to do" encodes the
+  correction made in 08.
