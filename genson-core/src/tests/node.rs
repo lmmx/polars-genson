@@ -178,3 +178,23 @@ fn test_hash_schema_matches_schema_equality() {
     }
     assert!(equal > 100, "too few equal pairs ({equal}) to test anything");
 }
+
+/// `add_schemas` into a new node leaves the same schema as `add_schema` of each schema in
+/// turn.
+#[test]
+fn test_add_schemas_matches_adding_in_turn() {
+    let mut rng = Rng(0x2545_f491_4f6c_dd1d);
+    for _ in 0..3000 {
+        let schemas: Vec<Value> = (0..1 + rng.below(5))
+            .map(|_| build(&random_documents(&mut rng), false).to_schema())
+            .collect();
+        let schemas: Vec<&Value> = schemas.iter().collect();
+        let mut in_turn = SchemaNode::new();
+        for schema in &schemas {
+            in_turn.add_schema(DataType::Schema(schema));
+        }
+        let mut batched = SchemaNode::new();
+        batched.add_schemas(&schemas);
+        assert_eq!(batched.to_schema(), in_turn.to_schema(), "adding {schemas:?}");
+    }
+}

@@ -201,7 +201,7 @@ impl SchemaStrategy for ObjectStrategy {
         // Phase 1: Collect all properties and required sets from all schemas
         let mut property_groups: PropMap<Vec<&Value>> = PropMap::default();
         let mut pattern_property_groups: PropMap<Vec<&Value>> = PropMap::default();
-        let mut additional_properties: Vec<Value> = Vec::new();
+        let mut additional_properties: Vec<&Value> = Vec::new();
         let mut all_required_sets: Vec<KeySet<String>> = Vec::new();
 
         for schema in schemas {
@@ -231,7 +231,7 @@ impl SchemaStrategy for ObjectStrategy {
                 // Collect map value schemas
                 if let Some(values) = schema_obj.get("additionalProperties") {
                     if values.is_object() {
-                        additional_properties.push(values.clone());
+                        additional_properties.push(values);
                     }
                 }
 
@@ -256,9 +256,7 @@ impl SchemaStrategy for ObjectStrategy {
                 .map(|(prop_name, sub_schemas)| {
                     let mut node = SchemaNode::new();
                     // Batch add all schemas for this property
-                    let schema_values: Vec<Value> =
-                        sub_schemas.iter().map(|&s| s.clone()).collect();
-                    node.add_schemas(&schema_values);
+                    node.add_schemas(&sub_schemas);
                     (prop_name, node)
                 })
                 .collect();
@@ -271,18 +269,14 @@ impl SchemaStrategy for ObjectStrategy {
             // Sequential for small property counts
             for (prop_name, sub_schemas) in property_groups {
                 let node = self.properties.entry(prop_name).or_default();
-
-                let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
-                node.add_schemas(&schema_values);
+                node.add_schemas(&sub_schemas);
             }
         }
 
         // Phase 3: Merge pattern properties (usually few, so sequential is fine)
         for (pattern, sub_schemas) in pattern_property_groups {
             let node = self.pattern_properties.entry(pattern).or_default();
-
-            let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
-            node.add_schemas(&schema_values);
+            node.add_schemas(&sub_schemas);
         }
 
         // Phase 3b: Merge map value schemas

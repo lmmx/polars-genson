@@ -330,7 +330,7 @@ impl SchemaNode {
     }
 
     /// Add multiple schemas at once with optimized batch processing
-    pub fn add_schemas(&mut self, schemas: &[Value]) -> &mut Self {
+    pub fn add_schemas(&mut self, schemas: &[&Value]) -> &mut Self {
         // Store owned subschemas to avoid lifetime issues
         let mut all_subschemas: Vec<Cow<Value>> = Vec::new();
         // Map strategy index to indices into all_subschemas
