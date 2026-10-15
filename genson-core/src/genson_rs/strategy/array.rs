@@ -154,9 +154,7 @@ impl SchemaStrategy for ListStrategy {
         if !all_item_schemas.is_empty() {
             let items = self.get_items_mut();
             for node in items {
-                let schema_values: Vec<Value> =
-                    all_item_schemas.iter().map(|&s| s.clone()).collect();
-                node.add_schemas(&schema_values);
+                node.add_schemas(&all_item_schemas);
             }
         }
     }

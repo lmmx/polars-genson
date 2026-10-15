@@ -19,11 +19,33 @@ pub struct ObjectStrategy {
     extra_keywords: Value,
     properties: PropMap<SchemaNode>,
     pattern_properties: PropMap<SchemaNode>,
+    pattern_regexes: PatternRegexes,
     /// A map's value schema (`additionalProperties` as a schema), merged from every
     /// schema added like a property, not kept from the first as other keywords are
     additional_properties: Option<SchemaNode>,
     required_properties: Option<KeySet<String>>,
     include_empty_required: bool,
+}
+
+/// The compiled `patternProperties` patterns, in the order of `pattern_properties` (which
+/// only grows), compiled when first matched against.
+#[derive(Debug, Default)]
+struct PatternRegexes(Vec<Regex>);
+
+impl PatternRegexes {
+    fn compiled(&mut self, patterns: &PropMap<SchemaNode>) -> &[Regex] {
+        for pattern in patterns.keys().skip(self.0.len()) {
+            self.0.push(Regex::new(pattern).unwrap());
+        }
+        &self.0
+    }
+}
+
+/// Derived from `pattern_properties`, so it takes no part in comparing strategies.
+impl PartialEq for PatternRegexes {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
 }
 
 impl ObjectStrategy {
@@ -32,6 +54,7 @@ impl ObjectStrategy {
             extra_keywords: json!({}),
             properties: PropMap::default(),
             pattern_properties: PropMap::default(),
+            pattern_regexes: PatternRegexes::default(),
             additional_properties: None,
             required_properties: None,
             include_empty_required: false,
@@ -115,20 +138,21 @@ impl SchemaStrategy for ObjectStrategy {
         let mut properties: KeySet<&str> = KeySet::default();
         if let Some(object) = object.as_object() {
             object.iter().for_each(|(prop, subobj)| {
-                let mut pattern: Option<&str> = None;
+                let mut matched = false;
                 if !self.properties.contains_key(prop) {
-                    let pattern_matcher = |p: &str| Regex::new(p).unwrap().is_match(prop);
-                    if let Some((p, node)) = self
+                    let regexes = self.pattern_regexes.compiled(&self.pattern_properties);
+                    if let Some((node, _)) = self
                         .pattern_properties
-                        .iter_mut()
-                        .find(|(p, _)| pattern_matcher(p))
+                        .values_mut()
+                        .zip(regexes)
+                        .find(|(_, regex)| regex.is_match(prop))
                     {
-                        pattern = Some(p);
+                        matched = true;
                         node.add_object(DataType::Object(subobj));
                     }
                 }
 
-                if pattern.is_none() {
+                if !matched {
                     properties.insert(prop);
                     if !self.properties.contains_key(prop) {
                         self.properties.insert(prop.to_string(), SchemaNode::new());
@@ -201,7 +225,7 @@ impl SchemaStrategy for ObjectStrategy {
         // Phase 1: Collect all properties and required sets from all schemas
         let mut property_groups: PropMap<Vec<&Value>> = PropMap::default();
         let mut pattern_property_groups: PropMap<Vec<&Value>> = PropMap::default();
-        let mut additional_properties: Vec<Value> = Vec::new();
+        let mut additional_properties: Vec<&Value> = Vec::new();
         let mut all_required_sets: Vec<KeySet<String>> = Vec::new();
 
         for schema in schemas {
@@ -231,7 +255,7 @@ impl SchemaStrategy for ObjectStrategy {
                 // Collect map value schemas
                 if let Some(values) = schema_obj.get("additionalProperties") {
                     if values.is_object() {
-                        additional_properties.push(values.clone());
+                        additional_properties.push(values);
                     }
                 }
 
@@ -256,9 +280,7 @@ impl SchemaStrategy for ObjectStrategy {
                 .map(|(prop_name, sub_schemas)| {
                     let mut node = SchemaNode::new();
                     // Batch add all schemas for this property
-                    let schema_values: Vec<Value> =
-                        sub_schemas.iter().map(|&s| s.clone()).collect();
-                    node.add_schemas(&schema_values);
+                    node.add_schemas(&sub_schemas);
                     (prop_name, node)
                 })
                 .collect();
@@ -271,18 +293,14 @@ impl SchemaStrategy for ObjectStrategy {
             // Sequential for small property counts
             for (prop_name, sub_schemas) in property_groups {
                 let node = self.properties.entry(prop_name).or_default();
-
-                let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
-                node.add_schemas(&schema_values);
+                node.add_schemas(&sub_schemas);
             }
         }
 
         // Phase 3: Merge pattern properties (usually few, so sequential is fine)
         for (pattern, sub_schemas) in pattern_property_groups {
             let node = self.pattern_properties.entry(pattern).or_default();
-
-            let schema_values: Vec<Value> = sub_schemas.iter().map(|&s| s.clone()).collect();
-            node.add_schemas(&schema_values);
+            node.add_schemas(&sub_schemas);
         }
 
         // Phase 3b: Merge map value schemas
@@ -639,6 +657,49 @@ impl ObjectStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn add_objects(strategy: &mut ObjectStrategy, objects: &[&str]) {
+        for object in objects {
+            let mut bytes = object.as_bytes().to_vec();
+            let tape = simd_json::to_tape(&mut bytes).unwrap();
+            strategy.add_object(tape.as_value());
+        }
+    }
+
+    /// Keys matching a `patternProperties` pattern merge into that pattern's node (the
+    /// first pattern matching, in the order the patterns were added), the rest into
+    /// `properties`, and a pattern added after some objects applies to the objects after it.
+    #[test]
+    fn test_pattern_properties_take_matching_keys() {
+        let mut strategy = ObjectStrategy::new();
+        strategy.add_schema(&json!({
+            "type": "object",
+            "patternProperties": {
+                "^P[0-9]+$": {"type": "array", "items": {"type": "integer"}},
+                "^P": {"type": "string"}
+            }
+        }));
+        add_objects(&mut strategy, &[r#"{"P31": [1], "label": "x"}"#]);
+        strategy.add_schema(&json!({
+            "type": "object",
+            "patternProperties": {"^Q[0-9]+$": {"type": "boolean"}}
+        }));
+        add_objects(
+            &mut strategy,
+            &[r#"{"P279": [2], "Px": "y", "Q5": true, "label": "z"}"#],
+        );
+        let schema = strategy.to_schema();
+        assert_eq!(
+            schema["patternProperties"],
+            json!({
+                "^P[0-9]+$": {"type": "array", "items": {"type": "integer"}},
+                "^P": {"type": "string"},
+                "^Q[0-9]+$": {"type": "boolean"}
+            })
+        );
+        assert_eq!(schema["properties"], json!({"label": {"type": "string"}}));
+        assert_eq!(schema["required"], json!(["label"]));
+    }
 
     #[test]
     fn test_ordermap_equality_differs_from_indexmap() {
