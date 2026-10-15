@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/lmmx/polars-genson/compare/genson-core-v1.0.0...genson-core-v1.0.1) - 2026-10-15
+
+### <!-- 2 -->Bug Fixes
+
+- fix/add schemas merge existing properties ([#224](https://github.com/lmmx/polars-genson/pull/224))
+
+### <!-- 3 -->Performance
+
+- perf/schema merge no clones ([#223](https://github.com/lmmx/polars-genson/pull/223))
+
 ## [1.0.0](https://github.com/lmmx/polars-genson/compare/genson-core-v0.9.4...genson-core-v1.0.0) - 2026-10-03
 
 ### <!-- 2 -->Bug Fixes
