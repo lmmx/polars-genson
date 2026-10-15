@@ -1,3 +1,5 @@
+> **Note (added 2026-10-15):** Superseded by 08 after reading the code; kept for the record.
+
 Yes — there's a real connection, and it's cleaner than the general "software" cases I listed. Let me build it from your own primitives.
 
 # Map vs record *is* a symmetry question
