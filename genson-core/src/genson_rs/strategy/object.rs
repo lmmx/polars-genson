@@ -275,20 +275,23 @@ impl SchemaStrategy for ObjectStrategy {
 
         // Phase 2: Merge properties in parallel if there are enough properties
         if property_groups.len() > 3 {
-            let merged_properties: Vec<(String, SchemaNode)> = property_groups
-                .into_par_iter()
-                .map(|(prop_name, sub_schemas)| {
-                    let mut node = SchemaNode::new();
-                    // Batch add all schemas for this property
-                    node.add_schemas(&sub_schemas);
-                    (prop_name, node)
-                })
-                .collect();
-
-            // Insert merged properties back
-            for (prop_name, node) in merged_properties {
-                self.properties.insert(prop_name, node);
+            // Each property's schemas merge into the node it already has (one is added, in
+            // order, where it has none), so that a property held before keeps its schema
+            for prop_name in property_groups.keys() {
+                if !self.properties.contains_key(prop_name) {
+                    self.properties.insert(prop_name.clone(), SchemaNode::new());
+                }
             }
+            let mut groups: HashMap<String, Vec<&Value>, FxBuildHasher> =
+                property_groups.into_iter().collect();
+            let work: Vec<(&mut SchemaNode, Vec<&Value>)> = self
+                .properties
+                .iter_mut()
+                .filter_map(|(name, node)| groups.remove(name).map(|s| (node, s)))
+                .collect();
+            work.into_par_iter().for_each(|(node, sub_schemas)| {
+                node.add_schemas(&sub_schemas);
+            });
         } else {
             // Sequential for small property counts
             for (prop_name, sub_schemas) in property_groups {

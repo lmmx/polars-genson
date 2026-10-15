@@ -198,3 +198,58 @@ fn test_add_schemas_matches_adding_in_turn() {
         assert_eq!(batched.to_schema(), in_turn.to_schema(), "adding {schemas:?}");
     }
 }
+
+/// `add_schemas` into a node already holding a schema leaves the same schema as
+/// `add_schema` of each schema in turn into that node.
+#[test]
+fn test_add_schemas_into_a_seeded_node_matches_adding_in_turn() {
+    let mut rng = Rng(0x6c07_8965_4f35_a2b1);
+    for _ in 0..3000 {
+        let seed = build(&random_documents(&mut rng), false).to_schema();
+        let schemas: Vec<Value> = (0..1 + rng.below(5))
+            .map(|_| build(&random_documents(&mut rng), false).to_schema())
+            .collect();
+        let schemas: Vec<&Value> = schemas.iter().collect();
+        let mut in_turn = SchemaNode::new();
+        in_turn.add_schema(DataType::Schema(&seed));
+        for schema in &schemas {
+            in_turn.add_schema(DataType::Schema(schema));
+        }
+        let mut batched = SchemaNode::new();
+        batched.add_schema(DataType::Schema(&seed));
+        batched.add_schemas(&schemas);
+        assert_eq!(
+            batched.to_schema(),
+            in_turn.to_schema(),
+            "seed {seed} adding {schemas:?}"
+        );
+    }
+}
+
+/// A property the seed and the batch share merges its shapes rather than taking the
+/// batch's, whether the batch has few properties (merged in turn) or more than 3 (merged
+/// in parallel).
+#[test]
+fn test_add_schemas_merges_a_property_the_node_already_holds() {
+    for keys in [&["a", "b"][..], &["a", "b", "c", "d", "e"]] {
+        let object = |value_type: &str| {
+            let properties: serde_json::Map<String, Value> = keys
+                .iter()
+                .map(|key| (key.to_string(), json!({"type": value_type})))
+                .collect();
+            json!({"type": "object", "properties": properties, "required": keys})
+        };
+        let mut node = SchemaNode::new();
+        node.add_schema(DataType::Schema(&object("integer")));
+        node.add_schemas(&[&object("string")]);
+        let schema = node.to_schema();
+        for key in keys {
+            assert_eq!(
+                schema["properties"][key]["type"],
+                json!(["integer", "string"]),
+                "{} keys: {schema}",
+                keys.len()
+            );
+        }
+    }
+}
