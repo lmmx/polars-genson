@@ -8,11 +8,12 @@ Repo: `lmmx/polars-genson`, crate `genson-core`. Files referenced are under
 
 - Run `cargo test -p genson-core` (and the Python tests if `polars-genson-py` is touched)
   before and after. No WP may change inferred output unless the WP says so explicitly.
-- Keep a snapshot corpus: before starting, run `genson-cli` over every JSON fixture in
-  `genson-core/tests/`, `examples/`, `bench/`, `sample.json`, `incompatible.json` with
-  default config AND with `--map-threshold 0 --unify-maps --wrap-scalars`, and store the
-  outputs under `genson-core/tests/snapshots/`. Every WP ends with a snapshot diff; an
-  empty diff is the acceptance criterion unless the WP says otherwise.
+- The existing `insta` snapshots in `genson-cli` and `polars-jsonschema-bridge` are the
+  acceptance oracle (see WP0). Every WP ends with `cargo insta test`; no pending
+  `.snap.new` is the acceptance criterion unless the WP says otherwise.
+- Benchmarks: `just bench` runs `genson-core/benches/schema_inference.rs`;
+  `examples/bench_claims.rs` is the wide-key (wikidata claims) case. `bench/` at the
+  repo root is the Python suite.
 - One WP per PR. Small commits. Do not combine WPs.
 - Prefer `&[&Value]` over cloning into `Vec<Value>`; prefer structural `Hash` impls over
   serialising to hash.
@@ -25,12 +26,17 @@ across agents (independent files or independent sub-tasks).
 
 ## Phase 0 — Safety net (do first, light quota)
 
-### WP0 Snapshot corpus — S — serial
-Build the snapshot corpus described above. Add a `just snapshot` / `just snapshot-check`
-target. This is the acceptance oracle for everything below.
+### WP0 Snapshot coverage — S — serial
+Do NOT build a second snapshot system. `genson-cli` already has ~164 `insta` snapshots
+plus ~88 verified outputs, and `polars-jsonschema-bridge` ~15. WP0 is: add the wikidata
+configuration (`--map-threshold 0 --unify-maps --wrap-scalars`) as a second variant of
+the existing insta cases that lack it, and confirm `cargo insta test` is green. The
+"snapshot diff" acceptance criterion everywhere below means `cargo insta test` with no
+pending `.snap.new` files; `cargo insta accept` is only allowed in WP6/WP7/WP9 with each
+accepted diff listed in the PR.
 
 ### WP1 Property tests — M — swarm (one agent per property)
-Add `proptest` to dev-deps. Write a generator for small JSON documents (depth ≤ 4,
+Add `proptest` and `jsonschema` (for property 3) to dev-deps. Write a generator for small JSON documents (depth ≤ 4,
 ≤ 6 keys per object, scalars/arrays/objects/null) and a generator for configs
 (`map_threshold ∈ {0,2,20}`, `unify_maps`, `wrap_scalars`, `map_max_required_keys`).
 Properties, each its own test and each marked `#[ignore]` if it fails today (record the
@@ -54,10 +60,12 @@ Expected: 1, 2 and 4 fail today in known ways (see WP5, WP6). Keep the failing s
 
 ### WP2 Stop cloning in `add_schemas` — S — serial
 `genson_rs/strategy/object.rs` ~lines 259, 275, 284: `sub_schemas.iter().map(|&s| s.clone())`
-builds `Vec<Value>` to pass to `node.add_schemas(&[Value])`. Change `add_schemas` (and the
-`SchemaStrategy` trait signature in `strategy/base.rs`) to take `&[&Value]` and drop the
-clones. Check `node.rs` callers. Acceptance: snapshot diff empty; `cargo bench` on
-`bench/` shows merge-phase time not worse.
+builds `Vec<Value>` because `SchemaNode::add_schemas` (`node.rs` ~333) takes `&[Value]`.
+The `SchemaStrategy` trait in `strategy/base.rs` already takes `&[&Value]`, so the change
+is to `SchemaNode::add_schemas` and its callers only. Acceptance: snapshot diff empty;
+`just bench` (`genson-core/benches/schema_inference.rs`) and `examples/bench_claims.rs`
+show merge-phase time not worse. Note `bench/` at the repo root is the Python benchmark
+suite, not the Rust one.
 
 ### WP3 Cache compiled regexes for patternProperties — S — serial
 `object.rs` ~line 120: `Regex::new(p).unwrap()` inside the per-key closure. Store
@@ -65,29 +73,21 @@ compiled `Regex` alongside each pattern in `pattern_properties` (e.g. `PropMap<(
 SchemaNode)>` or a parallel `Vec`). Only exercised when a seed schema has
 `patternProperties`; add one test that does.
 
-### WP4 Row-dedup hash: 128-bit + structural — M — serial
-Two sub-steps, same PR:
-a. `schema.rs` ~line 388/466 dedups per-row builders on a `u64` from
-   `chunk_builder.schema_hash()`. A collision silently drops a distinct row schema.
-   Switch to a 128-bit hash (`xxhash-rust` xxh3_128 or `siphasher` 128). Keep `u64`
-   nowhere on this path.
-b. `strategy/mod.rs` ~line 160 computes the hash via `hash_value(&self.to_schema(), ..)`
-   — it materialises the full `Value` schema and serialises it just to hash. Implement
-   `Hash` structurally on `SchemaNode` / each strategy (hash the strategy tag, then
-   fields; for `ObjectStrategy` hash properties in insertion order with their nodes;
-   `required` as a sorted set; `extra_keywords` via the existing `hash_value`). Must be
-   equal-iff-`to_schema()`-equal; add a test that asserts
-   `hash_struct(a) == hash_struct(b)  <=>  a.to_schema() == b.to_schema()` on the
-   proptest generator from WP1.
-Acceptance: snapshot diff empty; profile line "chunk N parallel" drops measurably on
-`bench/`.
+### WP4 Row-dedup hash: 128-bit — S — serial
+`schema.rs` ~line 388/448/466 dedups per-row builders on a `u64` (xxh64) from
+`chunk_builder.schema_hash()`. A collision silently drops a distinct row schema. Switch
+to xxh3_128 (`xxhash-rust`) and a `HashSet<u128>`. The hash is already structural over
+the node tree (`builder.rs` ~142, since #220) with a `to_schema()` fallback only for
+scalar leaves (`strategy/mod.rs` ~160) — leave that as is. Add a test on the WP1
+generator: `schema_hash(a) == schema_hash(b)  <=>  a.to_schema() == b.to_schema()`.
+Acceptance: snapshot diff empty; `just bench` unchanged within noise.
 
 ---
 
 ## Phase 2 — Determinism (may change output; snapshot diffs expected and reviewed)
 
 ### WP5 Audit and classify order-dependence — M — serial, read-mostly
-Produce `docs/determinism.md` listing every place inference depends on row order,
+Produce `docs/journal/2026-10-15-unification-algebra/meta/determinism.md` (the docs site builds with `strict: true`; `docs/concepts/key-order.md` already covers part of this — extend it rather than duplicate) listing every place inference depends on row order,
 key order, or parallel split, with a verdict *intended* / *accidental*:
 - `node.rs` `absorb_all` ("each still takes its nodes in order"), `anyOf` branch
   ordering in `node.rs` ~390–440, `add_extra_keywords` first-seen-wins (`object.rs` 54),
@@ -144,7 +144,7 @@ first-wins is intended). Goal: WP1 property 1 passes.
 - `apply_force_field_types_to_node`, `force_field_types` lookups, `no_unify`: intern
   the config strings once at config construction.
 Acceptance: snapshot diff empty; RSS profile lines ("RSS after collecting chunk") drop
-on `bench/` wide-key inputs; merge phase not slower. Do this *after* WP6 so the
+on `bench_claims` wide-key inputs; merge phase not slower. Do this *after* WP6 so the
 unification code you touch is already the simplified version.
 
 ### WP9 Canonical subtree hashes + key partition in map inference — L — serial, after WP8
@@ -177,7 +177,7 @@ a. (agent A) A function over the simd-json value that computes a 128-bit *shape
    generator: `fp(row_a) == fp(row_b)  ⇒  schema_hash(build(row_a)) == schema_hash(build(row_b))`.
 b. (agent B, after A) In the chunk loop, fingerprint every row, build a builder only
    for first-seen fingerprints, keep a count per fingerprint (feeds WP11).
-Acceptance: snapshot diff empty; "chunk N parallel" time on `bench/` with many
+Acceptance: snapshot diff empty; "chunk N parallel" time on `bench_claims` with many
 duplicate shapes drops roughly by the duplicate ratio; RSS peak drops.
 
 ### WP11 Presence counts in the merge — M — serial, after WP8
@@ -192,7 +192,7 @@ default behaviour change.
 Move `rewrite_objects` to operate on `SchemaNode`/`ObjectStrategy` before `to_schema()`,
 so only one tree is alive at peak and the hashes from WP9 live on the node. Only start
 this once WP6–WP9 are green; it's a port, not a redesign. Acceptance: snapshot diff
-empty; peak RSS on `bench/` lower than after WP8.
+empty; peak RSS on `bench_claims` lower than after WP8.
 
 ---
 
@@ -215,10 +215,10 @@ property tests in WP1 are checking.
 
 ## Suggested schedule
 
-**Now (light quota, Opus-class agent, serial):** WP0, WP2, WP3, WP13.
-WP0 is the prerequisite for everything; WP2/WP3 are mechanical; WP13 is prose.
+**Now (light quota, Opus-class agent, serial):** WP0, WP2, WP3, WP4, WP13.
+WP0 is the prerequisite for everything; WP2/WP3/WP4 are mechanical; WP13 is prose.
 
-**After reset, serial, in order:** WP1 → WP4 → WP5 → WP6 → WP7 → WP8 → WP9 → WP11 → WP12.
+**After reset, serial, in order:** WP1 → WP5 → WP6 → WP7 → WP8 → WP9 → WP11 → WP12.
 WP6 and WP8 are the two big ones; do not overlap them.
 
 **Swarm candidates (after reset):**
