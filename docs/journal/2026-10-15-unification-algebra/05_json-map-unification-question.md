@@ -1,0 +1,1 @@
+what about Map types in JSON? I have some software that does Map unification, and I think there is possibly a connection here… see genson-core and polars-genson
