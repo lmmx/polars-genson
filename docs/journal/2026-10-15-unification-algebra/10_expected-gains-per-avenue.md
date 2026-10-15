@@ -1,0 +1,21 @@
+Honest expectations, per avenue, in terms of what actually changes. Short version: one is mostly a **determinism/correctness** fix, one is the real **speed and memory** win, one is **new capability**, one is **robustness**, and the spec is what makes the other four **testable**.
+
+| Avenue | Correctness | Speed | Memory | Code size | New capability |
+|---|---|---|---|---|---|
+| 1. `⊔` as a commutative monoid | **main win** | minor | — | shrinks | incremental unify |
+| 2. Canonical hashing / hash-consing | minor | **main win** on wide nodes | **main win** | neutral | free partition |
+| 3. Key partition → hybrid outputs | better decisions | — | — | grows | **main win** |
+| 4. Presence counts in merge | robustness | — | negligible | small | graded gating |
+| 5. Formal spec + property tests | **finds bugs** | — | — | — | — |
+
+**1. Monoid `⊔`.** What you get is *order-independence*: today the result can depend on key insertion order (`props.values().next()` picks the reference schema), on `n ≥ 50` (sequential vs halved fold, and the halved fold explicitly can't promote across halves), and on `GENSON_PARALLEL`/chunking. So a schema can change when a row is prepended or the chunk size changes — bad for anything treating the schema as a stable contract. After: one embed-then-reduce, same result for any order and any parallel split, and unification becomes incremental across chunks (fold the chunk's join into the running join). Code: `unify_field_pair`, `_sequential`, `_parallel`, `try_scalar_promotion`, `try_mixed_scalar_promotion`, and most of `unify_anyof_schemas` collapse into "embed scalars, then one reduce". Speed gain is small; the existing parallel halving already captures most of it.
+
+**2. Canonical hashing.** This is where the measurable performance is, and only on wide nodes (the Wikidata case: thousands of keys, a handful of distinct value shapes). Today homogeneity is `n` structural compares of whole subtrees, `debug_unique_schemas` serialises every view to a string, and when unification runs it joins all `n` value schemas even if only 3 are distinct. With a bottom-up hash: homogeneity is `n` integer compares; unification joins the *distinct* schemas only (`n` → number of classes, typically single digits), which turns the "unification of 10k children" profile line from seconds into milliseconds. Memory: the merged tree repeats the same value subtree under every key; interning by hash (hash-consing to a DAG) removes that duplication — plausibly the biggest RSS reduction available in the rewrite stage, given the code already profiles RSS. Cost: a 128-bit hash or verify-on-collision; `Value`-based tree becomes an arena/DAG, which is a structural change.
+
+**3. Key partition.** No speed; this changes *what is inferred*. Today a node whose values don't join degrades to a record with thousands of null-padded fields, which is the failure mode map inference exists to avoid. With classes you can emit record-of-singletons + `additionalProperties` for the big class (JSON Schema and Polars yes, Avro no — so it's output-format-gated), or a map of `anyOf` when there are a few classes, and the debug line becomes an explanation rather than a trace. Expect it to add code, not remove it.
+
+**4. Presence counts.** One `usize` per property node in the merge. Outcome is robustness: `map_max_required_keys` stops being an exact intersection that one malformed row flips, and becomes a threshold on "present in ≥ p% of rows". Also lets normalisation decide nullability from frequency rather than from a boolean.
+
+**5. Spec + property tests.** This is the one I'd do first because it's cheap and it will find existing bugs. Properties to check with proptest: `⊔` associative/commutative/idempotent; inference invariant under row permutation and chunking; every input row validates against the inferred schema (hull ≥ input); `normalise` output validates against the schema; map-hull is the *least* invariant schema (no field could have stayed a field). Avenue 1 is what makes the first two properties *true*; the tests tell you how far from true they are now.
+
+Overall: don't expect asymptotic changes to the whole pipeline — parse+merge dominates for many narrow rows and stays as it is. The wins concentrate in the rewrite stage on wide-keyed nodes, which is exactly where your profiling hooks already are.
