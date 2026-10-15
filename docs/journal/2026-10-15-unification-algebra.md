@@ -60,16 +60,26 @@ next to this entry. This entry records the operation as implemented at 96ef9d5.
 - On the same 16 rows, `--max-builders` 1, 3, 7 and 100, and 1, 4 and the default number
   of rayon threads, give byte-identical schemas and Avro schemas under wikidata-pq's claims
   options; `--max-builders 3` splits them into 6 chunks and keeps 8 distinct row schemas
-- `SchemaNode::add_schemas` into a node already holding a schema gives a different schema
-  from `add_schema` of each schema in turn — first seen at 96ef9d5 with documents
-  `{"c": 46, "b": null, "a": 34}`, `"s"`, `{"b": {}}`, where the batch gives `b` as
+- `SchemaNode::add_schemas` into a node already holding a schema gave a different schema
+  from `add_schema` of each schema in turn at 96ef9d5, first seen with documents
+  `{"c": 46, "b": null, "a": 34}`, `"s"`, `{"b": {}}`, where the batch gave `b` as
   `integer` and the sequence as `["integer", "null", "object"]`; into a new node the two
-  agree on 3000 random batches (`test_add_schemas_matches_adding_in_turn` on branch
-  `perf/schema-merge-no-clones`)
-- `ObjectStrategy::add_schemas` merges more than 3 properties on rayon and puts each
-  merged node in with `properties.insert`, which replaces a node the strategy already
-  held for that property (genson-core/src/genson_rs/strategy/object.rs, Phase 2 of
-  `add_schemas`)
+  agree on 3000 random batches (`test_add_schemas_matches_adding_in_turn`)
+- `ObjectStrategy::add_schemas` merged a batch with more than 3 properties between its
+  schemas on rayon, each into a new node, and put each in with `properties.insert`,
+  replacing the node the strategy already held for that property — on branch
+  `fix/add-schemas-merge-existing-properties` each property's schemas merge on rayon
+  into the node it already holds, one being added first, in order, where it holds none
+  (genson-core/src/genson_rs/strategy/object.rs, Phase 2 of `add_schemas`)
+- `test_add_schemas_merges_a_property_the_node_already_holds` seeds a node with an object
+  whose properties are all `integer`, adds a batch of one object with the same
+  properties as `string`, and expects `["integer", "string"]` for each — before the fix
+  it passed with 2 properties and failed with 5, which gave `string`
+- `test_add_schemas_into_a_seeded_node_matches_adding_in_turn` seeds two nodes with the
+  same random schema and compares `add_schemas` of a random batch of 1 to 5 schemas with
+  `add_schema` of each in turn, over 3000 batches — before the fix at least one of the
+  3000 batches gave a different schema; after it all 3000 agree, and all 30000 in a run
+  with the count raised
 - `just bench` runs the Python benchmarks in bench/ (Justfile `bench`), and
   genson-core/benches/schema_inference.rs calls `build_json_schema` directly — neither
   reaches the row deduplication in `process_json_strings_parallel`; examples/bench_claims.rs
@@ -96,11 +106,11 @@ next to this entry. This entry records the operation as implemented at 96ef9d5.
 Work packages are those of `2026-10-15-unification-algebra/meta/brief.md`, one PR each
 except WP2 and WP3, which share one.
 
-- Branch `docs/unification-algebra`: this entry, the Fable chats and their outline, and
-  the brief
-- Branch `test/wikidata-config-snapshots` (WP0): `9fa4e04` re-locks Cargo.lock, which
+- #221 (branch `docs/unification-algebra`, merged): this entry, the Fable chats and their
+  outline, and the brief
+- #222 (WP0, branch `test/wikidata-config-snapshots`, merged): re-locks Cargo.lock, which
   listed genson-core and genson-cli as 0.9.5 and polars-jsonschema-bridge as 0.9.1 after
-  their manifests moved to 1.0.0; `e23ab9e` adds genson-cli/tests/wikidata_config.rs
+  their manifests moved to 1.0.0, and adds genson-cli/tests/wikidata_config.rs
   with 20 snapshots — 9 claims fixtures read as files, and 16 of their rows as a Parquet
   column — plus the `--max-builders` and thread-count checks on the Parquet rows, 22
   tests taking about 20 s, under wikidata-pq's claims options (`--ndjson
@@ -109,11 +119,11 @@ except WP2 and WP3, which share one.
   qualifiers --max-builders 100`, from `CLAIMS_INFERENCE_OPTIONS` in wikidata-pq's
   process.py) — the brief's `--wrap-scalars` flag does not exist in genson-cli, which
   wraps scalars unless given `--no-wrap-scalars` (genson-cli/src/main.rs:175)
-- Branch `perf/schema-merge-no-clones` (WP2 and WP3), on top of
-  `test/wikidata-config-snapshots`: `e0e031a` passes `&[&Value]` to
+- Branch `perf/schema-merge-no-clones` (WP2 and WP3), on master after #222: `894aaca`
+  passes `&[&Value]` to
   `SchemaNode::add_schemas` from the object and array strategies, removing four clones
   of every sub-schema in a batch (object.rs, array.rs), with
-  `test_add_schemas_matches_adding_in_turn`; `9ce9e40` compiles each `patternProperties`
+  `test_add_schemas_matches_adding_in_turn`; `cf60e5b` compiles each `patternProperties`
   regex once per strategy, in a `PatternRegexes` list kept in the order of
   `pattern_properties`, where it was compiled for every key of every object, with
   `test_pattern_properties_take_matching_keys`, which passes before and after the change
@@ -124,6 +134,11 @@ except WP2 and WP3, which share one.
   entry; `bench_claims` with `WIKIDATA=1` on `claims_fixture_x30.jsonl` repeated 4 times
   (120 rows, 30 distinct row schemas) gives a median of 1.52 s at master and 1.50 s on
   the branch over 6 alternated runs each, with the same schema hash
+- Branch `fix/add-schemas-merge-existing-properties`, on top of
+  `perf/schema-merge-no-clones`, as the fix changes lines `894aaca` changed: the
+  `add_schemas` fix above, its two tests, and a changelog entry — a fix to the public
+  `SchemaBuilder::add_schemas`, which inference, genson-cli and polars-genson-py do not
+  call
 - WP2 and WP3 change code that only callers of the public `genson_core::genson_rs` API
   reach: `SchemaBuilder::add_schemas` (genson-core/src/genson_rs/builder.rs:160) has no
   caller in the workspace, and a `patternProperties` keyword enters a builder only in a

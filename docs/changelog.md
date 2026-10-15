@@ -14,6 +14,10 @@ Release notes for earlier versions are on
   now reach inference unchanged, as without `wrap_root`.
 - **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
   on large rows with default options. See [How inference works](concepts/inference.md).
+- **`SchemaBuilder::add_schemas` keeps what the builder already held** (genson-core
+  Rust API). Given schemas with more than 3 properties between them, it replaced the
+  builder's schema for each of those properties instead of merging into it. Inference,
+  genson-cli and the Python package do not call it.
 
 ## 1.0.0
 
