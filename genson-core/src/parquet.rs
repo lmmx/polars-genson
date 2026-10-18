@@ -5,6 +5,7 @@ use arrow::datatypes::{DataType, Field, FieldRef, Schema, SchemaRef};
 use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 use parquet::arrow::{ArrowWriter, ProjectionMask};
+use parquet::basic::{Compression, ZstdLevel};
 use parquet::file::properties::WriterProperties;
 use std::collections::HashMap;
 use std::fs::File;
@@ -302,10 +303,18 @@ fn check_keep_len(keep: &[(FieldRef, ArrayRef)], rows: usize) -> Result<(), Stri
     }
 }
 
+/// zstd at level 1: on Wikidata claims, typed output a third the size of uncompressed in
+/// the same write time, and normalised JSON an eighth
+fn compression() -> Compression {
+    Compression::ZSTD(ZstdLevel::try_new(1).expect("1 is a zstd level"))
+}
+
 fn open_writer(path: &str, schema: SchemaRef) -> Result<ArrowWriter<File>, String> {
     let file = File::create(path)
         .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
-    let props = WriterProperties::builder().build();
+    let props = WriterProperties::builder()
+        .set_compression(compression())
+        .build();
     ArrowWriter::try_new(file, schema, Some(props))
         .map_err(|e| format!("Failed to create Parquet writer: {}", e))
 }

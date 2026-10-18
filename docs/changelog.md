@@ -17,6 +17,10 @@ Release notes for earlier versions are on
   required, depending on the order of the values, and normalised output held a record of
   nulls where the field was missing; it now holds `null`. Schemas change only by fields
   dropped from `required` and made nullable.
+- **Parquet output is zstd-compressed.** genson wrote every Parquet file uncompressed;
+  typed output, string output, lookup tables and pruned values are now written with
+  zstd (level 1). On 200 rows of Wikidata claims the typed output is 5 MB where it was
+  16 MB, in the same time, and the normalised JSON 27 MB where it was 212 MB.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.
