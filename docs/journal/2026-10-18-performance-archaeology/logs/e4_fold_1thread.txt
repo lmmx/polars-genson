@@ -1,0 +1,16 @@
+[time 1T] rows200.ndjson D: 1 process(es) x 3 runs; output hashes {'b044387a11c95954'}
+[time 1T]   chunk.parallel         warm wall=2.451 user=1.850 sys=0.566 faults=235,076   cold 5.712s
+[time 1T]   chunk.merge            warm wall=1.222 user=1.133 sys=0.070 faults=1,028   cold 1.282s
+[time 1T]   row.build              warm thread_s=1.758   cold 4.792s
+[time 1T]   row.hash               warm thread_s=0.346   cold 0.3635s
+[time 1T]   preprocess_force       warm wall=0.019 user=0.019 sys=0.000   cold 0.0108s
+[time 1T]   total                  warm wall=4.011 user=3.216 sys=0.734 faults=242,498   cold 7.78s
+[time 1T]   process: minor faults 695,788, major 0, user 10.01s, sys 7.45s, peak RSS 1130 MB
+[fold 1T] rows200.ndjson D: 1 process(es) x 3 runs; output hashes {'f41e508d01b5f65'}
+[fold 1T]   chunk.parallel         warm wall=2.608 user=2.170 sys=0.420 faults=53,582   cold 2.887s
+[fold 1T]   chunk.merge            warm wall=0.102 user=0.099 sys=0.002 faults=823   cold 0.1879s
+[fold 1T]   row.build              warm thread_s=1.413   cold 1.45s
+[fold 1T]   row.hash               warm thread_s=0.000   cold 0s
+[fold 1T]   preprocess_force       warm wall=0.011 user=0.010 sys=0.000   cold 0.0126s
+[fold 1T]   total                  warm wall=2.980 user=2.469 sys=0.489 faults=58,706   cold 3.56s
+[fold 1T]   process: minor faults 153,320, major 0, user 7.52s, sys 2.32s, peak RSS 947 MB
