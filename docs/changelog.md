@@ -21,6 +21,12 @@ Release notes for earlier versions are on
   typed output, string output, lookup tables and pruned values are now written with
   zstd (level 1). On 200 rows of Wikidata claims the typed output is 5 MB where it was
   16 MB, in the same time, and the normalised JSON 27 MB where it was 212 MB.
+- **`normalise_from_parquet` and `infer_from_parquet` decode only their column.** Reading
+  one column decoded every column of the file, and each row was then copied into a
+  `String`; the column is now decoded alone and its rows borrowed from the Arrow arrays.
+  On a chunk of wikidata-pq's shape (3,000 rows, 332 MB of claims beside the labels,
+  descriptions, aliases and sitelinks), its three map steps take 0.7–0.8 s where they
+  took 3.5–4.6 s.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.

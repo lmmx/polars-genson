@@ -2,8 +2,8 @@ use genson_core::normalise::{
     normalise_values_pruned, prune_schema, MapEncoding, NormaliseConfig, PrunedValue,
 };
 use genson_core::parquet::{
-    avro_record_fields, read_columns, read_string_column, read_string_column_opt,
-    values_to_struct_array, write_string_column_with, write_struct_column_with,
+    avro_record_fields, read_columns, read_string_column_arrays, values_to_struct_array,
+    write_string_column_with, write_struct_column_with,
 };
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use pyo3::prelude::*;
@@ -58,10 +58,11 @@ pub fn infer_from_parquet(
     no_root_map: bool,
     max_builders: Option<usize>,
 ) -> PyResult<String> {
-    // Read from Parquet
-    let json_strings = read_string_column(&input_path, &column).map_err(|e| {
+    // Read from Parquet: the column's rows, borrowed from the decoded arrays (nulls skipped)
+    let column_data = read_string_column_arrays(&input_path, &column).map_err(|e| {
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
     })?;
+    let json_strings: Vec<&str> = column_data.rows().into_iter().flatten().collect();
 
     if debug {
         anstream::eprintln!(
@@ -215,8 +216,9 @@ pub fn normalise_from_parquet(
         ));
     }
     let prune: HashSet<String> = prune.unwrap_or_default().into_iter().collect();
-    // Read from Parquet, one entry per row so null rows stay aligned with `keep`
-    let json_strings = read_string_column_opt(&input_path, &column).map_err(|e| {
+    // Read from Parquet, one entry per row so null rows stay aligned with `keep`; the rows
+    // are borrowed from the decoded arrays
+    let column_data = read_string_column_arrays(&input_path, &column).map_err(|e| {
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read Parquet: {}", e))
     })?;
     let keep = read_columns(&input_path, &keep_columns.unwrap_or_default()).map_err(|e| {
@@ -226,24 +228,32 @@ pub fn normalise_from_parquet(
     if debug {
         anstream::eprintln!(
             "Read {} JSON strings from column '{}'",
-            json_strings.len(),
+            column_data.len(),
             column
         );
     }
 
     tick("read_parquet", &mut t0);
     // Move the extract_invariants fields out of the rows before inference sees them
-    let json_strings = match (&extract_invariants, &lookup_output_path) {
+    let slim_rows = match (&extract_invariants, &lookup_output_path) {
         (Some(spec), Some(path)) => {
-            let extracted = genson_core::extract::extract_invariants(json_strings, spec)
-                .map_err(pyo3::exceptions::PyValueError::new_err)?;
+            let extracted =
+                genson_core::extract::extract_invariants_from(&column_data.rows(), spec)
+                    .map_err(pyo3::exceptions::PyValueError::new_err)?;
             genson_core::parquet::write_lookup_table(path, &extracted.lookup).map_err(|e| {
                 pyo3::exceptions::PyIOError::new_err(format!("Failed to write lookup table: {}", e))
             })?;
             tick("extract_invariants", &mut t0);
-            extracted.rows
+            Some(extracted.rows)
         }
-        _ => json_strings,
+        _ => None,
+    };
+    // The slim rows replace the read ones, which are then no longer needed
+    let column_data = slim_rows.is_none().then_some(column_data);
+    let json_strings: Vec<Option<&str>> = match (&slim_rows, &column_data) {
+        (Some(rows), _) => rows.iter().map(Option::as_deref).collect(),
+        (None, Some(column_data)) => column_data.rows(),
+        (None, None) => unreachable!("the read rows are kept when nothing was extracted"),
     };
     // Infer schema first (Avro mode)
     let config = SchemaInferenceConfig {
@@ -270,7 +280,7 @@ pub fn normalise_from_parquet(
         verbosity: DebugVerbosity::Normal,
     };
 
-    let present: Vec<&str> = json_strings.iter().flatten().map(String::as_str).collect();
+    let present: Vec<&str> = json_strings.iter().flatten().copied().collect();
     let result = infer_json_schema_from_strings(&present, config).map_err(|e| {
         pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
     })?;
@@ -307,7 +317,7 @@ pub fn normalise_from_parquet(
     };
 
     // Normalise one row, numbering its pruned values with the row's index
-    let normalise_row = |row: usize, s: &Option<String>| -> (serde_json::Value, Vec<PrunedValue>) {
+    let normalise_row = |row: usize, s: &Option<&str>| -> (serde_json::Value, Vec<PrunedValue>) {
         let Some(s) = s else {
             return (serde_json::Value::Null, Vec::new());
         };

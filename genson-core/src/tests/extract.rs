@@ -81,3 +81,18 @@ fn test_key_order_of_remaining_fields_is_kept() {
     let out = extract_invariants(input, &spec()).unwrap();
     assert_eq!(out.rows[0].as_deref(), Some(r#"{"b":1,"id":"Q1","a":2}"#));
 }
+
+#[test]
+fn test_extract_from_borrowed_rows_matches_owned() {
+    let owned: Vec<Option<String>> = vec![
+        Some(r#"{"x": {"id": "Q1", "labels": {"en": "one"}}}"#.to_string()),
+        None,
+        Some("not json".to_string()),
+        Some(r#"{"x": [{"id": "Q1", "labels": {"en": "one"}}, {"id": "Q2"}]}"#.to_string()),
+    ];
+    let borrowed: Vec<Option<&str>> = owned.iter().map(Option::as_deref).collect();
+    let from_borrowed = extract_invariants_from(&borrowed, &spec()).unwrap();
+    let from_owned = extract_invariants(owned, &spec()).unwrap();
+    assert_eq!(from_borrowed.rows, from_owned.rows);
+    assert_eq!(from_borrowed.lookup, from_owned.lookup);
+}
