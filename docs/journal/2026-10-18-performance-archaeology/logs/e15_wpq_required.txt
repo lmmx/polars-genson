@@ -1,0 +1,73 @@
+# repro_wpq_required.py with wikidata-pq 5ad5f96's locked environment (polars-genson 0.9.6, polars 1.44.2), rows200 as one chunk (ids Q0..Q199)
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"avro_record": "claims.claims{}[].mainsnak.datavalue", "non_nullable": ["datavalue__string", "id", "amount", "unit", "precision", "latitude", "longitude", "altitude", "globe", "time", "timezone", "before", "after", "calendarmodel", "text", "language", "upperBound", "lowerBound"]}
+{"typed_parquet_fields_all_nullable": true}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"]}
+{"raw": {"mainsnak": {"snaks": 16623, "no_datavalue": 49, "datavalue_without_precision": 7142, "datavalue_without_latitude": 7233, "datavalue_without_longitude": 7233}, "qualifier": {"snaks": 7489, "no_datavalue": 41, "datavalue_without_precision": 3668, "datavalue_without_latitude": 5724, "datavalue_without_longitude": 5724}, "reference": {"snaks": 10285, "no_datavalue": 0, "datavalue_without_latitude": 7039, "datavalue_without_longitude": 7039, "datavalue_without_precision": 4444}}}
+{"conformed": {"mainsnak": {"snaks": 16623, "precision_struct_of_nulls": 16389, "latitude_struct_of_nulls": 16470, "longitude_struct_of_nulls": 16470, "datavalue_struct_of_nulls": 49}, "qualifier": {"snaks": 7489, "precision_null": 5380, "latitude_null": 7436, "longitude_null": 7436, "datavalue_struct_of_nulls": 41}, "reference": {"snaks": 10285, "precision_null": 7690, "latitude_null": 10285, "longitude_null": 10285}}}
+{"published_statements": 16623, "published_datavalue_is_null": 0}
+
+# the same on rows200 split into 10 chunks of 20 rows (mainsnak record, check, conformed, published lines; long lines cut at 400 characters)
+== rows00
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "09e9eec0c71ec712"}
+{"raw": {"mainsnak": {"snaks": 1678, "no_datavalue": 6, "datavalue_without_precision": 691, "datavalue_without_latitude": 700, "datavalue_without_longitude": 700}, "qualifier": {"snaks": 776, "no_datavalue": 5, "datavalue_without_precision": 381, "datavalue_without_latitude": 571, "datavalue_without_longitude": 571}, "reference": {"snaks": 1108, "no_datavalue": 0, "datavalue_without_latitude": 799
+{"conformed": {"mainsnak": {"snaks": 1678, "precision_struct_of_nulls": 1654, "latitude_struct_of_nulls": 1663, "longitude_struct_of_nulls": 1663, "datavalue_struct_of_nulls": 6}, "qualifier": {"snaks": 776, "precision_null": 581, "latitude_null": 771, "longitude_null": 771, "datavalue_struct_of_nulls": 5}, "reference": {"snaks": 1108, "precision_null": 849, "latitude_null": 1108, "longitude_null"
+{"published_statements": 1678, "published_datavalue_is_null": 0}
+== rows01
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datatype", "datavalue"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "90492ef71f4a5c04"}
+{"raw": {"mainsnak": {"snaks": 2764, "no_datavalue": 10, "datavalue_without_precision": 1433, "datavalue_without_latitude": 1446, "datavalue_without_longitude": 1446}, "reference": {"snaks": 1760, "no_datavalue": 0, "datavalue_without_precision": 694, "datavalue_without_latitude": 1142, "datavalue_without_longitude": 1142}, "qualifier": {"snaks": 1319, "no_datavalue": 10, "datavalue_without_latitu
+{"conformed": {"mainsnak": {"snaks": 2764, "precision_struct_of_nulls": 2725, "latitude_null": 2737, "longitude_null": 2737, "datavalue_struct_of_nulls": 10}, "reference": {"snaks": 1760, "precision_null": 1312, "latitude_null": 1760, "longitude_null": 1760}, "qualifier": {"snaks": 1319, "latitude_null": 1307, "longitude_null": 1307, "precision_null": 867, "datavalue_struct_of_nulls": 10}}}
+{"published_statements": 2764, "published_datavalue_is_null": 0}
+== rows02
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "90492ef71f4a5c04"}
+{"raw": {"mainsnak": {"snaks": 2271, "no_datavalue": 5, "datavalue_without_precision": 1061, "datavalue_without_latitude": 1072, "datavalue_without_longitude": 1072}, "qualifier": {"snaks": 1177, "no_datavalue": 4, "datavalue_without_precision": 596, "datavalue_without_latitude": 979, "datavalue_without_longitude": 979}, "reference": {"snaks": 1552, "no_datavalue": 0, "datavalue_without_latitude":
+{"conformed": {"mainsnak": {"snaks": 2271, "precision_struct_of_nulls": 2241, "latitude_struct_of_nulls": 2251, "longitude_struct_of_nulls": 2251, "datavalue_struct_of_nulls": 5}, "qualifier": {"snaks": 1177, "precision_null": 788, "latitude_null": 1171, "longitude_null": 1171, "datavalue_struct_of_nulls": 4}, "reference": {"snaks": 1552, "precision_null": 1172, "latitude_null": 1552, "longitude_n
+{"published_statements": 2271, "published_datavalue_is_null": 0}
+== rows03
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "01cc1ff32b239a4c"}
+{"raw": {"mainsnak": {"snaks": 1337, "no_datavalue": 6, "datavalue_without_precision": 382, "datavalue_without_latitude": 392, "datavalue_without_longitude": 392}, "qualifier": {"snaks": 505, "no_datavalue": 4, "datavalue_without_precision": 273, "datavalue_without_latitude": 337, "datavalue_without_longitude": 337}, "reference": {"snaks": 831, "no_datavalue": 0, "datavalue_without_precision": 355
+{"conformed": {"mainsnak": {"snaks": 1337, "precision_struct_of_nulls": 1317, "latitude_null": 1327, "longitude_null": 1327, "datavalue_struct_of_nulls": 6}, "qualifier": {"snaks": 505, "precision_null": 437, "latitude_null": 501, "longitude_null": 501, "datavalue_struct_of_nulls": 4}, "reference": {"snaks": 831, "precision_null": 596, "latitude_null": 831, "longitude_null": 831}}}
+{"published_statements": 1337, "published_datavalue_is_null": 0}
+== rows04
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "070cb90b7d152766"}
+{"raw": {"mainsnak": {"snaks": 1042, "no_datavalue": 7, "datavalue_without_precision": 258, "datavalue_without_latitude": 267, "datavalue_without_longitude": 267}, "qualifier": {"snaks": 308, "no_datavalue": 1, "datavalue_without_precision": 119, "datavalue_without_latitude": 153, "datavalue_without_longitude": 153}, "reference": {"snaks": 659, "no_datavalue": 0, "datavalue_without_precision": 264
+{"conformed": {"mainsnak": {"snaks": 1042, "precision_struct_of_nulls": 1020, "latitude_null": 1028, "longitude_null": 1028, "datavalue_struct_of_nulls": 7}, "qualifier": {"snaks": 308, "precision_null": 272, "latitude_null": 306, "longitude_null": 306, "datavalue_struct_of_nulls": 1}, "reference": {"snaks": 659, "precision_null": 478, "latitude_null": 659, "longitude_null": 659}}}
+{"published_statements": 1042, "published_datavalue_is_null": 0}
+== rows05
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "90492ef71f4a5c04"}
+{"raw": {"mainsnak": {"snaks": 1274, "no_datavalue": 4, "datavalue_without_precision": 562, "datavalue_without_latitude": 573, "datavalue_without_longitude": 573}, "qualifier": {"snaks": 542, "no_datavalue": 1, "datavalue_without_precision": 252, "datavalue_without_latitude": 420, "datavalue_without_longitude": 420}, "reference": {"snaks": 846, "no_datavalue": 0, "datavalue_without_precision": 383
+{"conformed": {"mainsnak": {"snaks": 1274, "precision_struct_of_nulls": 1250, "latitude_struct_of_nulls": 1259, "longitude_struct_of_nulls": 1259, "datavalue_struct_of_nulls": 4}, "qualifier": {"snaks": 542, "precision_struct_of_nulls": 370, "latitude_null": 538, "longitude_null": 538, "datavalue_struct_of_nulls": 1}, "reference": {"snaks": 846, "precision_null": 629, "latitude_null": 846, "longit
+{"published_statements": 1274, "published_datavalue_is_null": 0}
+== rows06
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "90492ef71f4a5c04"}
+{"raw": {"mainsnak": {"snaks": 1495, "no_datavalue": 4, "datavalue_without_precision": 615, "datavalue_without_latitude": 620, "datavalue_without_longitude": 620}, "reference": {"snaks": 852, "no_datavalue": 0, "datavalue_without_precision": 417, "datavalue_without_latitude": 629, "datavalue_without_longitude": 629}, "qualifier": {"snaks": 683, "no_datavalue": 3, "datavalue_without_precision": 358
+{"conformed": {"mainsnak": {"snaks": 1495, "precision_struct_of_nulls": 1478, "latitude_null": 1481, "longitude_null": 1481, "datavalue_struct_of_nulls": 4}, "reference": {"snaks": 852, "precision_null": 640, "latitude_null": 852, "longitude_null": 852}, "qualifier": {"snaks": 683, "precision_struct_of_nulls": 515, "latitude_null": 679, "longitude_null": 679, "datavalue_struct_of_nulls": 3}}}
+{"published_statements": 1495, "published_datavalue_is_null": 0}
+== rows07
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "09e9eec0c71ec712"}
+{"raw": {"mainsnak": {"snaks": 2129, "no_datavalue": 1, "datavalue_without_precision": 906, "datavalue_without_latitude": 915, "datavalue_without_longitude": 915}, "qualifier": {"snaks": 1113, "no_datavalue": 8, "datavalue_without_precision": 570, "datavalue_without_latitude": 856, "datavalue_without_longitude": 856}, "reference": {"snaks": 1311, "no_datavalue": 0, "datavalue_without_precision": 6
+{"conformed": {"mainsnak": {"snaks": 2129, "precision_struct_of_nulls": 2102, "latitude_struct_of_nulls": 2111, "longitude_struct_of_nulls": 2111, "datavalue_struct_of_nulls": 1}, "qualifier": {"snaks": 1113, "precision_null": 819, "latitude_null": 1105, "longitude_null": 1105, "datavalue_struct_of_nulls": 8}, "reference": {"snaks": 1311, "precision_null": 1008, "latitude_null": 1311, "longitude_n
+{"published_statements": 2129, "published_datavalue_is_null": 0}
+== rows08
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "b77d708489df44b2"}
+{"raw": {"mainsnak": {"snaks": 1251, "no_datavalue": 2, "datavalue_without_precision": 566, "datavalue_without_latitude": 574, "datavalue_without_longitude": 574}, "reference": {"snaks": 769, "no_datavalue": 0, "datavalue_without_precision": 310, "datavalue_without_latitude": 515, "datavalue_without_longitude": 515}, "qualifier": {"snaks": 498, "no_datavalue": 2, "datavalue_without_precision": 225
+{"conformed": {"mainsnak": {"snaks": 1251, "precision_struct_of_nulls": 1236, "latitude_struct_of_nulls": 1242, "longitude_struct_of_nulls": 1242, "datavalue_struct_of_nulls": 2}, "reference": {"snaks": 769, "precision_null": 564, "latitude_null": 769, "longitude_null": 769}, "qualifier": {"snaks": 498, "precision_null": 345, "latitude_null": 493, "longitude_null": 493, "datavalue_struct_of_nulls"
+{"published_statements": 1251, "published_datavalue_is_null": 0}
+== rows09
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "0bbf26c0269f3111"}
+{"raw": {"mainsnak": {"snaks": 1382, "no_datavalue": 4, "datavalue_without_precision": 668, "datavalue_without_latitude": 674, "datavalue_without_longitude": 674}, "reference": {"snaks": 597, "no_datavalue": 0, "datavalue_without_precision": 244, "datavalue_without_latitude": 399, "datavalue_without_longitude": 399}, "qualifier": {"snaks": 568, "no_datavalue": 3, "datavalue_without_precision": 245
+{"conformed": {"mainsnak": {"snaks": 1382, "precision_struct_of_nulls": 1366, "latitude_null": 1371, "longitude_null": 1371, "datavalue_struct_of_nulls": 4}, "reference": {"snaks": 597, "precision_null": 442, "latitude_null": 597, "longitude_null": 597}, "qualifier": {"snaks": 568, "precision_null": 386, "latitude_null": 565, "longitude_null": 565, "datavalue_struct_of_nulls": 3}}}
+{"published_statements": 1382, "published_datavalue_is_null": 0}
+
+# Avro nullability of latitude/precision in each 20-row chunk's genson_avro_schema (typed.parquet metadata)
+rows00 main.latitude NON-nullable; rows01 nullable; rows02 NON; rows03 nullable; rows04 nullable; rows05 NON; rows06 nullable; rows07 NON; rows08 NON; rows09 nullable; main.precision NON-nullable in all 10; qual.precision NON-nullable in rows05, rows06

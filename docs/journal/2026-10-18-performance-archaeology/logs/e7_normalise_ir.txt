@@ -1,0 +1,4 @@
+nbase rows 20 parse 3.974s normalise 15.176s serialise 1.827s (output 22 MB, hash 8a881059ba070da1) ==2584== I   refs:      4,490,422,830 
+nmove rows 20 parse 4.091s normalise 11.809s serialise 2.060s (output 22 MB, hash 8a881059ba070da1) ==2596== I   refs:      3,973,153,778 
+ntype rows 20 parse 3.998s normalise 13.781s serialise 1.810s (output 22 MB, hash 8a881059ba070da1) ==2605== I   refs:      4,486,025,758 
+nboth rows 20 parse 4.527s normalise 11.731s serialise 2.106s (output 22 MB, hash 8a881059ba070da1) ==2612== I   refs:      3,967,852,772 

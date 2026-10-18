@@ -1,0 +1,80 @@
+Ir                       file:function
+--------------------------------------------------------------------------------
+14,005,829,284 (315.6%)  genson-core/src/normalise.rs:genson_core::normalise::normalise_inner'2 
+ 5,987,142,723 (134.9%)  serde_core-1.0.228/src/ser/impls.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>'2 
+ 5,268,997,271 (118.7%)  serde_json-1.0.145/src/value/de.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2 
+ 4,446,841,307 (100.2%)  serde_core-1.0.228/src/de/mod.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2
+ 4,438,204,557 (100.0%)  ???:0x000000000001f540 
+ 4,437,757,186 (99.99%)  ???:(below main) 
+ 4,437,757,174 (99.99%)  ./csu/../csu/libc-start.c:__libc_start_main@@GLIBC_2.34 
+ 4,437,305,034 (99.98%)  ./csu/../sysdeps/nptl/libc_start_call_main.h:(below main) 
+ 4,437,244,672 (99.98%)  ???:main 
+ 4,437,244,660 (99.98%)  std/src/rt.rs:std::rt::lang_start_internal 
+ 4,437,136,343 (99.98%)  core/src/ops/function.rs:std::rt::lang_start_internal
+ 4,437,136,342 (99.98%)  std/src/rt.rs:std::rt::lang_start::<()>::{closure#0} 
+ 4,437,136,336 (99.98%)  std/src/sys/backtrace.rs:std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> 
+ 4,437,136,333 (99.98%)  core/src/ops/function.rs:std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+ 4,437,136,332 (99.98%)  genson-core/examples/bench_normalise.rs:bench_normalise::main 
+ 3,679,744,110 (82.91%)  serde_json-1.0.145/src/value/ser.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>>'2 
+ 3,452,533,534 (77.79%)  serde_json-1.0.145/src/value/ser.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>'2
+ 3,209,032,468 (72.30%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value>'2 
+ 3,043,518,465 (68.58%)  genson-core/src/normalise.rs:genson_core::normalise::normalise_values_pruned 
+ 3,043,501,205 (68.58%)  genson-core/src/normalise.rs:genson_core::normalise::normalise_inner 
+ 2,263,510,979 (51.00%)  serde_core-1.0.228/src/ser/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value>'2
+ 2,176,155,698 (49.03%)  serde_core-1.0.228/src/ser/mod.rs:<serde_json::value::ser::Serializer as serde_core::ser::Serializer>::collect_seq::<&alloc::vec::Vec<serde_json::value::Value>>'2 
+ 2,155,833,383 (48.57%)  serde_core-1.0.228/src/ser/impls.rs:<serde_json::value::ser::Serializer as serde_core::ser::Serializer>::collect_seq::<&alloc::vec::Vec<serde_json::value::Value>>'2
+ 2,037,189,111 (45.90%)  genson-core/src/normalise.rs:genson_core::normalise::apply_map_encoding 
+ 2,025,782,547 (45.64%)  core/src/iter/adapters/map.rs:<core::iter::adapters::map::Map<serde_json::map::IntoIter, genson_core::normalise::apply_map_encoding::{closure#1}> as core::iter::traits::iterat
+ 1,748,037,910 (39.39%)  serde_json-1.0.145/src/ser.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>>'2
+ 1,680,181,839 (37.86%)  serde_core-1.0.228/src/ser/impls.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>>'2
+ 1,677,354,254 (37.79%)  alloc/src/vec/mod.rs:genson_core::normalise::apply_map_encoding
+ 1,572,706,429 (35.44%)  serde_json-1.0.145/src/value/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value>
+ 1,380,063,825 (31.10%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::insert_full 
+ 1,186,284,581 (26.73%)  serde_json-1.0.145/src/value/mod.rs:<core::iter::adapters::map::Map<serde_json::map::IntoIter, genson_core::normalise::apply_map_encoding::{closure#1}> as core::iter::traits::
+ 1,185,824,515 (26.72%)  serde_core-1.0.228/src/ser/impls.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer> 
+ 1,135,480,546 (25.58%)  serde_core-1.0.228/src/ser/mod.rs:<serde_json::value::ser::Serializer as serde_core::ser::Serializer>::collect_seq::<&alloc::vec::Vec<serde_json::value::Value>> 
+ 1,135,088,855 (25.58%)  serde_core-1.0.228/src/ser/impls.rs:<serde_json::value::ser::Serializer as serde_core::ser::Serializer>::collect_seq::<&alloc::vec::Vec<serde_json::value::Value>>
+ 1,133,811,091 (25.55%)  serde_core-1.0.228/src/ser/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value> 
+ 1,127,365,812 (25.40%)  serde_json-1.0.145/src/value/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value>
+   825,301,419 (18.60%)  serde_json-1.0.145/src/de.rs:bench_normalise::main
+   825,301,358 (18.60%)  serde_json-1.0.145/src/de.rs:serde_json::de::from_trait::<serde_json::read::StrRead, serde_json::value::Value> 
+   825,299,082 (18.60%)  serde_json-1.0.145/src/value/de.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>> 
+   824,414,975 (18.58%)  serde_core-1.0.228/src/de/mod.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>
+   694,601,420 (15.65%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<alloc::vec::Vec<indexmap::Bucket<alloc::string::String, serde_json::value::Value>>>'2 
+   683,174,289 (15.39%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value> as core::clone::Clone>::clone'2 
+   636,832,542 (14.35%)  serde_json-1.0.145/src/de.rs:<serde_json::de::MapAccess<serde_json::read::StrRead> as serde_core::de::MapAccess>::next_value_seed::<core::marker::PhantomData<serde_json::value
+   636,710,766 (14.35%)  serde_core-1.0.228/src/de/mod.rs:<serde_json::de::MapAccess<serde_json::read::StrRead> as serde_core::de::MapAccess>::next_value_seed::<core::marker::PhantomData<serde_json::v
+   624,170,261 (14.06%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_malloc_aligned 
+   555,897,584 (12.53%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value> 
+   541,487,626 (12.20%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned 
+   537,697,617 (12.12%)  core/src/hash/mod.rs:<std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&alloc::string::String> 
+   506,052,211 (11.40%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned_at 
+   498,813,401 (11.24%)  indexmap-2.14.2/src/map.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value>'2
+   470,616,796 (10.60%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_zero_aligned_at 
+   468,362,992 (10.55%)  serde_json-1.0.145/src/de.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2
+   428,003,033 ( 9.64%)  indexmap-2.14.2/src/map.rs:<core::iter::adapters::map::Map<serde_json::map::IntoIter, genson_core::normalise::apply_map_encoding::{closure#1}> as core::iter::traits::iterator:
+   423,019,490 ( 9.53%)  serde_json-1.0.145/src/read.rs:<serde_json::read::StrRead as serde_json::read::Read>::parse_str 
+   373,605,302 ( 8.42%)  serde_json-1.0.145/src/ser.rs:bench_normalise::main
+   373,605,142 ( 8.42%)  serde_json-1.0.145/src/value/ser.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>> 
+   373,603,842 ( 8.42%)  serde_json-1.0.145/src/ser.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>>
+   371,116,180 ( 8.36%)  indexmap-2.14.2/src/map.rs:genson_core::normalise::normalise_inner'2
+   368,763,850 ( 8.31%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value> as core::clone::Clone>::clone 
+   353,100,005 ( 7.96%)  alloc/src/vec/spec_from_iter_nested.rs:genson_core::normalise::apply_map_encoding
+   316,991,723 ( 7.14%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/free.c:mi_free 
+   310,331,458 ( 6.99%)  serde_json-1.0.145/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value> as core::clone::Clone>::clone'2
+   299,153,240 ( 6.74%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<alloc::vec::Vec<indexmap::Bucket<alloc::string::String, serde_json::value::Value>>> 
+   289,369,699 ( 6.52%)  core/src/hash/sip.rs:<core::hash::sip::Hasher<core::hash::sip::Sip13Rounds> as core::hash::Hasher>::write 
+   284,636,113 ( 6.41%)  serde_json-1.0.145/src/ser.rs:<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>> as serde_core::ser::Serializer>::serialize_str 
+   259,661,780 ( 5.85%)  genson-core/src/normalise.rs:<core::iter::adapters::map::Map<serde_json::map::IntoIter, genson_core::normalise::apply_map_encoding::{closure#1}> as core::iter::traits::iterato
+   253,182,956 ( 5.70%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms 
+   236,763,090 ( 5.33%)  hashbrown-0.17.1/src/raw.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::insert_full
+   226,824,497 ( 5.11%)  indexmap-2.14.2/src/map.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2
+   225,926,102 ( 5.09%)  core/src/hash/sip.rs:<std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&alloc::string::String>
+   207,628,615 ( 4.68%)  serde_json-1.0.145/src/map.rs:genson_core::normalise::normalise_inner'2
+   188,457,267 ( 4.25%)  alloc/src/slice.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value> as core::clone::Clone>::clone
+   188,390,611 ( 4.24%)  alloc/src/slice.rs:<serde_json::value::Value as <>::to_vec_in::ConvertVec>::to_vec::<alloc::alloc::Global> 
+   188,059,474 ( 4.24%)  serde_json-1.0.145/src/map.rs:<serde_json::value::Value as <>::to_vec_in::ConvertVec>::to_vec::<alloc::alloc::Global>
+   181,397,926 ( 4.09%)  serde_json-1.0.145/src/read.rs:serde_json::read::parse_unicode_escape::<serde_json::read::SliceRead> 
+   178,134,864 ( 4.01%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/include/mimalloc/internal.h:mi_free
+   171,082,777 ( 3.85%)  indexmap-2.14.2/src/map.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>'2
+   169,571,812 ( 3.82%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::with_capacity_and_hasher 

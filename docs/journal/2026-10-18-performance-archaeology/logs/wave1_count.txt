@@ -1,0 +1,44 @@
+rows200.ndjson W: 1 process(es) x 2 runs; output hashes {'ab63cbfae2d3dbf7'}
+  chunk.parallel         warm faults=180,621 allocs=13,309,473 bytes=4,889,192,570
+  chunk.merge            warm faults=3,158 allocs=16,187,190 bytes=6,758,400,479
+  row.prep               warm allocs=800 bytes=216,868,962
+  row.build              warm allocs=12,517,383 bytes=4,412,906,032
+  row.hash               warm allocs=149,536 bytes=45,945,824
+  build_all              warm faults=183,779 allocs=29,496,671 bytes=11,647,593,101
+  to_schema              warm faults=7,724 allocs=1,731,670 bytes=247,361,259
+  drop_builder           warm allocs=1 bytes=1
+  rewrite_objects        warm faults=21,361 allocs=18,606,076 bytes=1,869,334,145
+  total                  warm faults=212,864 allocs=49,834,427 bytes=13,764,288,581
+rows200.ndjson D: 1 process(es) x 2 runs; output hashes {'b044387a11c95954'}
+  chunk.parallel         warm faults=211,759 allocs=13,696,750 bytes=5,020,095,065
+  chunk.merge            warm faults=4,524 allocs=16,186,356 bytes=6,758,194,953
+  row.prep               warm allocs=200 bytes=1,600
+  row.build              warm allocs=12,519,247 bytes=4,415,158,824
+  row.hash               warm allocs=149,136 bytes=45,920,224
+  build_all              warm faults=216,283 allocs=29,883,114 bytes=11,778,290,070
+  to_schema              warm faults=7,717 allocs=1,731,653 bytes=247,359,409
+  drop_builder           warm allocs=1 bytes=1
+  rewrite_objects        warm faults=91 allocs=33,894 bytes=5,256,029
+  total                  warm faults=224,091 allocs=31,648,673 bytes=12,030,908,624
+labels.ndjson D: 1 process(es) x 2 runs; output hashes {'22f8e5cfb8ce1ca5'}
+  chunk.parallel         warm faults=7,880 allocs=1,509,325 bytes=260,597,144
+  chunk.merge            warm faults=861 allocs=1,753,743 bytes=671,152,488
+  row.prep               warm allocs=1,000 bytes=8,000
+  row.build              warm allocs=1,293,305 bytes=239,003,006
+  row.hash               warm allocs=212,706 bytes=15,234,832
+  build_all              warm faults=8,741 allocs=3,263,084 bytes=931,749,692
+  to_schema              warm faults=100 allocs=14,215 bytes=1,540,439
+  drop_builder           warm allocs=1 bytes=1
+  rewrite_objects        warm allocs=4 bytes=7,593
+  total                  warm faults=8,841 allocs=3,277,313 bytes=933,297,800
+narrow200k.ndjson D: 1 process(es) x 2 runs; output hashes {'c5e9db34b114ce53'}
+  chunk.parallel         warm faults=814 allocs=10,635,680 bytes=1,562,074,774
+  chunk.merge            warm faults=12 allocs=16,477 bytes=33,959,291
+  row.prep               warm allocs=200,000 bytes=1,600,000
+  row.build              warm allocs=9,167,652 bytes=1,431,861,028
+  row.hash               warm allocs=800,000 bytes=57,600,000
+  build_all              warm faults=826 allocs=10,654,195 bytes=1,596,084,755
+  to_schema              warm allocs=108 bytes=13,695
+  drop_builder           warm allocs=1 bytes=1
+  rewrite_objects        warm allocs=7 bytes=209
+  total                  warm faults=826 allocs=10,654,320 bytes=1,596,098,735

@@ -1,0 +1,15 @@
+# genson-cli on rows200.parquet (column claims, one string per row) with wikidata-pq's claims options:
+# --ndjson --map-threshold 0 --unify-maps --wrap-root claims --force-type mainsnak:record
+# --force-scalar-promotion mainsnak,datavalue,precision,latitude,longitude --no-unify qualifiers
+# --max-builders 100 --pq-column claims ; cli_master = master 36198dd, cli_req = + proto_required.py
+schema_prod_cli_master.json: 64,293 objects under a required list, 10,040 violate it, at 4 of 7 paths
+  7,337/7,337 at /claims/*/[]/mainsnak/datavalue missing e.g. ['datavalue__string', 'id', 'labels', 'unit-labels', 'precision']
+  2,613/5,736 at /claims/*/[]/qualifiers/*/[]/datavalue missing e.g. ['id', 'labels']
+  49/16,623 at /claims/*/[]/mainsnak missing e.g. ['datavalue']
+  41/7,489 at /claims/*/[]/qualifiers/*/[] missing e.g. ['datavalue']
+schema_prod_cli_req.json: 51,220 objects under a required list, 0 violate it, at 0 of 5 paths
+# with --avro added
+cli_master first datavalue record: datavalue | non-nullable fields: ['datavalue__string', 'id', 'labels', 'amount', 'unit', 'unit-labels', 'precision', 'latitude', 'longitude', 'altitude', 'globe', 'time', 'timezone', 'before', 'after', 'calendarmodel', 'text', 'language', 'upperBound', 'lowerBound']
+cli_master mainsnak non-nullable fields: ['property', 'datavalue', 'datatype', 'property-labels']
+cli_req first datavalue record: datavalue | non-nullable fields: []
+cli_req mainsnak non-nullable fields: ['property', 'datatype', 'property-labels']

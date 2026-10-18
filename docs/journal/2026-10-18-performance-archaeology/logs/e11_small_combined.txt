@@ -1,0 +1,24 @@
+[time] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[time]   total                  warm wall=2.226 user=5.235 sys=1.106 faults=147,832   cold 3.212s
+[time+nopurge]   total                  warm wall=1.629 user=5.047 sys=0.168 faults=18   cold 1.673s
+[small3] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[small3]   total                  warm wall=1.657 user=4.277 sys=0.886 faults=143,936   cold 1.504s
+[small3+nopurge]   total                  warm wall=1.352 user=4.217 sys=0.083 faults=5   cold 1.438s
+[time] rows200.ndjson D: 1 process(es) x 5 runs; output hashes {'b044387a11c95954'}
+[time]   total                  warm wall=1.438 user=4.121 sys=0.716 faults=168,415   cold 1.486s
+[time+nopurge]   total                  warm wall=1.325 user=4.186 sys=0.192 faults=18   cold 1.661s
+[small3] rows200.ndjson D: 1 process(es) x 5 runs; output hashes {'b044387a11c95954'}
+[small3]   total                  warm wall=1.366 user=3.745 sys=0.687 faults=150,082   cold 1.159s
+[small3+nopurge]   total                  warm wall=1.155 user=3.654 sys=0.167 faults=16   cold 1.169s
+[time] labels.ndjson D: 1 process(es) x 5 runs; output hashes {'22f8e5cfb8ce1ca5'}
+[time]   total                  warm wall=0.122 user=0.424 sys=0.015 faults=186   cold 0.1509s
+[time+nopurge]   total                  warm wall=0.144 user=0.495 sys=0.002 faults=1   cold 0.1397s
+[small3] labels.ndjson D: 1 process(es) x 5 runs; output hashes {'22f8e5cfb8ce1ca5'}
+[small3]   total                  warm wall=0.138 user=0.442 sys=0.012 faults=428   cold 0.1339s
+[small3+nopurge]   total                  warm wall=0.128 user=0.433 sys=0.006 faults=1   cold 0.1283s
+[time] slim200.ndjson W: 1 process(es) x 5 runs; output hashes {'65df34683ec8d758'}
+[time]   total                  warm wall=0.115 user=0.334 sys=0.024 faults=633   cold 0.1239s
+[time+nopurge]   total                  warm wall=0.108 user=0.304 sys=0.008 faults=1   cold 0.1097s
+[small3] slim200.ndjson W: 1 process(es) x 5 runs; output hashes {'65df34683ec8d758'}
+[small3]   total                  warm wall=0.108 user=0.305 sys=0.012 faults=4   cold 0.0972s
+[small3+nopurge]   total                  warm wall=0.095 user=0.276 sys=0.006 faults=4   cold 0.0931s

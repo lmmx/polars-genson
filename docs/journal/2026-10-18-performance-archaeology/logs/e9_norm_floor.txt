@@ -1,0 +1,3 @@
+rows 200 tape parse 0.566s walk+append 0.206s finish 0.000s (9101382 strings, 19432 other values, 201 MB of string data)
+rows 200 tape parse 0.536s walk+append 0.187s finish 0.000s (9101382 strings, 19432 other values, 201 MB of string data)
+rows 200 tape parse 0.590s walk+append 0.210s finish 0.000s (9101382 strings, 19432 other values, 201 MB of string data)

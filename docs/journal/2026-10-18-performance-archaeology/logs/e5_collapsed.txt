@@ -1,0 +1,20 @@
+rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+  chunk.parallel         warm wall=0.880 user=2.356 sys=0.721 faults=142,724   cold 1.846s
+  chunk.merge            warm wall=0.496 user=1.874 sys=0.047 faults=626   cold 0.4624s
+  row.build              warm thread_s=2.270   cold 5.876s
+  row.hash               warm thread_s=0.409   cold 0.4088s
+  to_schema              warm wall=0.140 user=0.118 sys=0.015 faults=7,910   cold 0.5995s
+  preprocess_force       warm wall=0.012 user=0.012 sys=0.000   cold 0.0091s
+  rewrite_objects        warm wall=0.451 user=1.074 sys=0.116 faults=8,583   cold 0.4339s
+  total                  warm wall=2.078 user=5.481 sys=0.915 faults=161,308   cold 3.376s
+  process: minor faults 798,389, major 0, user 27.41s, sys 11.39s, peak RSS 1203 MB
+rows200_collapsed.ndjson W: 1 process(es) x 5 runs; output hashes {'a8c065c6ad8b1f17'}
+  chunk.parallel         warm wall=0.283 user=1.001 sys=0.036 faults=5,638   cold 0.2788s
+  chunk.merge            warm wall=0.005 user=0.011 sys=0.001 faults=47   cold 0.0045s
+  row.build              warm thread_s=0.709   cold 0.7156s
+  row.hash               warm thread_s=0.002   cold 0.0023s
+  to_schema              warm wall=0.000 user=0.000 sys=0.000   cold 0.0001s
+  preprocess_force       warm wall=0.000 user=0.000 sys=0.000   cold 0s
+  rewrite_objects        warm wall=0.001 user=0.002 sys=0.000 faults=7   cold 0.0012s
+  total                  warm wall=0.291 user=1.019 sys=0.038 faults=5,724   cold 0.2854s
+  process: minor faults 32,293, major 0, user 5.10s, sys 0.54s, peak RSS 462 MB
