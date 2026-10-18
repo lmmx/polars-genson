@@ -10,6 +10,7 @@ use std::panic::{self, AssertUnwindSafe};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::genson_rs::{DataType, SchemaBuilder, SchemaNode};
+use crate::value::object;
 
 pub(crate) mod core;
 pub use core::*;
@@ -354,7 +355,10 @@ fn apply_force_field_types_to_node(node: &mut SchemaNode, config: &SchemaInferen
         }
         // Rewritten within an object holding just this property, so that it is
         // recognised by name; that also rewrites the forced fields within it
-        let mut holder = json!({ "properties": { name: property.to_schema() } });
+        let properties = [(name.to_string(), property.to_schema())]
+            .into_iter()
+            .collect();
+        let mut holder = object([("properties", Value::Object(properties))]);
         apply_force_field_types(&mut holder, config);
         let mut forced = SchemaNode::new();
         forced.add_schema(DataType::Schema(&holder["properties"][name]));

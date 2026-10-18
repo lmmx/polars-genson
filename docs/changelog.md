@@ -42,6 +42,12 @@ Release notes for earlier versions are on
   ranges of about equal size, each decoded by its own reader. Decoding the claims of a
   chunk written as wikidata-pq writes them (Polars, zstd level 9) takes 0.05–0.06 s on
   4 cores where it took 0.3–0.4 s.
+- **Less copying in map unification and normalisation.** `json!` copies each value it is
+  given by serialising it; map unification built each unified record, array and map
+  that way, so every level of a unified schema copied everything beneath it again, and
+  normalisation built every map entry of the key/value encodings that way. The values
+  are now moved in. On a release-format chunk of wikidata-pq's claims (7,128 rows),
+  inference takes 17% fewer instructions, with the same schemas and rows.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.
