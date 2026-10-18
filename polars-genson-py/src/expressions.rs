@@ -1,4 +1,4 @@
-use genson_core::normalise::{normalise_values, MapEncoding, NormaliseConfig};
+use genson_core::normalise::{MapEncoding, NormaliseConfig, NormalisePlan};
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use polars::prelude::*;
 use polars_jsonschema_bridge::deserialise::{schema_to_polars_fields, SchemaFormat};
@@ -523,13 +523,15 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
             wrap_root: wrap_root_field.clone(),
         };
 
+        // The schema is compiled once for all the rows
+        let plan = NormalisePlan::new(schema, &cfg, &std::collections::HashSet::new());
         let mut out = Vec::with_capacity(string_chunked.len());
         for s in string_chunked.iter() {
             let val = s
                 .and_then(|st| serde_json::from_str::<serde_json::Value>(st).ok())
                 .unwrap_or(serde_json::Value::Null);
 
-            let normed = normalise_values(vec![val], schema, &cfg).pop().unwrap();
+            let (normed, _) = plan.normalise(val);
             out.push(serde_json::to_string(&normed).unwrap());
         }
         out

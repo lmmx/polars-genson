@@ -3,6 +3,9 @@ use crate::value::object;
 use serde_json::{json, Value};
 use std::collections::HashSet;
 
+mod plan;
+pub use plan::NormalisePlan;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum MapEncoding {
@@ -482,6 +485,30 @@ pub fn normalise_values(values: Vec<Value>, schema: &Value, cfg: &NormaliseConfi
 /// Returns the rows and the removed values, each with its row, its path from the row's
 /// root (after `wrap_root`), and its input value.
 pub fn normalise_values_pruned(
+    values: Vec<Value>,
+    schema: &Value,
+    cfg: &NormaliseConfig,
+    prune: &HashSet<String>,
+) -> (Vec<Value>, Vec<PrunedValue>) {
+    let plan = NormalisePlan::new(schema, cfg, prune);
+    let mut pruned = Vec::new();
+    let rows = values
+        .into_iter()
+        .enumerate()
+        .map(|(row, v)| {
+            let (out, mut row_pruned) = plan.normalise(v);
+            row_pruned.iter_mut().for_each(|p| p.row = row);
+            pruned.append(&mut row_pruned);
+            out
+        })
+        .collect();
+    (rows, pruned)
+}
+
+/// [`normalise_values_pruned`] reading the schema for every value, without compiling it:
+/// the reference the compiled plan is tested against.
+#[doc(hidden)]
+pub fn normalise_values_pruned_by_schema(
     values: Vec<Value>,
     schema: &Value,
     cfg: &NormaliseConfig,
