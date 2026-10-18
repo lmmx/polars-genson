@@ -1,9 +1,9 @@
 # 2026-10-18 Learned indexes and the cost of `schema_hash`
 
 Whether a learned index (a Piecewise Geometric Model, PGM) applies to genson-core, and the
-per-row cost of `SchemaBuilder::schema_hash`, measured along the way. The scripts and the
-patch of the rejected experiment are in `2026-10-18-schema-hash-and-learned-indexes/` next
-to this entry.
+per-row cost of `SchemaBuilder::schema_hash`, measured along the way. The scripts, the
+patches of the two experiments not taken and the raw timings are in
+`2026-10-18-schema-hash-and-learned-indexes/` next to this entry.
 
 ## Current State
 
@@ -85,7 +85,58 @@ to this entry.
   which hashes the node tree and calls `to_schema()` for scalar leaves only — the scalar
   leaves are 96.2% of the nodes of rows200's row builders
 
+### Hashing scalar leaves without their schema value (branch `perf/schema-hash-scalar-leaves`)
+
+- On the branch, `BasicSchemaStrategy::hash_schema` feeds a scalar strategy without
+  keywords as `S`, `{"type":"`, the type name and `"}`, the bytes of `S` and the compact
+  serialisation of its schema, without building the schema value; a scalar with keywords
+  goes through `to_schema()` as at ac5129c (genson-core/src/genson_rs/strategy/mod.rs:158-170)
+- On the branch, `SchemaNode::hash_schema` feeds a node holding one strategy, other than a
+  typeless one, as `1` and that strategy's bytes, without the `Vec`s of `schema_order` —
+  the bytes the general path feeds for such a node (genson-core/src/genson_rs/node.rs:208-217)
+- `test_hash_schema_values_are_unchanged` pins the xxh64 that `hash_schema` gives over 2000
+  random batches, a fifth of them with a schema of keyworded scalars added, and one
+  `SchemaBuilder::schema_hash` value, both as at ac5129c (genson-core/src/tests/node.rs)
+- `test_scalar_hash_is_its_serialised_schema` compares the bytes a scalar strategy feeds
+  with `S` and `serde_json::to_writer` of its schema, for the five scalar types bare and
+  two scalars with keywords (genson-core/src/tests/node.rs)
+- `test_hash_schema_tells_keyworded_scalars_apart` checks that a `format` keyword
+  separates a string's hash from the bare string's and from another `format`'s, alone and
+  as a property, and that `integer` and `number` hash apart (genson-core/src/tests/node.rs)
+- The three tests pass at ac5129c (commit 8b59f30, before the change) and on the branch
+- `p2-tagged.diff` (against ac5129c) feeds a bare scalar as `s` and its type name, a byte
+  stream of its own, with the same `SchemaNode::hash_schema` change — under `p2-tagged.diff`,
+  `test_hash_schema_values_are_unchanged` and `test_scalar_hash_is_its_serialised_schema`
+  fail and `test_hash_schema_matches_schema_equality` passes
+- `stage_split.rs` on rows200, three runs of each build alternated, gives medians per pass
+  of 0.871 s in `schema_hash` at ac5129c (0.833–0.898 s), 0.320 s on the branch
+  (0.315–0.331 s) and 0.306 s with `p2-tagged.diff` (0.293–0.316 s); `to_tape` and
+  `add_object` stay within 3% of ac5129c, and the drop takes 0.105 s and 0.104 s against
+  0.112 s (timings.txt)
+- bench_claims, 5 rounds of 3 runs per build (n=15, `run_e2e.sh`, timings.txt), medians
+  of wall / CPU at ac5129c, on the branch, and with `p2-tagged.diff`:
+  - rows200 `WIKIDATA=1`: 2.31 s / 7.12 s, 2.04 s / 6.34 s, 2.12 s / 6.32 s
+  - rows200 default options: 1.75 s / 5.68 s, 1.49 s / 4.72 s, 1.57 s / 5.03 s
+  - labels: 0.170 s / 0.570 s, 0.140 s / 0.480 s, 0.150 s / 0.500 s
+  - narrow200k: 0.840 s / 2.700 s, 0.710 s / 2.270 s, 0.720 s / 2.300 s
+- The CPU medians on the branch are 11.0% (rows200 `WIKIDATA=1`), 16.9% (rows200 default),
+  15.8% (labels) and 15.9% (narrow200k) under those of ac5129c, and the CPU ranges of the
+  two builds overlap in all four cases (timings.txt)
+- An earlier round of the comparison, with `p1-predicted-slot.diff` applied as well (n=9),
+  gave rows200 CPU medians of 6.45 s against 6.86 s with `WIKIDATA=1` and 5.07 s against
+  5.56 s with default options
+- Every run of one corpus and set of options gives the same schema hash at ac5129c, on the
+  branch and with `p2-tagged.diff`
+- `process_json_strings_parallel` hashes a builder per string only with 10 or more strings
+  (`PARALLEL_THRESHOLD`, genson-core/src/schema.rs:22) — genson-cli reading a file without
+  `--pq-column` passes one string, so the sequential path calls no `schema_hash`
+- On the branch, `cargo test -F avro` in genson-core (160 passed, 2 ignored), `cargo test`
+  in genson-cli (181 passed, 11 ignored, no snapshot changes) and in polars-jsonschema-bridge
+  (37 passed), `cargo clippy -D warnings` on genson-core (all targets, `avro`) and
+  genson-cli, and `cargo fmt --check --all` pass
+
 ## Missing
 
-- No timing of bench_claims on a Wikidata chunk file, or of the Python plugin, in this entry
+- No timing of bench_claims on a Wikidata chunk file, or through the Python plugin
+- No run of the polars-genson-py test suite on the branch
 - No count of allocations per stage
