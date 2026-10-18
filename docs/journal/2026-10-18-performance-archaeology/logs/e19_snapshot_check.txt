@@ -1,0 +1,51 @@
+# check_snapshot_diffs.py genson-cli/tests/snapshots, after the required fix (INSTA_UPDATE=always cargo test -p genson-cli)
+claims_fixtures__claims_c0_p24_ddminv2__avro.snap: {'made nullable': 1}
+claims_fixtures__claims_c0_p24_ddminv2__jsonschema.snap: {'made nullable': 1, 'required entries removed': 1}
+claims_fixtures__claims_fixture_l3__avro.snap: {'made nullable': 2}
+claims_fixtures__claims_fixture_l3__jsonschema.snap: {'required removed': 1, 'required entries removed': 0}
+claims_fixtures__claims_fixture_l4__avro.snap: {'made nullable': 3}
+claims_fixtures__claims_fixture_l4__jsonschema.snap: {'made nullable': 1, 'required removed': 1, 'required entries removed': 1}
+claims_fixtures__claims_fixture_l4__normalize.snap: {'record of nulls -> null': 1}
+claims_fixtures__claims_fixture_x1818_l12_v2__avro.snap: {'made nullable': 2}
+claims_fixtures__claims_fixture_x1818_l12_v2__jsonschema.snap: {'required removed': 1, 'required entries removed': 0}
+claims_fixtures__claims_fixture_x1818_l14_v2__avro.snap: {'made nullable': 8}
+claims_fixtures__claims_fixture_x1818_l14_v2__jsonschema.snap: {'required removed': 2, 'required entries removed': 0}
+claims_fixtures__claims_fixture_x1818_l26__avro.snap: {'made nullable': 1}
+claims_fixtures__claims_fixture_x1818_l26__jsonschema.snap: {'made nullable': 1, 'required removed': 1, 'required entries removed': 0}
+claims_fixtures__claims_fixture_x1818_l26__normalize.snap: {'record of nulls -> null': 5}
+claims_fixtures__claims_fixture_x1818_l4__avro.snap: {'made nullable': 9}
+claims_fixtures__claims_fixture_x1818_l4__jsonschema.snap: {'required removed': 2, 'made nullable': 1, 'required entries removed': 5}
+claims_fixtures__claims_fixture_x1818_l4_v2__avro.snap: {'made nullable': 2}
+claims_fixtures__claims_fixture_x1818_l4_v2__jsonschema.snap: {'required removed': 1, 'required entries removed': 0}
+claims_fixtures__claims_fixture_x1818_l5__avro.snap: {'made nullable': 4, 'null type made optional': 1}
+claims_fixtures__claims_fixture_x1818_l5__jsonschema.snap: {'made nullable': 3, 'required removed': 1, 'required entries removed': 0}
+claims_fixtures__claims_fixture_x1818_l5__normalize.snap: {'record of nulls -> null': 18}
+claims_fixtures__claims_fixture_x1818_l5_v2__avro.snap: {'made nullable': 4, 'null type made optional': 1}
+claims_fixtures__claims_fixture_x1818_l5_v2__jsonschema.snap: {'made nullable': 3, 'required removed': 1, 'required entries removed': 0}
+claims_fixtures__claims_fixture_x1818_l5_v2__normalize.snap: {'record of nulls -> null': 9}
+unify_scalar__hex_string__scalar_unify__avro.snap: {'made nullable': 1}
+unify_scalar__hex_string__scalar_unify__json.snap: {'required removed': 1, 'required entries removed': 0}
+unify_scalar__rgb_integer__scalar_unify__avro.snap: {'made nullable': 1}
+unify_scalar__rgb_integer__scalar_unify__json.snap: {'required removed': 1, 'required entries removed': 0}
+wikidata_config__mixed__avro.snap: {'made nullable': 16}
+wikidata_config__mixed__jsonschema.snap: {'made nullable': 1, 'required removed': 3, 'required entries removed': 3}
+wikidata_config__x1818_l12__avro.snap: {'made nullable': 7}
+wikidata_config__x1818_l12__jsonschema.snap: {'required removed': 3, 'required entries removed': 0}
+wikidata_config__x1818_l14__avro.snap: {'made nullable': 8}
+wikidata_config__x1818_l14__jsonschema.snap: {'required removed': 2, 'required entries removed': 0}
+wikidata_config__x1818_l16__avro.snap: {'made nullable': 14}
+wikidata_config__x1818_l16__jsonschema.snap: {'required removed': 3, 'required entries removed': 0}
+wikidata_config__x1818_l26__avro.snap: {'made nullable': 16}
+wikidata_config__x1818_l26__jsonschema.snap: {'made nullable': 3, 'required removed': 1, 'required entries removed': 2}
+wikidata_config__x1818_l29__avro.snap: {'made nullable': 2}
+wikidata_config__x1818_l29__jsonschema.snap: {'required removed': 1, 'required entries removed': 0}
+wikidata_config__x1818_l4__avro.snap: {'made nullable': 13}
+wikidata_config__x1818_l4__jsonschema.snap: {'required removed': 2, 'required entries removed': 0}
+wikidata_config__x1818_l5__avro.snap: {'made nullable': 9}
+wikidata_config__x1818_l5__jsonschema.snap: {'made nullable': 1, 'required removed': 2, 'required entries removed': 1}
+wikidata_config__x30__avro.snap: {'made nullable': 24, 'null type made optional': 1}
+wikidata_config__x30__jsonschema.snap: {'made nullable': 3, 'required removed': 2, 'required entries removed': 2}
+wikidata_config__x4__avro.snap: {'made nullable': 10}
+wikidata_config__x4__jsonschema.snap: {'made nullable': 1, 'required removed': 1, 'required entries removed': 1}
+
+48 snapshots; explained: {'made nullable': 176, 'required entries removed': 16, 'required removed': 33, 'record of nulls -> null': 33, 'null type made optional': 3}; unexplained: 0

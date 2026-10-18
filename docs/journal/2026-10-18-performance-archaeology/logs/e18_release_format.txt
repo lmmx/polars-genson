@@ -1,0 +1,31 @@
+# release_chunk.py (wikidata-pq's dump.write_chunk) on Special:EntityData of 60 items, fetched 2026-10-18:
+# Q30 Q142 Q183 Q145 Q17 Q148 Q155 Q38 Q84 Q90 Q64 Q1741 Q60 Q1490 Q956 Q220 Q1085 Q42 Q1339 Q5582 Q937 Q7186 Q692 Q1035 Q255 Q762 Q9439 Q1048 Q859 Q868 Q12418 Q362 Q361 Q283 Q2 Q405 Q111 Q525 Q95 Q312 Q140 Q144 Q146 Q25188 Q47703 Q28865 Q2005 Q8023 Q517 Q1001 Q34266 Q6581097 Q5 Q515 Q6256 Q11173 Q7397 Q35120 Q215627 Q43229
+# then repro_wpq_required.py with WIKIDATA_RELEASE=20260928: 0.9.6 = wikidata-pq's locked env; base/fix = polars-genson-py at 36198dd without/with this branch's unification.rs (MAP_ENCODING=kv)
+## v096
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["snaktype", "property", "hash", "datatype", "datavalue", "datavalue_type"]}
+{"avro_record": "claims.claims{}[].mainsnak.datavalue", "non_nullable": ["entity-type", "numeric-id", "id", "datavalue__string", "precision", "amount", "unit", "upperBound", "lowerBound", "time", "timezone", "before", "after", "calendarmodel", "text", "language"]}
+{"typed_parquet_fields_all_nullable": true}
+{"polars_genson": "0.9.6", "polars": "1.44.2", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "d3272d17ab24d516"}
+{"raw": {"mainsnak": {"snaks": 33168, "no_datavalue": 33, "datavalue_without_precision": 16460, "datavalue_without_latitude": 16613, "datavalue_without_longitude": 16613}, "qualifier": {"snaks": 19860, "no_datavalue": 110, "datavalue_without_precision": 9300, "datavalue_without_latitude": 16271, "datavalue_without_longitude": 16271}, "reference": {"snaks": 29775, "no_datavalue": 0, "datavalue_without_latitude": 20014, "datavalue_without_longitude": 20014, "datavalue_without_precision": 13150}}}
+{"conformed": {"mainsnak": {"snaks": 33168, "precision_struct_of_nulls": 32869, "latitude_null": 33022, "longitude_null": 33022, "datavalue_struct_of_nulls": 33}, "qualifier": {"snaks": 19860, "precision_null": 12759, "latitude_null": 19730, "longitude_null": 19730, "datavalue_null": 110}, "reference": {"snaks": 29775, "precision_null": 22911, "latitude_null": 29775, "longitude_null": 29775}}}
+{"published_statements": 33168, "published_datavalue_is_null": 0}
+## vbase
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["snaktype", "property", "hash", "datatype", "datavalue", "datavalue_type"]}
+{"avro_record": "claims.claims{}[].mainsnak.datavalue", "non_nullable": ["entity-type", "numeric-id", "id", "datavalue__string", "precision", "amount", "unit", "upperBound", "lowerBound", "time", "timezone", "before", "after", "calendarmodel", "text", "language"]}
+{"typed_parquet_fields_all_nullable": true}
+{"polars_genson": "1.0.2", "polars": "2.0.0", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "d3272d17ab24d516"}
+{"raw": {"mainsnak": {"snaks": 33168, "no_datavalue": 33, "datavalue_without_precision": 16460, "datavalue_without_latitude": 16613, "datavalue_without_longitude": 16613}, "qualifier": {"snaks": 19860, "no_datavalue": 110, "datavalue_without_precision": 9300, "datavalue_without_latitude": 16271, "datavalue_without_longitude": 16271}, "reference": {"snaks": 29775, "no_datavalue": 0, "datavalue_without_latitude": 20014, "datavalue_without_longitude": 20014, "datavalue_without_precision": 13150}}}
+{"conformed": {"mainsnak": {"snaks": 33168, "precision_struct_of_nulls": 32869, "latitude_null": 33022, "longitude_null": 33022, "datavalue_struct_of_nulls": 33}, "qualifier": {"snaks": 19860, "precision_null": 12759, "latitude_null": 19730, "longitude_null": 19730, "datavalue_null": 110}, "reference": {"snaks": 29775, "precision_null": 22911, "latitude_null": 29775, "longitude_null": 29775}}}
+{"published_statements": 33168, "published_datavalue_is_null": 0}
+## vfix
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["snaktype", "property", "hash", "datatype"]}
+{"avro_record": "claims.claims{}[].mainsnak.datavalue", "non_nullable": []}
+{"typed_parquet_fields_all_nullable": true}
+{"polars_genson": "1.0.2", "polars": "2.0.0", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "d3272d17ab24d516"}
+{"raw": {"mainsnak": {"snaks": 33168, "no_datavalue": 33, "datavalue_without_precision": 16460, "datavalue_without_latitude": 16613, "datavalue_without_longitude": 16613}, "qualifier": {"snaks": 19860, "no_datavalue": 110, "datavalue_without_precision": 9300, "datavalue_without_latitude": 16271, "datavalue_without_longitude": 16271}, "reference": {"snaks": 29775, "no_datavalue": 0, "datavalue_without_latitude": 20014, "datavalue_without_longitude": 20014, "datavalue_without_precision": 13150}}}
+{"conformed": {"mainsnak": {"snaks": 33168, "precision_null": 32869, "latitude_null": 33022, "longitude_null": 33022, "datavalue_null": 33}, "qualifier": {"snaks": 19860, "precision_null": 12759, "latitude_null": 19730, "longitude_null": 19730, "datavalue_null": 110}, "reference": {"snaks": 29775, "precision_null": 22911, "latitude_null": 29775, "longitude_null": 29775}}}
+{"published_statements": 33168, "published_datavalue_is_null": 33}
+## compare_conformed.py, against claims_096
+{"file": "claims_096.parquet", "rows": 60, "against": "claims_096.parquet", "structs_of_nulls": 32935, "rows_differing": 0, "rows_differing_reading_structs_of_nulls_as_null": 0}
+{"file": "claims_base.parquet", "rows": 60, "against": "claims_096.parquet", "structs_of_nulls": 32935, "rows_differing": 0, "rows_differing_reading_structs_of_nulls_as_null": 0}
+{"file": "claims_fix.parquet", "rows": 60, "against": "claims_096.parquet", "structs_of_nulls": 0, "rows_differing": 60, "rows_differing_reading_structs_of_nulls_as_null": 0}
