@@ -104,9 +104,12 @@ fn promoted_scalar_matches(scalar: &Value, name: &str, has_int_field: bool) -> b
     }
 }
 
-/// The input value of a record's field `name`.
-fn field_value(value: &Value, name: &str, has_int_field: bool) -> Value {
+/// The input value of a record's field `name`: taken out of the record's input, or with
+/// `prune`, copied, leaving the input whole for the record to be recorded as it was if one
+/// of its fields is pruned.
+fn field_value(value: &mut Value, name: &str, has_int_field: bool, take: bool) -> Value {
     match value {
+        Value::Object(m) if take => m.remove(name).unwrap_or(Value::Null),
         Value::Object(m) => m.get(name).cloned().unwrap_or(Value::Null),
         scalar if promoted_scalar_matches(scalar, name, has_int_field) => scalar.clone(),
         _ => Value::Null,
@@ -317,6 +320,9 @@ fn normalise_inner(
                     return Outcome::Pruned(value);
                 }
                 let start = pruned.len();
+                // Nothing can be pruned without `prune`, so the input need not stay whole
+                let take = prune.is_empty();
+                let mut value = value;
                 for f in fields {
                     if let (Some(Value::String(name)), Some(field_schema)) =
                         (f.get("name"), f.get("type"))
@@ -324,7 +330,7 @@ fn normalise_inner(
                         if !prune.is_empty() && prune.contains(name) {
                             continue;
                         }
-                        let val = field_value(&value, name, has_int_field);
+                        let val = field_value(&mut value, name, has_int_field, take);
                         let field_start = pruned.len();
                         let normalised =
                             normalise_inner(val, field_schema, cfg, Some(name), prune, pruned);
