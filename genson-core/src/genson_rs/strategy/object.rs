@@ -462,10 +462,12 @@ impl ObjectStrategy {
     /// The part of `absorb` besides the child nodes: the keywords `add_extra_keywords`
     /// records from `other`'s schema, and the intersection of the `required` sets.
     fn absorb_keywords_and_required(&mut self, other: &mut ObjectStrategy) {
-        let keywords: Vec<(String, Value)> = other
-            .schema_keys()
-            .into_iter()
-            .map(|key| {
+        if let Value::Object(own) = &mut self.extra_keywords {
+            // Only a key this strategy has not recorded is added, so only those are built
+            for key in other.schema_keys() {
+                if own.contains_key(key) {
+                    continue;
+                }
                 let placeholder = match key {
                     "properties" | "patternProperties" | "additionalProperties"
                         if other.writes(key) || other.extra_keywords[key].is_object() =>
@@ -475,12 +477,7 @@ impl ObjectStrategy {
                     "required" => Value::Null,
                     _ => other.extra_keywords[key].clone(),
                 };
-                (key.to_string(), placeholder)
-            })
-            .collect();
-        if let Value::Object(own) = &mut self.extra_keywords {
-            for (key, placeholder) in keywords {
-                own.entry(key).or_insert(placeholder);
+                own.insert(key.to_string(), placeholder);
             }
         }
 
