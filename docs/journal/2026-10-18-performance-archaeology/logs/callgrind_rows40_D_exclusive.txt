@@ -1,0 +1,40 @@
+Ir                    file:function
+--------------------------------------------------------------------------------
+515,796,911 ( 7.28%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms 
+481,174,523 ( 6.79%)  serde_json-1.0.145/src/read.rs:<serde_json::read::SliceRead as serde_json::read::Read>::ignore_str 
+244,830,225 ( 3.45%)  simd-json-0.17.0/src/impls/avx2/deser.rs:simd_json::impls::avx2::deser::parse_str 
+183,972,719 ( 2.60%)  ./string/../sysdeps/x86_64/multiarch/memcmp-avx2-movbe.S:__memcmp_avx2_movbe 
+176,728,625 ( 2.49%)  simd-json-0.17.0/src/charutils.rs:simd_json::stringparse::handle_unicode_codepoint
+162,995,971 ( 2.30%)  xxhash-rust-0.8.15/src/xxh64.rs:<xxhash_rust::xxh64::Xxh64>::update 
+150,231,242 ( 2.12%)  core/src/slice/iter/macros.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_sc
+140,593,798 ( 1.98%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_zero_aligned_at 
+122,436,558 ( 1.73%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/include/mimalloc/internal.h:mi_free
+120,184,783 ( 1.70%)  core/src/ptr/non_null.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema:
+ 90,138,501 ( 1.27%)  genson-core/src/genson_rs/mod.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects
+ 84,310,541 ( 1.19%)  alloc/src/raw_vec/mod.rs:<alloc::raw_vec::RawVecInner>::finish_grow 
+ 83,709,725 ( 1.18%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/free.c:mi_free 
+ 83,569,747 ( 1.18%)  simd-json-0.17.0/src/lib.rs:<simd_json::Deserializer>::_find_structural_bits::<simd_json::impls::avx2::stage1::SimdInput> 
+ 82,711,163 ( 1.17%)  core/src/slice/memchr.rs:<core::iter::adapters::map::Map<core::iter::adapters::take::Take<std::io::Lines<std::io::buffered::bufreader::BufReader<std::fs::File>>>, <core::result::
+ 79,756,092 ( 1.13%)  serde_json-1.0.145/src/read.rs:genson_core::schema::validate_json
+ 79,083,956 ( 1.12%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value> 
+ 75,215,793 ( 1.06%)  simd-json-0.17.0/src/stage2.rs:<simd_json::Deserializer>::from_slice_with_buffers
+ 72,627,368 ( 1.02%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc.c:_mi_page_malloc 
+ 70,238,526 ( 0.99%)  core/src/hash/sip.rs:<core::hash::sip::Hasher<core::hash::sip::Sip13Rounds> as core::hash::Hasher>::write 
+ 65,060,378 ( 0.92%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/page.c:_mi_malloc_generic 
+ 63,863,800 ( 0.90%)  hashbrown-0.17.1/src/raw.rs:<hashbrown::raw::RawTable<usize>>::reserve_rehash::<indexmap::inner::get_hash<alloc::string::String, serde_json::value::Value>::{closure#0}> 
+ 63,849,915 ( 0.90%)  core/src/slice/memchr.rs:<core::str::iter::SplitInternal<char>>::next_inclusive
+ 58,195,198 ( 0.82%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_zero_aligned_at_generic 
+ 57,883,448 ( 0.82%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/page.c:_mi_page_free_collect 
+ 57,864,541 ( 0.82%)  simd-json-0.17.0/src/stringparse.rs:simd_json::stringparse::handle_unicode_codepoint 
+ 57,711,754 ( 0.81%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/page.c:mi_find_page 
+ 52,585,285 ( 0.74%)  core/src/str/validations.rs:core::str::converts::from_utf8
+ 49,884,606 ( 0.70%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_malloc_aligned 
+ 46,362,537 ( 0.65%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/free.c:mi_free_block_mt 
+ 44,020,454 ( 0.62%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::create_strategy_for_kind 
+ 42,237,995 ( 0.60%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2 
+ 40,815,279 ( 0.58%)  core/src/num/uint_macros.rs:<simd_json::impls::avx2::stage1::SimdInput as simd_json::Stage1Parse>::flatten_bits
+ 36,064,888 ( 0.51%)  core/src/../../stdarch/crates/core_arch/src/x86/avx2.rs:simd_json::impls::avx2::deser::parse_str
+ 35,095,055 ( 0.50%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value>'2 
+ 34,437,888 ( 0.49%)  core/src/slice/index.rs:simd_json::impls::avx2::deser::parse_str
+ 33,764,503 ( 0.48%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema 
+ 33,671,572 ( 0.47%)  core/src/hash/sip.rs:<str as serde_json::value::index::Index>::index_or_insert

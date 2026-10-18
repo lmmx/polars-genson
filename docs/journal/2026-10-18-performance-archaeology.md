@@ -119,16 +119,138 @@ changed by this work.
   is a nullable type in the unified schema and a non-required, non-nullable one in the
   built schema
 
+- genson-cli on rows200 as a Parquet column (`--pq-column claims`, one string per row)
+  with wikidata-pq's claims options (`WIKIDATA_ARGS` of genson-cli/tests/wikidata_config.rs
+  and `--max-builders 100`) gives the same 10,040 of 64,293 violations at master and 0
+  with `proto_required.py`
+- Under those options the Avro schema at master (`--avro`) makes all 20 fields of the
+  mainsnak `datavalue` record and the `datavalue` field of `mainsnak` non-nullable; with
+  `proto_required.py` none of the 20 and not `datavalue` (logs/production_options.txt)
+- `normalise_inner` fills a record field missing from its input with `null`
+  (`field_value`, genson-core/src/normalise.rs:108-114), so rows normalised against the
+  master schema hold nulls in fields that schema declares non-nullable
+- The W schema inferred from the first 1, 2, 5, 10, 20 or 50 rows of rows200 has the same
+  11 map paths as the one inferred from all 200, and no others (`map_stability.py`)
+- Issue #50 (2025-09-06) suspects that merging schemas in map inference marks every field
+  required; issue #110 records `__integer`/`__number` promotion as the chosen form for
+  mixed integer and float values
+
+### Instruction counts (callgrind, one thread)
+
+- Release builds keep no symbols (`strip = "symbols"`, Cargo.toml); the profiles below
+  use builds with `CARGO_PROFILE_RELEASE_STRIP=none CARGO_PROFILE_RELEASE_DEBUG=line-tables-only`
+  and `RAYON_NUM_THREADS=1`
+- labels D (1.95G instructions): `absorb_all` (the chunk merge) 48.5% inclusive, within
+  which `BasicSchemaStrategy::to_schema` 10.1% (a scalar merges through
+  `strategy.add_schema(&other.to_schema())`, genson-core/src/genson_rs/strategy/mod.rs) and
+  `absorb_keywords_and_required` 12.2%; `schema_hash` 17.0%, of which `Xxh64::update` 8.6%
+  over 3.5M writes; `validate_json` 4.7%; simd-json parsing 6.2%
+- rows200, first 40 rows, D (7.09G): chunk merge 25.8%, build (`ObjectStrategy::add_object`)
+  19.2%, simd-json 15.1%, `validate_json` 9.9%, `schema_hash` 8.6%, final `to_schema` 6.8%,
+  dropping `Value`s 4.6%, `rewrite_objects` 3.2%
+- rows200, first 40 rows, W (13.66G): `check_unifiable_schemas` 46.5% inclusive (on rayon
+  jobs, outside `rewrite_objects`' own 8.3%), dropping `Value`s 8.3%, `unified_values`
+  7.3%, merge 13.4%, build 10.0%, simd-json 7.9%
+- `serde_json` serialisation into `Vec<u8>` takes 1.76G instructions (12.9%) of the W run,
+  from 26,531 top-level calls: `check_unifiable_schemas` passes
+  `serde_json::to_string(schema)` for every input schema to `debug_verbose!`
+  (genson-core/src/schema/map_inference/unification.rs:686-695), and the macro expands to
+  `$cfg.debug_verbose(format_args!(...))`, which evaluates its arguments before
+  `debug_verbose` checks `self.debug` (genson-core/src/schema/core.rs:82-95, 164-175); the
+  same holds at unification.rs:271-277 (each array's items) and 784-791
+- `proto_lazy_debug.py` checks `$cfg.debug` in both macros before building the arguments:
+  `rewrite_objects` on rows200 W takes 0.31–0.34 s against 0.43–0.44 s warm (user 0.76–0.80 s
+  against 0.98–0.99 s), with the same schema hash (logs/e6_lazy_debug.txt)
+
 ### Per-string preparation
 
 - `prepare_json_bytes` checks UTF-8 with `std::str::from_utf8` on input that is already a
   `&str`, and parses each document with serde_json (`IgnoredAny`) to validate it before
   simd-json parses it again (genson-core/src/schema.rs:159-216); the stage takes 0.38–0.51
   thread-s per warm run on rows200 W
+- `proto_no_validate.py` (upper bound: no serde validation, simd-json the only parse) takes
+  the stage from 0.30 to 0.03 thread-s on rows200 D and from 0.47 to 0.11 on rows200 W
+  (the rest is the `wrap_root` copy), total wall 1.50 → 1.38 s (D), 2.09 → 1.66 s (W) and
+  0.161 → 0.130 s (labels), with the same schema hashes (logs/e8_merge_scalar_validate.txt)
+  — issue #194 item 4c proposes letting simd-json validate and falling back to serde on
+  failure only
+
+### Merge of a scalar
+
+- `proto_merge_scalar.py` merges a scalar with no keywords into one of its kind without
+  `to_schema()` (a no-op, but for `number` over `integer`): chunk merge 0.113 → 0.090 s
+  (labels), 0.513 → 0.391 s (rows200 D), 0.444 → 0.354 s (rows200 W), same schema hashes
+  (logs/e8_merge_scalar_validate.txt)
+
+### Folding, corrected
+
+- The first version of `proto_fold.py` gave each worker's builder the AUTO `$schema`
+  handling, so every merge of workers' builders after the first went through
+  `SchemaBuilder::add_builder`'s `self.add_schema(other.to_schema())` branch
+  (genson-core/src/genson_rs/builder.rs:97-108), which drops an empty `required` set —
+  the rows200 D difference of the first version was one `required` list
+  (`P832/items/qualifiers`, `["P828", "P837"]`) that 1 of its 5 objects violates; the
+  production path merges with `add_builders`, which does not take that branch
+- With workers' builders that have no `$schema` (NULL, as
+  `build_multi_json_objects_schema`'s), the fold gives master's schema hash on rows200 W
+  and D (3 of 3 runs on 4 threads each), narrow200k and the collapsed corpus; on one thread
+  rows200 D and on 4 threads labels give equal JSON values with keywords in another order
+  (`type, properties, required` against master's `properties, required, type`)
+- Warm wall, fold against master (logs/e4_fold_v2.txt): narrow200k 0.110 s against 0.941 s,
+  labels 0.032 s against 0.143 s, rows200 W 2.08 s against 2.03 s (CPU 5.42 against 6.67 s,
+  page faults 71K against 148K per run, cold 2.54 against 3.23 s), rows200 D 1.70 against
+  1.55 s (CPU 4.37 against 5.23 s), collapsed corpus 0.262 against 0.296 s
+- `absorb_keywords_and_required` records each merged object's keyword order as placeholder
+  extra keywords so that the output's keyword order follows the `add_schema(to_schema())`
+  semantics (genson-core/src/genson_rs/strategy/object.rs:464-500); it is 12.2% of labels'
+  instructions, and the 2026-10-08 entry measured 28 genson-cli snapshots failing under a
+  canonical keyword order
+
+### Normalisation
+
+- polars-genson-py's `normalise_from_parquet` parses each row with `serde_json::from_str`,
+  normalises it with `normalise_values_pruned` into a new `Value`, and then either
+  serialises it (`serde_json::to_string`) or, with `typed`, converts all rows with
+  `values_to_struct_array` (polars-genson-py/src/parquet_io.rs:309-412)
+- `bench_normalise.rs` runs that row loop on one thread against the Avro schema genson-cli
+  infers for rows200 under wikidata-pq's options: parse 1.0–1.6 s, normalise 6.5–11.7 s,
+  serialise 0.7–1.7 s, and `values_to_struct_array` 4.1 s, against 4.7–6.7 CPU-s for
+  inferring the schema on 4 threads (logs/e7_normalise.txt)
+- callgrind on its first 20 rows: `normalise_inner` 68.6% inclusive, of which
+  `IndexMap::insert_full` (building the output objects, `serde_json`'s map under
+  `preserve_order`) 31.1%, SipHash of keys 12.1%, and dropping `Value`s 12.5%
+  (logs/callgrind_norm20_*.txt)
+- The record branch reads each field with `field_value`, `m.get(name).cloned()`
+  (genson-core/src/normalise.rs:108-114), copying the field's subtree out of an input it
+  owns; issue #72 proposes normalising in place
+- `proto_norm_move.py` takes each field out of the owned input (`Map::remove`) when no
+  field is pruned: 3.97G against 4.49G instructions for the 20-row run, the normalise
+  stage 4.4 s against 7.4 s median wall on 200 rows, with the same output hash
+  (logs/e7_normalise_ir.txt, logs/e7_normalise.txt)
+
+- `bench_norm_floor.rs` parses each rows200 row with simd-json's tape and walks it once,
+  appending every string (keys and values, 9,101,382 strings, 201 MB) to an Arrow
+  `StringBuilder`: 0.54–0.59 s parse and 0.19–0.21 s walk on one thread
+  (logs/e9_norm_floor.txt); rows200 holds 19,432 values that are not strings
+
+## Measured and not kept
+
+- `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
+  a `Value::String` per comparison: 4.486G against 4.490G instructions (20 rows); the
+  wall-time differences of single runs are within the run-to-run spread
+- `bench_arrow_json.rs` (arrow-json decoding the raw rows into Arrow with arrow-json's own
+  inferred schema, as a bound on one pass from JSON text to Arrow) stops at schema
+  inference: "Incompatible type found during schema inference", the `datavalue` that is an
+  object in some snaks and a string in others
+- Key interning: issue #133 records an interning attempt with lasso that was reverted
 
 ## Missing
 
-- No breakdown of the chunk merge by function
-- No measurement under wikidata-pq's own claims options (`--force-type mainsnak:record`,
-  `--force-scalar-promotion`, `--no-unify qualifiers`), which bench_claims does not take
-- No run of `proto_required.py` against the genson-cli snapshot suites
+- No timing on a Wikidata chunk file (`chunk_*.parquet`) or of Parquet reading and writing:
+  the corpora are rows200, labels and narrow200k
+- No normaliser writing to Arrow from the tape: the floor above is a walk that appends
+  strings, without schema dispatch, nested builders or null buffers
+- No measurement of `ListStrategy::add_object`'s parallel fold over arrays of 10 or more
+  items (genson-core/src/genson_rs/strategy/array.rs:95-130) inside the parallel phase
+- No combined measurement of the four small fixes (lazy debug macros, scalar merge,
+  lazy validation, purge delay)

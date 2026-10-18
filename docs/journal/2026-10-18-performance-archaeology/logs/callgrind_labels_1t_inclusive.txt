@@ -1,0 +1,80 @@
+Ir                      file:function
+--------------------------------------------------------------------------------
+2,753,012,289 (140.9%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc:
+2,267,971,987 (116.0%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::genson_r
+2,267,571,622 (116.0%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::gens
+1,959,243,978 (100.2%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::slic
+1,959,231,978 (100.2%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::
+1,959,230,598 (100.2%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::stri
+1,872,511,190 (95.80%)  ./nptl/./nptl/pthread_create.c:start_thread 
+1,872,510,427 (95.80%)  std/src/sys/thread/unix.rs:<std::sys::thread::unix::Thread>::new::thread_start 
+1,872,507,134 (95.80%)  alloc/src/boxed.rs:<std::sys::thread::unix::Thread>::new::thread_start
+1,872,507,132 (95.80%)  core/src/ops/function.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closure#1
+1,872,507,105 (95.80%)  std/src/thread/lifecycle.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closur
+1,872,506,539 (95.80%)  std/src/sys/backtrace.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()> 
+1,872,506,538 (95.80%)  rayon-core-1.13.0/src/registry.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure
+1,872,506,537 (95.80%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::ThreadBuilder>::run 
+1,872,499,937 (95.80%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::WorkerThread>::wait_until_cold 
+1,872,384,346 (95.80%)  rayon-core-1.13.0/src/job.rs:<rayon_core::registry::WorkerThread>::wait_until_cold
+1,376,674,021 (70.43%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc::vec
+1,375,871,502 (70.39%)  genson-core/src/genson_rs/strategy/object.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode,
+  979,632,424 (50.12%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::stri
+  979,631,889 (50.12%)  rayon-core-1.13.0/src/job.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_core::
+  979,630,779 (50.12%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_c
+  979,630,549 (50.12%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::slic
+  979,629,514 (50.12%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string::
+  979,628,549 (50.12%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::
+  979,618,019 (50.12%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string::
+  974,403,699 (49.85%)  genson-core/src/schema.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string::String>>
+  948,254,072 (48.52%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all 
+  891,354,915 (45.60%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc:
+  891,353,816 (45.60%)  rayon-core-1.13.0/src/job.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_core::
+  891,353,025 (45.60%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc::vec
+  891,352,836 (45.60%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_c
+  891,352,646 (45.60%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::genson_r
+  891,351,096 (45.60%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::gens
+  540,075,301 (27.63%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_json_schema_into 
+  540,036,301 (27.63%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_multi_json_objects_schema 
+  539,790,459 (27.62%)  rayon-1.11.0/src/iter/plumbing/mod.rs:genson_core::genson_rs::build_multi_json_objects_schema
+  539,788,459 (27.62%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_
+  511,799,982 (26.19%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb 
+  502,844,531 (25.73%)  rayon-1.11.0/src/split_producer.rs:<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema::{closure#0}, &mut > as rayon::iter::plumbing::
+  502,811,531 (25.73%)  rayon-1.11.0/src/iter/fold.rs:<rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt_red
+  502,759,531 (25.72%)  genson-core/src/genson_rs/mod.rs:<rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt_
+  502,738,531 (25.72%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_single_json_object_schema 
+  485,511,244 (24.84%)  rayon-1.11.0/src/iter/plumbing/mod.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all
+  484,558,517 (24.79%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all'2 
+  380,489,432 (19.47%)  genson-core/src/genson_rs/builder.rs:genson_core::genson_rs::build_single_json_object_schema
+  380,483,432 (19.47%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::add_object 
+  380,080,818 (19.45%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::node::SchemaNode>::add_object
+  380,065,818 (19.45%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::add_object 
+  379,628,834 (19.42%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2 
+  346,690,261 (17.74%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2 
+  333,321,305 (17.05%)  genson-core/src/genson_rs/builder.rs:<genson_core::genson_rs::builder::SchemaBuilder>::schema_hash 
+  333,067,795 (17.04%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::hash_schema::<xxhash_rust::xxh64::Xxh64> 
+  332,933,795 (17.03%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64> 
+  318,859,901 (16.31%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2 
+  292,414,335 (14.96%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_strategy 
+  283,277,576 (14.49%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb 
+  270,074,262 (13.82%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>
+  259,072,468 (13.25%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all
+  254,087,761 (13.00%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2
+  250,400,406 (12.81%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::add_object'2 
+  244,267,806 (12.50%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_malloc_aligned 
+  237,392,512 (12.15%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy>::absorb_keywords_and_required 
+  221,635,840 (11.34%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned 
+  219,243,821 (11.22%)  alloc/src/raw_vec/mod.rs:<alloc::raw_vec::RawVecInner>::finish_grow 
+  216,746,705 (11.09%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms 
+  211,936,426 (10.84%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned_at 
+  202,243,649 (10.35%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_zero_aligned_at 
+  197,151,394 (10.09%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema 
+  180,026,793 ( 9.21%)  mimalloc-0.1.48/src/lib.rs:<alloc::raw_vec::RawVecInner>::finish_grow
+  167,322,709 ( 8.56%)  xxhash-rust-0.8.15/src/xxh64.rs:<xxhash_rust::xxh64::Xxh64>::update 
+  152,497,022 ( 7.80%)  serde_json-1.0.145/src/value/index.rs:<str as serde_json::value::index::Index>::index_or_insert 
+  151,991,809 ( 7.78%)  serde_json-1.0.145/src/value/index.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema
+  137,021,955 ( 7.01%)  xxhash-rust-0.8.15/src/xxh64.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2
+  125,784,992 ( 6.44%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2
+  122,106,733 ( 6.25%)  simd-json-0.17.0/src/lib.rs:genson_core::genson_rs::build_single_json_object_schema
+  122,105,733 ( 6.25%)  simd-json-0.17.0/src/lib.rs:<simd_json::Deserializer>::from_slice 
+  120,208,644 ( 6.15%)  simd-json-0.17.0/src/lib.rs:<simd_json::Deserializer>::from_slice_with_buffers 
+  118,238,350 ( 6.05%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/free.c:mi_free 

@@ -1,0 +1,45 @@
+[time] labels.ndjson D: 1 process(es) x 5 runs; output hashes {'22f8e5cfb8ce1ca5'}
+[time]   chunk.parallel         warm wall=0.041 user=0.142 sys=0.000 faults=230   cold 0.1354s
+[time]   chunk.merge            warm wall=0.113 user=0.380 sys=0.003 faults=139   cold 0.1185s
+[time]   row.prep               warm thread_s=0.010   cold 0.0114s
+[time]   total                  warm wall=0.161 user=0.536 sys=0.005 faults=466   cold 0.2578s
+[mscalar] labels.ndjson D: 1 process(es) x 5 runs; output hashes {'22f8e5cfb8ce1ca5'}
+[mscalar]   chunk.parallel         warm wall=0.034 user=0.125 sys=0.000   cold 0.0461s
+[mscalar]   chunk.merge            warm wall=0.090 user=0.312 sys=0.000 faults=63   cold 0.0894s
+[mscalar]   row.prep               warm thread_s=0.009   cold 0.0092s
+[mscalar]   total                  warm wall=0.127 user=0.436 sys=0.000 faults=140   cold 0.1387s
+[novalid] labels.ndjson D: 1 process(es) x 5 runs; output hashes {'22f8e5cfb8ce1ca5'}
+[novalid]   chunk.parallel         warm wall=0.031 user=0.110 sys=0.000 faults=0   cold 0.0322s
+[novalid]   chunk.merge            warm wall=0.097 user=0.329 sys=0.006 faults=144   cold 0.0953s
+[novalid]   row.prep               warm thread_s=0.001   cold 0.0013s
+[novalid]   total                  warm wall=0.130 user=0.443 sys=0.006 faults=224   cold 0.1306s
+[time] rows200.ndjson D: 1 process(es) x 5 runs; output hashes {'b044387a11c95954'}
+[time]   chunk.parallel         warm wall=0.757 user=2.160 sys=0.550 faults=154,788   cold 1.912s
+[time]   chunk.merge            warm wall=0.513 user=1.837 sys=0.054 faults=685   cold 0.4596s
+[time]   row.prep               warm thread_s=0.303   cold 0.2861s
+[time]   total                  warm wall=1.502 user=4.247 sys=0.743 faults=161,460   cold 2.983s
+[mscalar] rows200.ndjson D: 1 process(es) x 5 runs; output hashes {'b044387a11c95954'}
+[mscalar]   chunk.parallel         warm wall=0.753 user=2.095 sys=0.673 faults=153,563   cold 0.7937s
+[mscalar]   chunk.merge            warm wall=0.391 user=1.355 sys=0.045 faults=615   cold 0.3935s
+[mscalar]   row.prep               warm thread_s=0.294   cold 0.3029s
+[mscalar]   total                  warm wall=1.333 user=3.670 sys=0.792 faults=160,716   cold 1.783s
+[novalid] rows200.ndjson D: 1 process(es) x 5 runs; output hashes {'b044387a11c95954'}
+[novalid]   chunk.parallel         warm wall=0.633 user=1.835 sys=0.604 faults=163,059   cold 0.7806s
+[novalid]   chunk.merge            warm wall=0.490 user=1.769 sys=0.044 faults=588   cold 0.4168s
+[novalid]   row.prep               warm thread_s=0.031   cold 0.03s
+[novalid]   total                  warm wall=1.384 user=3.892 sys=0.775 faults=167,950   cold 1.822s
+[time] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[time]   chunk.parallel         warm wall=0.975 user=2.152 sys=1.448 faults=131,754   cold 0.7098s
+[time]   chunk.merge            warm wall=0.444 user=1.682 sys=0.028 faults=486   cold 0.4962s
+[time]   row.prep               warm thread_s=0.470   cold 0.3827s
+[time]   total                  warm wall=2.094 user=4.940 sys=1.719 faults=149,537   cold 2.247s
+[mscalar] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[mscalar]   chunk.parallel         warm wall=0.998 user=2.265 sys=1.471 faults=104,971   cold 0.7962s
+[mscalar]   chunk.merge            warm wall=0.354 user=1.347 sys=0.020 faults=485   cold 0.353s
+[mscalar]   row.prep               warm thread_s=0.468   cold 0.4009s
+[mscalar]   total                  warm wall=1.914 user=4.606 sys=1.664 faults=120,254   cold 1.939s
+[novalid] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[novalid]   chunk.parallel         warm wall=0.626 user=1.841 sys=0.503 faults=112,402   cold 0.8218s
+[novalid]   chunk.merge            warm wall=0.418 user=1.584 sys=0.026 faults=451   cold 0.4179s
+[novalid]   row.prep               warm thread_s=0.110   cold 0.1177s
+[novalid]   total                  warm wall=1.657 user=4.545 sys=0.730 faults=127,540   cold 2.192s

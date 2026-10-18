@@ -5,6 +5,9 @@ the distinct ones merged per chunk of `max_builders`) with one `try_fold` over a
 each worker adds its strings' documents straight into its own builder with `add_object`,
 and the workers' builders are merged at the end. No per-string tree, no row hash, no
 chunks. Forced map fields and `processed_count` are not handled (the corpora use neither).
+The workers' builders have no `$schema` (NULL), so that they merge by their nodes: with
+the AUTO handling, every merge after the first goes through `add_schema(to_schema())`,
+which drops an empty `required` (a first version of this prototype did that).
 
 Apply after acct_patch.py. Usage: python proto_fold.py <checkout>
 """
@@ -31,7 +34,9 @@ fold = """    let _ = (chunk_size, forces_maps);
         .par_iter()
         .enumerate()
         .try_fold(
-            || get_builder(config.schema_uri.as_deref()),
+            // No `$schema` of their own (NULL), as build_multi_json_objects_schema's fold
+            // builders: merged by their nodes, never through a schema value
+            || SchemaBuilder::new(None),
             |mut b, (i, json_str)| -> Result<SchemaBuilder, String> {
                 let prepared =
                     acct::row(0, || prepare_json_bytes(json_str.as_ref().as_bytes(), i, config))?;

@@ -1,0 +1,40 @@
+Ir                    file:function
+--------------------------------------------------------------------------------
+216,746,705 (11.09%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms 
+ 89,778,526 ( 4.59%)  xxhash-rust-0.8.15/src/xxh64.rs:<xxhash_rust::xxh64::Xxh64>::update 
+ 56,186,803 ( 2.87%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_zero_aligned_at 
+ 52,144,252 ( 2.67%)  serde_json-1.0.145/src/read.rs:<serde_json::read::SliceRead as serde_json::read::Read>::ignore_str 
+ 48,714,309 ( 2.49%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/include/mimalloc/internal.h:mi_free
+ 40,549,485 ( 2.07%)  ./string/../sysdeps/x86_64/multiarch/memcmp-avx2-movbe.S:__memcmp_avx2_movbe 
+ 34,925,743 ( 1.79%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/free.c:mi_free 
+ 29,950,668 ( 1.53%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc.c:_mi_page_malloc 
+ 28,735,674 ( 1.47%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value> 
+ 27,735,457 ( 1.42%)  core/src/hash/sip.rs:<core::hash::sip::Hasher<core::hash::sip::Sip13Rounds> as core::hash::Hasher>::write 
+ 25,845,774 ( 1.32%)  alloc/src/raw_vec/mod.rs:<alloc::raw_vec::RawVecInner>::finish_grow 
+ 24,202,466 ( 1.24%)  simd-json-0.17.0/src/impls/avx2/deser.rs:simd_json::impls::avx2::deser::parse_str 
+ 21,427,659 ( 1.10%)  simd-json-0.17.0/src/stage2.rs:<simd_json::Deserializer>::from_slice_with_buffers
+ 20,181,429 ( 1.03%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::create_strategy_for_kind 
+ 19,838,579 ( 1.01%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/page.c:_mi_malloc_generic 
+ 19,398,828 ( 0.99%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_malloc_aligned 
+ 17,610,287 ( 0.90%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/page.c:mi_find_page 
+ 17,357,746 ( 0.89%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_zero_aligned_at_generic 
+ 16,161,320 ( 0.83%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy>::absorb_keywords_and_required 
+ 15,725,597 ( 0.80%)  serde_json-1.0.145/src/read.rs:genson_core::schema::validate_json
+ 15,480,835 ( 0.79%)  hashbrown-0.17.1/src/raw.rs:<hashbrown::raw::RawTable<usize>>::reserve_rehash::<indexmap::inner::get_hash<alloc::string::String, serde_json::value::Value>::{closure#0}> 
+ 15,320,949 ( 0.78%)  core/src/slice/iter/macros.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_sc
+ 13,224,591 ( 0.68%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/page.c:_mi_page_free_collect 
+ 12,251,518 ( 0.63%)  core/src/ptr/non_null.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema:
+ 11,624,113 ( 0.59%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/include/mimalloc/internal.h:mi_heap_malloc_zero_aligned_at
+ 11,236,108 ( 0.57%)  core/src/iter/adapters/chain.rs:<core::iter::adapters::chain::Chain<core::iter::adapters::filter::Filter<core::iter::adapters::map::Map<serde_json::map::Keys, <alloc::string::Str
+ 11,062,065 ( 0.57%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2 
+ 10,853,224 ( 0.56%)  serde_json-1.0.145/src/map.rs:<serde_json::map::Entry>::or_insert 
+ 10,743,247 ( 0.55%)  hashbrown-0.17.1/src/raw.rs:<hashbrown::raw::RawTable<usize>>::reserve_rehash::<indexmap::inner::get_hash<alloc::string::String, genson_core::genson_rs::node::SchemaNode>::{closu
+ 10,733,528 ( 0.55%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::get_index_of::<str> 
+ 10,531,632 ( 0.54%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema 
+  9,955,202 ( 0.51%)  /rust/deps/hashbrown-0.17.1/src/raw.rs:<hashbrown::raw::RawTable<(alloc::string::String, ())>>::reserve_rehash::<hashbrown::map::make_hasher<alloc::string::String, (), rustc_hash
+  9,946,464 ( 0.51%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb 
+  9,939,634 ( 0.51%)  core/src/slice/cmp.rs:<core::iter::adapters::chain::Chain<core::iter::adapters::filter::Filter<core::iter::adapters::map::Map<serde_json::map::Keys, <alloc::string::String>::as_s
+  9,930,753 ( 0.51%)  indexmap-2.14.2/src/inner.rs:<indexmap::inner::Core<alloc::string::String, genson_core::genson_rs::node::SchemaNode>>::push_entry 
+  9,699,414 ( 0.50%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned 
+  9,699,414 ( 0.50%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned_at 
+  9,481,770 ( 0.49%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2 

@@ -1,0 +1,80 @@
+Ir                      file:function
+--------------------------------------------------------------------------------
+8,687,062,139 (122.5%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb'2 
+8,427,416,420 (118.9%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::slic
+8,427,415,220 (118.9%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::
+8,427,415,082 (118.9%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::stri
+8,111,205,255 (114.4%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_strategy'2 
+8,027,637,223 (113.2%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb'2 
+7,467,564,572 (105.3%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2 
+7,151,742,212 (100.9%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2
+6,547,106,184 (92.36%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc:
+6,267,271,751 (88.41%)  ./nptl/./nptl/pthread_create.c:start_thread 
+6,267,270,988 (88.41%)  std/src/sys/thread/unix.rs:<std::sys::thread::unix::Thread>::new::thread_start 
+6,267,267,695 (88.41%)  alloc/src/boxed.rs:<std::sys::thread::unix::Thread>::new::thread_start
+6,267,267,693 (88.41%)  core/src/ops/function.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closure#1
+6,267,267,666 (88.41%)  std/src/thread/lifecycle.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closur
+6,267,267,100 (88.41%)  std/src/sys/backtrace.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()> 
+6,267,267,099 (88.41%)  rayon-core-1.13.0/src/registry.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure
+6,267,267,098 (88.41%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::ThreadBuilder>::run 
+6,267,260,498 (88.41%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::WorkerThread>::wait_until_cold 
+6,266,976,602 (88.40%)  rayon-core-1.13.0/src/job.rs:<rayon_core::registry::WorkerThread>::wait_until_cold
+5,691,401,438 (80.29%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb'2
+5,090,222,219 (71.80%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::genson_r
+5,090,162,854 (71.80%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::gens
+4,567,301,125 (64.43%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::add_object'2 
+4,213,709,225 (59.44%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::stri
+4,213,709,200 (59.44%)  rayon-core-1.13.0/src/job.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_core::
+4,213,709,089 (59.44%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_c
+4,213,709,066 (59.44%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::slic
+4,213,708,934 (59.44%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string::
+4,213,708,866 (59.44%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::
+4,213,707,813 (59.44%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string::
+4,202,324,208 (59.28%)  genson-core/src/genson_rs/strategy/object.rs:genson_core::genson_rs::strategy::object::absorb_properties'2 
+4,194,725,941 (59.17%)  genson-core/src/schema.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string::String>>
+3,766,056,798 (53.13%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2 
+3,708,486,009 (52.31%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2 
+3,281,542,222 (46.29%)  genson-core/src/genson_rs/strategy/object.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode,
+3,265,388,709 (46.06%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc::vec
+3,189,339,753 (44.99%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::to_schema'2 
+3,077,686,552 (43.42%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema'2 
+2,791,969,360 (39.38%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_json_schema_into 
+2,791,967,800 (39.38%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_multi_json_objects_schema 
+2,791,954,882 (39.38%)  rayon-1.11.0/src/iter/plumbing/mod.rs:genson_core::genson_rs::build_multi_json_objects_schema
+2,791,954,802 (39.38%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_
+2,431,392,876 (34.30%)  rayon-1.11.0/src/split_producer.rs:<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema::{closure#0}, &mut > as rayon::iter::plumbing::
+2,431,391,556 (34.30%)  rayon-1.11.0/src/iter/fold.rs:<rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt_red
+2,431,389,476 (34.30%)  genson-core/src/genson_rs/mod.rs:<rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt_
+2,431,388,636 (34.30%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_single_json_object_schema 
+2,234,947,206 (31.53%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all'2 
+1,933,516,896 (27.27%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2
+1,893,703,172 (26.71%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb 
+1,854,158,090 (26.16%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::to_schema'2 
+1,826,857,294 (25.77%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all 
+1,824,841,731 (25.74%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc:
+1,824,841,589 (25.74%)  rayon-core-1.13.0/src/job.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_core::
+1,824,841,542 (25.74%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc::vec
+1,824,841,491 (25.74%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_c
+1,824,841,472 (25.74%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::genson_r
+1,824,841,317 (25.74%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::gens
+1,762,660,713 (24.86%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_strategy 
+1,753,711,201 (24.74%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb 
+1,676,793,454 (23.65%)  genson-core/src/genson_rs/node.rs:genson_core::genson_rs::strategy::object::absorb_properties'2
+1,639,636,124 (23.13%)  genson-core/src/genson_rs/strategy/array.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb'2
+1,584,739,345 (22.35%)  genson-core/src/genson_rs/strategy/object.rs:genson_core::genson_rs::strategy::object::absorb_properties 
+1,496,419,469 (21.11%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&alloc::string::String, &mut serde_json::value::Value
+1,456,953,277 (20.55%)  rayon-1.11.0/src/iter/plumbing/mod.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all'2
+1,409,452,089 (19.88%)  genson-core/src/genson_rs/strategy/array.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb
+1,359,224,090 (19.17%)  genson-core/src/genson_rs/builder.rs:genson_core::genson_rs::build_single_json_object_schema
+1,359,223,850 (19.17%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::add_object 
+1,359,207,053 (19.17%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::node::SchemaNode>::add_object
+1,359,206,453 (19.17%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::add_object 
+1,355,820,310 (19.13%)  genson-core/src/genson_rs/strategy/array.rs:<genson_core::genson_rs::strategy::array::ListStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::add_object 
+1,216,056,511 (17.15%)  genson-core/src/genson_rs/strategy/array.rs:<genson_core::genson_rs::strategy::array::ListStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::add_object'2 
+1,142,949,400 (16.12%)  genson-core/src/schema/map_inference.rs:genson_core::schema::map_inference::rewrite_objects'2 
+1,104,811,965 (15.58%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema 
+1,072,111,106 (15.12%)  simd-json-0.17.0/src/lib.rs:genson_core::genson_rs::build_single_json_object_schema
+1,072,111,066 (15.12%)  simd-json-0.17.0/src/lib.rs:<simd_json::Deserializer>::from_slice 
+1,071,716,304 (15.12%)  simd-json-0.17.0/src/lib.rs:<simd_json::Deserializer>::from_slice_with_buffers 
+1,040,606,821 (14.68%)  genson-core/src/genson_rs/strategy/array.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema'2
+  976,486,567 (13.77%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&alloc::string::String, &m
