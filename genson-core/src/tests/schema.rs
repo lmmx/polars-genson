@@ -1281,3 +1281,33 @@ fn test_key_missing_from_an_empty_object_is_not_required() {
         }
     }
 }
+
+#[test]
+fn test_debug_macros_evaluate_arguments_only_when_they_print() {
+    let evaluated = std::cell::Cell::new(0);
+    let arg = || {
+        evaluated.set(evaluated.get() + 1);
+        "x"
+    };
+    let off = SchemaInferenceConfig::default();
+    crate::debug!(off, "{}", arg());
+    crate::debug_verbose!(off, "{}", arg());
+    assert_eq!(evaluated.get(), 0);
+
+    let normal = SchemaInferenceConfig {
+        debug: true,
+        ..Default::default()
+    };
+    crate::debug!(normal, "{}", arg());
+    crate::debug_verbose!(normal, "{}", arg());
+    assert_eq!(evaluated.get(), 1);
+
+    let verbose = SchemaInferenceConfig {
+        debug: true,
+        verbosity: DebugVerbosity::Verbose,
+        ..Default::default()
+    };
+    crate::debug!(verbose, "{}", arg());
+    crate::debug_verbose!(verbose, "{}", arg());
+    assert_eq!(evaluated.get(), 3);
+}
