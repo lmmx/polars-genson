@@ -17,6 +17,9 @@ Release notes for earlier versions are on
   required, depending on the order of the values, and normalised output held a record of
   nulls where the field was missing; it now holds `null`. Schemas change only by fields
   dropped from `required` and made nullable.
+- **An integer beyond the 64-bit range no longer panics.** Inference read it with
+  simd-json, which failed on it after serde_json had accepted the input; it is now a
+  `number`, as serde_json reads it when normalising.
 - **`wrap_root` wraps each document as written.** Duplicate keys and number formatting
   now reach inference unchanged, as without `wrap_root`.
 - **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
