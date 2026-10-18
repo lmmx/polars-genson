@@ -286,6 +286,38 @@ changed by this work.
   rows200 D 1.37 against 1.44 s (1.16 s with the purge delay); slim200 W 0.108 against
   0.115 s (0.095 s); labels within the spread of runs; the same schema hashes
 
+### Parquet reading and writing
+
+- `bench_parquet_io.rs` times genson-core's Parquet ends on one thread
+  (logs/e13_parquet_io.txt): `read_string_column` on rows200.parquet (24 MB file, 216 MB of
+  JSON) 0.28–0.43 s warm (2.4 s with a cold page cache), on slim200.parquet 0.005–0.011 s;
+  `write_struct_column` of rows200's typed output 0.45–0.61 s and `write_string_column` of
+  its normalised JSON 0.49–0.78 s; slim200's 0.03–0.04 s and 0.02–0.08 s
+- `read_columns`, which keeps the column as Arrow (#194's item 3 proposes reading `&str`
+  from the batches), takes 0.30–0.36 s against 0.35–0.54 s for `read_string_column` in the
+  same processes: the `String` per row is 0.05–0.15 s of the read, the rest decoding
+- `open_writer` builds `WriterProperties::builder().build()` (genson-core/src/parquet.rs:305-311),
+  whose codec is UNCOMPRESSED, and nothing in the workspace sets one: rows200's normalised
+  JSON is written as 212 MB from a 24 MB input, its typed output as 16 MB
+- `proto_parquet_codec.py` (COMPRESSION env) on the same writes: zstd level 1 writes the
+  typed output in 0.45–0.61 s against 0.46–0.61 s, 5 MB against 16 MB, and the JSON in
+  0.91–0.93 s against 0.49–0.78 s, 27 MB against 212 MB; zstd level 3 4 MB and 19 MB;
+  snappy and lz4 are larger and no faster than zstd 1; on slim200 zstd 1 writes 0.52 MB
+  against 0.84 MB (typed) and 0.50 MB against 14.5 MB (JSON) in the same time
+- Summing the stage timings for the production shape (not one process), 200 rows on one
+  thread: read 0.3–0.4 s, extract 1.2–1.5 s, infer 0.3 CPU-s, normalise and typed decode
+  0.5–0.7 s, write 0.03–0.04 s: 2.3–2.9 s, of which extract, normalise and decode 70–75%
+  and the Parquet read 13–15%
+
+### Nested parallel fold of long arrays
+
+- `ListStrategy::add_object` folds an array of 10 or more items with rayon inside a worker
+  of the parallel build (genson-core/src/genson_rs/strategy/array.rs:95-130); rows200 has
+  120 such arrays (3,742 items) among 32,523, labels none, narrow200k none
+- `proto_list_seq.py` adds every array item by item: warm totals within the spread of
+  master's on rows200 W (1.80–2.33 s against 2.09–2.31 s), rows200 D (1.28–1.66 s against
+  1.52–1.54 s), labels and narrow200k, with the same output hashes (logs/e14_list_seq.txt)
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
@@ -296,14 +328,16 @@ changed by this work.
   inference: "Incompatible type found during schema inference", the `datavalue` that is an
   object in some snaks and a string in others
 - Key interning: issue #133 records an interning attempt with lasso that was reverted
+- `proto_list_seq.py`: no difference on these corpora (above)
 
 ## Missing
 
-- No timing on a Wikidata chunk file (`chunk_*.parquet`) or of Parquet reading and writing:
-  the corpora are rows200, labels and narrow200k
+- No timing on a Wikidata chunk file (`chunk_*.parquet`): the corpora are rows200 (and
+  slim200 from it), labels and narrow200k
 - No normaliser writing to Arrow from the tape: the floor above is a walk that appends
   strings, without schema dispatch, nested builders or null buffers
-- No measurement of `ListStrategy::add_object`'s parallel fold over arrays of 10 or more
-  items (genson-core/src/genson_rs/strategy/array.rs:95-130) inside the parallel phase
 - No timing of `normalise_from_parquet` end to end (Parquet read, extract, infer,
-  normalise, write) in one process
+  normalise, write) in one process, or through the Python binding: the production-shape
+  total above is a sum of stage timings
+- Disk throughput on the machines that run wikidata-pq, which decides what the
+  uncompressed output costs in wall time

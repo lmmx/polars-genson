@@ -13,20 +13,22 @@ effort and correctness risk.
 | extract_invariants | 1.2–1.5 CPU-s (216 MB in, 4 MB out) | — |
 | infer (wikidata-pq options) | 0.3 CPU-s (0.1 s wall) | 6.4–6.7 CPU-s (2.0 s wall) |
 | normalise + typed decode (1T) | 0.5–0.8 s | 12–17 s |
+| Parquet read / write (1T) | 0.3–0.4 s / 0.03–0.04 s | 0.3–0.4 s / 0.45–0.78 s |
 | one-pass bounds | extract: tape parse 0.55 s (1T) | normalise: tape + string appends 0.75 s; arrow-json on the normalised shape 0.52–0.63 s |
 
-The data path (extract, normalise, decode) is ~80% of the measured Rust CPU on the
-production shape and ~70% on full rows. Parquet reading and writing are not measured.
+The data path (extract, normalise, decode) is 70–75% of the summed stage timings on the
+production shape (2.3–2.9 s per 200 rows, Parquet read 13–15%) and ~70% on full rows.
 
 ## Ranking
 
 | # | Work package | Measured | Ceiling | Effort | Risk | Issue |
 |---|---|---|---|---|---|---|
-| 1 | **Map unification's `required` is unsound** | 10,040 / 64,293 objects violate the schema inferred under wikidata-pq's options, on full and slim rows; the Avro schema makes 20 `datavalue` fields non-nullable; prototype → 0 | correctness | S | 48 snapshots (order kept), all `required` / nullability | #50 |
-| 2 | **Data path off `serde_json::Value`** (extract, normalise, decode in one pass over the tape) | normalise is 16–21× its floor; extraction is 60% Value parsing + 12% Value equality; #72 move: −11.5% instructions, normalise 7.4 → 4.4 s (1T) | normalise 10×+ (arrow-json 0.55 s on the same output shape), extract ~2× | L (increment S) | normalisation rules, `prune`, lookup equality semantics | new |
-| 3 | **Build the map interpretation directly** | record interpretation 20–250× the map interpretation per row (13,136 vs 53 full; 812 vs 40 slim); collapsed full corpus 2.08 → 0.29 s warm (7.1×), RSS −62%; slim spends ~70% of inference on merge, `to_schema` and `rewrite_objects` | inference ≈ parse-bound; `required` correct by construction | L | map decision per path at first sight + verification/fallback; two unification conventions (#110 promotion, nullable optional fields) | new |
-| 4 | **Small, output-preserving fixes** | lazy debug macros (`rewrite_objects` −22–28%), scalar merge without `to_schema` (merge −20–24%), lazy validation (#194 4c); together rows200 W 2.23 → 1.66 s (−26%), 1.35 s with the purge delay; slim −6% (−17%) | — | S | none known; the purge delay retains memory | new |
-| 5 | **Fold strings into per-worker builders** | narrow200k 8.6×, labels 4.5×; rows200 and slim200 no faster (per-worker unions of the record interpretation); byte-identical except keyword order on labels | many-small-row workloads | M | keyword order (canonical order: 28 snapshots per 2026-10-08), `processed_count`, forced maps | new |
+| 1 | **Map unification's `required` is unsound** | 10,040 / 64,293 objects violate the schema inferred under wikidata-pq's options, on full and slim rows; the Avro schema makes 20 `datavalue` fields non-nullable; prototype → 0 | correctness | S | 48 snapshots (order kept), all `required` / nullability | #50 (comment) |
+| 2 | **Data path off `serde_json::Value`** (extract, normalise, decode in one pass over the tape) | normalise is 16–21× its floor; extraction is 60% Value parsing + 12% Value equality; #72 move: −11.5% instructions, normalise 7.4 → 4.4 s (1T) | normalise 10×+ (arrow-json 0.55 s on the same output shape), extract ~2× | L (increment S) | normalisation rules, `prune`, lookup equality semantics | #228 (#72) |
+| 3 | **Build the map interpretation directly** | record interpretation 20–250× the map interpretation per row (13,136 vs 53 full; 812 vs 40 slim); collapsed full corpus 2.08 → 0.29 s warm (7.1×), RSS −62%; slim spends ~70% of inference on merge, `to_schema` and `rewrite_objects` | inference ≈ parse-bound; `required` correct by construction | L | map decision per path at first sight + verification/fallback; two unification conventions (#110 promotion, nullable optional fields) | #227 |
+| 4 | **Small, output-preserving fixes** | lazy debug macros (`rewrite_objects` −22–28%), scalar merge without `to_schema` (merge −20–24%), lazy validation (#194 4c); together rows200 W 2.23 → 1.66 s (−26%), 1.35 s with the purge delay; slim −6% (−17%) | — | S | none known; the purge delay retains memory | #229 |
+| 5 | **Fold strings into per-worker builders** | narrow200k 8.6×, labels 4.5×; rows200 and slim200 no faster (per-worker unions of the record interpretation); byte-identical except keyword order on labels | many-small-row workloads | M | keyword order (canonical order: 28 snapshots per 2026-10-08), `processed_count`, forced maps | #230 |
+| 6 | **Parquet output is uncompressed** (bytes, not CPU) | `open_writer` uses the default codec, UNCOMPRESSED: rows200's JSON output 212 MB from a 24 MB input, typed 16 MB; zstd 1: typed 5 MB in the same time, JSON 27 MB for +0.2–0.4 s; slim JSON 14.5 → 0.5 MB | 3–29× smaller files | S | file bytes change (data does not); readers must support zstd | #194 (2) |
 
 ## Reading of the evidence
 
@@ -50,6 +52,8 @@ production shape and ~70% on full rows. Parquet reading and writing are not meas
 4. #3 — the largest architectural change, after #1 so the collapsed build has a correct
    target.
 5. #5 — with a decision on canonical keyword order; for workloads of many small rows.
+6. #6 — independent of the rest; a one-line default (or an option) whenever disk or
+   transfer matters.
 
 ## Killed
 
@@ -62,3 +66,5 @@ production shape and ~70% on full rows. Parquet reading and writing are not meas
   object/string `datavalue`); kept as a decoder bound with genson's schema instead
 - Fixed-count chunk sizing as its own item: subsumed by #5
 - The fold for the production shape: no faster on slim200
+- Sequential `ListStrategy` folds (no nested rayon fold for arrays of 10+ items): within
+  the run-to-run spread, same hashes; rows200 has 120 such arrays

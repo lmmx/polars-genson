@@ -1,0 +1,33 @@
+# bench_parquet_io.rs, one thread; rows200.parquet / slim200.parquet (column claims); Avro schemas from genson-cli under wikidata-pq's options
+# default WriterProperties (master: UNCOMPRESSED); r1 of the first block is a cold page cache
+[rows200 r1] read 2.375s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.496s (16 MB) write_string 0.615s (212 MB of JSON to 212 MB)
+[slim200 r1] read 0.007s (200 rows, 4 MB of JSON from 0 MB) write_struct 0.033s (0 MB) write_string 0.032s (14 MB of JSON to 14 MB)
+[rows200 r2] read 0.352s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.477s (16 MB) write_string 0.667s (212 MB of JSON to 212 MB)
+[slim200 r2] read 0.008s (200 rows, 4 MB of JSON from 0 MB) write_struct 0.044s (0 MB) write_string 0.062s (14 MB of JSON to 14 MB)
+[rows200 r3] read 0.430s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.453s (16 MB) write_string 0.697s (212 MB of JSON to 212 MB)
+[slim200 r3] read 0.006s (200 rows, 4 MB of JSON from 0 MB) write_struct 0.039s (0 MB) write_string 0.078s (14 MB of JSON to 14 MB)
+
+# COMPRESSION=<codec> patches open_writer's WriterProperties (measurement only)
+[rows200 none r1] read 2.472s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.610s (16 MB) write_string 0.489s (212 MB of JSON to 212 MB)
+[rows200 snappy r1] read 0.327s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.607s (10 MB) write_string 1.020s (212 MB of JSON to 65 MB)
+[rows200 lz4 r1] read 0.335s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.576s (7 MB) write_string 1.362s (212 MB of JSON to 48 MB)
+[rows200 zstd1 r1] read 0.330s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.453s (5 MB) write_string 0.907s (212 MB of JSON to 27 MB)
+[rows200 zstd3 r1] read 0.326s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.521s (4 MB) write_string 1.029s (212 MB of JSON to 19 MB)
+[rows200 none r2] read 0.342s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.531s (16 MB) write_string 0.665s (212 MB of JSON to 212 MB)
+[rows200 snappy r2] read 0.328s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.591s (10 MB) write_string 1.061s (212 MB of JSON to 65 MB)
+[rows200 lz4 r2] read 0.282s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.529s (7 MB) write_string 0.993s (212 MB of JSON to 48 MB)
+[rows200 zstd1 r2] read 0.376s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.609s (5 MB) write_string 0.915s (212 MB of JSON to 27 MB)
+[rows200 zstd3 r2] read 0.359s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.651s (4 MB) write_string 1.078s (212 MB of JSON to 19 MB)
+[rows200 none r3] read 0.341s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.463s (16 MB) write_string 0.779s (212 MB of JSON to 212 MB)
+[rows200 snappy r3] read 0.287s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.972s (10 MB) write_string 0.965s (212 MB of JSON to 65 MB)
+[rows200 lz4 r3] read 0.343s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.482s (7 MB) write_string 1.008s (212 MB of JSON to 48 MB)
+[rows200 zstd1 r3] read 0.354s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.481s (5 MB) write_string 0.933s (212 MB of JSON to 27 MB)
+[rows200 zstd3 r3] read 0.350s (200 rows, 216 MB of JSON from 24 MB) write_struct 0.544s (4 MB) write_string 0.933s (212 MB of JSON to 19 MB)
+[slim200 none] write_struct 0.036s (837,987 bytes) write_string 0.021s (14 MB of JSON to 14,453,122 bytes)
+[slim200 zstd1] write_struct 0.032s (523,811 bytes) write_string 0.023s (14 MB of JSON to 495,444 bytes)
+
+# read_columns (column kept as Arrow, chunks concatenated) after read_string_column in the same process; r1 cold
+[rows200 none r1] read 2.390s (200 rows, 216 MB of JSON from 24 MB) read_columns 0.990s write_struct 0.961s (16 MB) write_string 0.561s (212 MB of JSON to 212 MB)
+[rows200 none r2] read 0.346s (200 rows, 216 MB of JSON from 24 MB) read_columns 0.359s write_struct 0.580s (16 MB) write_string 0.795s (212 MB of JSON to 212 MB)
+[rows200 none r3] read 0.422s (200 rows, 216 MB of JSON from 24 MB) read_columns 0.304s write_struct 0.635s (16 MB) write_string 0.875s (212 MB of JSON to 212 MB)
+[rows200 none r4] read 0.535s (200 rows, 216 MB of JSON from 24 MB) read_columns 0.344s write_struct 0.526s (16 MB) write_string 0.840s (212 MB of JSON to 212 MB)
