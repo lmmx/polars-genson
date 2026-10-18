@@ -27,6 +27,16 @@ Release notes for earlier versions are on
   On a chunk of wikidata-pq's shape (3,000 rows, 332 MB of claims beside the labels,
   descriptions, aliases and sitelinks), its three map steps take 0.7–0.8 s where they
   took 3.5–4.6 s.
+- **`extract_invariants` reads each row's text once.** Each row was parsed into a tree,
+  the fields removed and the row written out again; rows are now scanned as text, with
+  the removed fields cut out, and only rows the scan cannot read exactly as before
+  (invalid JSON, a line break, a repeated or escaped key in an object with fields
+  removed) take the old path. The lookup table, the inferred schema and the normalised
+  output are unchanged. On 3,000 rows of wikidata-pq's claims (332 MB, 98% of it the
+  label maps removed), extraction takes 0.2–0.3 s where it took 0.7–0.8 s. With two
+  values for one key, the error now names the first in row order. In genson-core's
+  `extract_invariants`, the slim rows keep their own spacing and escapes instead of
+  serde_json's compact form.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.
