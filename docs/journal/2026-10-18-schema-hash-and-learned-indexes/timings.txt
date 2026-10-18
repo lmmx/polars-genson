@@ -226,3 +226,72 @@ parse     0.538s  27.0%
 build     1.029s  51.6%
 hash      0.316s  15.9%
 drop      0.110s   5.5%
+
+# peak_rss.py: round corpus options build peak_rss schema_hash (5 rounds)
+0 rows200 W base 1029.8MB ab63cbfae2d3dbf7
+0 rows200 W p2compat 1071.5MB ab63cbfae2d3dbf7
+0 rows200 D base 1056.7MB b044387a11c95954
+0 rows200 D p2compat 1061.4MB b044387a11c95954
+0 labels D base 61.4MB 22f8e5cfb8ce1ca5
+0 labels D p2compat 61.5MB 22f8e5cfb8ce1ca5
+0 narrow200k D base 47.5MB c5e9db34b114ce53
+0 narrow200k D p2compat 47.3MB c5e9db34b114ce53
+1 rows200 W base 1061.9MB ab63cbfae2d3dbf7
+1 rows200 W p2compat 1050.5MB ab63cbfae2d3dbf7
+1 rows200 D base 1071.2MB b044387a11c95954
+1 rows200 D p2compat 1066.6MB b044387a11c95954
+1 labels D base 59.4MB 22f8e5cfb8ce1ca5
+1 labels D p2compat 59.6MB 22f8e5cfb8ce1ca5
+1 narrow200k D base 47.4MB c5e9db34b114ce53
+1 narrow200k D p2compat 47.3MB c5e9db34b114ce53
+2 rows200 W base 1051.0MB ab63cbfae2d3dbf7
+2 rows200 W p2compat 1099.0MB ab63cbfae2d3dbf7
+2 rows200 D base 1061.5MB b044387a11c95954
+2 rows200 D p2compat 1059.2MB b044387a11c95954
+2 labels D base 64.5MB 22f8e5cfb8ce1ca5
+2 labels D p2compat 64.3MB 22f8e5cfb8ce1ca5
+2 narrow200k D base 47.4MB c5e9db34b114ce53
+2 narrow200k D p2compat 47.5MB c5e9db34b114ce53
+3 rows200 W base 1062.1MB ab63cbfae2d3dbf7
+3 rows200 W p2compat 1082.8MB ab63cbfae2d3dbf7
+3 rows200 D base 1079.2MB b044387a11c95954
+3 rows200 D p2compat 1065.8MB b044387a11c95954
+3 labels D base 59.4MB 22f8e5cfb8ce1ca5
+3 labels D p2compat 63.3MB 22f8e5cfb8ce1ca5
+3 narrow200k D base 47.4MB c5e9db34b114ce53
+3 narrow200k D p2compat 47.5MB c5e9db34b114ce53
+4 rows200 W base 1057.6MB ab63cbfae2d3dbf7
+4 rows200 W p2compat 1070.1MB ab63cbfae2d3dbf7
+4 rows200 D base 1067.5MB b044387a11c95954
+4 rows200 D p2compat 1050.7MB b044387a11c95954
+4 labels D base 61.4MB 22f8e5cfb8ce1ca5
+4 labels D p2compat 63.2MB 22f8e5cfb8ce1ca5
+4 narrow200k D base 47.6MB c5e9db34b114ce53
+4 narrow200k D p2compat 47.4MB c5e9db34b114ce53
+
+rows200 W base n=5 median 1057.6 MB [1029.8-1062.1] {'ab63cbfae2d3dbf7'}
+rows200 W p2compat n=5 median 1071.5 MB [1050.5-1099.0] {'ab63cbfae2d3dbf7'}
+rows200 D base n=5 median 1067.5 MB [1056.7-1079.2] {'b044387a11c95954'}
+rows200 D p2compat n=5 median 1061.4 MB [1050.7-1066.6] {'b044387a11c95954'}
+labels D base n=5 median 61.4 MB [59.4-64.5] {'22f8e5cfb8ce1ca5'}
+labels D p2compat n=5 median 63.2 MB [59.6-64.3] {'22f8e5cfb8ce1ca5'}
+narrow200k D base n=5 median 47.4 MB [47.4-47.6] {'c5e9db34b114ce53'}
+narrow200k D p2compat n=5 median 47.4 MB [47.3-47.5] {'c5e9db34b114ce53'}
+
+# alloc_count.rs with count_alloc.py applied, one process per build (ac5129c, then the branch)
+== ac5129c rows200 W
+stage to_tape allocs 1400 bytes 1480474888
+stage add_object allocs 19279899 bytes 5207123640
+stage schema_hash allocs 18120375 bytes 1245384410
+stage drop allocs 0 bytes 0
+e2e allocs 67566011 bytes 14885107348 hash=ab63cbfae2d3dbf7
+== ac5129c narrow200k D
+e2e allocs 21958454 bytes 2311360746 hash=c5e9db34b114ce53
+== branch rows200 W
+stage to_tape allocs 1400 bytes 1480474888
+stage add_object allocs 19269486 bytes 5204232362
+stage schema_hash allocs 149536 bytes 45945824
+stage drop allocs 0 bytes 0
+e2e allocs 49804369 bytes 13754084218 hash=ab63cbfae2d3dbf7
+== branch narrow200k D
+e2e allocs 10623671 bytes 1592864635 hash=c5e9db34b114ce53

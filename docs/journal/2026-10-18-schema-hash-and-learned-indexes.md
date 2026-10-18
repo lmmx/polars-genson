@@ -134,9 +134,37 @@ patches of the two experiments not taken and the raw timings are in
   in genson-cli (181 passed, 11 ignored, no snapshot changes) and in polars-jsonschema-bridge
   (37 passed), `cargo clippy -D warnings` on genson-core (all targets, `avro`) and
   genson-cli, and `cargo fmt --check --all` pass
+- On the branch, `maturin develop` (debug build) and `pytest tests/` in polars-genson-py
+  give 262 passed and 3 skipped
+- `peak_rss.py` reads each bench_claims process's `ru_maxrss` with `os.wait4` (the
+  counter `/usr/bin/time -v` reports as "Maximum resident set size"), one inference per
+  process, 5 rounds with the builds alternated; medians at ac5129c against the branch
+  (timings.txt):
+  - rows200 `WIKIDATA=1`: 1057.6 MB (1029.8–1062.1) against 1071.5 MB (1050.5–1099.0)
+  - rows200 default options: 1067.5 MB (1056.7–1079.2) against 1061.4 MB (1050.7–1066.6)
+  - labels: 61.4 MB (59.4–64.5) against 63.2 MB (59.6–64.3)
+  - narrow200k: 47.4 MB (47.4–47.6) against 47.4 MB (47.3–47.5)
+- bench_claims holds the input rows as `String`s for the whole run, 216.8 MB of the peak
+  RSS for rows200 in both builds (genson-core/examples/bench_claims.rs)
+- `count_alloc.py` puts a counter of allocations and requested bytes (`alloc`,
+  `alloc_zeroed`, `realloc`) around mimalloc in genson-core/src/genson_rs/mod.rs, for
+  measurement only, and `alloc_count.rs` reads the counter around the stages of
+  `stage_split.rs` (one pass, one thread) and around one `infer_json_schema_from_strings`
+  call; each build of the measurement has a target directory of its own — two worktrees
+  built into one target directory gave one binary for both, which cargo took as fresh
+- `alloc_count.rs` on rows200, ac5129c against the branch (timings.txt):
+  - `schema_hash` stage: 18,120,375 allocations (1,245,384,410 bytes) against 149,536
+    (45,945,824 bytes)
+  - `to_tape` stage: 1,400 allocations in both; `add_object` stage: 19,279,899 against
+    19,269,486, the arrays of 10 or more items merging on rayon in both
+  - one inference with `WIKIDATA=1`: 67,566,011 allocations (14,885,107,348 bytes) against
+    49,804,369 (13,754,084,218 bytes)
+- `alloc_count.rs` on narrow200k, one inference with default options: 21,958,454
+  allocations (2,311,360,746 bytes) at ac5129c against 10,623,671 (1,592,864,635 bytes)
+  on the branch
+- Every `alloc_count.rs` run of one corpus and set of options gives the same schema hash on
+  both builds
 
 ## Missing
 
 - No timing of bench_claims on a Wikidata chunk file, or through the Python plugin
-- No run of the polars-genson-py test suite on the branch
-- No count of allocations per stage
