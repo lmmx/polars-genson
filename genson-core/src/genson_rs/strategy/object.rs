@@ -644,12 +644,25 @@ fn absorb_properties(properties: &mut PropMap<SchemaNode>, other: PropMap<Schema
     }
 }
 
+/// Properties from which an object writes its properties' schemas in parallel.
+const PAR_TO_SCHEMA_MIN: usize = 16;
+
 impl ObjectStrategy {
     fn properties_to_schema(&self, properties: &PropMap<SchemaNode>) -> Value {
+        // Each property's schema is written on its own, so many are written in parallel
+        // (in order)
+        let schemas: Vec<Value> = if properties.len() >= PAR_TO_SCHEMA_MIN {
+            properties
+                .par_iter()
+                .map(|(_, node)| node.to_schema())
+                .collect()
+        } else {
+            properties.values().map(SchemaNode::to_schema).collect()
+        };
         let mut schema_properties = Map::with_capacity(properties.len());
-        properties.iter().for_each(|(prop, node)| {
-            schema_properties.insert(prop.clone(), node.to_schema());
-        });
+        for (prop, schema) in properties.keys().zip(schemas) {
+            schema_properties.insert(prop.clone(), schema);
+        }
         Value::Object(schema_properties)
     }
 }

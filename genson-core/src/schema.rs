@@ -634,6 +634,8 @@ pub fn infer_json_schema_from_strings<S: AsRef<str> + Sync>(
 
             // Get final schema
             let mut final_schema = builder.to_schema();
+            // The builder's tree is freed on the rayon pool while the schema is rewritten
+            rayon::spawn(move || drop(builder));
             profile!(
                 config,
                 "Applying force field types ({})",

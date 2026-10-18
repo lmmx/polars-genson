@@ -48,6 +48,13 @@ Release notes for earlier versions are on
   normalisation built every map entry of the key/value encodings that way. The values
   are now moved in. On a release-format chunk of wikidata-pq's claims (7,128 rows),
   inference takes 17% fewer instructions, with the same schemas and rows.
+- **Faster merging and schema writing in inference.** Merging each row's schema into the
+  running one moved every node's strategies through two new vectors to order them, and
+  rebuilt every object's recorded keywords, though nearly always there was one strategy
+  and no keyword new; those cases are now merged as they are. An object of 16 or more
+  properties writes their schemas in parallel. On the release-format chunk, inference
+  takes 0.39–0.43 s on 4 cores where it took 0.45–0.46 s, and 0.53–0.54 s before the
+  entry above; the same schemas.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.
