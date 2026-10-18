@@ -12,7 +12,8 @@ time of each step, by wrapping the functions `process()` calls, and the `[profil
 lines polars-genson prints (summed by name; wikidata-pq passes `profile=True` for claims). With `MAP_ENCODING=kv`,
 `normalise_from_parquet` and `avro_to_polars_schema` get `map_encoding="kv"`
 (polars-genson >= 1.0 defaults to maps; wikidata-pq's tables are key/value lists).
-Nothing is fetched: `process()` reads the mirror only.
+Nothing is fetched: `process()` reads the mirror only. With `KEEP=dir`, each run's tables
+(and the quarantine directory) are copied to `dir/<label>/<run>/` for `compare_tables.py`.
 
 Usage: python bench_process.py <python> <chunk.parquet> <runs> [label]
 """
@@ -44,7 +45,11 @@ def timed(name, fn):
         try:
             return fn(*a, **k)
         finally:
-            key = name if name != "normalise_map_direct" else f"map:{k.get('key')}"
+            key = {
+                "normalise_map_direct": lambda: f"map:{k.get('key')}",
+                # By the table written, from its destination's directory
+                "atomic_sink_parquet": lambda: f"sink:{Path(a[1]).parent.name}",
+            }.get(name, lambda: name)()
             steps[key] = steps.get(key, 0) + time.perf_counter() - t
     return run
 for name in ["normalise_map_direct", "normalise_sitelinks", "normalise_claims_direct",
@@ -78,6 +83,11 @@ for run in range(runs):
             cwd=work,
             env=os.environ,
         )
+        if p.returncode == 0 and os.environ.get("KEEP"):
+            kept = Path(os.environ["KEEP"]) / label.replace(" ", "_") / str(run)
+            shutil.copytree(Path(work) / "results", kept / "results")
+            for quarantine in Path(work).rglob("quarantine"):
+                shutil.copytree(quarantine, kept / "quarantine")
     if p.returncode != 0:
         sys.exit(p.stdout[-2000:] + p.stderr[-3000:])
     out = json.loads(p.stdout.strip().splitlines()[-1])
