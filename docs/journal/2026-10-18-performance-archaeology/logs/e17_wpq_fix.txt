@@ -1,0 +1,36 @@
+# repro_wpq_required.py, MAP_ENCODING=kv, Polars 2.0.0: base = polars-genson-py at 36198dd, fix = + proto_required2.py (release builds)
+## base, rows200
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datavalue", "datatype"]}
+{"avro_record": "claims.claims{}[].mainsnak.datavalue", "non_nullable": ["datavalue__string", "id", "amount", "unit", "precision", "latitude", "longitude", "altitude", "globe", "time", "timezone", "before", "after", "calendarmodel", "text", "language", "upperBound", "lowerBound"]}
+{"typed_parquet_fields_all_nullable": true}
+{"polars_genson": "1.0.2", "polars": "2.0.0", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "90492ef71f4a5c04"}
+{"raw": {"mainsnak": {"snaks": 16623, "no_datavalue": 49, "datavalue_without_precision": 7142, "datavalue_without_latitude": 7233, "datavalue_without_longitude": 7233}, "qualifier": {"snaks": 7489, "no_datavalue": 41, "datavalue_without_precision": 3668, "datavalue_without_latitude": 5724, "datavalue_without_longitude": 5724}, "reference": {"snaks": 10285, "no_datavalue": 0, "datavalue_without_latitude": 7039, "datavalue_without_longitude": 7039, "datavalue_without_precision": 4444}}}
+{"conformed": {"mainsnak": {"snaks": 16623, "precision_struct_of_nulls": 16389, "latitude_struct_of_nulls": 16470, "longitude_struct_of_nulls": 16470, "datavalue_struct_of_nulls": 49}, "qualifier": {"snaks": 7489, "precision_null": 5380, "latitude_null": 7436, "longitude_null": 7436, "datavalue_struct_of_nulls": 41}, "reference": {"snaks": 10285, "precision_null": 7690, "latitude_null": 10285, "longitude_null": 10285}}}
+{"published_statements": 16623, "published_datavalue_is_null": 0}
+## fix, rows200
+{"avro_record": "claims.claims{}[].mainsnak", "non_nullable": ["property", "datatype"]}
+{"avro_record": "claims.claims{}[].mainsnak.datavalue", "non_nullable": []}
+{"typed_parquet_fields_all_nullable": true}
+{"polars_genson": "1.0.2", "polars": "2.0.0", "schema_check_passes": true, "schema_diff_kinds": ["dictionary_item_removed"], "inferred_schema_sha": "90492ef71f4a5c04"}
+{"raw": {"mainsnak": {"snaks": 16623, "no_datavalue": 49, "datavalue_without_precision": 7142, "datavalue_without_latitude": 7233, "datavalue_without_longitude": 7233}, "qualifier": {"snaks": 7489, "no_datavalue": 41, "datavalue_without_precision": 3668, "datavalue_without_latitude": 5724, "datavalue_without_longitude": 5724}, "reference": {"snaks": 10285, "no_datavalue": 0, "datavalue_without_latitude": 7039, "datavalue_without_longitude": 7039, "datavalue_without_precision": 4444}}}
+{"conformed": {"mainsnak": {"snaks": 16623, "precision_null": 16389, "latitude_null": 16470, "longitude_null": 16470, "datavalue_null": 49}, "qualifier": {"snaks": 7489, "precision_null": 5380, "latitude_null": 7436, "longitude_null": 7436, "datavalue_null": 41}, "reference": {"snaks": 10285, "precision_null": 7690, "latitude_null": 10285, "longitude_null": 10285}}}
+{"published_statements": 16623, "published_datavalue_is_null": 49}
+## fix, rows200 in 10 chunks of 20 rows
+rows00 check_passes=True schema_sha=09e9eec0c71ec712 structs_of_nulls=0 datavalue_null(main)=6 published_null=6
+rows01 check_passes=True schema_sha=90492ef71f4a5c04 structs_of_nulls=0 datavalue_null(main)=10 published_null=10
+rows02 check_passes=True schema_sha=90492ef71f4a5c04 structs_of_nulls=0 datavalue_null(main)=5 published_null=5
+rows03 check_passes=True schema_sha=01cc1ff32b239a4c structs_of_nulls=0 datavalue_null(main)=6 published_null=6
+rows04 check_passes=True schema_sha=070cb90b7d152766 structs_of_nulls=0 datavalue_null(main)=7 published_null=7
+rows05 check_passes=True schema_sha=90492ef71f4a5c04 structs_of_nulls=0 datavalue_null(main)=4 published_null=4
+rows06 check_passes=True schema_sha=90492ef71f4a5c04 structs_of_nulls=0 datavalue_null(main)=4 published_null=4
+rows07 check_passes=True schema_sha=09e9eec0c71ec712 structs_of_nulls=0 datavalue_null(main)=1 published_null=1
+rows08 check_passes=True schema_sha=b77d708489df44b2 structs_of_nulls=0 datavalue_null(main)=2 published_null=2
+rows09 check_passes=True schema_sha=0bbf26c0269f3111 structs_of_nulls=0 datavalue_null(main)=4 published_null=4
+## 0.9.6 inferred_schema_sha per 20-row chunk (from the 0.9.6 runs above)
+09e9eec0c71ec712 90492ef71f4a5c04 90492ef71f4a5c04 01cc1ff32b239a4c 070cb90b7d152766 90492ef71f4a5c04 90492ef71f4a5c04 09e9eec0c71ec712 b77d708489df44b2 0bbf26c0269f3111
+## compare_conformed.py claims_096 claims_base claims_fix (sorted by id, against claims_096)
+{"file": "claims_096", "rows": 200, "structs_of_nulls": 49566, "rows_differing": 0, "rows_differing_reading_structs_of_nulls_as_null": 0}
+{"file": "claims_base", "rows": 200, "structs_of_nulls": 49566, "rows_differing": 0, "rows_differing_reading_structs_of_nulls_as_null": 0}
+{"file": "claims_fix", "rows": 200, "structs_of_nulls": 0, "rows_differing": 200, "rows_differing_reading_structs_of_nulls_as_null": 0}
+## rows200: present objects that are empty or all-null, by path
+{'claims.*[].mainsnak.datavalue.labels': 9}

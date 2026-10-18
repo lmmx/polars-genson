@@ -278,6 +278,66 @@ changed by this work.
   (logs/req2_cli_tests_all.txt); 4 of them are normalised output, where an absent promoted
   record (`latitude`, `precision`) is `null` instead of a record of nulls
 
+### wikidata-pq's ingestion and the `required` finding
+
+- wikidata-pq (5ad5f96) `normalise_claims_direct` calls `normalise_from_parquet` with
+  `CLAIMS_INFERENCE_OPTIONS` (the options of `WIKIDATA_ARGS` above), `max_builders=100`,
+  `typed=True`, `keep_columns=["id"]`, `extract_invariants=LABEL_INVARIANTS` and
+  `prune=QUARANTINE_FIELDS`, then scans the typed file conformed to `claims_schema`
+  (`missing_struct_fields="insert"`, `extra_struct_fields="ignore"`); `process()` compares
+  `schema_to_dict(claims_schema)` with the Polars schema of the typed file (DeepDiff,
+  `is_acceptable_diff`) and halts on a mismatch (src/wikidata/process.py:317-370, 507-517).
+  Release 20260928 ran with polars-genson 0.9.6 (its uv.lock;
+  docs/journal/2026-10-03-release-20260928-run.md)
+- `repro_wpq_required.py` runs that function and that check in wikidata-pq's locked
+  environment (polars-genson 0.9.6, Polars 1.44.2) on rows200 with ids
+  (logs/e15_wpq_required.txt): the check passes; the stored `genson_avro_schema` makes
+  `mainsnak.datavalue` and 18 of its fields non-nullable; every Arrow field of the typed
+  file is nullable (`avro_record_fields` makes them so); Polars dtypes carry no
+  nullability, so the compared schemas cannot express `required`
+- `normalise_inner` normalises an absent field against a non-nullable record as a record
+  of null fields: in the conformed claims, all 49 mainsnaks and 41 qualifier snaks without
+  a `datavalue` hold a struct of nulls, and absent mainsnak `precision`, `latitude` and
+  `longitude` are structs of nulls (16,389, 16,470, 16,470) where in qualifiers and
+  references they are null; after `claims_base` (the published shape) 0 of 16,623
+  statements have a null `datavalue`
+- rows200 in 10 chunks of 20 rows (0.9.6): `datavalue` non-nullable in all 10; mainsnak
+  `latitude`, in all 10 schemas, non-nullable in 5 and nullable in 5; qualifier
+  `precision` non-nullable in 2 — the same absence stored as a null or as a struct of
+  nulls depending on the chunk
+- `check_published.py` on permutans/wikidata-claims at 39e6837b (release 20260928), row
+  groups 0 and 45 of parts 00, 43 and 85 (949,170 rows, logs/e16_published.txt): 1,676 of
+  1,676 snaks with a `snaktype` other than `value` have a non-null `datavalue` whose fields
+  are all null; absent `precision`, `latitude` and `longitude` are held both ways within
+  one row group (part 00, row group 0: `latitude` null 122,774 times, a struct of nulls
+  35,421 times)
+- master (polars-genson-py 1.0.2 at 36198dd, Polars 2.0.0, `map_encoding="kv"`) gives the
+  same conformed claims as 0.9.6 (0 of 200 rows differ, 49,566 structs of nulls in each);
+  with `proto_required2.py`: `mainsnak.datavalue` and every field of its record nullable,
+  the check passing with the same inferred Polars schema (sha 90492ef71f4a5c04), no
+  structs of nulls, and every row different from 0.9.6's as written but none once a
+  struct of nulls is read as a null (`compare_conformed.py`, logs/e17_wpq_fix.txt); 49
+  statements with a null `datavalue` after `claims_base`. 49,566 = 16,389 + 16,470 +
+  16,470 + 49 + 41 + 147, the last the three promoted fields in each of the 49 empty
+  mainsnak `datavalue`s
+- With the fix, each 20-row chunk: no structs of nulls, the check passing, its inferred
+  Polars schema the same as under 0.9.6, and as many null `datavalue`s as snaks without
+  one (6, 10, 5, 6, 7, 4, 4, 1, 2, 4)
+- rows200 holds no object that is present and empty or all-null under `datavalue`,
+  `precision`, `latitude` or `longitude`; the only such objects are 9 empty `labels` maps,
+  which extraction moves to the lookup table
+- In Polars 1.44.2 a null struct and a struct of nulls differ under `is_null`,
+  `null_count`, `drop_nulls`, `unique`/`n_unique`, `group_by`, `eq_missing`, a join on the
+  struct and `struct.json_encode`; `struct.field` gives null for both
+- wikidata-pq's code reads leaves of `datavalue` (claims_labels.py: `id`, `unit`) except
+  demos/timeline.py, which tests `pl.all_horizontal(pl.col("point", "start", "own").is_null())`
+  and takes `pl.coalesce("own", "point", "start", "event")` over whole `datavalue`
+  structs: a time value, or a P585/P580 qualifier, of unknown value would take the place
+  of a later date and be listed undated; the committed outputs (London, London in French,
+  Vienna) list no undated row
+- Not run: a release-format (official dump) chunk through either build; the published
+  claims are release format, the reproduction philippesaade format
+
 ### The small fixes together
 
 - `proto_lazy_debug.py`, `proto_merge_scalar.py` and `proto_no_validate.py` applied
