@@ -1,0 +1,39 @@
+diff --git a/genson-core/src/genson_rs/strategy/object.rs b/genson-core/src/genson_rs/strategy/object.rs
+index a22a940..9610f18 100644
+--- a/genson-core/src/genson_rs/strategy/object.rs
++++ b/genson-core/src/genson_rs/strategy/object.rs
+@@ -110,14 +110,30 @@ impl SchemaStrategy for ObjectStrategy {
+         // key set and the repeated lookups.
+         if self.pattern_properties.is_empty() {
+             if let Some(object) = object.as_object() {
++                // PROTOTYPE: predict each key's slot as the previous key's slot + 1, check it
++                // with one comparison, and only hash the key when the prediction misses
++                let mut cursor = 0usize;
+                 for (prop, subobj) in object.iter() {
+-                    if let Some(node) = self.properties.get_mut(prop) {
+-                        node.add_object(DataType::Object(subobj));
++                    let predicted = self
++                        .properties
++                        .get_index(cursor)
++                        .is_some_and(|(key, _)| key == prop);
++                    let idx = if predicted {
++                        cursor
++                    } else if let Some(idx) = self.properties.get_index_of(prop) {
++                        idx
+                     } else {
+                         let mut node = SchemaNode::new();
+                         node.add_object(DataType::Object(subobj));
+-                        self.properties.insert(prop.to_string(), node);
+-                    }
++                        cursor = self.properties.insert_full(prop.to_string(), node).0 + 1;
++                        continue;
++                    };
++                    self.properties
++                        .get_index_mut(idx)
++                        .unwrap()
++                        .1
++                        .add_object(DataType::Object(subobj));
++                    cursor = idx + 1;
+                 }
+                 match &mut self.required_properties {
+                     None => {
