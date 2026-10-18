@@ -232,6 +232,59 @@ changed by this work.
   appending every string (keys and values, 9,101,382 strings, 201 MB) to an Arrow
   `StringBuilder`: 0.54–0.59 s parse and 0.19–0.21 s walk on one thread
   (logs/e9_norm_floor.txt); rows200 holds 19,432 values that are not strings
+- arrow-json, given the Arrow schema `avro_record_fields` derives from the production Avro
+  schema (native maps), decodes rows200 normalised by `bench_normalise.rs` (`MAPPING=1`,
+  142 MB of NDJSON) into typed Arrow in 0.52–0.63 s on one thread (`bench_arrow_json.rs`,
+  logs/e9_norm_floor.txt)
+
+### The production shape: label maps extracted
+
+- `normalise_from_parquet` with `extract_invariants` (and a `lookup_output_path`) runs
+  `extract_invariants` on the rows before inference and normalisation
+  (polars-genson-py/src/parquet_io.rs:229-243); `extract_invariants` parses each row into a
+  `Value`, removes each invariant field with `shift_remove`, compares every repeated
+  `(field, key)` value with the stored one (`Value` equality), and serialises the slim row
+  again (genson-core/src/extract.rs)
+- `bench_extract.rs` with wikidata-pq's spec (`labels`→`id`, `property-labels`→`property`,
+  `unit-labels`→`unit`) on rows200: 1.17–1.46 s on one thread, 0.42–0.68 s on four, 216 MB
+  in, 4 MB of slim rows and 1,924 lookup entries out (logs/e10_extract.txt); callgrind on
+  its first 20 rows: `Lookup::insert` 16.4% inclusive, of which `Value` equality 11.9%,
+  `strip` 14.5%, dropping `Value`s 6.0%, the rest the serde parse
+- `slim.py` drops those three fields from rows200 (slim200, 4.6 MB): the record
+  interpretation holds 812 nodes per row and 12,508 merged against 40 and 65 for the map
+  interpretation, and the W schema has the same 10,040 `required` violations
+- slim200 through genson-cli with wikidata-pq's options takes 0.11–0.20 s wall (user
+  0.29–0.31 s), and its normalisation against that schema on one thread 0.03 s parse,
+  0.31–0.56 s normalise and 0.16 s `values_to_struct_array`, the output 14 MB from 4.6 MB
+  (a `datavalue` record of 20 fields per snak)
+- bench_claims W on slim200 (warm 0.104 s): chunk merge 0.040 s, parallel build 0.027 s,
+  `rewrite_objects` 0.025 s, `to_schema` 0.007 s; 2.58M allocations of 595 MB, 129 bytes
+  per input byte
+- The fold prototype takes 0.127 s against 0.097–0.106 s on slim200 W, with the same schema
+  hash (logs/e12_fold_slim.txt)
+- The W schema of the first 1, 2 and 3 rows of genson-cli/tests/data/claims_fixture_x30.jsonl
+  has 9 of the 11 map paths of all 30 rows, and that of the first 5, 10 and 20 rows all 11,
+  with no others (logs/map_stability_x30.txt)
+
+### Snapshot impact of the `required` change
+
+- `proto_required.py` changes 67 genson-cli snapshots: claims_fixtures 40, wikidata_config
+  20, unify_scalar 4, map_of_unified_records 3 (logs/req_cli_tests_all.txt) — `required`
+  lists, nullable types, and the order of fields, as fields required by every input are
+  listed first
+- `proto_required2.py` keeps master's field order (fields in the `properties` of every
+  input first) and takes only `required` and nullability from the inputs: 48 snapshots
+  change, claims_fixtures 24, wikidata_config 20, unify_scalar 4
+  (logs/req2_cli_tests_all.txt); 4 of them are normalised output, where an absent promoted
+  record (`latitude`, `precision`) is `null` instead of a record of nulls
+
+### The small fixes together
+
+- `proto_lazy_debug.py`, `proto_merge_scalar.py` and `proto_no_validate.py` applied
+  together (logs/e11_small_combined.txt), warm wall against master: rows200 W 1.66 s
+  against 2.23 s (cold 1.50 s against 3.21 s), and 1.35 s with `MIMALLOC_PURGE_DELAY=-1`;
+  rows200 D 1.37 against 1.44 s (1.16 s with the purge delay); slim200 W 0.108 against
+  0.115 s (0.095 s); labels within the spread of runs; the same schema hashes
 
 ## Measured and not kept
 
@@ -252,5 +305,5 @@ changed by this work.
   strings, without schema dispatch, nested builders or null buffers
 - No measurement of `ListStrategy::add_object`'s parallel fold over arrays of 10 or more
   items (genson-core/src/genson_rs/strategy/array.rs:95-130) inside the parallel phase
-- No combined measurement of the four small fixes (lazy debug macros, scalar merge,
-  lazy validation, purge delay)
+- No timing of `normalise_from_parquet` end to end (Parquet read, extract, infer,
+  normalise, write) in one process

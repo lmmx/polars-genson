@@ -1,0 +1,6 @@
+[4T] extract_invariants 0.683s: 216 MB in, 4 MB slim, 1924 lookup entries
+[4T] extract_invariants 0.423s: 216 MB in, 4 MB slim, 1924 lookup entries
+[4T] extract_invariants 0.455s: 216 MB in, 4 MB slim, 1924 lookup entries
+[1T] extract_invariants 1.173s: 216 MB in, 4 MB slim, 1924 lookup entries
+[1T] extract_invariants 1.198s: 216 MB in, 4 MB slim, 1924 lookup entries
+[1T] extract_invariants 1.460s: 216 MB in, 4 MB slim, 1924 lookup entries

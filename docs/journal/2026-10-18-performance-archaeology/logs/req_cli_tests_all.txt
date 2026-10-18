@@ -1,0 +1,42 @@
+     Running unittests src/main.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/genson_cli-ccf01f8b5201fd07)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+     Running tests/avro_schemas.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/avro_schemas-c0a48701307124cd)
+test result: ok. 2 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.04s
+     Running tests/claims_fixtures.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/claims_fixtures-5303349e6928ef4c)
+test result: FAILED. 8 passed; 40 failed; 6 ignored; 0 measured; 0 filtered out; finished in 2.42s
+     Running tests/deep_nested_map_unification.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/deep_nested_map_unification-db0d14b41a47cab3)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+     Running tests/integration.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/integration-55170ecc39f6ab5e)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+     Running tests/map_encoding.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/map_encoding-a64d76009203530a)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+     Running tests/map_max_required_keys.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/map_max_required_keys-8e28881a05f70b62)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+     Running tests/map_max_required_keys_snapshots.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/map_max_required_keys_snapshots-a8f976ba9ca59792)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+     Running tests/map_of_records.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/map_of_records-d9548bc3e92a35d4)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+     Running tests/map_of_unified_records.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/map_of_unified_records-3405972641067d53)
+test result: FAILED. 21 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+     Running tests/map_record.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/map_record-48912f98a03e1cdb)
+test result: ok. 2 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/normalise.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/normalise-582cbe59d44ad074)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+     Running tests/prune.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/prune-19a7049db423c3c6)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+     Running tests/unify_anyof_scalar.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/unify_anyof_scalar-3506b3b6893edd16)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+     Running tests/unify_map_max_rk.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/unify_map_max_rk-a67562b18013472b)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+     Running tests/unify_map_threshold.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/unify_map_threshold-e55008011a67a55d)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+     Running tests/unify_scalar.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/unify_scalar-ee2a21ab2b334763)
+test result: FAILED. 2 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+     Running tests/wikidata_config.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/wikidata_config-a8182fcb36ce6474)
+test result: FAILED. 2 passed; 20 failed; 0 ignored; 0 measured; 0 filtered out; finished in 46.38s
+     Running tests/wrapping.rs (/tmp/claude-0/-home-user-polars-genson/a3c6f4e5-fac5-5911-974c-cd24e5aa55fb/scratchpad/target-req/debug/deps/wrapping-3728a4c7e9604c39)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+     40 claims_fixtures
+      3 map_of_unified_records
+      4 unify_scalar
+     20 wikidata_config

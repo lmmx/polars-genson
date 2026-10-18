@@ -1,63 +1,64 @@
 # Opportunity portfolio (living ranking)
 
 Evidence is in the journal entry next to this folder (`../2026-10-18-performance-archaeology.md`)
-and in `logs/`. Numbers are warm medians on the 4-core VM unless stated; "1T" means one
-thread. Ranked by measured avoidable cost on the production path (wikidata-pq's
-`normalise_from_parquet`: read, infer, normalise, write) × generality, against effort and
-correctness risk.
+and in `logs/`. Warm medians on the 4-core VM unless stated; "1T" is one thread. Ranked by
+measured avoidable cost on wikidata-pq's path (`normalise_from_parquet`: read, extract
+invariants, infer, normalise, write) and on the same data without extraction, against
+effort and correctness risk.
 
-## Where the production path's CPU goes (rows200, 216.8 MB of claims)
+## Where the CPU goes, per 200 rows of Wikidata claims
 
-| stage | cost | evidence |
+| stage | production shape (label maps extracted) | full rows (no extraction) |
 |---|---|---|
-| infer (W options, 4 threads) | 2.0 s wall, 6.4–6.7 CPU-s | wave1_time, e4_fold_v2 |
-| normalise, typed (1T) | parse 1.0–1.6 s + normalise 6.5–11.7 s + `values_to_struct_array` 4.1 s ≈ 12–17 CPU-s | e7_normalise |
-| floor for normalising: simd-json tape + one walk appending every string to Arrow (1T) | 0.75–0.80 s | e9_norm_floor |
+| extract_invariants | 1.2–1.5 CPU-s (216 MB in, 4 MB out) | — |
+| infer (wikidata-pq options) | 0.3 CPU-s (0.1 s wall) | 6.4–6.7 CPU-s (2.0 s wall) |
+| normalise + typed decode (1T) | 0.5–0.8 s | 12–17 s |
+| one-pass bounds | extract: tape parse 0.55 s (1T) | normalise: tape + string appends 0.75 s; arrow-json on the normalised shape 0.52–0.63 s |
 
-Normalisation is about two thirds of the measured CPU, and sits 16–21× above its floor.
+The data path (extract, normalise, decode) is ~80% of the measured Rust CPU on the
+production shape and ~70% on full rows. Parquet reading and writing are not measured.
 
 ## Ranking
 
 | # | Work package | Measured | Ceiling | Effort | Risk | Issue |
 |---|---|---|---|---|---|---|
-| 1 | **Map unification's `required` is unsound** | 10,040 / 64,293 objects violate the inferred schema under wikidata-pq's own options; Avro makes 20 `datavalue` fields non-nullable that no row fills together; prototype → 0 | correctness | S | output changes (a fix); snapshot churn | #50 |
-| 2 | **Normalise straight into the output** (no parsed and normalised `Value` trees) | typed normalise ≈ 12–17 CPU-s / 200 rows; 31% inserting into output `IndexMap`s, 12% SipHash, 12.5% drops | floor 0.75 s: 5–8× after real-world overheads (estimate) | L | normalisation rules (promotions, maps, coercions, prune) | new |
-| 2a | ↳ increment: move fields out instead of cloning (#72) | −11.5% instructions of the whole run (20 rows), normalise 7.4 → 4.4 s median 1T, same output | — | S | prune path keeps the clone | #72 |
-| 3 | **Build the map interpretation directly** (bind map-ness early) | record interpretation 13,136 nodes/row (213,685 merged) vs 53/row (81) for the answer; collapsed corpus 2.08 → 0.29 s warm (7.1×), 3.38 → 0.29 s cold, RSS 1.2 → 0.46 GB; map paths decided by the first row | inference ≈ parse-bound (0.26 s with fold) | L | needs map paths before the build + verify/fallback; two unification conventions to reproduce (#110 integer/number, nullable optional fields) | new |
-| 4 | **Fold strings into per-worker builders** (no per-string trees, hashes, chunks, merge) | narrow200k 0.94 → 0.11 s (8.6×), labels 0.143 → 0.032 s (4.5×), rows200 CPU −16–19% at equal wall; byte-identical where keyword order is unaffected | — | M | keyword order (labels) unless a canonical order is adopted (28 snapshots, 2026-10-08); `processed_count`, forced maps | new |
-| 5 | **Four small, output-preserving fixes** | lazy debug macros: `rewrite_objects` −22–28%; scalar merge fast path: merge −20–24%; lazy validation (#194 4c): prep −90%, total −8–21%; purge delay: −11–20% wall on large rows (RSS +10%) | ~30–40% of inference on rows200 W together (not measured together) | S each | none known (purge: retained memory) | new (links #194) |
+| 1 | **Map unification's `required` is unsound** | 10,040 / 64,293 objects violate the schema inferred under wikidata-pq's options, on full and slim rows; the Avro schema makes 20 `datavalue` fields non-nullable; prototype → 0 | correctness | S | 48 snapshots (order kept), all `required` / nullability | #50 |
+| 2 | **Data path off `serde_json::Value`** (extract, normalise, decode in one pass over the tape) | normalise is 16–21× its floor; extraction is 60% Value parsing + 12% Value equality; #72 move: −11.5% instructions, normalise 7.4 → 4.4 s (1T) | normalise 10×+ (arrow-json 0.55 s on the same output shape), extract ~2× | L (increment S) | normalisation rules, `prune`, lookup equality semantics | new |
+| 3 | **Build the map interpretation directly** | record interpretation 20–250× the map interpretation per row (13,136 vs 53 full; 812 vs 40 slim); collapsed full corpus 2.08 → 0.29 s warm (7.1×), RSS −62%; slim spends ~70% of inference on merge, `to_schema` and `rewrite_objects` | inference ≈ parse-bound; `required` correct by construction | L | map decision per path at first sight + verification/fallback; two unification conventions (#110 promotion, nullable optional fields) | new |
+| 4 | **Small, output-preserving fixes** | lazy debug macros (`rewrite_objects` −22–28%), scalar merge without `to_schema` (merge −20–24%), lazy validation (#194 4c); together rows200 W 2.23 → 1.66 s (−26%), 1.35 s with the purge delay; slim −6% (−17%) | — | S | none known; the purge delay retains memory | new |
+| 5 | **Fold strings into per-worker builders** | narrow200k 8.6×, labels 4.5×; rows200 and slim200 no faster (per-worker unions of the record interpretation); byte-identical except keyword order on labels | many-small-row workloads | M | keyword order (canonical order: 28 snapshots per 2026-10-08), `processed_count`, forced maps | new |
 
 ## Reading of the evidence
 
-- The costs are not in any one function but in the size and number of intermediate
-  representations. Inference carries the record interpretation (250–2,600× the answer)
-  through every stage before map inference collapses it; normalisation materialises the
-  data three times (parsed `Value`, normalised `Value`, Arrow) where one suffices. #3 and
-  #2 remove a representation; everything else makes a representation cheaper.
-- #1 is the correctness face of the same late-binding design: the join that collapses the
-  record interpretation after the fact loses optionality. Building the map interpretation
-  directly (#3) gives the correct `required` sets with no fix at all.
-- #4 is a loss only under the record interpretation, whose union each worker rebuilds;
-  under the map interpretation the fold costs 0.262 s against 0.296 s.
-- The kernel's share (27–34% of CPU on large rows) is a consequence of allocation volume
-  (63 bytes allocated per input byte); #3 and #4 cut it at the source, the purge delay
-  only hides it.
+- The costs are not in any one function but in representations. Inference carries the
+  record interpretation, 20–250× its answer, through every stage before map inference
+  collapses it. The data path turns 216 MB of text into `Value` trees two or three times
+  (extract parse, normalise parse, normalised output) where one pass over the tape
+  suffices. #2 and #3 remove a representation; #4 and #5 make one cheaper.
+- #1 is the correctness face of the same late binding: the join that collapses the record
+  interpretation after the fact loses optionality. Building the map interpretation (#3)
+  gives the right `required` sets by construction.
+- Allocation volume (63–129 bytes allocated per input byte) shows up as 27–34% kernel CPU
+  on large rows; #2, #3 and #5 cut it at the source, the purge delay only hides it.
 
 ## Order of work
 
-1. #1 (correctness, small) — before any change that moves output, so snapshots move once.
-2. #5 (small, certain, output-preserving) — independent of everything else.
-3. #2a, then #2 (largest share of production CPU).
-4. #4 with a decision on canonical keyword order.
-5. #3 (largest architectural change; #1 first, so the collapsed build has a correct target).
+1. #1 — correctness, small; first, so that snapshots move once.
+2. #4 — small, certain, output-preserving.
+3. #2: the #72 move increment, then a schema-compiled tape → Arrow decoder for normalise
+   and span-based extraction — largest share of production CPU.
+4. #3 — the largest architectural change, after #1 so the collapsed build has a correct
+   target.
+5. #5 — with a decision on canonical keyword order; for workloads of many small rows.
 
 ## Killed
 
-- PGM learned index and predicted-slot lookups (P1): no sorted array is searched;
-  lookups are not the cost (2026-10-18-schema-hash-and-learned-indexes.md)
+- PGM learned index and predicted-slot lookups: no sorted array is searched; lookups are
+  not the cost (2026-10-18-schema-hash-and-learned-indexes.md)
 - Key interning: tried with lasso and reverted (#133); key strings are not where the
   per-node allocations go
 - Allocation-free type checks in `normalise_inner`: −0.1% instructions
-- arrow-json as a normalisation bound: cannot infer this data's schema (mixed
-  object/string `datavalue`)
-- Fixed-count chunk sizing as its own item: subsumed by #4 (folding needs no chunks)
+- arrow-json schema inference as a normalisation bound: fails on this data (mixed
+  object/string `datavalue`); kept as a decoder bound with genson's schema instead
+- Fixed-count chunk sizing as its own item: subsumed by #5
+- The fold for the production shape: no faster on slim200
