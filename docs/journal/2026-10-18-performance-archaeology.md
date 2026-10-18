@@ -434,6 +434,89 @@ changed by this work.
   passing with the same inferred Polars schema; the typed temporary file is 535 KB
   where it was 852 KB; polars-genson-py's tests pass (262, 3 skipped)
 
+### The data path on wikidata-pq's chunks
+
+- Corpora (in the session's scratchpad, not committed): rows3000p (3,000 rows of
+  `claims_rows_small.py`, `id` and `claims`, 332 MB of claims JSON, rewritten by pyarrow
+  25 without dictionary encoding: plain, no offset index), rows3000m (the same rows with
+  the labels, descriptions, aliases and sitelinks of the release-format chunk's 60
+  well-known items repeated in turn, so those four columns are far larger than a typical
+  entity's), rowsw
+  (rows3000m's 2,185 distinct rows with an `entity` column, written as wikidata-pq's
+  `dump.write_chunk` writes a chunk: Polars, zstd level 9; 322 MB of claims), rows200,
+  and rel7k (`release_chunk_synth.py`: a release-format chunk of a main-set chunk's
+  median shape, 7,128 entities in 3.96 MB, made from the 60 entity JSON files
+  `release_chunk.py` fetched earlier, through `dump.write_chunk`; nothing new fetched)
+- Polars dictionary-encodes a string column with repeated values: written by Polars,
+  rows3000m's claims (2,185 distinct of 3,000) were dictionary-encoded, which a chunk of
+  distinct entities is not, hence rowsw's distinct rows. Polars 1.44.2 (wikidata-pq's
+  lock) and 2.0 write an offset index and a column index; pyarrow 25 writes neither by
+  default
+- `bench_wpq.py` times `normalise_claims_direct`, `bench_wpq_maps.py` the three
+  `normalise_map_direct` calls and `bench_process.py` the whole of `process()` on one
+  chunk (every table, the id and schema checks; `WIKIDATA_RELEASE` for a release chunk),
+  each run in a fresh process, with `MAP_ENCODING=kv` (polars-genson 1.0 defaults to
+  maps); master is 36198dd, and the candidates the stack's top with each change
+- The projected read (#194 item 3): `read_string_column_opt` built its reader without a
+  projection, so each of wikidata-pq's four `normalise_from_parquet` calls per chunk
+  decoded every column, then copied each row into a `String`. Reading the one column as
+  borrowed rows (logs/e23_projected_read.txt): the three map steps on rows3000m
+  3.47–4.60 s against 0.71–0.79 s; on rows3000p the claims step's read 1.23 s against
+  0.56 s (medians of 3)
+- Extraction by scanning each row's text (#228): one pass validates the row by
+  serde_json's rules for `Value` and finds the removed fields as byte ranges; a removed
+  value's text is parsed only when its (field, key) is new and its text differs from the
+  one held. `diff_extract.rs` against the `Value` path on four corpora
+  (logs/e25_diff_extract.txt): identical lookups, slim rows that parse to the same values
+  with keys in the same order, equal inferred schemas under wikidata-pq's claims options;
+  all threads, rowsw 0.21–0.31 s against 0.64–0.76 s, rows3000p 0.17–0.29 s against
+  0.69–0.72 s, rows200 0.15–0.25 s against 0.46–0.56 s, rel7k (no label maps) 0.010 s
+  against 0.027 s. The property tests compare the two paths on 3,000 random batches and
+  reject 20,000 mutations of valid rows as serde_json does (a stress run of 30,000 and
+  200,000 under other seeds passed). The claims step on rows3000p fell from about 3.4 s
+  to 1.65 s, peak RSS from 750 to 544 MB (logs/e24_scan_extract.txt)
+- Along the way: reading `\uXXXX` with `from_utf8` and `from_str_radix` made escapes the
+  scan's slowest part (a table and an 8-byte SWAR test for plain runs replaced it); slim
+  rows allocated at the row's length raised peak RSS by 375 MB and slowed extraction
+  (they are sized exactly); parsing every first-seen removed value in each chunk cost
+  about 31,000 parses on rows3000p (values are held as text, compared as text, and
+  parsed when they differ or are written); rayon's `collect` into a `Result` reported
+  whichever chunk's conflict came first (each chunk's result is kept and the first in
+  row order reported)
+- Parallel decoding of the column (`par_read.rs`, medians of 5): rowsw one reader 0.31 s,
+  4 readers over row ranges 0.12 s, 8 0.11–0.13 s, 16 0.058 s; rows200 0.28 s and
+  0.044–0.056 s with 16; rows3000p, without an offset index, 0.62 s, 0.32 s with 4, and
+  0.47 s and 0.81 s with 8 and 16 (each reader walks the column's page headers from the
+  start). Loading the offset index or not made no difference to these. Ranges start at
+  pages by the offset index, balanced by compressed bytes, or else at row groups; a file
+  with neither is read by one reader. Tested against one reader on four layouts (pages in
+  one and several row groups, row groups without an offset index, one row group without
+  one), both string types, 0 to 200 rows and 1 to 1,000 parts; of three mutants of the
+  selection, two fail the test and the third is equivalent (page starts strictly
+  increase)
+- The claims step on rowsw, 6 interleaved rounds (logs/e26_claims_rowsw.txt), median wall
+  [range], CPU, peak RSS: master 3.40 s [2.55–5.11], 5.68 s, 754 MB; projected read and
+  scan 1.83 s [1.40–2.50], 3.05 s, 591 MB; with parallel decoding 1.16 s [1.03–1.45],
+  2.67 s, 626 MB. Its stages at the top: read 0.10, extract 0.23, infer 0.18,
+  normalise and decode 0.16, write 0.06 s; outside `normalise_from_parquet`,
+  `lookup_to_long` 0.2 s and the conforming scan 0.1 s
+- The whole of `process()` on rowsw, 3 interleaved rounds (logs/e27_process_rowsw.txt):
+  master 12.75 s [12.70–13.36], CPU 18.8 s; the top 6.64 s [6.52–9.11], CPU 11.9 s. The
+  map steps 5.40 s against 0.53 s, the claims step 3.03 s against 1.21 s. Left as they
+  were: `normalise_sitelinks` 3.5–3.7 s (polars-genson's `normalise_json` expression,
+  which normalises its rows one at a time), Polars' writes of the tables 1.0 s, and
+  `pl.read_parquet` of the whole chunk 0.6 s. rowsw's sitelinks are those of well-known
+  items in every row (above): on rel7k, whose entities keep a few, `normalise_sitelinks`
+  takes 0.1 s
+- A release chunk's claims carry no label maps (`lookup_to_long`: "An official dump's
+  claims carry no labels"), so on the release being run the extraction has nothing to
+  remove and the claims column is small. `process()` on rel7k, 6 interleaved rounds
+  (logs/e28_process_rel7k.txt): master 2.56 s [2.51–3.26], CPU 4.80 s; the top 2.48 s
+  [2.37–2.63], CPU 4.42 s. The claims step 1.29 against 1.20 s, in which inference
+  0.62 against 0.54 s and normalisation with the typed decode 0.34 against 0.30 s;
+  Polars' writes of the tables 0.90 s. On a release chunk polars-genson's share is
+  inference and normalisation, about 1 s of 2.5 s
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
@@ -453,11 +536,9 @@ changed by this work.
 ## Missing
 
 - No timing on a Wikidata chunk file (`chunk_*.parquet`): the corpora are rows200 (and
-  slim200 from it), labels and narrow200k
+  slim200 from it), labels and narrow200k, and the chunk-shaped files above, made from
+  them and from 60 fetched entities
 - No normaliser writing to Arrow from the tape: the floor above is a walk that appends
   strings, without schema dispatch, nested builders or null buffers
-- No timing of `normalise_from_parquet` end to end (Parquet read, extract, infer,
-  normalise, write) in one process, or through the Python binding: the production-shape
-  total above is a sum of stage timings
 - Disk throughput on the machines that run wikidata-pq, which decides what the
   uncompressed output costs in wall time
