@@ -168,3 +168,108 @@ fn test_output_is_zstd_compressed() {
     assert_eq!(column.compression(), compression());
     assert_eq!(read_string_column(path, "json").unwrap(), strings);
 }
+
+/// A file of `rows` rows with an `id` column and a `json` column of uneven, sometimes
+/// null strings, in the given layout.
+fn split_file(rows: usize, props: WriterProperties, large: bool) -> (NamedTempFile, Vec<Option<String>>) {
+    let mut state = 0x9E37_79B9_7F4A_7C15_u64;
+    let mut next = move || {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        state
+    };
+    let strings: Vec<Option<String>> = (0..rows)
+        .map(|i| match next() % 10 {
+            0 => None,
+            n => Some(format!(r#"{{"row": {i}, "pad": "{}"}}"#, "x".repeat((n * n * n) as usize * 7))),
+        })
+        .collect();
+    let ids: ArrayRef = Arc::new(StringArray::from_iter_values((0..rows).map(|i| format!("Q{i}"))));
+    let json: ArrayRef = if large {
+        Arc::new(LargeStringArray::from(strings.clone()))
+    } else {
+        Arc::new(StringArray::from(strings.clone()))
+    };
+    let schema = Arc::new(Schema::new(vec![
+        Field::new("id", DataType::Utf8, false),
+        Field::new("json", json.data_type().clone(), true),
+    ]));
+    let file = NamedTempFile::new().unwrap();
+    let mut writer = ArrowWriter::try_new(File::create(file.path()).unwrap(), schema.clone(), Some(props)).unwrap();
+    // Written in small batches, so that pages and row groups end where the limits say
+    for from in (0..rows).step_by(5) {
+        let len = 5.min(rows - from);
+        let batch = RecordBatch::try_new(schema.clone(), vec![ids.slice(from, len), json.slice(from, len)]).unwrap();
+        writer.write(&batch).unwrap();
+    }
+    writer.close().unwrap();
+    (file, strings)
+}
+
+#[test]
+fn test_split_read_matches_one_reader() {
+    use parquet::file::properties::EnabledStatistics;
+    use parquet::file::reader::{FileReader, SerializedFileReader};
+    let small_pages = || {
+        WriterProperties::builder()
+            .set_write_batch_size(3)
+            .set_data_page_row_count_limit(4)
+            .set_data_page_size_limit(2000)
+    };
+    let no_offset_index = |b: parquet::file::properties::WriterPropertiesBuilder| {
+        b.set_statistics_enabled(EnabledStatistics::Chunk).set_offset_index_disabled(true)
+    };
+    // (layout, whether the rows are split)
+    let layouts = [
+        ("pages, one row group", small_pages().build(), true),
+        ("pages, several row groups", small_pages().set_max_row_group_row_count(Some(37)).build(), true),
+        ("row groups, no offset index", no_offset_index(small_pages().set_max_row_group_row_count(Some(37))).build(), true),
+        ("one row group, no offset index", no_offset_index(small_pages()).build(), false),
+    ];
+    for (layout, props, splits) in layouts {
+        for large in [false, true] {
+            for rows in [0, 1, 2, 9, 200] {
+                let (file, strings) = split_file(rows, props.clone(), large);
+                let path = file.path().to_str().unwrap();
+
+                let reader = SerializedFileReader::new(File::open(path).unwrap()).unwrap();
+                let options = ArrowReaderOptions::new().with_offset_index_policy(PageIndexPolicy::Optional);
+                let metadata = ArrowReaderMetadata::load(&File::open(path).unwrap(), options).unwrap();
+                let ranges = split_rows(metadata.metadata(), 1, 16);
+                if rows == 200 {
+                    assert_eq!(ranges.is_some(), splits, "{layout}: {}", reader.metadata().num_row_groups());
+                }
+                // The ranges are the rows in order, each one not empty
+                if let Some(ranges) = &ranges {
+                    assert_eq!(ranges.first().unwrap().start, 0);
+                    assert_eq!(ranges.last().unwrap().end, rows);
+                    assert!(ranges.windows(2).all(|w| w[0].end == w[1].start));
+                    assert!(ranges.iter().all(|r| !r.is_empty()));
+                    assert!(ranges.len() <= 16);
+                }
+
+                for parts in [1, 2, 3, 5, 16, 64, 1000] {
+                    let column = read_string_column_parts(path, "json", parts).unwrap();
+                    let read: Vec<Option<String>> =
+                        column.rows().into_iter().map(|r| r.map(String::from)).collect();
+                    assert_eq!(read, strings, "{layout}, {rows} rows, {parts} parts, large {large}");
+                    let ids = read_string_column_parts(path, "id", parts).unwrap();
+                    assert_eq!(ids.len(), rows);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test_split_read_errors_as_one_reader() {
+    let (file, _) = split_file(50, WriterProperties::builder().build(), false);
+    let path = file.path().to_str().unwrap();
+    for parts in [1, 8] {
+        let err = read_string_column_parts(path, "nope", parts).err().unwrap();
+        assert!(err.starts_with("Column 'nope' not found"), "{err}");
+    }
+    let err = read_string_column_arrays("/nonexistent.parquet", "json").err().unwrap();
+    assert!(err.starts_with("Failed to open Parquet file"), "{err}");
+}

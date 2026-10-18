@@ -3,12 +3,18 @@
 use arrow::array::{Array, ArrayRef, LargeStringArray, StringArray, StringViewArray};
 use arrow::datatypes::{DataType, Field, FieldRef, Schema, SchemaRef};
 use arrow::record_batch::RecordBatch;
-use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
+use parquet::arrow::arrow_reader::{
+    ArrowReaderMetadata, ArrowReaderOptions, ParquetRecordBatchReaderBuilder, RowSelection,
+    RowSelector,
+};
 use parquet::arrow::{ArrowWriter, ProjectionMask};
 use parquet::basic::{Compression, ZstdLevel};
+use parquet::file::metadata::{PageIndexPolicy, ParquetMetaData};
 use parquet::file::properties::WriterProperties;
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::fs::File;
+use std::ops::Range;
 use std::sync::Arc;
 
 /// Read a string column from a Parquet file
@@ -83,17 +89,38 @@ impl StringColumn {
 
 /// Read a string column from a Parquet file, decoding that column only.
 ///
+/// Where the file has an offset index (Polars and arrow-rs write one, pyarrow does with
+/// `write_page_index=True`) or several row groups, the column is decoded by several
+/// readers at once, each over its own rows.
+///
 /// # Errors
 /// As for [`read_string_column`].
 pub fn read_string_column_arrays(path: &str, column_name: &str) -> Result<StringColumn, String> {
+    read_string_column_parts(path, column_name, rayon::current_num_threads() * 4)
+}
+
+/// [`read_string_column_arrays`] with the column split into at most `parts` parts.
+#[doc(hidden)]
+pub fn read_string_column_parts(
+    path: &str,
+    column_name: &str,
+    parts: usize,
+) -> Result<StringColumn, String> {
     let file =
         File::open(path).map_err(|e| format!("Failed to open Parquet file '{}': {}", path, e))?;
 
-    let builder = ParquetRecordBatchReaderBuilder::try_new(file)
+    // The offset index says where each of the column's pages starts. A file whose index
+    // cannot be read is read as it was before the index was looked for, from its footer
+    let load = |policy| {
+        let options = ArrowReaderOptions::new().with_offset_index_policy(policy);
+        ArrowReaderMetadata::load(&file, options)
+    };
+    let metadata = load(PageIndexPolicy::Optional)
+        .or_else(|_| load(PageIndexPolicy::Skip))
         .map_err(|e| format!("Failed to read Parquet file '{}': {}", path, e))?;
 
     // Find column and verify it's a string type
-    let schema = builder.schema();
+    let schema = metadata.schema();
     let (column_index, field) = schema.column_with_name(column_name).ok_or_else(|| {
         let available: Vec<_> = schema.fields().iter().map(|f| f.name().as_str()).collect();
         format!(
@@ -114,19 +141,129 @@ pub fn read_string_column_arrays(path: &str, column_name: &str) -> Result<String
 
     // Decode the one column: the others (in wikidata-pq's chunks, every other table's JSON)
     // are not read
-    let mask = ProjectionMask::roots(builder.parquet_schema(), [column_index]);
-    let reader = builder
-        .with_projection(mask)
-        .build()
-        .map_err(|e| format!("Failed to create Parquet reader: {}", e))?;
-    let arrays = reader
-        .map(|batch| {
-            batch
-                .map(|b| b.column(0).clone())
-                .map_err(|e| format!("Failed to read record batch: {}", e))
-        })
-        .collect::<Result<_, _>>()?;
+    let parquet_schema = metadata.parquet_schema();
+    let mask = ProjectionMask::roots(parquet_schema, [column_index]);
+    let leaf = (0..parquet_schema.num_columns())
+        .find(|&leaf| parquet_schema.get_column_root_idx(leaf) == column_index)
+        .expect("a string column has a leaf");
+    let ranges = split_rows(metadata.metadata(), leaf, parts);
+
+    // Each part opens the file itself: one `File`'s clones share its position
+    let read = |rows: Option<Range<usize>>| -> Result<Vec<ArrayRef>, String> {
+        let file = File::open(path)
+            .map_err(|e| format!("Failed to open Parquet file '{}': {}", path, e))?;
+        let mut builder =
+            ParquetRecordBatchReaderBuilder::new_with_metadata(file, metadata.clone())
+                .with_projection(mask.clone());
+        if let Some(rows) = rows {
+            let (groups, selection) = select_rows(metadata.metadata(), rows);
+            builder = builder.with_row_groups(groups);
+            if let Some(selection) = selection {
+                builder = builder.with_row_selection(selection);
+            }
+        }
+        let reader = builder
+            .build()
+            .map_err(|e| format!("Failed to create Parquet reader: {}", e))?;
+        reader
+            .map(|batch| {
+                batch
+                    .map(|b| b.column(0).clone())
+                    .map_err(|e| format!("Failed to read record batch: {}", e))
+            })
+            .collect()
+    };
+    let parts: Vec<Result<Vec<ArrayRef>, String>> = match ranges {
+        Some(ranges) => ranges
+            .into_par_iter()
+            .map(|rows| read(Some(rows)))
+            .collect(),
+        None => vec![read(None)],
+    };
+    // The error reported is the first in row order, as one reader would have met it
+    let mut arrays = Vec::new();
+    for part in parts {
+        arrays.extend(part?);
+    }
     Ok(StringColumn { arrays })
+}
+
+/// Split the file's rows into at most `parts` ranges of about equal compressed size in the
+/// column with leaf index `leaf`, each starting where one of the column's pages starts (by
+/// its offset index) or, where the column has no offset index, where a row group starts.
+/// `None` when the rows are not split.
+fn split_rows(metadata: &ParquetMetaData, leaf: usize, parts: usize) -> Option<Vec<Range<usize>>> {
+    // Each place a range can start, with the compressed bytes from there to the next one
+    let mut starts: Vec<(usize, u64)> = Vec::new();
+    let mut base = 0;
+    for (i, group) in metadata.row_groups().iter().enumerate() {
+        match metadata.page_index_for_row_group(i).page_locations(leaf) {
+            Some(pages) if !pages.is_empty() => starts.extend(pages.iter().map(|page| {
+                let first = base + page.first_row_index as usize;
+                (first, page.compressed_page_size.max(0) as u64)
+            })),
+            _ => starts.push((base, group.column(leaf).compressed_size().max(0) as u64)),
+        }
+        base += group.num_rows() as usize;
+    }
+    let total_rows = base;
+    let total_bytes: u64 = starts.iter().map(|(_, bytes)| bytes).sum();
+    if parts < 2 || starts.len() < 2 || total_bytes == 0 {
+        return None;
+    }
+    let mut cuts = vec![0];
+    let mut before = 0;
+    for &(first, bytes) in &starts {
+        // A range ends where the bytes before the next start reach its share of the total
+        let next = cuts.len() as u64;
+        if before * parts as u64 >= total_bytes * next
+            && first > *cuts.last().unwrap()
+            && first < total_rows
+        {
+            cuts.push(first);
+        }
+        before += bytes;
+    }
+    if cuts.len() < 2 {
+        return None;
+    }
+    cuts.push(total_rows);
+    Some(cuts.windows(2).map(|w| w[0]..w[1]).collect())
+}
+
+/// The row groups holding `rows`, and the selection of `rows` within them (`None` when
+/// they are the groups' rows exactly).
+fn select_rows(
+    metadata: &ParquetMetaData,
+    rows: Range<usize>,
+) -> (Vec<usize>, Option<RowSelection>) {
+    let mut groups = Vec::new();
+    let (mut first, mut end) = (None, 0);
+    let mut base = 0;
+    for (i, group) in metadata.row_groups().iter().enumerate() {
+        let next = base + group.num_rows() as usize;
+        if base < rows.end && next > rows.start {
+            groups.push(i);
+            first.get_or_insert(base);
+            end = next;
+        }
+        base = next;
+    }
+    let skip = rows.start - first.unwrap_or(rows.start);
+    let tail = end.saturating_sub(rows.end);
+    if skip == 0 && tail == 0 {
+        return (groups, None);
+    }
+    let selectors = [
+        RowSelector::skip(skip),
+        RowSelector::select(rows.len()),
+        RowSelector::skip(tail),
+    ];
+    let selectors = selectors
+        .into_iter()
+        .filter(|s| s.row_count > 0)
+        .collect::<Vec<_>>();
+    (groups, Some(RowSelection::from(selectors)))
 }
 
 /// Write strings to a Parquet file as a single string column
