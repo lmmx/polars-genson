@@ -45,11 +45,7 @@ info:
                       "string"
                     ]
                   }
-                },
-                "required": [
-                  "id",
-                  "labels"
-                ]
+                }
               }
             },
             "qualifiers": {
@@ -65,7 +61,10 @@ info:
                         "type": "object",
                         "properties": {
                           "precision__integer": {
-                            "type": "integer"
+                            "type": [
+                              "null",
+                              "integer"
+                            ]
                           },
                           "precision__number": {
                             "type": [
@@ -128,12 +127,7 @@ info:
                       }
                     },
                     "required": [
-                      "precision",
-                      "time",
-                      "timezone",
-                      "before",
-                      "after",
-                      "calendarmodel"
+                      "precision"
                     ]
                   }
                 }
@@ -219,11 +213,7 @@ info:
                             "string"
                           ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ]
+                      }
                     }
                   }
                 }

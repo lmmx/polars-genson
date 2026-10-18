@@ -57,35 +57,53 @@ info:
                         "fields": [
                           {
                             "name": "datavalue__string",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "id",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "labels",
-                            "type": {
-                              "name": "labels",
-                              "type": "map",
-                              "values": "string"
-                            }
+                            "type": [
+                              "null",
+                              {
+                                "name": "labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            ]
                           },
                           {
                             "name": "amount",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "unit",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "unit-labels",
-                            "type": {
-                              "name": "unit-labels",
-                              "type": "map",
-                              "values": "string"
-                            }
+                            "type": [
+                              "null",
+                              {
+                                "name": "unit-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            ]
                           },
                           {
                             "name": "upperBound",
@@ -375,15 +393,21 @@ info:
                                 "fields": [
                                   {
                                     "name": "id",
-                                    "type": "string"
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
                                   },
                                   {
                                     "name": "labels",
-                                    "type": {
-                                      "name": "labels",
-                                      "type": "map",
-                                      "values": "string"
-                                    }
+                                    "type": [
+                                      "null",
+                                      {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    ]
                                   },
                                   {
                                     "name": "datavalue__string",

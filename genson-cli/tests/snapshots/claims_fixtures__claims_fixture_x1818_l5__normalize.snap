@@ -19,19 +19,10 @@ info:
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": null,
               "labels": null,
@@ -89,19 +80,10 @@ info:
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": null,
               "labels": null,
@@ -139,19 +121,10 @@ info:
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": "Q5460604",
               "labels": {
@@ -166,19 +139,10 @@ info:
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": "Q6173448",
               "labels": {
@@ -211,19 +175,10 @@ info:
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": "Q19180675",
               "labels": {
@@ -256,19 +211,10 @@ info:
         {
           "mainsnak": {
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": "Q602358",
               "labels": {

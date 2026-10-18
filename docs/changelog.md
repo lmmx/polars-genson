@@ -10,6 +10,13 @@ Release notes for earlier versions are on
   marked required (and its Avro field non-nullable) although some rows lack it, and
   which keys were required could depend on the order of the rows or vary from run to
   run. Schemas change only by keys dropped from `required`.
+- **A field some map values lack is no longer required.** Map unification made a
+  record field required (and its Avro field non-nullable) whenever every record it
+  unified listed the field, though a record that was itself unified lists every field
+  seen so far, required or not. A record field missing from some values could then be
+  required, depending on the order of the values, and normalised output held a record of
+  nulls where the field was missing; it now holds `null`. Schemas change only by fields
+  dropped from `required` and made nullable.
 - **`wrap_root` wraps each document as written.** Duplicate keys and number formatting
   now reach inference unchanged, as without `wrap_root`.
 - **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and

@@ -45,11 +45,14 @@ info:
           "fields": [
             {
               "name": "hex",
-              "type": {
-                "name": "hex",
-                "type": "map",
-                "values": "string"
-              }
+              "type": [
+                "null",
+                {
+                  "name": "hex",
+                  "type": "map",
+                  "values": "string"
+                }
+              ]
             },
             {
               "name": "rgb",

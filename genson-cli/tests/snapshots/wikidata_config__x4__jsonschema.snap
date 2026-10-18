@@ -36,7 +36,10 @@ info:
                   "type": "string"
                 },
                 "datavalue": {
-                  "type": "object",
+                  "type": [
+                    "null",
+                    "object"
+                  ],
                   "properties": {
                     "id": {
                       "type": [
@@ -127,18 +130,7 @@ info:
                         "type": "string"
                       }
                     }
-                  },
-                  "required": [
-                    "id",
-                    "labels",
-                    "datavalue__string",
-                    "time",
-                    "timezone",
-                    "before",
-                    "after",
-                    "precision",
-                    "calendarmodel"
-                  ]
+                  }
                 },
                 "datatype": {
                   "type": "string"
@@ -152,7 +144,6 @@ info:
               },
               "required": [
                 "property",
-                "datavalue",
                 "datatype",
                 "property-labels"
               ]

@@ -50,105 +50,135 @@ info:
                     },
                     {
                       "name": "datavalue",
-                      "type": {
-                        "type": "record",
-                        "name": "datavalue",
-                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
-                        "fields": [
-                          {
-                            "name": "id",
-                            "type": "string"
-                          },
-                          {
-                            "name": "labels",
-                            "type": {
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "datavalue",
+                          "namespace": "genson.document_types.claims_values_types.mainsnak_types",
+                          "fields": [
+                            {
+                              "name": "id",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
                               "name": "labels",
-                              "type": "map",
-                              "values": "string"
-                            }
-                          },
-                          {
-                            "name": "datavalue__string",
-                            "type": "string"
-                          },
-                          {
-                            "name": "time",
-                            "type": "string"
-                          },
-                          {
-                            "name": "timezone",
-                            "type": "int"
-                          },
-                          {
-                            "name": "before",
-                            "type": "int"
-                          },
-                          {
-                            "name": "after",
-                            "type": "int"
-                          },
-                          {
-                            "name": "precision",
-                            "type": {
-                              "type": "record",
-                              "name": "precision",
-                              "namespace": "genson.document_types.claims_values_types.mainsnak_types.datavalue_types",
-                              "fields": [
+                              "type": [
+                                "null",
                                 {
-                                  "name": "precision__integer",
-                                  "type": [
-                                    "null",
-                                    "int"
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "datavalue__string",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "time",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "timezone",
+                              "type": [
+                                "null",
+                                "int"
+                              ]
+                            },
+                            {
+                              "name": "before",
+                              "type": [
+                                "null",
+                                "int"
+                              ]
+                            },
+                            {
+                              "name": "after",
+                              "type": [
+                                "null",
+                                "int"
+                              ]
+                            },
+                            {
+                              "name": "precision",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "record",
+                                  "name": "precision",
+                                  "namespace": "genson.document_types.claims_values_types.mainsnak_types.datavalue_types",
+                                  "fields": [
+                                    {
+                                      "name": "precision__integer",
+                                      "type": [
+                                        "null",
+                                        "int"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "name": "calendarmodel",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "text",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "language",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "amount",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "unit",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "unit-labels",
+                              "type": [
+                                "null",
+                                {
+                                  "name": "unit-labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              ]
                             }
-                          },
-                          {
-                            "name": "calendarmodel",
-                            "type": "string"
-                          },
-                          {
-                            "name": "text",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "language",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "amount",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "unit",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "unit-labels",
-                            "type": [
-                              "null",
-                              {
-                                "name": "unit-labels",
-                                "type": "map",
-                                "values": "string"
-                              }
-                            ]
-                          }
-                        ]
-                      }
+                          ]
+                        }
+                      ]
                     },
                     {
                       "name": "datatype",

@@ -54,19 +54,10 @@ info:
           "mainsnak": {
             "property": "P901",
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": null,
               "labels": null,
@@ -124,19 +115,10 @@ info:
           "mainsnak": {
             "property": "P5008",
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": "Q5460604",
               "labels": {
@@ -161,19 +143,10 @@ info:
           "mainsnak": {
             "property": "P1343",
             "datavalue": {
-              "latitude": {
-                "latitude__integer": null,
-                "latitude__number": null
-              },
-              "longitude": {
-                "longitude__integer": null,
-                "longitude__number": null
-              },
+              "latitude": null,
+              "longitude": null,
               "altitude": null,
-              "precision": {
-                "precision__integer": null,
-                "precision__number": null
-              },
+              "precision": null,
               "globe": null,
               "id": "Q19180675",
               "labels": {

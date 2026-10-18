@@ -36,7 +36,10 @@ info:
                   "type": "string"
                 },
                 "datavalue": {
-                  "type": "object",
+                  "type": [
+                    "null",
+                    "object"
+                  ],
                   "properties": {
                     "id": {
                       "type": [
@@ -93,7 +96,10 @@ info:
                       ]
                     },
                     "precision": {
-                      "type": "object",
+                      "type": [
+                        "null",
+                        "object"
+                      ],
                       "properties": {
                         "precision__integer": {
                           "type": [
@@ -176,29 +182,7 @@ info:
                         "string"
                       ]
                     }
-                  },
-                  "required": [
-                    "id",
-                    "labels",
-                    "datavalue__string",
-                    "text",
-                    "language",
-                    "time",
-                    "timezone",
-                    "before",
-                    "after",
-                    "precision",
-                    "calendarmodel",
-                    "amount",
-                    "unit",
-                    "unit-labels",
-                    "latitude",
-                    "longitude",
-                    "altitude",
-                    "globe",
-                    "upperBound",
-                    "lowerBound"
-                  ]
+                  }
                 },
                 "datatype": {
                   "type": "string"
@@ -212,7 +196,6 @@ info:
               },
               "required": [
                 "property",
-                "datavalue",
                 "datatype",
                 "property-labels"
               ]
@@ -354,7 +337,10 @@ info:
                       ]
                     },
                     "datavalue": {
-                      "type": "object",
+                      "type": [
+                        "null",
+                        "object"
+                      ],
                       "properties": {
                         "amount": {
                           "type": [
@@ -497,12 +483,7 @@ info:
                             "string"
                           ]
                         }
-                      },
-                      "required": [
-                        "amount",
-                        "unit",
-                        "unit-labels"
-                      ]
+                      }
                     },
                     "datatype": {
                       "type": [
@@ -519,7 +500,6 @@ info:
                   },
                   "required": [
                     "property",
-                    "datavalue",
                     "datatype",
                     "property-labels"
                   ]

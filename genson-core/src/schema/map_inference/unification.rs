@@ -467,8 +467,9 @@ fn unify_field_schemas(
 }
 
 /// Unify record schemas by merging their properties: each field's schemas are unified, a
-/// field in every record stays as it is (and required), and one missing from some becomes
-/// nullable.
+/// field every record requires stays as it is (and required), and any other becomes
+/// nullable. A field's presence in every record's `properties` does not make it required:
+/// a record that is itself a unified schema lists every field seen so far, required or not.
 fn unify_record_schemas(
     schemas: &[&Value],
     path: &str,
@@ -486,8 +487,16 @@ fn unify_record_schemas(
     // others, so a field seen only as one comes after the rest.
     let mut fields: ordermap::OrderMap<&str, Vec<&Value>> = ordermap::OrderMap::new();
     let mut counts: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+    // How many records require each field
+    let mut required_in: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
     let mut unified_anyofs: Vec<(&str, Value)> = Vec::new();
     for (i, &schema) in schemas.iter().enumerate() {
+        if let Some(Value::Array(required)) = extract_field_from_nullable_schema(schema, "required")
+        {
+            for name in required.iter().filter_map(Value::as_str) {
+                *required_in.entry(name).or_default() += 1;
+            }
+        }
         let properties = match extract_field_from_nullable_schema(schema, "properties") {
             Some(Value::Object(properties)) => Some(properties),
             _ if is_empty_record_schema(schema) => None,
@@ -530,20 +539,34 @@ fn unify_record_schemas(
         anstream::eprintln!("  Merge loop took {:?}", merge_start.elapsed());
     }
 
-    // Fields in every record first, as they are and required; then the rest, nullable
+    // Fields in every record first, then the rest; a field every record requires is kept
+    // as it is and required, any other made nullable
     let (in_all, in_some): (Vec<_>, Vec<_>) = fields
         .keys()
         .zip(unified)
         .map(|(&name, field_schema)| (name, counts[name], field_schema))
         .partition(|(_, count, _)| *count == schemas.len());
-    let required: Vec<&str> = in_all.iter().map(|(name, _, _)| *name).collect();
+    let required_by_all = |name: &str| required_in.get(name) == Some(&schemas.len());
+    let required: Vec<&str> = in_all
+        .iter()
+        .map(|(name, _, _)| *name)
+        .filter(|name| required_by_all(name))
+        .collect();
     let mut properties = Map::new();
     for (name, _, field_schema) in in_all {
-        debug_verbose!(
-            config,
-            "Field `{name}` present in all schemas → keeping non-nullable"
-        );
-        properties.insert(name.to_string(), field_schema);
+        if required_by_all(name) {
+            debug_verbose!(
+                config,
+                "Field `{name}` required in all schemas → keeping non-nullable"
+            );
+            properties.insert(name.to_string(), field_schema);
+        } else {
+            debug_verbose!(
+                config,
+                "Field `{name}` optional in some schemas → making nullable"
+            );
+            properties.insert(name.to_string(), make_nullable(field_schema));
+        }
     }
     for (name, count, field_schema) in in_some {
         debug_verbose!(

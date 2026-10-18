@@ -28,7 +28,10 @@ info:
                 "type": "object",
                 "properties": {
                   "latitude": {
-                    "type": "object",
+                    "type": [
+                      "null",
+                      "object"
+                    ],
                     "properties": {
                       "latitude__integer": {
                         "type": [
@@ -42,7 +45,10 @@ info:
                     }
                   },
                   "longitude": {
-                    "type": "object",
+                    "type": [
+                      "null",
+                      "object"
+                    ],
                     "properties": {
                       "longitude__integer": {
                         "type": [
@@ -59,7 +65,10 @@ info:
                     "type": "null"
                   },
                   "precision": {
-                    "type": "object",
+                    "type": [
+                      "null",
+                      "object"
+                    ],
                     "properties": {
                       "precision__integer": {
                         "type": [
@@ -96,14 +105,7 @@ info:
                       "string"
                     ]
                   }
-                },
-                "required": [
-                  "latitude",
-                  "longitude",
-                  "altitude",
-                  "precision",
-                  "globe"
-                ]
+                }
               }
             },
             "qualifiers": {

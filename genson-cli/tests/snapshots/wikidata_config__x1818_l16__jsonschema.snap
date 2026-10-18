@@ -99,15 +99,7 @@ info:
                         "string"
                       ]
                     }
-                  },
-                  "required": [
-                    "datavalue__string",
-                    "id",
-                    "labels",
-                    "amount",
-                    "unit",
-                    "unit-labels"
-                  ]
+                  }
                 },
                 "datatype": {
                   "type": "string"
@@ -228,11 +220,7 @@ info:
                             "string"
                           ]
                         }
-                      },
-                      "required": [
-                        "id",
-                        "labels"
-                      ]
+                      }
                     },
                     "datatype": {
                       "type": "string"
@@ -342,15 +330,7 @@ info:
                               "string"
                             ]
                           }
-                        },
-                        "required": [
-                          "time",
-                          "timezone",
-                          "before",
-                          "after",
-                          "precision",
-                          "calendarmodel"
-                        ]
+                        }
                       },
                       "datatype": {
                         "type": "string"

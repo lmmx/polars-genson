@@ -37,7 +37,10 @@ info:
                   "type": "string"
                 },
                 "datavalue": {
-                  "type": "object",
+                  "type": [
+                    "null",
+                    "object"
+                  ],
                   "properties": {
                     "datavalue__string": {
                       "type": [
@@ -70,7 +73,10 @@ info:
                       ]
                     },
                     "precision": {
-                      "type": "object",
+                      "type": [
+                        "null",
+                        "object"
+                      ],
                       "properties": {
                         "precision__integer": {
                           "type": [
@@ -195,23 +201,7 @@ info:
                         "string"
                       ]
                     }
-                  },
-                  "required": [
-                    "datavalue__string",
-                    "id",
-                    "labels",
-                    "amount",
-                    "unit",
-                    "precision",
-                    "unit-labels",
-                    "time",
-                    "timezone",
-                    "before",
-                    "after",
-                    "calendarmodel",
-                    "text",
-                    "language"
-                  ]
+                  }
                 },
                 "datatype": {
                   "type": "string"
@@ -225,7 +215,6 @@ info:
               },
               "required": [
                 "property",
-                "datavalue",
                 "datatype",
                 "property-labels"
               ]
@@ -247,7 +236,10 @@ info:
                       "type": "string"
                     },
                     "datavalue": {
-                      "type": "object",
+                      "type": [
+                        "null",
+                        "object"
+                      ],
                       "properties": {
                         "datavalue__string": {
                           "type": [
@@ -340,7 +332,6 @@ info:
                   },
                   "required": [
                     "property",
-                    "datavalue",
                     "datatype",
                     "property-labels"
                   ]

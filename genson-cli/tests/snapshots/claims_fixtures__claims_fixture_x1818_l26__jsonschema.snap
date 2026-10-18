@@ -28,7 +28,10 @@ info:
                 "type": "object",
                 "properties": {
                   "precision": {
-                    "type": "object",
+                    "type": [
+                      "null",
+                      "object"
+                    ],
                     "properties": {
                       "precision__number": {
                         "type": [
@@ -110,10 +113,7 @@ info:
                       "string"
                     ]
                   }
-                },
-                "required": [
-                  "precision"
-                ]
+                }
               }
             },
             "references": {
