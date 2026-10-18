@@ -420,6 +420,20 @@ changed by this work.
   master's on rows200 W (1.80–2.33 s against 2.09–2.31 s), rows200 D (1.28–1.66 s against
   1.52–1.54 s), labels and narrow200k, with the same output hashes (logs/e14_list_seq.txt)
 
+### The stack's inference layers
+
+- `bench_claims` at #232 (1a2b591), #233 (e4044c7) and #234 (eca2fb8), 3 alternated
+  processes of 4 runs each, the same schema hash on every corpus in all three
+  (logs/e21_stack_inference.txt), median warm wall / CPU: rows200 W 2.137/7.04,
+  1.941/6.82, 2.029/6.47 s; rows200 D 1.504/4.93, 1.423/4.85, 1.285/4.32 s; slim200 W
+  0.108/0.31, 0.089/0.28, 0.102/0.30 s; labels D 0.142/0.49, 0.143/0.48, 0.125/0.42 s;
+  rows200 W `rewrite_objects` 0.473, 0.325, 0.343 s and `chunk.merge` 0.470, 0.448,
+  0.372 s
+- At #237 (the stack's top) wikidata-pq's path gives the conformed claims of #232 alone,
+  row for row as written, on rows200 and on the release-format chunk, the schema check
+  passing with the same inferred Polars schema; the typed temporary file is 535 KB
+  where it was 852 KB; polars-genson-py's tests pass (262, 3 skipped)
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
@@ -431,6 +445,10 @@ changed by this work.
   object in some snaks and a string in others
 - Key interning: issue #133 records an interning attempt with lasso that was reverted
 - `proto_list_seq.py`: no difference on these corpora (above)
+- Validation by simd-json alone (#229 item 3): `proto_no_validate.py` on genson-cli
+  accepts `{"a": 1} xyz` and `{"a": 1}}`, which master rejects (`trim_to_object` trims to
+  the outer braces before simd-json parses); `{"a": 123456789012345678901234567890}`
+  panics in both (simd-json errors after serde accepts it as a float), fixed in #235
 
 ## Missing
 
