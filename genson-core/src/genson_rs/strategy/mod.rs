@@ -157,7 +157,16 @@ impl BasicSchemaStrategy {
             }
             _ => {
                 hasher.write_u8(b'S');
-                crate::genson_rs::node::hash_value(&self.to_schema(), hasher);
+                match self.bare_type() {
+                    // A scalar without keywords serialises as `{"type":"<name>"}`, so feed
+                    // those bytes without building the schema value
+                    Some(name) => {
+                        hasher.write(br#"{"type":""#);
+                        hasher.write(name.as_bytes());
+                        hasher.write(br#""}"#);
+                    }
+                    None => crate::genson_rs::node::hash_value(&self.to_schema(), hasher),
+                }
             }
         }
     }

@@ -206,6 +206,15 @@ impl SchemaNode {
     /// Feed `hasher` what identifies `to_schema`'s output, without building it, so that
     /// nodes with equal schemas hash equal.
     pub fn hash_schema<H: Hasher>(&self, hasher: &mut H) {
+        // One typed strategy is already in schema order: feed what the loop below would,
+        // without collecting the strategies
+        if let [strategy] = self.active_strategies.as_slice() {
+            if !matches!(strategy, BasicSchemaStrategy::Typeless(_)) {
+                hasher.write_usize(1);
+                strategy.hash_schema(hasher);
+                return;
+            }
+        }
         // A typeless strategy without keywords writes `{}`, as no strategy at all does
         let written = self.active_strategies.iter().filter(|strategy| {
             !matches!(strategy, BasicSchemaStrategy::Typeless(t) if t.to_schema() == json!({}))
