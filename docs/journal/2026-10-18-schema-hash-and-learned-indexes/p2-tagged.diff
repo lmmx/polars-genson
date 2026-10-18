@@ -1,0 +1,36 @@
+diff --git a/genson-core/src/genson_rs/node.rs b/genson-core/src/genson_rs/node.rs
+index 76602df..0e82e48 100644
+--- a/genson-core/src/genson_rs/node.rs
++++ b/genson-core/src/genson_rs/node.rs
+@@ -206,6 +206,14 @@ impl SchemaNode {
+     /// Feed `hasher` what identifies `to_schema`'s output, without building it, so that
+     /// nodes with equal schemas hash equal.
+     pub fn hash_schema<H: Hasher>(&self, hasher: &mut H) {
++        // PROTOTYPE: one typed strategy is its own schema order, so skip the Vecs below
++        if let [only] = self.active_strategies.as_slice() {
++            if !matches!(only, BasicSchemaStrategy::Typeless(_)) {
++                hasher.write_usize(1);
++                only.hash_schema(hasher);
++                return;
++            }
++        }
+         // A typeless strategy without keywords writes `{}`, as no strategy at all does
+         let written = self.active_strategies.iter().filter(|strategy| {
+             !matches!(strategy, BasicSchemaStrategy::Typeless(t) if t.to_schema() == json!({}))
+diff --git a/genson-core/src/genson_rs/strategy/mod.rs b/genson-core/src/genson_rs/strategy/mod.rs
+index 96a2aa4..45843b6 100644
+--- a/genson-core/src/genson_rs/strategy/mod.rs
++++ b/genson-core/src/genson_rs/strategy/mod.rs
+@@ -155,6 +155,12 @@ impl BasicSchemaStrategy {
+                 hasher.write_u8(b'L');
+                 strategy.items_node().hash_schema(hasher);
+             }
++            // PROTOTYPE: a scalar with no keywords writes `{"type": <name>}`, so its name
++            // identifies it without building and serialising that value
++            _ if self.bare_type().is_some() => {
++                hasher.write_u8(b's');
++                hasher.write(self.bare_type().unwrap().as_bytes());
++            }
+             _ => {
+                 hasher.write_u8(b'S');
+                 crate::genson_rs::node::hash_value(&self.to_schema(), hasher);

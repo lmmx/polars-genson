@@ -14,6 +14,10 @@ Release notes for earlier versions are on
   now reach inference unchanged, as without `wrap_root`.
 - **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
   on large rows with default options. See [How inference works](concepts/inference.md).
+- **Less time spent deduplicating rows.** Given 10 or more strings, inference hashes each
+  string's schema to skip duplicates; a scalar field is now hashed without building its
+  schema, for 6–17% less CPU time on Wikidata claims and on narrow rows.
+  `SchemaBuilder::schema_hash` gives the same values as before.
 - **`SchemaBuilder::add_schemas` keeps what the builder already held** (genson-core
   Rust API). Given schemas with more than 3 properties between them, it replaced the
   builder's schema for each of those properties instead of merging into it. Inference,

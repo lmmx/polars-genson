@@ -179,6 +179,105 @@ fn test_hash_schema_matches_schema_equality() {
     assert!(equal > 100, "too few equal pairs ({equal}) to test anything");
 }
 
+/// A hasher that keeps the bytes it is fed.
+#[derive(Default)]
+struct Recorder(Vec<u8>);
+
+impl Hasher for Recorder {
+    fn write(&mut self, bytes: &[u8]) {
+        self.0.extend_from_slice(bytes);
+    }
+
+    fn finish(&self) -> u64 {
+        0
+    }
+}
+
+/// A scalar strategy hashes as `S` and the compact serialisation of its schema, with
+/// keywords or without.
+#[test]
+fn test_scalar_hash_is_its_serialised_schema() {
+    let schemas = [
+        json!({"type": "null"}),
+        json!({"type": "boolean"}),
+        json!({"type": "integer"}),
+        json!({"type": "number"}),
+        json!({"type": "string"}),
+        json!({"type": "string", "format": "date"}),
+        json!({"type": "integer", "minimum": 0}),
+    ];
+    for schema in schemas {
+        let mut node = SchemaNode::new();
+        node.add_schema(DataType::Schema(&schema));
+        assert_eq!(node.active_strategies.len(), 1, "{schema}");
+        let strategy = &node.active_strategies[0];
+        let mut written = Recorder::default();
+        strategy.hash_schema(&mut written);
+        let mut expected = vec![b'S'];
+        serde_json::to_writer(&mut expected, &strategy.to_schema()).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&written.0),
+            String::from_utf8_lossy(&expected),
+            "{schema}"
+        );
+    }
+}
+
+/// A scalar with keywords hashes apart from the bare scalar and from one with other
+/// keywords, and equal to one with the same keywords, alone or as a property.
+#[test]
+fn test_hash_schema_tells_keyworded_scalars_apart() {
+    let hash = |schema: Value| {
+        let mut node = SchemaNode::new();
+        node.add_schema(DataType::Schema(&schema));
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        node.hash_schema(&mut hasher);
+        hasher.finish()
+    };
+    let in_object = |a: Value| json!({"type": "object", "properties": {"a": a}});
+    let bare = json!({"type": "string"});
+    let date = json!({"type": "string", "format": "date"});
+    let time = json!({"type": "string", "format": "time"});
+    for wrap in [|schema| schema, in_object] {
+        assert_ne!(hash(wrap(bare.clone())), hash(wrap(date.clone())));
+        assert_ne!(hash(wrap(date.clone())), hash(wrap(time.clone())));
+        assert_eq!(hash(wrap(date.clone())), hash(wrap(date.clone())));
+    }
+    assert_ne!(
+        hash(json!({"type": "integer"})),
+        hash(json!({"type": "number"}))
+    );
+}
+
+/// `hash_schema` feeds the bytes it fed at ac5129c, so `SchemaBuilder::schema_hash` keeps
+/// its values: one xxh64 over the nodes of 2000 random batches, a fifth of them with a
+/// schema of keyworded scalars added, and the builder's hash of one document.
+#[test]
+fn test_hash_schema_values_are_unchanged() {
+    let keyworded = json!({"type": "object", "properties": {
+        "a": {"type": "string", "format": "date"},
+        "b": {"type": "integer", "minimum": 0},
+    }});
+    let mut rng = Rng(0x0dd_ba11_c0ff_ee00);
+    let mut hasher = xxhash_rust::xxh64::Xxh64::new(0);
+    for i in 0..2000 {
+        let mut node = build(&random_documents(&mut rng), rng.below(3) == 0);
+        if i % 5 == 0 {
+            node.add_schema(DataType::Schema(&keyworded));
+        }
+        node.hash_schema(&mut hasher);
+    }
+    assert_eq!(hasher.finish(), PINNED_NODES_HASH);
+
+    let mut builder = crate::genson_rs::SchemaBuilder::new(None);
+    let mut document = br#"{"a": 1, "b": [true, null, 1.5, "s"], "c": {"d": {}}}"#.to_vec();
+    builder.add_object(simd_json::to_tape(&mut document).unwrap().as_value());
+    assert_eq!(builder.schema_hash(), PINNED_BUILDER_HASH);
+}
+
+const PINNED_NODES_HASH: u64 = 4095574756938490984;
+const PINNED_BUILDER_HASH: u64 = 11897637414506759766;
+
 /// `add_schemas` into a new node leaves the same schema as `add_schema` of each schema in
 /// turn.
 #[test]

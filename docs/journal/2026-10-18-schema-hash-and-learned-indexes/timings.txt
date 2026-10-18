@@ -1,0 +1,297 @@
+# bench_claims: round corpus options build wall cpu processed schema_len hash (run_e2e.sh, 5 rounds)
+1 rows200 W base 3.58s cpu=10.97s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W base 2.31s cpu=7.02s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W base 2.10s cpu=6.93s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W p2compat 2.19s cpu=6.36s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W p2compat 1.90s cpu=5.99s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W p2compat 1.86s cpu=6.05s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W p2tag 2.66s cpu=7.26s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W p2tag 1.96s cpu=6.28s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 W p2tag 1.93s cpu=6.10s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+1 rows200 D base 2.54s cpu=6.87s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D base 1.82s cpu=6.13s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D base 1.96s cpu=6.42s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D p2compat 2.23s cpu=6.22s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D p2compat 1.56s cpu=4.89s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D p2compat 1.51s cpu=5.22s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D p2tag 1.81s cpu=5.03s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D p2tag 1.68s cpu=5.48s processed=200 schema_len=801825 hash=b044387a11c95954
+1 rows200 D p2tag 1.63s cpu=5.49s processed=200 schema_len=801825 hash=b044387a11c95954
+1 labels D base 0.17s cpu=0.60s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D base 0.16s cpu=0.56s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D base 0.15s cpu=0.53s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D p2compat 0.13s cpu=0.45s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D p2compat 0.15s cpu=0.47s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D p2compat 0.14s cpu=0.47s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D p2tag 0.19s cpu=0.65s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D p2tag 0.15s cpu=0.48s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 labels D p2tag 0.14s cpu=0.49s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+1 narrow200k D base 0.84s cpu=2.70s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D base 0.85s cpu=2.72s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D base 0.92s cpu=2.95s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D p2compat 0.71s cpu=2.22s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D p2compat 0.71s cpu=2.30s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D p2compat 0.65s cpu=2.11s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D p2tag 0.80s cpu=2.45s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D p2tag 0.78s cpu=2.37s processed=8 schema_len=424 hash=c5e9db34b114ce53
+1 narrow200k D p2tag 0.66s cpu=2.18s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 rows200 W base 3.97s cpu=12.02s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W base 2.50s cpu=7.42s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W base 2.35s cpu=7.24s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W p2compat 2.59s cpu=7.27s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W p2compat 2.16s cpu=6.88s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W p2compat 2.15s cpu=6.43s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W p2tag 2.21s cpu=6.60s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W p2tag 1.91s cpu=6.23s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 W p2tag 2.12s cpu=6.01s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+2 rows200 D base 1.80s cpu=5.67s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D base 1.59s cpu=5.48s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D base 1.69s cpu=5.71s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D p2compat 1.71s cpu=4.69s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D p2compat 1.39s cpu=4.72s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D p2compat 1.33s cpu=4.52s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D p2tag 1.26s cpu=4.30s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D p2tag 1.55s cpu=5.13s processed=200 schema_len=801825 hash=b044387a11c95954
+2 rows200 D p2tag 1.57s cpu=5.40s processed=200 schema_len=801825 hash=b044387a11c95954
+2 labels D base 0.17s cpu=0.57s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D base 0.20s cpu=0.63s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D base 0.18s cpu=0.60s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D p2compat 0.15s cpu=0.53s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D p2compat 0.14s cpu=0.49s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D p2compat 0.13s cpu=0.43s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D p2tag 0.14s cpu=0.49s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D p2tag 0.17s cpu=0.59s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 labels D p2tag 0.12s cpu=0.41s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+2 narrow200k D base 0.83s cpu=2.67s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D base 0.89s cpu=2.82s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D base 0.84s cpu=2.69s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D p2compat 0.67s cpu=2.23s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D p2compat 0.77s cpu=2.41s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D p2compat 0.66s cpu=2.14s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D p2tag 0.70s cpu=2.16s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D p2tag 0.73s cpu=2.27s processed=8 schema_len=424 hash=c5e9db34b114ce53
+2 narrow200k D p2tag 0.65s cpu=2.10s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 rows200 W base 3.49s cpu=10.01s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W base 2.08s cpu=6.46s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W base 2.07s cpu=6.87s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W p2compat 2.26s cpu=6.42s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W p2compat 1.88s cpu=6.11s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W p2compat 1.84s cpu=5.82s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W p2tag 2.76s cpu=7.24s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W p2tag 1.91s cpu=6.06s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 W p2tag 2.46s cpu=7.04s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+3 rows200 D base 2.11s cpu=6.15s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D base 1.61s cpu=5.08s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D base 1.54s cpu=5.34s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D p2compat 1.60s cpu=4.41s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D p2compat 1.42s cpu=4.65s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D p2compat 1.42s cpu=4.68s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D p2tag 1.20s cpu=4.08s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D p2tag 1.82s cpu=5.79s processed=200 schema_len=801825 hash=b044387a11c95954
+3 rows200 D p2tag 1.58s cpu=4.99s processed=200 schema_len=801825 hash=b044387a11c95954
+3 labels D base 0.17s cpu=0.57s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D base 0.16s cpu=0.54s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D base 0.22s cpu=0.72s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D p2compat 0.14s cpu=0.48s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D p2compat 0.14s cpu=0.46s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D p2compat 0.15s cpu=0.48s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D p2tag 0.14s cpu=0.46s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D p2tag 0.13s cpu=0.46s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 labels D p2tag 0.15s cpu=0.50s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+3 narrow200k D base 0.83s cpu=2.69s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D base 0.90s cpu=2.94s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D base 0.82s cpu=2.65s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D p2compat 0.68s cpu=2.26s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D p2compat 0.70s cpu=2.28s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D p2compat 0.73s cpu=2.27s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D p2tag 0.75s cpu=2.34s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D p2tag 0.69s cpu=2.20s processed=8 schema_len=424 hash=c5e9db34b114ce53
+3 narrow200k D p2tag 0.77s cpu=2.44s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 rows200 W base 3.63s cpu=10.93s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W base 2.20s cpu=7.12s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W base 2.00s cpu=6.58s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W p2compat 2.69s cpu=7.57s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W p2compat 1.95s cpu=6.34s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W p2compat 1.99s cpu=6.58s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W p2tag 2.70s cpu=7.74s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W p2tag 2.14s cpu=6.53s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 W p2tag 1.84s cpu=6.04s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+4 rows200 D base 1.62s cpu=5.39s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D base 1.59s cpu=5.51s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D base 1.79s cpu=5.83s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D p2compat 1.49s cpu=5.13s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D p2compat 1.63s cpu=4.94s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D p2compat 2.04s cpu=6.16s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D p2tag 2.02s cpu=5.75s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D p2tag 1.50s cpu=4.89s processed=200 schema_len=801825 hash=b044387a11c95954
+4 rows200 D p2tag 1.48s cpu=5.03s processed=200 schema_len=801825 hash=b044387a11c95954
+4 labels D base 0.17s cpu=0.55s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D base 0.17s cpu=0.57s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D base 0.17s cpu=0.59s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D p2compat 0.16s cpu=0.54s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D p2compat 0.16s cpu=0.54s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D p2compat 0.15s cpu=0.48s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D p2tag 0.14s cpu=0.50s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D p2tag 0.22s cpu=0.76s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 labels D p2tag 0.15s cpu=0.54s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+4 narrow200k D base 0.80s cpu=2.70s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D base 0.73s cpu=2.52s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D base 0.81s cpu=2.70s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D p2compat 0.80s cpu=2.42s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D p2compat 0.64s cpu=2.12s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D p2compat 0.76s cpu=2.39s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D p2tag 0.71s cpu=2.35s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D p2tag 0.77s cpu=2.47s processed=8 schema_len=424 hash=c5e9db34b114ce53
+4 narrow200k D p2tag 0.60s cpu=2.03s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 rows200 W base 3.50s cpu=10.71s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W base 2.04s cpu=6.72s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W base 2.00s cpu=6.62s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W p2compat 2.23s cpu=6.14s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W p2compat 2.04s cpu=6.31s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W p2compat 1.82s cpu=6.05s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W p2tag 2.80s cpu=6.96s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W p2tag 1.93s cpu=6.12s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 W p2tag 2.05s cpu=6.32s processed=200 schema_len=3866 hash=ab63cbfae2d3dbf7
+5 rows200 D base 2.12s cpu=5.83s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D base 1.63s cpu=5.68s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D base 1.75s cpu=5.63s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D p2compat 1.25s cpu=4.28s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D p2compat 1.43s cpu=4.84s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D p2compat 1.33s cpu=4.54s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D p2tag 1.57s cpu=4.71s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D p2tag 1.49s cpu=4.94s processed=200 schema_len=801825 hash=b044387a11c95954
+5 rows200 D p2tag 1.35s cpu=4.72s processed=200 schema_len=801825 hash=b044387a11c95954
+5 labels D base 0.15s cpu=0.51s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D base 0.15s cpu=0.52s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D base 0.16s cpu=0.56s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D p2compat 0.15s cpu=0.50s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D p2compat 0.14s cpu=0.49s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D p2compat 0.14s cpu=0.48s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D p2tag 0.15s cpu=0.52s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D p2tag 0.15s cpu=0.51s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 labels D p2tag 0.15s cpu=0.52s processed=996 schema_len=59696 hash=22f8e5cfb8ce1ca5
+5 narrow200k D base 0.84s cpu=2.81s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D base 0.88s cpu=2.90s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D base 0.86s cpu=2.84s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D p2compat 0.80s cpu=2.45s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D p2compat 0.82s cpu=2.66s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D p2compat 0.67s cpu=2.20s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D p2tag 0.68s cpu=2.17s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D p2tag 0.77s cpu=2.38s processed=8 schema_len=424 hash=c5e9db34b114ce53
+5 narrow200k D p2tag 0.72s cpu=2.30s processed=8 schema_len=424 hash=c5e9db34b114ce53
+
+# stage_split.rs on rows200, per pass (3 rounds, builds alternated)
+round 1 base
+parse     0.607s  22.1%
+build     1.118s  40.7%
+hash      0.898s  32.7%
+drop      0.126s   4.6%
+round 1 p2compat
+parse     0.526s  25.6%
+build     1.090s  53.0%
+hash      0.331s  16.1%
+drop      0.111s   5.4%
+round 1 p2tag
+parse     0.563s  28.2%
+build     1.025s  51.3%
+hash      0.306s  15.3%
+drop      0.104s   5.2%
+round 2 base
+parse     0.492s  20.3%
+build     0.997s  41.1%
+hash      0.833s  34.3%
+drop      0.104s   4.3%
+round 2 p2compat
+parse     0.575s  28.6%
+build     1.021s  50.7%
+hash      0.315s  15.7%
+drop      0.101s   5.0%
+round 2 p2tag
+parse     0.495s  26.3%
+build     0.998s  52.9%
+hash      0.293s  15.5%
+drop      0.099s   5.3%
+round 3 base
+parse     0.550s  21.5%
+build     1.022s  40.0%
+hash      0.871s  34.1%
+drop      0.112s   4.4%
+round 3 p2compat
+parse     0.536s  27.7%
+build     0.977s  50.4%
+hash      0.320s  16.5%
+drop      0.105s   5.4%
+round 3 p2tag
+parse     0.538s  27.0%
+build     1.029s  51.6%
+hash      0.316s  15.9%
+drop      0.110s   5.5%
+
+# peak_rss.py: round corpus options build peak_rss schema_hash (5 rounds)
+0 rows200 W base 1029.8MB ab63cbfae2d3dbf7
+0 rows200 W p2compat 1071.5MB ab63cbfae2d3dbf7
+0 rows200 D base 1056.7MB b044387a11c95954
+0 rows200 D p2compat 1061.4MB b044387a11c95954
+0 labels D base 61.4MB 22f8e5cfb8ce1ca5
+0 labels D p2compat 61.5MB 22f8e5cfb8ce1ca5
+0 narrow200k D base 47.5MB c5e9db34b114ce53
+0 narrow200k D p2compat 47.3MB c5e9db34b114ce53
+1 rows200 W base 1061.9MB ab63cbfae2d3dbf7
+1 rows200 W p2compat 1050.5MB ab63cbfae2d3dbf7
+1 rows200 D base 1071.2MB b044387a11c95954
+1 rows200 D p2compat 1066.6MB b044387a11c95954
+1 labels D base 59.4MB 22f8e5cfb8ce1ca5
+1 labels D p2compat 59.6MB 22f8e5cfb8ce1ca5
+1 narrow200k D base 47.4MB c5e9db34b114ce53
+1 narrow200k D p2compat 47.3MB c5e9db34b114ce53
+2 rows200 W base 1051.0MB ab63cbfae2d3dbf7
+2 rows200 W p2compat 1099.0MB ab63cbfae2d3dbf7
+2 rows200 D base 1061.5MB b044387a11c95954
+2 rows200 D p2compat 1059.2MB b044387a11c95954
+2 labels D base 64.5MB 22f8e5cfb8ce1ca5
+2 labels D p2compat 64.3MB 22f8e5cfb8ce1ca5
+2 narrow200k D base 47.4MB c5e9db34b114ce53
+2 narrow200k D p2compat 47.5MB c5e9db34b114ce53
+3 rows200 W base 1062.1MB ab63cbfae2d3dbf7
+3 rows200 W p2compat 1082.8MB ab63cbfae2d3dbf7
+3 rows200 D base 1079.2MB b044387a11c95954
+3 rows200 D p2compat 1065.8MB b044387a11c95954
+3 labels D base 59.4MB 22f8e5cfb8ce1ca5
+3 labels D p2compat 63.3MB 22f8e5cfb8ce1ca5
+3 narrow200k D base 47.4MB c5e9db34b114ce53
+3 narrow200k D p2compat 47.5MB c5e9db34b114ce53
+4 rows200 W base 1057.6MB ab63cbfae2d3dbf7
+4 rows200 W p2compat 1070.1MB ab63cbfae2d3dbf7
+4 rows200 D base 1067.5MB b044387a11c95954
+4 rows200 D p2compat 1050.7MB b044387a11c95954
+4 labels D base 61.4MB 22f8e5cfb8ce1ca5
+4 labels D p2compat 63.2MB 22f8e5cfb8ce1ca5
+4 narrow200k D base 47.6MB c5e9db34b114ce53
+4 narrow200k D p2compat 47.4MB c5e9db34b114ce53
+
+rows200 W base n=5 median 1057.6 MB [1029.8-1062.1] {'ab63cbfae2d3dbf7'}
+rows200 W p2compat n=5 median 1071.5 MB [1050.5-1099.0] {'ab63cbfae2d3dbf7'}
+rows200 D base n=5 median 1067.5 MB [1056.7-1079.2] {'b044387a11c95954'}
+rows200 D p2compat n=5 median 1061.4 MB [1050.7-1066.6] {'b044387a11c95954'}
+labels D base n=5 median 61.4 MB [59.4-64.5] {'22f8e5cfb8ce1ca5'}
+labels D p2compat n=5 median 63.2 MB [59.6-64.3] {'22f8e5cfb8ce1ca5'}
+narrow200k D base n=5 median 47.4 MB [47.4-47.6] {'c5e9db34b114ce53'}
+narrow200k D p2compat n=5 median 47.4 MB [47.3-47.5] {'c5e9db34b114ce53'}
+
+# alloc_count.rs with count_alloc.py applied, one process per build (ac5129c, then the branch)
+== ac5129c rows200 W
+stage to_tape allocs 1400 bytes 1480474888
+stage add_object allocs 19279899 bytes 5207123640
+stage schema_hash allocs 18120375 bytes 1245384410
+stage drop allocs 0 bytes 0
+e2e allocs 67566011 bytes 14885107348 hash=ab63cbfae2d3dbf7
+== ac5129c narrow200k D
+e2e allocs 21958454 bytes 2311360746 hash=c5e9db34b114ce53
+== branch rows200 W
+stage to_tape allocs 1400 bytes 1480474888
+stage add_object allocs 19269486 bytes 5204232362
+stage schema_hash allocs 149536 bytes 45945824
+stage drop allocs 0 bytes 0
+e2e allocs 49804369 bytes 13754084218 hash=ab63cbfae2d3dbf7
+== branch narrow200k D
+e2e allocs 10623671 bytes 1592864635 hash=c5e9db34b114ce53
