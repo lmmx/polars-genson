@@ -191,6 +191,9 @@ fn get_scalar_type_from_value(value: &Value) -> &'static str {
 ///   * Non-matching values are coerced to string via `.to_string()` for the
 ///     `"string"` type, or dropped to `null` for numeric/boolean types.
 ///
+/// - **`"null"`**: every value becomes `null` (as a value a type cannot hold does
+///   elsewhere), as in a union of `null` alone.
+///
 /// - **Record** (`{"type":"record","fields":[...]}`):
 ///   * Produces a JSON object with exactly the schema’s fields.
 ///   * Missing fields are filled with `null`.
@@ -308,6 +311,9 @@ fn normalise_inner(
         }),
 
         // Record
+        // `null` holds nothing else: a value is null there, as in a union of `null` alone
+        Value::String(t) if t == "null" => Kept(Value::Null),
+
         Value::Object(obj) if obj.get("type") == Some(&Value::String("record".into())) => {
             let mut out = serde_json::Map::new();
             if let Some(Value::Array(fields)) = obj.get("fields") {
