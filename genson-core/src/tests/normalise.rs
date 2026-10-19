@@ -958,7 +958,7 @@ fn test_a_value_typed_null_normalises_to_null() {
 fn test_empty_list_beside_scalars_decodes_their_values() {
     use crate::SchemaInferenceConfig;
     use arrow::array::{Array, ListArray, StringArray};
-    for empty_as_null in [true, false] {
+    for (empty_as_null, wrap_scalars) in [(true, true), (false, true), (true, false), (false, false)] {
         for rows in [
             vec![r#"{"s": "x"}"#, r#"{"s": []}"#],
             vec![r#"{"s": ""}"#, r#"{"s": "x"}"#, r#"{"s": []}"#],
@@ -967,14 +967,14 @@ fn test_empty_list_beside_scalars_decodes_their_values() {
             let config = SchemaInferenceConfig {
                 delimiter: Some(b'\n'),
                 avro: true,
+                wrap_scalars,
                 ..Default::default()
             };
             let schema = crate::infer_json_schema_from_strings(&rows, config).unwrap().schema;
+            // A union of the list and the scalar, or (with `wrap_scalars`) the list alone
             let s = &schema["fields"][0]["type"];
-            assert!(
-                s.as_array().unwrap().iter().any(|t| t["items"] == "string"),
-                "{s}"
-            );
+            let branches = s.as_array().map_or(vec![s], |b| b.iter().collect());
+            assert!(branches.iter().any(|t| t["items"] == "string"), "{s}");
             let cfg = NormaliseConfig {
                 empty_as_null,
                 ..Default::default()
@@ -991,18 +991,136 @@ fn test_empty_list_beside_scalars_decodes_their_values() {
     }
 }
 
-/// An empty list beside a record keeps `null` items: a record is not wrapped into the list.
+/// An empty list beside a record: with `wrap_scalars`, one list of the record (normalisation
+/// wraps the record into the list); without, a union whose list keeps `null` items.
 #[cfg(feature = "avro")]
 #[test]
-fn test_empty_list_beside_a_record_keeps_null_items() {
+fn test_empty_list_beside_a_record() {
     use crate::SchemaInferenceConfig;
     let rows = [r#"{"s": {"a": 1}}"#, r#"{"s": []}"#];
+    for wrap_scalars in [true, false] {
+        let config = SchemaInferenceConfig {
+            delimiter: Some(b'\n'),
+            avro: true,
+            wrap_scalars,
+            ..Default::default()
+        };
+        let schema = crate::infer_json_schema_from_strings(&rows, config).unwrap().schema;
+        let s = &schema["fields"][0]["type"];
+        if wrap_scalars {
+            assert_eq!(s["items"]["type"], "record", "{s}");
+        } else {
+            assert!(s.as_array().unwrap().iter().any(|t| t["items"] == "null"), "{s}");
+        }
+    }
+}
+
+/// The non-null scalars in a value, counted (`sign` 1 to add, -1 to take away); numbers as
+/// floats, as an integer in a float field widens.
+#[cfg(all(feature = "avro", feature = "parquet"))]
+fn count_scalars(value: &Value, counts: &mut std::collections::HashMap<String, i64>, sign: i64) {
+    let key = match value {
+        Value::Null => return,
+        Value::Array(items) => return items.iter().for_each(|v| count_scalars(v, counts, sign)),
+        Value::Object(m) => return m.values().for_each(|v| count_scalars(v, counts, sign)),
+        Value::Number(n) => format!("{}", n.as_f64().unwrap()),
+        scalar => scalar.to_string(),
+    };
+    *counts.entry(key).or_default() += sign;
+}
+
+/// Rows normalised against the Avro schema inferred from them: the schema and the rows,
+/// which decode to Arrow, as the typed decoder decodes them where it takes them.
+#[cfg(all(feature = "avro", feature = "parquet"))]
+fn normalised_against_inferred(rows: &[&str], wrap_scalars: bool) -> (Value, Vec<Value>) {
+    use crate::SchemaInferenceConfig;
     let config = SchemaInferenceConfig {
         delimiter: Some(b'\n'),
         avro: true,
+        wrap_scalars,
         ..Default::default()
     };
-    let schema = crate::infer_json_schema_from_strings(&rows, config).unwrap().schema;
-    let s = &schema["fields"][0]["type"];
-    assert!(s.as_array().unwrap().iter().any(|t| t["items"] == "null"), "{s}");
+    let schema = crate::infer_json_schema_from_strings(rows, config).unwrap().schema;
+    let cfg = NormaliseConfig::default();
+    let plan = NormalisePlan::new(&schema, &cfg, &HashSet::new());
+    let fields = crate::parquet::avro_record_fields(&schema, false).unwrap();
+    let owned: Vec<Option<String>> = rows.iter().map(|r| Some(r.to_string())).collect();
+    let (by_value, _) = typed_by_value(&owned, &plan, &fields).unwrap();
+    let borrowed: Vec<Option<&str>> = rows.iter().copied().map(Some).collect();
+    if let Some((typed, _)) = plan.to_arrow(&fields).and_then(|p| p.normalise(&borrowed, 0)) {
+        assert_eq!(typed, by_value, "{schema}");
+    }
+    let values = rows.iter().map(|r| plan.normalise(serde_json::from_str(r).unwrap()).0);
+    let normalised = values.collect();
+    (schema, normalised)
+}
+
+/// A union of an array with records or scalars (as when a key holds a list in some places
+/// and a record or a scalar in others, #238) is one array whose items take the other
+/// branches: normalisation wraps their values into the array, so every value is kept, for
+/// either order of the branches and beside `null`, and the rows decode.
+#[cfg(all(feature = "avro", feature = "parquet"))]
+#[test]
+fn test_union_of_an_array_and_other_branches_keeps_their_values() {
+    let cases: [&[&str]; 9] = [
+        &[
+            r#"{"r":[[true,true,{"d":null}],1,{"d":9}]}"#,
+            r#"{"r":true}"#,
+            r#"{"r":true}"#,
+        ],
+        &[r#"{"r":[[{"d":null}],{"d":9}]}"#],
+        &[r#"{"r":[{"d":9},[{"d":null}]]}"#],
+        &[r#"{"x":[1,[2]]}"#],
+        &[r#"{"x":[{"a":1},[{"a":2}]]}"#],
+        &[r#"{"x":[[true,{"d":null}],1]}"#],
+        &[r#"{"t":[1]}"#, r#"{"t":null}"#, r#"{"t":2}"#],
+        &[r#"{"t":{"a":1}}"#, r#"{"t":null}"#, r#"{"t":[{"a":2}]}"#],
+        &[r#"{"t":[1]}"#, r#"{"t":{"a":1}}"#, r#"{"t":null}"#],
+    ];
+    for rows in cases {
+        let (schema, normalised) = normalised_against_inferred(rows, true);
+        let field = &schema["fields"][0]["type"];
+        let array = match field.as_array().map(Vec::as_slice) {
+            Some([a, null] | [null, a]) if null == "null" => a,
+            _ => field,
+        };
+        assert_eq!(array["type"], "array", "{rows:?}: {field}");
+        for (row, out) in rows.iter().zip(&normalised) {
+            let mut counts = std::collections::HashMap::new();
+            count_scalars(&serde_json::from_str(row).unwrap(), &mut counts, 1);
+            count_scalars(out, &mut counts, -1);
+            assert!(counts.values().all(|&c| c == 0), "{row} -> {out}");
+        }
+    }
+    // #238: the integer, the record's `d` and the booleans each land once
+    let (_, normalised) = normalised_against_inferred(cases[0], true);
+    assert_eq!(normalised[0]["r"][1][0]["__integer"], 1);
+    assert_eq!(normalised[0]["r"][2][0]["d"], 9);
+    assert_eq!(normalised[1]["r"][0][0]["__boolean"], true);
+    // Either order of the branches gives the one schema
+    assert_eq!(
+        normalised_against_inferred(cases[1], true).0,
+        normalised_against_inferred(cases[2], true).0
+    );
+}
+
+/// A union of an array with what its items cannot unify with stays a union, as before:
+/// different scalars, a branch that is itself a union of types, or `wrap_scalars` off.
+#[cfg(feature = "avro")]
+#[test]
+fn test_union_of_an_array_and_other_branches_it_cannot_hold_stays() {
+    use crate::SchemaInferenceConfig;
+    for (rows, wrap_scalars) in [
+        (&[r#"{"x":[[1],"a"]}"#][..], true),
+        (&[r#"{"u":-4}"#, r#"{"u":[]}"#, r#"{"u":{}}"#][..], true),
+        (&[r#"{"r":[[{"d":null}],{"d":9}]}"#][..], false),
+    ] {
+        let config = SchemaInferenceConfig {
+            delimiter: Some(b'\n'),
+            wrap_scalars,
+            ..Default::default()
+        };
+        let schema = crate::infer_json_schema_from_strings(rows, config).unwrap().schema;
+        assert!(schema.to_string().contains("anyOf"), "{rows:?}: {schema}");
+    }
 }

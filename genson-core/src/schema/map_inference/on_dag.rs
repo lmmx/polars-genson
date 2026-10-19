@@ -296,6 +296,10 @@ impl<'c> OnDag<'c> {
                 .into_iter()
                 .map(|branch| self.rewrite_objects(branch, field, false))
                 .collect();
+            // An array's items may unify with the other branches only once rewritten
+            if let Some(array) = self.unify_rewritten_into_array(&branches) {
+                return array;
+            }
             let branches = self.dag.array(&branches);
             obj.insert(kw::ANY_OF, branches);
         }

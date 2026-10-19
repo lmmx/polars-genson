@@ -769,6 +769,9 @@ pub(crate) fn unify_anyof_schemas(
     if !config.wrap_scalars {
         return None;
     }
+    if let Some(array) = unify_into_array(schemas, config) {
+        return Some(array);
+    }
 
     // Check if we have the specific case: some scalars, some objects
     let has_scalars = schemas.iter().any(|&s| is_scalar_schema(s));
@@ -799,6 +802,87 @@ pub(crate) fn unify_anyof_schemas(
         .collect::<Option<Vec<Cow<Value>>>>()?;
     let promoted: Vec<&Value> = promoted.iter().map(Cow::as_ref).collect();
     check_unifiable_schemas(&promoted, field_name, config)
+}
+
+/// `unify_into_array` of a union's branches once each is rewritten: an array's items may
+/// unify with the other branches only then.
+pub(crate) fn unify_rewritten_into_array(
+    branches: &[&Value],
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    if !config.wrap_scalars {
+        return None;
+    }
+    unify_into_array(branches, config)
+}
+
+/// A union branch without `null`, and whether it held `null`: `None` for a branch that is
+/// `null` alone.
+fn without_null(schema: &Value) -> (Option<Cow<'_, Value>>, bool) {
+    let inner = normalise_nullable(schema);
+    let wrapped = !std::ptr::eq(inner, schema);
+    match inner.get("type") {
+        Some(t) if t == "null" => (None, true),
+        Some(Value::Array(types)) if types.iter().any(|t| t == "null") => {
+            let mut rest: Vec<Value> = types.iter().filter(|t| *t != "null").cloned().collect();
+            let t = match rest.len() {
+                0 => return (None, true),
+                1 => rest.swap_remove(0),
+                _ => Value::Array(rest),
+            };
+            let mut owned = inner.clone();
+            owned["type"] = t;
+            (Some(Cow::Owned(owned)), true)
+        }
+        _ => (Some(Cow::Borrowed(inner)), wrapped),
+    }
+}
+
+/// A union of arrays and other schemas as one array, whose items unify the arrays' items
+/// with the other schemas: normalisation wraps a value that is not an array into the array,
+/// so the items must hold it. Scalars among records promote as they do among an array's
+/// items, under no field name (`__string`). A union that holds `null` (as a branch, or in a
+/// branch's types) stays one of the array and `null`. `None` without both an array and
+/// another schema besides `null`, where a branch has other than one type besides `null`,
+/// or where the items do not unify.
+fn unify_into_array(schemas: &[&Value], config: &SchemaInferenceConfig) -> Option<Value> {
+    let (mut arrays, mut others, mut nullable) = (Vec::new(), Vec::new(), false);
+    for &schema in schemas {
+        let (schema, null) = without_null(schema);
+        nullable |= null;
+        match schema {
+            // A branch of one type: one of several, or none, is a union of its own
+            Some(schema) if !schema.get("type").is_some_and(Value::is_string) => return None,
+            Some(schema) if is_array_schema(&schema) => arrays.push(schema),
+            Some(schema) => others.push(schema),
+            None => {}
+        }
+    }
+    if arrays.is_empty() || others.is_empty() {
+        return None;
+    }
+    // An array seen only empty has no items, or empty ones, and constrains nothing
+    let mut items: Vec<&Value> = arrays
+        .iter()
+        .filter_map(|a| a.get("items"))
+        .filter(|items| items.as_object().is_none_or(|o| !o.is_empty()))
+        .collect();
+    items.extend(others.iter().map(Cow::as_ref));
+    let items = match items.as_slice() {
+        [only] => (*only).clone(),
+        _ => check_unifiable_schemas(&items, "", config)
+            .or_else(|| unify_anyof_schemas(&items, "", config))?,
+    };
+    debug!(
+        config,
+        "anyOf unification: other branches wrapped into the array"
+    );
+    let array = object([("type", "array".into()), ("items", items)]);
+    Some(if nullable {
+        object([("anyOf", json!([array, {"type": "null"}]))])
+    } else {
+        array
+    })
 }
 
 /// Check if a collection of schemas can be unified into a single schema.

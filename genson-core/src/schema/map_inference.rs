@@ -297,6 +297,12 @@ pub(crate) fn rewrite_objects(
             } else {
                 any_of.iter_mut().for_each(rewrite);
             }
+            // An array's items may unify with the other branches only once rewritten
+            let branches: Vec<&Value> = any_of.iter().collect();
+            if let Some(array) = unify_rewritten_into_array(&branches, config) {
+                *schema = array;
+                return;
+            }
         }
     }
 
