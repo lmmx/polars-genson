@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2](https://github.com/lmmx/polars-genson/compare/genson-core-v1.0.1...genson-core-v1.0.2) - 2026-10-19
+
+### <!-- 2 -->Bug Fixes
+
+- *(core)* an integer beyond 64 bits is a number, not a panic ([#235](https://github.com/lmmx/polars-genson/pull/235))
+- *(core)* map unification requires a field only when every record requires it ([#232](https://github.com/lmmx/polars-genson/pull/232))
+
+### <!-- 3 -->Performance
+
+- *(core)* a property given an earlier sibling's states shares its subtree ([#254](https://github.com/lmmx/polars-genson/pull/254))
+- *(core)* write the DAG without allocating or hashing known terms per node ([#253](https://github.com/lmmx/polars-genson/pull/253))
+- *(core)* rewrite the merged schema on a hash-consed DAG ([#252](https://github.com/lmmx/polars-genson/pull/252))
+- *(core)* merge interned rows with each property's states absorbed in parallel ([#251](https://github.com/lmmx/polars-genson/pull/251))
+- *(core)* intern a row's values without allocating or hashing what repeats ([#250](https://github.com/lmmx/polars-genson/pull/250))
+- *(core)* read rows with braces in strings as the usual path splits them ([#249](https://github.com/lmmx/polars-genson/pull/249))
+- *(core)* encode each row group's columns in parallel ([#248](https://github.com/lmmx/polars-genson/pull/248))
+- *(core)* unification moves the schema so far into the result ([#247](https://github.com/lmmx/polars-genson/pull/247))
+- *(core)* infer the rows' schemas as interned states ([#246](https://github.com/lmmx/polars-genson/pull/246))
+- *(core)* normalise rows of JSON text straight into Arrow ([#245](https://github.com/lmmx/polars-genson/pull/245))
+- *(core)* normalise against a plan compiled from the schema once ([#244](https://github.com/lmmx/polars-genson/pull/244))
+- *(core)* merge rows' schemas without rebuilding them, and write large objects in parallel ([#243](https://github.com/lmmx/polars-genson/pull/243))
+- *(core)* move values into the JSON objects that inference and normalisation build ([#242](https://github.com/lmmx/polars-genson/pull/242))
+- *(parquet)* decode a string column with several readers at once ([#241](https://github.com/lmmx/polars-genson/pull/241))
+- *(core)* extract invariant fields by scanning each row's text ([#240](https://github.com/lmmx/polars-genson/pull/240))
+- *(parquet)* read only the requested column, and borrow its rows ([#239](https://github.com/lmmx/polars-genson/pull/239))
+- *(core)* write Parquet output with zstd compression ([#237](https://github.com/lmmx/polars-genson/pull/237))
+- *(core)* normalise takes record fields out of their input without prune ([#236](https://github.com/lmmx/polars-genson/pull/236))
+- *(core)* merge a bare scalar without building its schema ([#234](https://github.com/lmmx/polars-genson/pull/234))
+- *(core)* debug macros build their message only when it prints ([#233](https://github.com/lmmx/polars-genson/pull/233))
+- *(core)* hash scalar leaves without building their schema value ([#226](https://github.com/lmmx/polars-genson/pull/226))
+
+### <!-- 7 -->Build System and CI
+
+- a performance scorecard of genson-core's stages for pull requests ([#255](https://github.com/lmmx/polars-genson/pull/255))
+
+### <!-- 9 -->Other
+
+- *(clippy)* fix lint
+
 ## [1.0.1](https://github.com/lmmx/polars-genson/compare/genson-core-v1.0.0...genson-core-v1.0.1) - 2026-10-15
 
 ### <!-- 2 -->Bug Fixes
