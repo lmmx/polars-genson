@@ -1,0 +1,139 @@
+# genson-core's performance scorecard (scripts/scorecard.py, docs/perf/scorecard.md): on a
+# pull request labelled `perf-scorecard`, the PR's head measured against its base (for a
+# stacked PR, the PR below it) and the report kept as one comment, edited on each push, on
+# a change of base, and when a run fails. Opt-in and not a required check: it takes about
+# half an hour.
+#
+# The `measure` job runs the PR's code with a read-only token. The `comment` job runs none
+# of it: it only reads the report the first job uploaded and writes the comment. A fork's
+# PR gets a read-only token for both, so it gets the report as an artifact and a job
+# summary but no comment.
+name: Performance scorecard
+
+on:
+  pull_request:
+    types: [labeled, synchronize, reopened, edited]
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Revision to compare against
+        required: true
+      head:
+        description: Revision to measure
+        required: true
+      cumulative:
+        description: Revision to compare the head against as well (say, master)
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scorecard-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    # On a PR: labelled, and (when edited) only when its base changed
+    if: >
+      github.event_name == 'workflow_dispatch'
+      || (contains(github.event.pull_request.labels.*.name, 'perf-scorecard')
+          && (github.event.action != 'edited' || github.event.changes.base)
+          && (github.event.action != 'labeled' || github.event.label.name == 'perf-scorecard'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+      # The crates downloaded; each revision is built afresh in its own worktree
+      - uses: Swatinem/rust-cache@v2
+      - name: Measure base and head
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || inputs.base }}
+          HEAD: ${{ github.event.pull_request.head.sha || inputs.head }}
+          CUMULATIVE: ${{ inputs.cumulative || (contains(github.event.pull_request.labels.*.name, 'perf-scorecard-cumulative') && 'origin/master') || '' }}
+        run: |
+          python3 scripts/scorecard.py compare --base "$BASE" --head "$HEAD" \
+            ${CUMULATIVE:+--cumulative "$CUMULATIVE"} --out scorecard-out \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          cat scorecard-out/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Note the pull request
+        if: github.event_name == 'pull_request'
+        run: echo "${{ github.event.pull_request.number }}" > scorecard-out/pr-number
+      - uses: actions/upload-artifact@v7
+        with:
+          name: scorecard
+          path: scorecard-out
+          retention-days: 90
+
+  comment:
+    needs: measure
+    # After a run that finished or failed (not one a newer run cancelled), on a PR of this
+    # repository (a fork's gets a read-only token)
+    if: >
+      always()
+      && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (needs.measure.result == 'success' || needs.measure.result == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@v7
+        if: needs.measure.result == 'success'
+        with:
+          name: scorecard
+          path: scorecard-out
+      - name: Post or edit the report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          MEASURED: ${{ needs.measure.result }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          marker='<!-- genson-core-scorecard -->'
+          read -r head_now base_now < <(gh api "repos/$REPO/pulls/$PR" --jq '.head.sha + " " + .base.sha')
+          # A newer push is being measured by a newer run: leave the comment to it
+          if [ "$head_now" != "$HEAD_SHA" ]; then
+            echo "The PR's head is now $head_now, not $HEAD_SHA: not publishing."
+            exit 0
+          fi
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.user.type == \"Bot\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1)
+          if [ "$MEASURED" = success ]; then
+            test "$(cat scorecard-out/pr-number)" = "$PR"
+            test "$(jq -r .head scorecard-out/compared.json)" = "$HEAD_SHA"
+            cp scorecard-out/report.md body.md
+            if [ "$base_now" != "$BASE_SHA" ]; then
+              printf '\n> **The base has moved** since this run (it is now `%s`): push, or label again, to measure against it.\n' "$base_now" >> body.md
+            fi
+          else
+            # A failed run: say so, and keep the last results only as stale
+            {
+              echo "$marker"
+              echo "## genson-core performance scorecard"
+              echo
+              echo "**The measurement of head \`$HEAD_SHA\` against base \`$BASE_SHA\` failed** ([run]($RUN_URL)). There are no current results."
+              if [ -n "$id" ]; then
+                echo
+                echo "<details><summary>The previous results (stale)</summary>"
+                echo
+                gh api "repos/$REPO/issues/comments/$id" --jq .body | grep -v -e "$marker" | sed -e '/^<details><summary>The previous results/,/^<\/details>$/d'
+                echo
+                echo "</details>"
+              fi
+            } > body.md
+          fi
+          head -c 65000 body.md > report.md
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@report.md > /dev/null
+          else
+            gh pr comment "$PR" --repo "$REPO" --body-file report.md
+          fi

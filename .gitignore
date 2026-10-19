@@ -20,3 +20,7 @@ target/
 
 *.so
 .pdm*
+
+# The performance scorecard's worktrees, builds and reports (scripts/scorecard.py)
+.scorecard/
+scorecard-out/

@@ -494,19 +494,21 @@ pub fn normalise_values_pruned(
     cfg: &NormaliseConfig,
     prune: &HashSet<String>,
 ) -> (Vec<Value>, Vec<PrunedValue>) {
-    let plan = NormalisePlan::new(schema, cfg, prune);
-    let mut pruned = Vec::new();
-    let rows = values
-        .into_iter()
-        .enumerate()
-        .map(|(row, v)| {
-            let (out, mut row_pruned) = plan.normalise(v);
-            row_pruned.iter_mut().for_each(|p| p.row = row);
-            pruned.append(&mut row_pruned);
-            out
-        })
-        .collect();
-    (rows, pruned)
+    crate::phase::normalise(|| {
+        let plan = NormalisePlan::new(schema, cfg, prune);
+        let mut pruned = Vec::new();
+        let rows = values
+            .into_iter()
+            .enumerate()
+            .map(|(row, v)| {
+                let (out, mut row_pruned) = plan.normalise(v);
+                row_pruned.iter_mut().for_each(|p| p.row = row);
+                pruned.append(&mut row_pruned);
+                out
+            })
+            .collect();
+        (rows, pruned)
+    })
 }
 
 /// [`normalise_values_pruned`] reading the schema for every value, without compiling it:

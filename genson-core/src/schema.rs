@@ -523,19 +523,23 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
         .len()
         .div_ceil(rayon::current_num_threads() * 4)
         .max(1);
-    let blocks: Vec<(RowStates, Vec<RowState>)> = json_strings
-        .par_chunks(block_len)
-        .map(|rows| {
-            let mut states = RowStates::new();
-            let mut toks = Vec::new();
-            let rows = rows
-                .iter()
-                .map(|row| states.row(row.as_ref(), ndjson, config.wrap_root.as_deref(), &mut toks))
-                .collect::<Result<Vec<_>, _>>()
-                .ok()?;
-            Some((states, rows))
-        })
-        .collect::<Option<_>>()?;
+    let blocks: Vec<(RowStates, Vec<RowState>)> = crate::phase::rows(|| {
+        json_strings
+            .par_chunks(block_len)
+            .map(|rows| {
+                let mut states = RowStates::new();
+                let mut toks = Vec::new();
+                let rows = rows
+                    .iter()
+                    .map(|row| {
+                        states.row(row.as_ref(), ndjson, config.wrap_root.as_deref(), &mut toks)
+                    })
+                    .collect::<Result<Vec<_>, _>>()
+                    .ok()?;
+                Some((states, rows))
+            })
+            .collect::<Option<_>>()
+    })?;
     profile!(config, "Interned row states took {:?}", t_rows.elapsed());
 
     // The distinct rows of each chunk of `max_builders`, in order, as the usual path merges
@@ -560,7 +564,7 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
         }
         chunks.push(chunk);
     }
-    builder.add_interned_row_chunks(chunks, config.schema_uri.as_deref());
+    crate::phase::merge(|| builder.add_interned_row_chunks(chunks, config.schema_uri.as_deref()));
     profile!(config, "Interned merge took {:?}", t_merge.elapsed());
     Some(processed_count)
 }
@@ -682,36 +686,41 @@ fn rewrite_merged(builder: SchemaBuilder, config: &SchemaInferenceConfig, way: R
     let forced_maps = config.force_field_types.values().any(|t| t == "map");
     match way {
         Rewrite::Values => {
-            let mut schema = builder.to_schema();
+            let mut schema = crate::phase::write_schema(|| builder.to_schema());
             // The builder's tree is freed on the rayon pool while the schema is rewritten
             rayon::spawn(move || drop(builder));
-            profile!(
-                config,
-                "Applying force field types ({})",
-                current_time_hms()
-            );
-            if forced_maps {
-                preprocess_force_field_types(&mut schema, config);
-            }
-            profile!(config, "Rewriting objects ({})", current_time_hms());
-            rewrite_objects(&mut schema, None, config, true);
+            crate::phase::rewrite(|| {
+                profile!(
+                    config,
+                    "Applying force field types ({})",
+                    current_time_hms()
+                );
+                if forced_maps {
+                    preprocess_force_field_types(&mut schema, config);
+                }
+                profile!(config, "Rewriting objects ({})", current_time_hms());
+                rewrite_objects(&mut schema, None, config, true);
+            });
             schema
         }
         Rewrite::Dag => {
             let mut on = OnDag::new(crate::dag::Dag::new(), config);
-            let mut schema = builder.to_dag(&mut on.dag);
+            let schema = crate::phase::write_schema(|| builder.to_dag(&mut on.dag));
             rayon::spawn(move || drop(builder));
-            profile!(
-                config,
-                "Applying force field types ({})",
-                current_time_hms()
-            );
-            if forced_maps {
-                schema = on.preprocess_force_field_types(schema);
-            }
-            profile!(config, "Rewriting objects ({})", current_time_hms());
-            schema = on.rewrite_objects(schema, None, true);
-            on.dag.to_value(schema)
+            let schema = crate::phase::rewrite(|| {
+                profile!(
+                    config,
+                    "Applying force field types ({})",
+                    current_time_hms()
+                );
+                let schema = match forced_maps {
+                    true => on.preprocess_force_field_types(schema),
+                    false => schema,
+                };
+                profile!(config, "Rewriting objects ({})", current_time_hms());
+                on.rewrite_objects(schema, None, true)
+            });
+            crate::phase::materialise(|| on.dag.to_value(schema))
         }
     }
 }
@@ -761,29 +770,35 @@ pub(crate) fn infer_json_schema_from_strings_by<S: AsRef<str> + Sync>(
             let processed_count = if use_parallel {
                 match process_json_strings_interned(json_strings, &config, &mut builder) {
                     Some(processed_count) => processed_count,
-                    None => process_json_strings_parallel(json_strings, &config, &mut builder)?,
+                    None => crate::phase::rows(|| {
+                        process_json_strings_parallel(json_strings, &config, &mut builder)
+                    })?,
                 }
             } else {
-                process_json_strings_sequential(json_strings, &config, &mut builder)?
+                crate::phase::rows(|| {
+                    process_json_strings_sequential(json_strings, &config, &mut builder)
+                })?
             };
 
             // Get final schema
             let mut final_schema = rewrite_merged(builder, &config, way);
             profile!(config, "Reordering unions ({})", current_time_hms());
-            reorder_unions(&mut final_schema);
+            crate::phase::reorder(|| reorder_unions(&mut final_schema));
 
             #[cfg(feature = "avro")]
             if config.avro {
-                let avro_schema = SchemaInferenceResult {
-                    schema: final_schema,
-                    processed_count,
-                }
-                .to_avro_schema(
-                    "genson", // namespace
-                    Some(""),
-                    Some(""), // base_uri
-                    false,    // don't split top-level
-                );
+                let avro_schema = crate::phase::avro(|| {
+                    SchemaInferenceResult {
+                        schema: final_schema,
+                        processed_count,
+                    }
+                    .to_avro_schema(
+                        "genson", // namespace
+                        Some(""),
+                        Some(""), // base_uri
+                        false,    // don't split top-level
+                    )
+                });
                 return Ok(SchemaInferenceResult {
                     schema: avro_schema,
                     processed_count,
