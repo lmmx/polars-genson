@@ -1,0 +1,9 @@
+Mutants of the interned row phase's split rule (genson-core/src/genson_rs/interned.rs,
+`read_whole`), each run against test_interned_rows_match_the_builders and
+test_interned_rows_tell_required_apart. "caught" = a test fails.
+
+caught: old check (any brace in a string)       (declines every row with a brace in a string: too few sets with braces compared)
+caught: wrapped row may close at depth 0        (a wrapped row whose braces close inside it read whole: interned where the builders fail)
+caught: wrapper not counted                     (the wrapping object's brace left out of the count)
+caught: closing at the end declines             (a row whose last `}` closes it declines: too few sets compared)
+caught: no check                                (every row read whole: interned where the builders fail)

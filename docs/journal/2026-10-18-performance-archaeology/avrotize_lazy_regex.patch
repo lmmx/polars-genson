@@ -1,0 +1,103 @@
+diff -ru a/src b/src
+--- a/src/common/names.rs	2006-07-24 01:21:28.000000000 +0000
++++ b/src/common/names.rs	2026-10-19 05:05:11.254797075 +0000
+@@ -6,8 +6,7 @@
+ /// Ensures the identifier starts with a letter or underscore,
+ /// replaces invalid characters with `_`, and prefixes leading digits.
+ pub fn avro_name(name: &str) -> String {
+-    let mut val = Regex::new(r"[^a-zA-Z0-9_]")
+-        .unwrap()
++    let mut val = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[^a-zA-Z0-9_]").unwrap()); &*RE }
+         .replace_all(name, "_")
+         .to_string();
+     if val
+@@ -39,8 +38,7 @@
+ /// Replaces invalid chars with `_` but preserves dots as separators.
+ /// Prefixes with `_` if starting with a digit.
+ pub fn avro_namespace(name: &str) -> String {
+-    let mut val = Regex::new(r"[^a-zA-Z0-9_\.]")
+-        .unwrap()
++    let mut val = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[^a-zA-Z0-9_\.]").unwrap()); &*RE }
+         .replace_all(name, "_")
+         .to_string();
+     if val
+@@ -78,13 +76,13 @@
+     if input.contains('_') {
+         words = input.split('_').map(|w| w.to_string()).collect();
+     } else if input.chars().next().unwrap().is_uppercase() {
+-        let re = Regex::new(r"[A-Z][a-z0-9_]*\.?").unwrap();
++        let re = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[A-Z][a-z0-9_]*\.?").unwrap()); &*RE };
+         words = re
+             .find_iter(input)
+             .map(|m| m.as_str().to_string())
+             .collect();
+     } else {
+-        let re = Regex::new(r"[a-z0-9]+\.?|[A-Z][a-z0-9_]*\.?").unwrap();
++        let re = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[a-z0-9]+\.?|[A-Z][a-z0-9_]*\.?").unwrap()); &*RE };
+         words = re
+             .find_iter(input)
+             .map(|m| m.as_str().to_string())
+@@ -123,13 +121,13 @@
+     if input.contains('_') {
+         words = input.split('_').map(|w| w.to_string()).collect();
+     } else if input.chars().next().unwrap().is_uppercase() {
+-        let re = Regex::new(r"[A-Z][a-z0-9_]*\.?").unwrap();
++        let re = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[A-Z][a-z0-9_]*\.?").unwrap()); &*RE };
+         words = re
+             .find_iter(input)
+             .map(|m| m.as_str().to_string())
+             .collect();
+     } else {
+-        let re = Regex::new(r"[a-z0-9]+\.?|[A-Z][a-z0-9_]*\.?").unwrap();
++        let re = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[a-z0-9]+\.?|[A-Z][a-z0-9_]*\.?").unwrap()); &*RE };
+         words = re
+             .find_iter(input)
+             .map(|m| m.as_str().to_string())
+@@ -165,13 +163,13 @@
+     if input.contains('_') {
+         words = input.split('_').map(|w| w.to_string()).collect();
+     } else if input.chars().next().unwrap().is_uppercase() {
+-        let re = Regex::new(r"[A-Z][a-z0-9_]*\.?").unwrap();
++        let re = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[A-Z][a-z0-9_]*\.?").unwrap()); &*RE };
+         words = re
+             .find_iter(input)
+             .map(|m| m.as_str().to_string())
+             .collect();
+     } else {
+-        let re = Regex::new(r"[a-z0-9]+\.?|[A-Z][a-z0-9_]*\.?").unwrap();
++        let re = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[a-z0-9]+\.?|[A-Z][a-z0-9_]*\.?").unwrap()); &*RE };
+         words = re
+             .find_iter(input)
+             .map(|m| m.as_str().to_string())
+@@ -249,7 +247,7 @@
+ 
+ /// Parse generic arguments from a type string like `List[Map[String]]`.
+ pub fn get_typing_args_from_string(type_str: &str) -> Vec<String> {
+-    let re = Regex::new(r"([\w\.]+)\[(.+)\]").unwrap();
++    let re = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"([\w\.]+)\[(.+)\]").unwrap()); &*RE };
+     if let Some(caps) = re.captures(type_str) {
+         let args_str = caps.get(2).unwrap().as_str();
+         let mut args = Vec::new();
+diff -ru a/src b/src
+--- a/src/common.rs	2006-07-24 01:21:28.000000000 +0000
++++ b/src/common.rs	2026-10-19 05:05:11.254221530 +0000
+@@ -16,8 +16,7 @@
+ /// invalid characters with `_` and ensuring it starts with
+ /// a letter or underscore.
+ pub fn avro_name(name: &str) -> String {
+-    let mut val = Regex::new(r"[^a-zA-Z0-9_]")
+-        .unwrap()
++    let mut val = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[^a-zA-Z0-9_]").unwrap()); &*RE }
+         .replace_all(name, "_")
+         .to_string();
+ 
+@@ -57,8 +56,7 @@
+ /// Convert a string into a valid Avro namespace, allowing dots (`.`).
+ /// Invalid characters are replaced with `_`.
+ pub fn avro_namespace(name: &str) -> String {
+-    let mut val = Regex::new(r"[^a-zA-Z0-9_\.]")
+-        .unwrap()
++    let mut val = { static RE: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"[^a-zA-Z0-9_\.]").unwrap()); &*RE }
+         .replace_all(name, "_")
+         .to_string();
+ 

@@ -835,6 +835,43 @@ changed by this work.
   0 to 300 rows: the files are equal byte for byte. Each of 4 mutants (no row-group split,
   chunks reversed, only the first batch written, the last row group dropped) fails it
 
+### Rows with braces in strings, and the Avro conversion
+
+- Without a delimiter, the usual path splits a row after each `}` that brings its count of
+  braces, those inside strings too, back to zero, and reads each piece apart. The interned
+  row phase declined any row with a brace in a string, and a declined row sends the whole
+  input the usual way: 17 of rows200's 200 entities hold one (LaTeX in descriptions,
+  `{\displaystyle ...}`), all of them balanced so that the usual path reads them whole, and
+  inference on rows200 built every row's tree (2.9 s for the rows, a 0.32 s serial merge,
+  1.57 GB peak RSS on the first run). rows20 has 2 such rows; events, narrow200k and labels
+  none
+- A row now declines only where the usual path would split it: where a `}` before its end
+  (or, with `wrap_root`, anywhere in it, the wrapping object's own `}` coming after) brings
+  the count to zero. A row it reads whole is read whole here too
+- Read and inference, 2 rounds of 4 runs each in a fresh process
+  (logs/e42_braces_infer.txt), the previous commit and this one: rows200 2.43-5.86 s (CPU
+  5.6-17.7 s, peak RSS 1.71 GB) and 1.31-1.81 s (CPU 1.95-2.44 s, 508-522 MB); rows20
+  0.93-1.69 s (327-334 MB) and 0.80-1.26 s (238-246 MB); labels unchanged; the same schema
+  hashes and processed counts. Most of what is left of rows200's time is the Avro
+  conversion (below)
+- wikidata-pq's claims inference reads with the `\n` delimiter, which the rule does not
+  touch: `process()` (logs/e43, e44) rel7k 1.625 s, rowsw 5.15 s, within the run-to-run
+  spread of the previous step; every table equal to #246's on both
+- Tests: `test_interned_rows_match_the_builders` now puts braces in strings in a third of
+  its sets (balanced, opening, and in a third of those closing early, which the usual path
+  then fails to read): of 1,200 sets 694 are compared with the builders (82 of them with
+  braces in strings and no delimiter) and the rest decline. All 5 mutants of the rule fail
+  the tests (logs/e40_braces_mutants.txt)
+- Found while measuring, outside genson: on labels (1,000 rows of label maps, default
+  options), `to_avro_schema` is 1.06G of inference's 1.49G instructions, nearly all of it
+  compiling regular expressions. avrotize's `avro_name` and `avro_namespace` (and its case
+  conversions) call `Regex::new` on every call, and a wide record schema (labels' 473
+  language keys) names a record and a field per key. With the 11 patterns compiled once
+  (`avrotize_lazy_regex.patch`, statics behind `LazyLock`; measured only, not part of this
+  repository), the schemas are the same and inference takes, warm: labels 0.113-0.130 s
+  and 0.018-0.026 s, rows200 (with the rule above) 1.48-1.57 s and 0.45-0.55 s; rel7k,
+  whose rewritten schema is small, is unchanged
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
