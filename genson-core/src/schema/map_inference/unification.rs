@@ -152,12 +152,9 @@ fn try_make_nullable_union(a: &Value, b: &Value) -> Option<Value> {
     Some(result)
 }
 
-/// The two schemas as one when they differ at most in nullability: equal, one of them
-/// the null schema, or equal once `["null", T]` types are read as `T` (then nullable).
-fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
-    if existing == new {
-        return Some(existing.clone());
-    }
+/// Two unequal schemas as one when they differ only in nullability: one of them the null
+/// schema, or equal once `["null", T]` types are read as `T` (then nullable).
+fn schemas_compatible_unequal(existing: &Value, new: &Value) -> Option<Value> {
     if let Some(result) =
         try_make_nullable_union(existing, new).or_else(|| try_make_nullable_union(new, existing))
     {
@@ -182,6 +179,56 @@ fn schemas_compatible(existing: &Value, new: &Value) -> Option<Value> {
         nullable["type"] = json!(["null", inner_type]);
     }
     Some(nullable)
+}
+
+/// `schemas_compatible_unequal` with `existing` owned: the same schema, made from
+/// `existing` itself where it is the one made nullable, or `existing` back when the two
+/// differ in more than nullability.
+fn schemas_compatible_owned(existing: Value, new: &Value) -> Result<Value, Value> {
+    if let Some(result) = try_make_nullable_union(&existing, new) {
+        return Ok(result);
+    }
+    let mut existing = existing;
+    // `new` the null schema: `existing` made nullable
+    if new.get("type").is_some_and(|t| t == "null") {
+        if let Some(other_type) = existing.get("type").filter(|t| *t != "null").cloned() {
+            existing["type"] = json!(["null", other_type]);
+            return Ok(existing);
+        }
+    }
+    let (existing_type, new_type) = (nullable_type(&existing), nullable_type(new));
+    let (existing_view, new_view) = (
+        NonNullView {
+            schema: &existing,
+            type_override: existing_type,
+        },
+        NonNullView {
+            schema: new,
+            type_override: new_type,
+        },
+    );
+    if existing_type.or(new_type).is_none() || !existing_view.eq(&new_view) {
+        return Err(existing);
+    }
+    if let Some(inner_type) = existing_type.or_else(|| existing.get("type")).cloned() {
+        existing["type"] = json!(["null", inner_type]);
+    }
+    Ok(existing)
+}
+
+/// `normalise_nullable` of an owned schema.
+fn normalise_nullable_owned(mut schema: Value) -> Value {
+    loop {
+        let inner = match &schema {
+            Value::Array(pair) if pair.len() == 2 && pair[0] == "null" => 1,
+            Value::Array(pair) if pair.len() == 2 && pair[1] == "null" => 0,
+            _ => return schema,
+        };
+        let Value::Array(mut pair) = schema else {
+            unreachable!()
+        };
+        schema = pair.swap_remove(inner);
+    }
 }
 
 /// The field name to promote scalars under when unifying the schemas at `path`: its
@@ -390,34 +437,55 @@ fn unify_field_schemas_sequential(
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
     let (&first, rest) = schemas.split_first()?;
-    if rest.iter().all(|&s| s == first) {
-        return Some(first.clone());
-    }
     let field_path = format!("{path}.{field_name}");
-    let mut unified = first.clone();
+    // The first schema is copied only if no step changes it
+    let mut unified = Cow::Borrowed(first);
     for &new in rest {
-        unified = unify_field_pair(unified, new, field_name, &field_path, path, config)?;
+        // A schema equal to the one so far leaves it as it is
+        if *unified == *new {
+            continue;
+        }
+        unified = Cow::Owned(unify_field_pair(
+            unified,
+            new,
+            field_name,
+            &field_path,
+            path,
+            config,
+        )?);
     }
-    Some(unified)
+    Some(unified.into_owned())
 }
 
-/// One step of `unify_field_schemas_sequential`: the field's schema so far with the next.
+/// One step of `unify_field_schemas_sequential`: the field's schema so far with the next,
+/// which differs from it. A schema so far that is owned has what it shares with the next
+/// moved into the result rather than copied.
 fn unify_field_pair(
-    unified: Value,
+    unified: Cow<Value>,
     new: &Value,
     field_name: &str,
     field_path: &str,
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
-    if let Some(compatible) = schemas_compatible(&unified, new) {
-        return Some(compatible);
-    }
+    let unified = match unified {
+        Cow::Owned(unified) if !config.debug => match schemas_compatible_owned(unified, new) {
+            Ok(compatible) => return Some(compatible),
+            Err(unified) => Cow::Owned(unified),
+        },
+        unified => match schemas_compatible_unequal(&unified, new) {
+            Some(compatible) => return Some(compatible),
+            None => unified,
+        },
+    };
     let record_like = |s: &Value| is_object_schema(s) || is_empty_record_schema(s);
     if (is_array_schema(&unified) && is_array_schema(new))
         || (record_like(&unified) && record_like(new))
     {
-        return check_unifiable_schemas(&[&unified, new], field_path, config);
+        return match unified {
+            Cow::Owned(unified) => unify_pair(unified, new, field_path, config),
+            Cow::Borrowed(unified) => check_unifiable_schemas(&[unified, new], field_path, config),
+        };
     }
     if !config.wrap_scalars {
         return None;
@@ -448,7 +516,7 @@ fn unify_field_schemas_parallel(
         || unify_field_schemas_parallel(field_name, left, path, config),
         || unify_field_schemas_parallel(field_name, right, path, config),
     );
-    check_unifiable_schemas(&[&left?, &right?], &format!("{path}.{field_name}"), config)
+    unify_pair(left?, &right?, &format!("{path}.{field_name}"), config)
 }
 
 /// Unify one field's schemas: pairwise in order when there are few of them or scalars may
@@ -843,6 +911,199 @@ pub(crate) fn check_unifiable_item_schemas(
         debug!(config, "{}: Promoting scalar items among records", path);
         unify_anyof_schemas(schemas, promotion_field_name(path), config)
     })
+}
+
+/// `check_unifiable_schemas` of `[a, b]` with `a` owned: the same schema, with what `a`
+/// shares with `b` moved into it rather than copied. Debugging takes the borrowed way, so
+/// that it reports as it did.
+fn unify_pair(a: Value, b: &Value, path: &str, config: &SchemaInferenceConfig) -> Option<Value> {
+    if config.debug {
+        return check_unifiable_schemas(&[&a, b], path, config);
+    }
+    if is_array_schema(&a) && is_array_schema(b) {
+        return unify_array_pair(a, b, path, config);
+    }
+    if (is_map_schema(&a) || is_empty_record_schema(&a))
+        && (is_map_schema(b) || is_empty_record_schema(b))
+    {
+        if !(is_map_schema(&a) && is_map_schema(b)) {
+            return check_unifiable_schemas(&[&a, b], path, config);
+        }
+        // Two maps: their values unified
+        let Value::Object(mut a) = a else {
+            unreachable!()
+        };
+        let a_values = a.swap_remove("additionalProperties")?;
+        let b_values = b.get("additionalProperties")?;
+        let values = unify_pair(
+            a_values,
+            b_values,
+            &format!("{}.additionalProperties", path),
+            config,
+        )?;
+        return Some(object([
+            ("type", "object".into()),
+            ("additionalProperties", values),
+        ]));
+    }
+    if (is_object_schema(&a) || is_empty_record_schema(&a))
+        && (is_object_schema(b) || is_empty_record_schema(b))
+    {
+        return unify_record_pair(a, b, path, config);
+    }
+    // Scalars, or kinds that do not unify: nothing of `a` to move
+    check_unifiable_schemas(&[&a, b], path, config)
+}
+
+/// `unify_array_schemas` of `[a, b]` with `a` owned, as `unify_pair`.
+fn unify_array_pair(
+    a: Value,
+    b: &Value,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    // An array in a legacy nullable wrapper has its items read from inside it, as there
+    let Value::Object(mut a) = normalise_nullable_owned(a) else {
+        unreachable!("an array schema is an object")
+    };
+    let has_items = |items: &Value| items.as_object().is_none_or(|o| !o.is_empty());
+    let a_items = a.swap_remove("items").filter(has_items);
+    let b_items = extract_field_from_nullable_schema(b, "items").filter(|items| has_items(items));
+    let items = match (a_items, b_items) {
+        (None, None) => return Some(json!({ "type": "array" })),
+        (Some(a_items), None) => a_items,
+        (None, Some(b_items)) => b_items.clone(),
+        (Some(a_items), Some(b_items)) => {
+            unify_item_pair(a_items, b_items, &format!("{}.items", path), config)?
+        }
+    };
+    Some(object([("type", "array".into()), ("items", items)]))
+}
+
+/// `check_unifiable_item_schemas` of `[a, b]` with `a` owned, as `unify_pair`. Its scalar
+/// promotion can only succeed for a scalar and a record, which go the borrowed way.
+fn unify_item_pair(
+    a: Value,
+    b: &Value,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    let promotes = |x: &Value, y: &Value| is_scalar_schema(x) && is_object_schema(y);
+    if config.wrap_scalars && (promotes(&a, b) || promotes(b, &a)) {
+        return check_unifiable_item_schemas(&[&a, b], path, config);
+    }
+    unify_pair(a, b, path, config)
+}
+
+/// `unify_record_schemas` of `[a, b]` with `a` owned, as `unify_pair`: `a`'s fields are
+/// moved into the result, those it shares with `b` unified with them in turn.
+fn unify_record_pair(
+    a: Value,
+    b: &Value,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    // A field that is an `anyOf` may be unified apart, and placed after the others
+    let any_of = |schema: &Value| {
+        schema
+            .get("properties")
+            .and_then(Value::as_object)
+            .is_some_and(|properties| {
+                properties.values().any(|field| {
+                    normalise_nullable(field)
+                        .get("anyOf")
+                        .is_some_and(Value::is_array)
+                })
+            })
+    };
+    if any_of(&a) || any_of(b) {
+        return check_unifiable_schemas(&[&a, b], path, config);
+    }
+    let has_properties = |schema: &Value| match schema.get("properties") {
+        Some(Value::Object(_)) => Some(true),
+        _ if is_empty_record_schema(schema) => Some(false),
+        _ => None,
+    };
+    let (a_has, b_has) = (has_properties(&a)?, has_properties(b)?);
+    let Value::Object(mut a) = a else {
+        unreachable!()
+    };
+    let a_properties = match a.swap_remove("properties") {
+        Some(Value::Object(properties)) if a_has => properties,
+        _ => Map::new(),
+    };
+    let empty = Map::new();
+    let b_properties = match b.get("properties") {
+        Some(Value::Object(properties)) if b_has => properties,
+        _ => &empty,
+    };
+    // How many of the two require each field
+    let a_required = a.swap_remove("required");
+    let mut required_in: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+    for required in [a_required.as_ref(), b.get("required")] {
+        if let Some(Value::Array(names)) = required {
+            for name in names.iter().filter_map(Value::as_str) {
+                *required_in.entry(name).or_default() += 1;
+            }
+        }
+    }
+    let required_by_both = |name: &str| required_in.get(name) == Some(&2);
+
+    // The fields of both, in `a`'s order, then those of only `a`, then those of only `b`
+    let (in_both, only_a): (Vec<_>, Vec<_>) = a_properties
+        .into_iter()
+        .map(|(name, field)| {
+            let other = b_properties.get(&name).map(normalise_nullable);
+            (name, normalise_nullable_owned(field), other)
+        })
+        .partition(|(_, _, other)| other.is_some());
+    let unify = |(name, field, other): (String, Value, Option<&Value>)| {
+        let other = other?;
+        let unified = if field == *other {
+            field
+        } else {
+            let field_path = format!("{path}.{name}");
+            unify_field_pair(Cow::Owned(field), other, &name, &field_path, path, config)?
+        };
+        Some((name, unified))
+    };
+    // As many fields as `unify_record_schemas` counts, to go parallel where it does
+    let fields = only_a.len() + b_properties.len();
+    let in_both: Vec<(String, Value)> = if fields >= 10 {
+        in_both.into_par_iter().map(unify).collect::<Option<_>>()?
+    } else {
+        in_both.into_iter().map(unify).collect::<Option<_>>()?
+    };
+    let mut required = Vec::new();
+    let mut properties = Map::new();
+    for (name, field) in in_both {
+        let field = if required_by_both(&name) {
+            required.push(Value::String(name.clone()));
+            field
+        } else {
+            make_nullable(field)
+        };
+        properties.insert(name, field);
+    }
+    for (name, field, _) in only_a {
+        properties.insert(name, make_nullable(field));
+    }
+    for (name, field) in b_properties {
+        if !properties.contains_key(name) {
+            properties.insert(
+                name.clone(),
+                make_nullable(normalise_nullable(field).clone()),
+            );
+        }
+    }
+    let mut result = object([
+        ("type", "object".into()),
+        ("properties", Value::Object(properties)),
+    ]);
+    if !required.is_empty() {
+        result["required"] = Value::Array(required);
+    }
+    Some(result)
 }
 
 #[cfg(test)]

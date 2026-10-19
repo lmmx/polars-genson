@@ -587,3 +587,194 @@ fn test_nullable_union_from_null_and_typed() {
     let result = try_make_nullable_union(&null_schema, &null_schema);
     assert_eq!(result, None);
 }
+
+struct Rng(u64);
+
+impl Rng {
+    fn below(&mut self, n: u64) -> u64 {
+        self.0 ^= self.0 << 13;
+        self.0 ^= self.0 >> 7;
+        self.0 ^= self.0 << 17;
+        self.0 % n
+    }
+}
+
+const KEYS: [&str; 6] = ["a", "b", "c", "id", "value", "x__string"];
+
+/// A random schema of the forms unification meets: scalars (nullable either way round),
+/// null, records (nullable, with required fields, sometimes over many keys), arrays (with
+/// items, empty ones or none), maps, empty records, legacy nullable wrappers, `anyOf`
+/// unions and schemas without a type.
+fn random_schema(rng: &mut Rng, depth: u32) -> Value {
+    let scalar = |rng: &mut Rng| ["string", "integer", "number", "boolean"][rng.below(4) as usize];
+    let pick = if depth == 0 { rng.below(3) } else { rng.below(20) };
+    match pick {
+        0 => json!({ "type": scalar(rng) }),
+        1 => match rng.below(2) {
+            0 => json!({ "type": ["null", scalar(rng)] }),
+            _ => json!({ "type": [scalar(rng), "null"] }),
+        },
+        2 => json!({ "type": "null" }),
+        3..=8 => {
+            let many = rng.below(8) == 0;
+            let mut properties = Map::new();
+            for i in 0..if many { 12 } else { 1 + rng.below(4) } {
+                let key = if many { format!("k{i}") } else { KEYS[rng.below(6) as usize].to_string() };
+                properties.insert(key, random_schema(rng, depth - 1));
+            }
+            let required: Vec<Value> = properties
+                .keys()
+                .filter(|_| rng.below(2) == 0)
+                .map(|k| json!(k))
+                .collect();
+            let mut record = json!({ "type": "object", "properties": properties });
+            if rng.below(6) == 0 {
+                record["type"] = json!(["null", "object"]);
+            }
+            if !required.is_empty() {
+                record["required"] = Value::Array(required);
+            }
+            record
+        }
+        9..=12 => match rng.below(6) {
+            0 => json!({ "type": "array" }),
+            1 => json!({ "type": "array", "items": {} }),
+            2 => json!({ "type": ["null", "array"], "items": random_schema(rng, depth - 1) }),
+            _ => json!({ "type": "array", "items": random_schema(rng, depth - 1) }),
+        },
+        13 | 14 => json!({ "type": "object", "additionalProperties": random_schema(rng, depth - 1) }),
+        15 => [json!({ "type": "object" }), json!({ "type": "object", "properties": {} })]
+            [rng.below(2) as usize]
+            .clone(),
+        16 => json!(["null", random_schema(rng, depth - 1)]),
+        17 => json!({ "anyOf": [{ "type": scalar(rng) }, random_schema(rng, depth - 1)] }),
+        18 => json!({}),
+        _ => json!({ "type": "object", "properties": { "value__string": { "type": "string" } } }),
+    }
+}
+
+/// A schema like `schema`: its fields dropped, added, made nullable or required, and its
+/// parts changed or replaced, each now and then.
+fn mutate(rng: &mut Rng, schema: &Value, depth: u32) -> Value {
+    if rng.below(3) == 0 {
+        return schema.clone();
+    }
+    if rng.below(12) == 0 {
+        return random_schema(rng, depth);
+    }
+    let mut schema = schema.clone();
+    let Some(obj) = schema.as_object_mut() else {
+        return schema;
+    };
+    if let Some(Value::Object(properties)) = obj.get_mut("properties") {
+        let keys: Vec<String> = properties.keys().cloned().collect();
+        for key in keys {
+            match rng.below(8) {
+                0 => {
+                    properties.shift_remove(&key);
+                }
+                1 | 2 => {
+                    let field = mutate(rng, &properties[&key], depth.saturating_sub(1));
+                    properties.insert(key, field);
+                }
+                _ => {}
+            }
+        }
+        if rng.below(4) == 0 {
+            properties.insert(KEYS[rng.below(6) as usize].to_string(), random_schema(rng, depth.saturating_sub(1)));
+        }
+        let required: Vec<Value> = properties.keys().filter(|_| rng.below(2) == 0).map(|k| json!(k)).collect();
+        if rng.below(2) == 0 {
+            obj.shift_remove("required");
+            if !required.is_empty() {
+                obj.insert("required".into(), Value::Array(required));
+            }
+        }
+    }
+    for key in ["items", "additionalProperties"] {
+        if let Some(inner) = obj.get(key).cloned() {
+            obj.insert(key.into(), mutate(rng, &inner, depth.saturating_sub(1)));
+        }
+    }
+    match obj.get("type").cloned() {
+        Some(Value::String(t)) if t != "null" && rng.below(5) == 0 => {
+            obj.insert("type".into(), json!(["null", t]));
+        }
+        Some(Value::String(t)) if rng.below(8) == 0 && ["string", "integer"].contains(&t.as_str()) => {
+            obj.insert("type".into(), json!(if t == "string" { "integer" } else { "string" }));
+        }
+        _ => {}
+    }
+    schema
+}
+
+/// The fold `unify_field_schemas_sequential` makes, every step taken the borrowed way.
+fn borrowed_fold(schemas: &[&Value], config: &SchemaInferenceConfig) -> Option<Value> {
+    let (&first, rest) = schemas.split_first()?;
+    let mut unified = first.clone();
+    for &new in rest {
+        if unified != *new {
+            unified = unify_field_pair(Cow::Borrowed(&unified), new, "f", "p.f", "p", config)?;
+        }
+    }
+    Some(unified)
+}
+
+/// `unify_field_schemas_parallel` with its halves merged the borrowed way.
+fn borrowed_halves(schemas: &[&Value], config: &SchemaInferenceConfig) -> Option<Value> {
+    if schemas.len() < 10 {
+        return borrowed_fold(schemas, config);
+    }
+    let (left, right) = schemas.split_at(schemas.len() / 2);
+    let (left, right) = (borrowed_halves(left, config)?, borrowed_halves(right, config)?);
+    check_unifiable_schemas(&[&left, &right], "p.f", config)
+}
+
+#[test]
+fn test_owned_unification_matches_the_borrowed() {
+    let text = |v: Option<Value>| v.map(|v| v.to_string());
+    let mut rng = Rng(0x2545_F491_4F6C_DD1D);
+    let (mut unified, mut cases) = (0, 0);
+    for case in 0..3000 {
+        let config = SchemaInferenceConfig {
+            wrap_scalars: case % 3 != 0,
+            ..Default::default()
+        };
+        let a = random_schema(&mut rng, 4);
+        let b = mutate(&mut rng, &a, 4);
+        // A pair, as `check_unifiable_schemas` (every step of which is borrowed) unifies it
+        let borrowed = check_unifiable_schemas(&[&a, &b], "p", &config);
+        unified += borrowed.is_some() as usize;
+        assert_eq!(text(unify_pair(a.clone(), &b, "p", &config)), text(borrowed), "{a}\n{b}");
+        if a != b {
+            assert_eq!(
+                text(unify_field_pair(Cow::Owned(a.clone()), &b, "f", "p.f", "p", &config)),
+                text(unify_field_pair(Cow::Borrowed(&a), &b, "f", "p.f", "p", &config)),
+                "{a}\n{b}"
+            );
+        }
+        // A run of schemas, folded in order and (when long) by halves
+        let len = [3, 5, 9, 12, 23][case % 5];
+        let mut run = vec![a.clone(), b];
+        while run.len() < len {
+            let base = &run[rng.below(run.len() as u64) as usize];
+            let next = mutate(&mut rng, base, 4);
+            run.push(next);
+        }
+        let run: Vec<&Value> = run.iter().collect();
+        let borrowed = borrowed_fold(&run, &config);
+        cases += borrowed.is_some() as usize;
+        assert_eq!(
+            text(unify_field_schemas_sequential("f", &run, "p", &config)),
+            text(borrowed),
+            "{run:?}"
+        );
+        assert_eq!(
+            text(unify_field_schemas_parallel("f", &run, "p", &config)),
+            text(borrowed_halves(&run, &config)),
+            "{run:?}"
+        );
+    }
+    // Enough of them unify to compare more than failures
+    assert!(unified > 1000 && cases > 500, "{unified} pairs and {cases} runs unified");
+}

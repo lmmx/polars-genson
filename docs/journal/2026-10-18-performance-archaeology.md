@@ -754,6 +754,63 @@ changed by this work.
   5.14 s, interned 4.77 s, inference 0.144, 0.146 and 0.050 s. Every table is equal to
   #237's on both
 
+### The merged schema's rewrite, in place
+
+- After the row phase, inference rewrites the merged schema as `Value`s. On rel7k at #246
+  (four threads, a patch timing each step, not kept): `to_schema` 23-51 ms,
+  `preprocess_force_field_types` 9-16 ms, `rewrite_objects` (map inference and
+  unification) 100-166 ms, `reorder_unions` 0.02 ms, the Avro conversion 5-6 ms. The
+  merged schema is 3.45 MB of JSON and the rewritten one 4,224 bytes: the statement
+  schemas of claims' 2,269 property keys unify into one map value
+- The rewrite on its own (`profile_rewrite_merged.rs`: the merged schema read from a file,
+  then the three passes; one thread) is 1.12G instructions, 0.23G of them reading the
+  file. Copying the first schema in `unify_field_schemas_sequential` is 0.30G (27%), and
+  freeing the copies and what was built from them most of the rest: each step of a fold
+  called `check_unifiable_schemas` on the schema so far and the next, which builds a new
+  schema from copies of both, including the fields of the schema so far that the next
+  lacks or holds the same
+- The schema so far is now owned by the fold, and a step moves its parts into the result
+  (`unify_pair`, `unify_record_pair`, `unify_array_pair`, `unify_item_pair`,
+  `schemas_compatible_owned`): a field of only the schema so far is moved and made
+  nullable, a field equal in both is kept, and only what the next adds is copied. The
+  first schema is borrowed until a step changes it; the parallel fold's halves, owned
+  already, merge the same way. Where a pair could come out otherwise the general
+  functions run: records with `anyOf` fields (unified apart and placed last), a scalar
+  item and a record item (promotion), a map with an empty record, and debugging (so that
+  it reports as it did). `preprocess_force_field_types` runs only when a field is forced
+  to be a map, and the Avro conversion takes the schema rather than a copy
+- The rewrite on its own: 0.68G instructions (0.23G reading the file, 0.05G the forced-type
+  pass the harness still runs); on four threads 76-183 ms (median 103) and 56-95 ms
+  (median 63), 10 runs each, with the same hash of the rewritten schema
+- Read and inference on one thread: rel7k 2.13G and 1.66G instructions; labels 1.49G both
+- Read and inference on four threads, 2 interleaved rounds of 5 runs, the first of each
+  dropped (logs/e39_infer_owned_unification.txt), median wall and CPU, #246 and now:
+  rel7k 0.214 and 0.166 s, CPU 0.425 and 0.334 s; rowsw with its label maps extracted
+  0.044 and 0.038 s; event logs, narrow200k, labels and rows200 within the run-to-run
+  spread (0.067/0.065, 0.038/0.041, 0.114/0.113, 2.40/2.32 s). Schema hashes and processed
+  counts are equal in every run
+- `process()` on rel7k, 6 interleaved rounds of #246 and this section's three steps
+  (logs/e43_process_rel7k_gold4.txt), median wall, CPU, peak RSS: #246 1.912 s, 2.37 s,
+  356 MB; this 1.744 s, 2.18 s, 358 MB. The claims step 0.727 and 0.526 s, its inference
+  0.315 and 0.204 s. On rowsw (3 rounds, logs/e44_process_rowsw_gold4.txt) within the
+  run-to-run spread: 5.22 and 5.15 s, inference 0.062 and 0.057 s. Every table is equal
+  to #246's on both
+- Tests: `test_owned_unification_matches_the_borrowed` unifies 3,000 random pairs (records
+  over shared and many keys, nullable either way round, required fields, arrays with and
+  without items, maps, empty records, legacy nullable wrappers, `anyOf` unions, schemas
+  without a type, each pair a schema and one derived from it) the owned way and the
+  borrowed way, and folds runs of 3-23 of them in order and by halves both ways: the
+  same schemas, key order included, or both fail; 2,101 pairs and 1,538 runs unify. Of
+  13 mutants (logs/e38_owned_unification_mutants.txt) 11 fail it and 2 are equivalent,
+  one of them taken (an array in a legacy wrapper is unwrapped and its items moved, as
+  the borrowed way reads them)
+- Found on the way, left as it is: unification is not idempotent in field order. A record
+  unified with one of the records it came from puts the fields that record holds first:
+  folding `{a, x}`, `{a, y}` gives `a, x, y`, and folding `{a, x}`, `{a, y}`, `{a, y}`
+  gives `a, y, x`. So a map value's field order depends on how often each key's schema
+  repeats and on whether the fold runs in order or (from 50 schemas) by halves, and
+  repeated schemas cannot be skipped in a fold without changing it
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
