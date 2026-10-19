@@ -552,10 +552,96 @@ impl OnDag<'_> {
         )
     }
 
+    /// `unify_rewritten_into_array`
+    pub(super) fn unify_rewritten_into_array(&mut self, branches: &[Id]) -> Option<Id> {
+        if !self.config.wrap_scalars {
+            return None;
+        }
+        self.unify_into_array(branches)
+    }
+
+    /// `without_null`
+    fn without_null(&mut self, schema: Id) -> (Option<Id>, bool) {
+        let inner = self.normalise_nullable(schema);
+        let wrapped = inner != schema;
+        let Some(t) = self.dag.get(inner, kw::TYPE) else {
+            return (Some(inner), wrapped);
+        };
+        if self.is_null(t) {
+            return (None, true);
+        }
+        let Some(types) = self.dag.as_array(t) else {
+            return (Some(inner), wrapped);
+        };
+        if !types.iter().any(|&t| self.is_null(t)) {
+            return (Some(inner), wrapped);
+        }
+        let rest: Vec<Id> = types
+            .iter()
+            .copied()
+            .filter(|&t| !self.is_null(t))
+            .collect();
+        let t = match rest.as_slice() {
+            [] => return (None, true),
+            [only] => *only,
+            _ => self.dag.array(&rest),
+        };
+        (Some(self.with_type(inner, t)), true)
+    }
+
+    /// `unify_into_array`
+    fn unify_into_array(&mut self, schemas: &[Id]) -> Option<Id> {
+        let (mut arrays, mut others, mut nullable) = (Vec::new(), Vec::new(), false);
+        for &schema in schemas {
+            let (schema, null) = self.without_null(schema);
+            nullable |= null;
+            match schema {
+                Some(schema)
+                    if self
+                        .dag
+                        .get(schema, kw::TYPE)
+                        .is_none_or(|t| self.dag.as_sym(t).is_none()) =>
+                {
+                    return None
+                }
+                Some(schema) if self.is_array(schema) => arrays.push(schema),
+                Some(schema) => others.push(schema),
+                None => {}
+            }
+        }
+        if arrays.is_empty() || others.is_empty() {
+            return None;
+        }
+        let mut items: Vec<Id> = arrays
+            .iter()
+            .filter_map(|&schema| self.dag.get(schema, kw::ITEMS))
+            .filter(|&items| self.dag.as_object(items).is_none_or(|o| !o.is_empty()))
+            .collect();
+        items.extend(others);
+        let items = match items.as_slice() {
+            [only] => *only,
+            _ => match self.check_unifiable_schemas(&items, kw::EMPTY) {
+                Some(unified) => unified,
+                None => self.unify_anyof_schemas(&items, kw::EMPTY)?,
+            },
+        };
+        let array = self.dag.string(kw::ARRAY);
+        let array = self.dag.object(&[(kw::TYPE, array), (kw::ITEMS, items)]);
+        if !nullable {
+            return Some(array);
+        }
+        let null = self.typed(kw::NULL);
+        let branches = self.dag.array(&[array, null]);
+        Some(self.dag.object(&[(kw::ANY_OF, branches)]))
+    }
+
     /// `unify_anyof_schemas`
     pub(super) fn unify_anyof_schemas(&mut self, schemas: &[Id], field: Sym) -> Option<Id> {
         if !self.config.wrap_scalars {
             return None;
+        }
+        if let Some(array) = self.unify_into_array(schemas) {
+            return Some(array);
         }
         let has_scalars = schemas.iter().any(|&s| self.is_scalar(s));
         let has_objects = schemas.iter().any(|&s| self.is_record(s));
