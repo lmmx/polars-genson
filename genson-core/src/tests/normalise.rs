@@ -917,3 +917,35 @@ fn test_rows_with_one_record_name_for_two_shapes_normalise() {
     let planned: Vec<Value> = values.into_iter().map(|v| plan.normalise(v).0).collect();
     assert_eq!(planned, normalised);
 }
+
+/// A value in a position typed `null` (a record field, or a list's items, as the Avro
+/// conversion types those that were only ever null or empty) normalises to null on both
+/// paths, and the rows decode, by the typed decoder too: kept as it was, it could not.
+#[cfg(feature = "parquet")]
+#[test]
+fn test_a_value_typed_null_normalises_to_null() {
+    let schema = json!({
+        "type": "record",
+        "name": "document",
+        "fields": [
+            {"name": "a", "type": ["null", "long"]},
+            {"name": "n", "type": "null"},
+            {"name": "l", "type": ["null", {"type": "array", "items": "null"}]}
+        ]
+    });
+    let cfg = NormaliseConfig::default();
+    let rows = [r#"{"a": 1, "n": 5, "l": ["x", null, {"b": 2}]}"#, r#"{"n": {"c": true}}"#];
+    let values: Vec<Value> = rows.iter().map(|r| serde_json::from_str(r).unwrap()).collect();
+    let expected = vec![
+        json!({"a": 1, "n": null, "l": [null, null, null]}),
+        json!({"a": null, "n": null, "l": null}),
+    ];
+    assert_eq!(normalise_values(values, &schema, &cfg), expected);
+    let plan = NormalisePlan::new(&schema, &cfg, &HashSet::new());
+    let fields = crate::parquet::avro_record_fields(&schema, false).unwrap();
+    let owned: Vec<Option<String>> = rows.iter().map(|r| Some(r.to_string())).collect();
+    let (by_value, _) = typed_by_value(&owned, &plan, &fields).unwrap();
+    let borrowed: Vec<Option<&str>> = rows.iter().copied().map(Some).collect();
+    let (typed, _) = plan.to_arrow(&fields).and_then(|p| p.normalise(&borrowed, 0)).unwrap();
+    assert_eq!(typed, by_value);
+}
