@@ -710,7 +710,10 @@ pub fn infer_json_schema_from_strings<S: AsRef<str> + Sync>(
                 "Applying force field types ({})",
                 current_time_hms()
             );
-            preprocess_force_field_types(&mut final_schema, &config);
+            // It changes only a field forced to be a map
+            if config.force_field_types.values().any(|t| t == "map") {
+                preprocess_force_field_types(&mut final_schema, &config);
+            }
             profile!(config, "Rewriting objects ({})", current_time_hms());
             rewrite_objects(&mut final_schema, None, &config, true);
             profile!(config, "Reordering unions ({})", current_time_hms());
@@ -719,7 +722,7 @@ pub fn infer_json_schema_from_strings<S: AsRef<str> + Sync>(
             #[cfg(feature = "avro")]
             if config.avro {
                 let avro_schema = SchemaInferenceResult {
-                    schema: final_schema.clone(),
+                    schema: final_schema,
                     processed_count,
                 }
                 .to_avro_schema(
