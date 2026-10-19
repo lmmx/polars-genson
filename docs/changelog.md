@@ -37,6 +37,11 @@ Release notes for earlier versions are on
   values for one key, the error now names the first in row order. In genson-core's
   `extract_invariants`, the slim rows keep their own spacing and escapes instead of
   serde_json's compact form.
+- **Parquet string columns are decoded in parallel.** Where the file has an offset index
+  (Polars and arrow-rs write one) or several row groups, the column is split into row
+  ranges of about equal size, each decoded by its own reader. Decoding the claims of a
+  chunk written as wikidata-pq writes them (Polars, zstd level 9) takes 0.05–0.06 s on
+  4 cores where it took 0.3–0.4 s.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.

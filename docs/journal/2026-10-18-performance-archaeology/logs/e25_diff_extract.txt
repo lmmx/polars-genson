@@ -1,0 +1,4 @@
+prod/rowsw.parquet: 2185 rows, 322 MB: identical lookup (1932 entries), slim rows equal (0 of them byte-identical), equal schemas; scan 0.310/0.269/0.211s, by value 0.758/0.637/0.640s
+prod/rows3000p.parquet: 3000 rows, 332 MB: identical lookup (1932 entries), slim rows equal (0 of them byte-identical), equal schemas; scan 0.171/0.286/0.213s, by value 0.721/0.689/0.708s
+prod/rows200.parquet: 200 rows, 216 MB: identical lookup (1924 entries), slim rows equal (0 of them byte-identical), equal schemas; scan 0.146/0.247/0.158s, by value 0.463/0.557/0.484s
+rel7k/chunk_0.parquet: 7128 rows, 16 MB: identical lookup (0 entries), slim rows equal (7126 of them byte-identical), equal schemas; scan 0.012/0.010/0.010s, by value 0.027/0.027/0.026s
