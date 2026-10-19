@@ -811,6 +811,30 @@ changed by this work.
   repeats and on whether the fold runs in order or (from 50 schemas) by halves, and
   repeated schemas cannot be skipped in a fold without changing it
 
+### Parallel column encoding
+
+- genson's Parquet output went through `ArrowWriter::write` batch by batch, which encodes
+  and compresses a row group's columns one after another on the calling thread. rel7k's
+  normalised claims (`bench_write.rs`, the typed batches written as `write_struct_column`
+  writes them) are 3,038,418 bytes in one row group of many leaf columns: 0.107-0.193 s per write
+- `write_batches` writes the same file from the batches: rows go to row groups as there
+  (`max_row_group_row_count` each; genson's writer sets no byte limit or content-defined
+  chunking), the batches' leaf columns are computed in parallel, each column's writer
+  (from `into_serialized_writer`) encodes its leaf of each batch in turn on the rayon
+  pool, and the column chunks are appended in order
+- The same bytes, 0.037-0.060 s per write (3 interleaved rounds of 8 writes,
+  logs/e41_write_batches.txt)
+- `process()` (logs/e43, e44, as above): rel7k 1.581 s wall, 2.11 s CPU, the claims step
+  0.426 s, genson's write within it 0.134 and 0.042 s; on rowsw genson's write 0.063 and
+  0.024 s, the rest within the run-to-run spread. Every table is equal to #246's on both
+- Tests: `test_write_batches_matches_arrow_writer` writes an `id` column and a struct
+  column (a string, a list of integers and a struct of a float, any of them null) in
+  batches of uneven sizes, some empty, with `ArrowWriter` and with `write_batches`, under
+  four layouts (genson's, small pages and row groups of 37, row groups of 1 with page
+  statistics and bloom filters, no dictionary or offset index and row groups of 50) and
+  0 to 300 rows: the files are equal byte for byte. Each of 4 mutants (no row-group split,
+  chunks reversed, only the first batch written, the last row group dropped) fails it
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
