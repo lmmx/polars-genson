@@ -283,17 +283,13 @@ impl RowStates {
         let is_object = matches!(toks[0], Tok::Obj { .. });
         match wrap_root {
             None if !is_object => return Err(Unsupported),
-            // Without a delimiter the usual path splits the text after each `}` that
-            // closes its braces: a brace inside a string (or the wrapping key) moves that
+            // Without a delimiter the usual path splits the text where its braces close, a
+            // brace in the wrapping key counted too
             Some(field) if !ndjson && field.contains(['{', '}']) => return Err(Unsupported),
             _ => {}
         }
-        if !ndjson {
-            let objects = toks.iter().filter(|t| matches!(t, Tok::Obj { .. })).count();
-            let braces = text.bytes().filter(|b| matches!(b, b'{' | b'}')).count();
-            if braces != 2 * objects {
-                return Err(Unsupported);
-            }
+        if !ndjson && !read_whole(text, wrap_root.is_some()) {
+            return Err(Unsupported);
         }
         let mut state = self.value(text, toks, 0)?;
         if let Some(field) = wrap_root {
@@ -509,6 +505,29 @@ fn after(toks: &[Tok], i: usize) -> usize {
 /// A number's state as simd-json reads it (with `big-int-as-float`): an integer that fits
 /// an `i64` or a `u64` is one, any other number a float. simd-json rejects a negative
 /// integer below `i64::MIN`, and floats near the end of `f64`'s range.
+/// Whether the usual path, without a delimiter, reads `text` (one object, inside the
+/// wrapping object's braces when `wrapped`) as one document. It splits the text after each
+/// `}` that brings its count of braces, those inside strings too, back to zero, and reads
+/// each piece apart: no `}` before the end may do so.
+fn read_whole(text: &str, wrapped: bool) -> bool {
+    let text = text.trim_end().as_bytes();
+    let mut depth = i32::from(wrapped);
+    for (i, &byte) in text.iter().enumerate() {
+        match byte {
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                // The wrapping object's own `}` comes after the text
+                if depth == 0 && (wrapped || i + 1 < text.len()) {
+                    return false;
+                }
+            }
+            _ => {}
+        }
+    }
+    true
+}
+
 fn number_kind(text: &str) -> Result<StateId, Unsupported> {
     let integer = !text.contains(['.', 'e', 'E']);
     if integer {

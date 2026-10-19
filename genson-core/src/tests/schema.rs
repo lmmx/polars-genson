@@ -1401,10 +1401,14 @@ fn random_document(rng: &mut Rng, depth: u32, out: &mut String) {
 #[test]
 fn test_interned_rows_match_the_builders() {
     let mut rng = Rng(0x2545_f491_4f6c_dd1d);
-    let (mut compared, mut declined) = (0, 0);
+    let (mut compared, mut declined, mut braced_compared) = (0, 0, 0);
     for case in 0..1200 {
         let mut rows: Vec<String> = Vec::new();
         let hostile = rng.below(8) == 0;
+        // In a third of the sets braces in strings; in a third of those, braces that close
+        // the row early (which the usual path then fails to read)
+        let braced = (case / 2) % 3 == 0;
+        let closing = rng.below(3) == 0;
         for _ in 0..10 + rng.below(30) {
             let mut row = String::new();
             // Mostly objects (rows without `wrap_root` must be), a few blank rows; in some
@@ -1433,6 +1437,18 @@ fn test_interned_rows_match_the_builders() {
                 (true, 0) => row.push_str(" x"),
                 (true, 1) => row = format!("{{\"n\":-9223372036854775809,{}", &row[1..]),
                 _ => {}
+            }
+            // In some cases braces in strings: a row without a delimiter is split where the
+            // braces it holds close, those in strings counted too
+            if braced {
+                let pieces: Vec<&str> = row.split("\"s\"").collect();
+                let mut braced_row = pieces[0].to_string();
+                for piece in &pieces[1..] {
+                    let braces = if closing { 6 } else { 4 };
+                    let brace = ["{x}", "{", "{a}{b}", "s", "}", "}{"][rng.below(braces) as usize];
+                    braced_row.push_str(&format!("\"{brace}\"{piece}"));
+                }
+                row = braced_row;
             }
             rows.push(row);
         }
@@ -1465,14 +1481,19 @@ fn test_interned_rows_match_the_builders() {
                     "rows {rows:?}, config {config:?}"
                 );
                 compared += 1;
+                let in_strings = |row: &String| ["\"{x}\"", "\"{\"", "\"}\"", "\"}{\"", "\"{a}{b}\""].iter().any(|b| row.contains(b));
+                braced_compared += (config.delimiter.is_none() && rows.iter().any(in_strings)) as usize;
             }
             (Some(_), Ok(Err(e))) => panic!("interned where the builders fail ({e}): {rows:?}"),
             (Some(_), Err(_)) => panic!("interned where the builders panic: {rows:?}"),
             (None, _) => declined += 1,
         }
     }
-    eprintln!("interned rows: compared {compared}, declined {declined}");
-    assert!(compared > 700, "compared {compared}, declined {declined}");
+    eprintln!("interned rows: compared {compared} ({braced_compared} with braces in strings and no delimiter), declined {declined}");
+    assert!(
+        compared > 650 && braced_compared > 50,
+        "compared {compared} ({braced_compared} with braces), declined {declined}"
+    );
 }
 
 
