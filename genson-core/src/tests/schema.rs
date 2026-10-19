@@ -1524,3 +1524,44 @@ fn test_interned_rows_tell_required_apart() {
         assert_eq!(count, 4);
     }
 }
+
+/// The interned merge takes the root's rows chunk by chunk, each chunk's `$schema` (where the
+/// rows' builders keep one) after its rows, and the children's states after the last chunk:
+/// keywords in the order the rows' builders give them, here a `$schema` from the first
+/// chunk ahead of the `properties` and `required` the later rows bring, and children merged
+/// as they are.
+#[test]
+fn test_interned_merge_keeps_each_chunks_keywords_in_place() {
+    let rows: Vec<String> = [
+        "{}",
+        "{}",
+        r#"{"a":{"b":1},"c":[{"d":1}]}"#,
+        r#"{"a":{"e":"x"},"c":[]}"#,
+        r#"{"f":null,"a":{"b":2.5}}"#,
+        r#"{"c":[{"d":2,"g":true}],"h":[1,"y"]}"#,
+    ]
+    .iter()
+    .map(|row| row.to_string())
+    .collect();
+    for max_builders in [None, Some(1), Some(2), Some(3)] {
+        for schema_uri in [Some("AUTO"), None, Some("urn:x")] {
+            for delimiter in [Some(b'\n'), None] {
+                let config = SchemaInferenceConfig {
+                    max_builders,
+                    schema_uri: schema_uri.map(str::to_string),
+                    delimiter,
+                    ..Default::default()
+                };
+                let mut interned = get_builder(config.schema_uri.as_deref());
+                let count = process_json_strings_interned(&rows, &config, &mut interned).unwrap();
+                let mut usual = get_builder(config.schema_uri.as_deref());
+                let expected = process_json_strings_parallel(&rows, &config, &mut usual).unwrap();
+                assert_eq!(
+                    (count, interned.to_schema().to_string()),
+                    (expected, usual.to_schema().to_string()),
+                    "{config:?}"
+                );
+            }
+        }
+    }
+}

@@ -65,6 +65,10 @@ impl ListStrategy {
         &self.items[0]
     }
 
+    pub(crate) fn items_node_mut(&mut self) -> &mut SchemaNode {
+        &mut self.items[0]
+    }
+
     /// `absorb` each of `others` in turn.
     pub(crate) fn absorb_all(&mut self, others: Vec<ListStrategy>) {
         let items = others.into_iter().map(|other| {

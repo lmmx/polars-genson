@@ -10,8 +10,8 @@ type KeySet<T> = HashSet<T, FxBuildHasher>;
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
 
-use crate::genson_rs::interned::RowStates;
-use crate::genson_rs::node::{hash_value, DataType, SchemaNode};
+use crate::genson_rs::interned::{RowStates, StateId};
+use crate::genson_rs::node::{hash_value, DataType, DeferredStrategy, SchemaNode, PAR_MERGE_MIN};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 
 #[derive(Debug, PartialEq)]
@@ -433,6 +433,75 @@ impl ObjectStrategy {
     /// `required` sets, and its properties, merged into the same-named nodes or added
     /// round-tripped (absorbed into a new node), as `absorb_properties` adds them.
     pub(crate) fn absorb_interned(&mut self, rows: &RowStates, obj: u32) {
+        self.absorb_interned_keywords(rows, obj);
+        for &(key, state) in rows.obj(obj).props.iter() {
+            let name = rows.key(key);
+            match self.properties.get_mut(name) {
+                Some(node) => node.absorb_interned(rows, state),
+                None => {
+                    let mut node = SchemaNode::new();
+                    node.absorb_interned(rows, state);
+                    self.properties.insert(name.to_string(), node);
+                }
+            }
+        }
+    }
+
+    /// `absorb_interned`, with each property's absorb added to `deferred`: a new property's
+    /// node is added (empty) where `absorb_interned` adds it, and its states absorbed later.
+    pub(crate) fn absorb_interned_deferred<'a>(
+        &mut self,
+        rows: &'a RowStates,
+        obj: u32,
+        deferred: &mut DeferredStrategy<'a>,
+    ) {
+        self.absorb_interned_keywords(rows, obj);
+        if !matches!(deferred, DeferredStrategy::Object(_)) {
+            *deferred = DeferredStrategy::Object(Vec::new());
+        }
+        let DeferredStrategy::Object(groups) = deferred else {
+            unreachable!()
+        };
+        for &(key, state) in rows.obj(obj).props.iter() {
+            let name = rows.key(key);
+            let at = match self.properties.get_index_of(name) {
+                Some(at) => at,
+                None => {
+                    self.properties.insert(name.to_string(), SchemaNode::new());
+                    self.properties.len() - 1
+                }
+            };
+            if groups.len() <= at {
+                groups.resize_with(at + 1, Vec::new);
+            }
+            groups[at].push((rows, state));
+        }
+    }
+
+    /// The property absorbs `absorb_interned_deferred` held back, each property's node
+    /// taking its states in their order, the properties on their own threads.
+    pub(crate) fn absorb_deferred(&mut self, groups: Vec<Vec<(&RowStates, StateId)>>) {
+        let work: Vec<(&mut SchemaNode, Vec<(&RowStates, StateId)>)> = self
+            .properties
+            .values_mut()
+            .zip(groups)
+            .filter(|(_, states)| !states.is_empty())
+            .collect();
+        if work.len() > 1
+            && work.iter().map(|(_, states)| states.len()).sum::<usize>() >= PAR_MERGE_MIN
+        {
+            work.into_par_iter()
+                .for_each(|(node, states)| node.absorb_interned_all(&states));
+        } else {
+            for (node, states) in work {
+                node.absorb_interned_all(&states);
+            }
+        }
+    }
+
+    /// The part of `absorb_interned` besides the child nodes: the keyword placeholders and
+    /// the intersection of the `required` sets.
+    fn absorb_interned_keywords(&mut self, rows: &RowStates, obj: u32) {
         let other = rows.obj(obj);
         if let Value::Object(own) = &mut self.extra_keywords {
             // A strategy holds a few keywords: looked for in turn, not by hash
@@ -457,17 +526,6 @@ impl ObjectStrategy {
                 own.retain(|p| keys.contains(p.as_str()));
             }
             Some(_) => {}
-        }
-        for &(key, state) in other.props.iter() {
-            let name = rows.key(key);
-            match self.properties.get_mut(name) {
-                Some(node) => node.absorb_interned(rows, state),
-                None => {
-                    let mut node = SchemaNode::new();
-                    node.absorb_interned(rows, state);
-                    self.properties.insert(name.to_string(), node);
-                }
-            }
         }
     }
 

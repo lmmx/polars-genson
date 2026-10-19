@@ -11,7 +11,22 @@ use ordermap::OrderMap;
 use serde_json::{json, Value};
 
 /// Fewest schemas merged into one node at once for which going parallel below it pays off.
-const PAR_MERGE_MIN: usize = 8;
+pub(crate) const PAR_MERGE_MIN: usize = 8;
+
+/// The child absorbs a node's strategies hold back while the node takes a batch of
+/// interned states (`absorb_interned_all`), by strategy, in the order of the node's.
+#[derive(Default)]
+pub(crate) struct Deferred<'a>(Vec<DeferredStrategy<'a>>);
+
+/// The child absorbs one strategy holds back: an object's states for each of its
+/// properties (by the property's index), or a list's states for its items.
+#[derive(Default)]
+pub(crate) enum DeferredStrategy<'a> {
+    #[default]
+    None,
+    Object(Vec<Vec<(&'a RowStates, StateId)>>),
+    List(Vec<(&'a RowStates, StateId)>),
+}
 
 /// Feed `hasher` a JSON value, as its compact serialisation.
 pub(crate) fn hash_value<H: Hasher>(value: &Value, hasher: &mut H) {
@@ -266,6 +281,86 @@ impl SchemaNode {
                     self.absorb_interned_strategy(rows, strat);
                 }
             }
+        }
+    }
+
+    /// `absorb_interned` of each of `states` in turn: the same node. The node takes all of
+    /// them first, its strategies holding back their children's states, and then each child
+    /// takes its own in their order (an object's children on their own threads); a node
+    /// reads nothing of its children's, nor they of each other's.
+    pub(crate) fn absorb_interned_all(&mut self, states: &[(&RowStates, StateId)]) {
+        if let [(rows, state)] = states {
+            return self.absorb_interned(rows, *state);
+        }
+        let mut deferred = Deferred::default();
+        for &(rows, state) in states {
+            self.absorb_interned_deferred(rows, state, &mut deferred);
+        }
+        self.absorb_deferred(deferred);
+    }
+
+    /// `absorb_interned`, with the strategies' child absorbs added to `deferred` (to be
+    /// made by `absorb_deferred`).
+    pub(crate) fn absorb_interned_deferred<'a>(
+        &mut self,
+        rows: &'a RowStates,
+        state: StateId,
+        deferred: &mut Deferred<'a>,
+    ) {
+        if !self.absorbed.0.insert(rows.identity(state)) {
+            return;
+        }
+        let strats = rows.strats(state);
+        match strats.len() {
+            0 => self.absorb_strategy(BasicSchemaStrategy::Typeless(TypelessStrategy::new())),
+            1 => self.absorb_interned_strategy_deferred(rows, strats[0], deferred),
+            _ => {
+                for strat in rows.schema_order(strats) {
+                    self.absorb_interned_strategy_deferred(rows, strat, deferred);
+                }
+            }
+        }
+    }
+
+    /// `absorb_interned_strategy`, with the child absorbs added to `deferred`.
+    fn absorb_interned_strategy_deferred<'a>(
+        &mut self,
+        rows: &'a RowStates,
+        strat: Strat,
+        deferred: &mut Deferred<'a>,
+    ) {
+        let at = match self
+            .active_strategies
+            .iter()
+            .position(|existing| existing.same_kind_as_interned(strat))
+        {
+            Some(at) => at,
+            None => {
+                let mut created = BasicSchemaStrategy::new_of_interned_kind(strat);
+                if let Some(BasicSchemaStrategy::Typeless(typeless)) = self.active_strategies.last()
+                {
+                    created.add_schema(&typeless.to_schema());
+                    self.active_strategies.pop();
+                }
+                if self.active_strategies.is_empty() {
+                    self.active_strategies.reserve_exact(1);
+                }
+                self.active_strategies.push(created);
+                self.active_strategies.len() - 1
+            }
+        };
+        // A slot for each strategy: a typeless one holds back nothing, and a strategy that
+        // replaced one takes its slot
+        deferred
+            .0
+            .resize_with(self.active_strategies.len(), Default::default);
+        self.active_strategies[at].absorb_interned_deferred(rows, strat, &mut deferred.0[at]);
+    }
+
+    /// The child absorbs `absorb_interned_deferred` held back.
+    pub(crate) fn absorb_deferred(&mut self, deferred: Deferred) {
+        for (strategy, deferred) in self.active_strategies.iter_mut().zip(deferred.0) {
+            strategy.absorb_deferred(deferred);
         }
     }
 
