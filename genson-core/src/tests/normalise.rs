@@ -949,3 +949,60 @@ fn test_a_value_typed_null_normalises_to_null() {
     let (typed, _) = plan.to_arrow(&fields).and_then(|p| p.normalise(&borrowed, 0)).unwrap();
     assert_eq!(typed, by_value);
 }
+
+/// A field that is a scalar in some rows and an empty list in the rest: normalisation wraps
+/// the scalar into the list, so the list's items take the scalar's type, and the rows
+/// decode with their values (before, the items were `null` and decoding failed).
+#[cfg(all(feature = "avro", feature = "parquet"))]
+#[test]
+fn test_empty_list_beside_scalars_decodes_their_values() {
+    use crate::SchemaInferenceConfig;
+    use arrow::array::{Array, ListArray, StringArray};
+    for empty_as_null in [true, false] {
+        for rows in [
+            vec![r#"{"s": "x"}"#, r#"{"s": []}"#],
+            vec![r#"{"s": ""}"#, r#"{"s": "x"}"#, r#"{"s": []}"#],
+            vec![r#"{"s": "x"}"#, r#"{"s": null}"#, r#"{"s": []}"#],
+        ] {
+            let config = SchemaInferenceConfig {
+                delimiter: Some(b'\n'),
+                avro: true,
+                ..Default::default()
+            };
+            let schema = crate::infer_json_schema_from_strings(&rows, config).unwrap().schema;
+            let s = &schema["fields"][0]["type"];
+            assert!(
+                s.as_array().unwrap().iter().any(|t| t["items"] == "string"),
+                "{s}"
+            );
+            let cfg = NormaliseConfig {
+                empty_as_null,
+                ..Default::default()
+            };
+            let fields = crate::parquet::avro_record_fields(&schema, false).unwrap();
+            let values: Vec<Value> = rows.iter().map(|r| serde_json::from_str(r).unwrap()).collect();
+            let normalised = normalise_values(values, &schema, &cfg);
+            let array = crate::parquet::values_to_struct_array(&normalised, &fields).unwrap();
+            let list = array.column(0).as_any().downcast_ref::<ListArray>().unwrap();
+            let first = list.value(0);
+            let first = first.as_any().downcast_ref::<StringArray>().unwrap();
+            assert_eq!(first.value(0), if rows[0].contains("\"\"") { "" } else { "x" });
+        }
+    }
+}
+
+/// An empty list beside a record keeps `null` items: a record is not wrapped into the list.
+#[cfg(feature = "avro")]
+#[test]
+fn test_empty_list_beside_a_record_keeps_null_items() {
+    use crate::SchemaInferenceConfig;
+    let rows = [r#"{"s": {"a": 1}}"#, r#"{"s": []}"#];
+    let config = SchemaInferenceConfig {
+        delimiter: Some(b'\n'),
+        avro: true,
+        ..Default::default()
+    };
+    let schema = crate::infer_json_schema_from_strings(&rows, config).unwrap().schema;
+    let s = &schema["fields"][0]["type"];
+    assert!(s.as_array().unwrap().iter().any(|t| t["items"] == "null"), "{s}");
+}
