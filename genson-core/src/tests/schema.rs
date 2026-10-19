@@ -1311,3 +1311,195 @@ fn test_debug_macros_evaluate_arguments_only_when_they_print() {
     crate::debug_verbose!(verbose, "{}", arg());
     assert_eq!(evaluated.get(), 3);
 }
+
+/// A small deterministic generator (xorshift), so the rows are the same on every run.
+struct Rng(u64);
+
+impl Rng {
+    fn below(&mut self, n: u64) -> u64 {
+        self.0 ^= self.0 << 13;
+        self.0 ^= self.0 >> 7;
+        self.0 ^= self.0 << 17;
+        self.0 % n
+    }
+}
+
+/// Random JSON for inference's row phase: objects over a few keys (some escaped, some
+/// repeated, some empty objects), lists (empty, long, of mixed kinds), every number form
+/// simd-json and serde_json read differently, escapes, and whitespace between tokens.
+fn random_document(rng: &mut Rng, depth: u32, out: &mut String) {
+    if rng.below(5) == 0 {
+        out.push_str([" ", "\t", "\r", "  "][rng.below(4) as usize]);
+    }
+    let pick = if depth == 0 { 3 + rng.below(6) } else { rng.below(9) };
+    match pick {
+        0 | 1 => {
+            out.push('{');
+            let n = if rng.below(10) == 0 { 18 + rng.below(6) } else { rng.below(5) };
+            for i in 0..n {
+                if i > 0 {
+                    out.push(',');
+                }
+                let key = ["a", "b", "c", "id", "x__string", "k"][rng.below(6) as usize];
+                let key = if n > 16 { format!("{key}{}", rng.below(30)) } else { key.to_string() };
+                match rng.below(10) {
+                    0 => out.push_str(&format!("\"\\u{:04x}{}\":", key.as_bytes()[0], &key[1..])),
+                    _ => out.push_str(&format!("\"{key}\":")),
+                }
+                random_document(rng, depth - 1, out);
+            }
+            out.push('}');
+        }
+        2 => {
+            out.push('[');
+            let n = if rng.below(4) == 0 { 10 + rng.below(6) } else { rng.below(4) };
+            // A long list mostly holds one kind of item: records or scalars
+            let kind = match (n >= 10, rng.below(6)) {
+                (true, 0) | (false, _) => None,
+                (true, k) => Some(k % 2),
+            };
+            for i in 0..n {
+                if i > 0 {
+                    out.push(',');
+                }
+                match kind {
+                    Some(0) => {
+                        out.push_str(&format!("{{\"r\":{},\"s\":", rng.below(9)));
+                        match rng.below(3) {
+                            0 => out.push_str(&format!("{{\"u\":{}}}", rng.below(3))),
+                            1 => out.push_str("\"v\""),
+                            _ => out.push_str("null"),
+                        }
+                        out.push('}');
+                    }
+                    Some(_) => out.push_str(["1", "2.5", "\"t\"", "null"][rng.below(4) as usize]),
+                    None => random_document(rng, depth - 1, out),
+                }
+            }
+            out.push(']');
+        }
+        3 => out.push_str("null"),
+        4 => out.push_str(["true", "false"][rng.below(2) as usize]),
+        5 | 6 => out.push_str(
+            [
+                "0", "-0", "7", "-12", "1.5", "-0.0", "1e2", "2E-3", "18446744073709551615",
+                "18446744073709551616", "-9223372036854775808", "123456789012345678901234",
+                "0.1",
+            ][rng.below(13) as usize],
+        ),
+        _ => out.push_str(
+            ["\"s\"", "\"\"", "\"a\\nb\"", "\"\\u00e9\"", "\"\\ud83d\\ude00\"", "\"q\\\"\""]
+                [rng.below(6) as usize],
+        ),
+    }
+}
+
+/// For random rows under every combination of delimiter, `wrap_root`, `$schema` handling and
+/// chunk size: the row phase by interned states gives the builder (its schema, key order
+/// included) and processed count the rows' own builders give, or declines (`None`) where
+/// they might differ; and rarely declines.
+#[test]
+fn test_interned_rows_match_the_builders() {
+    let mut rng = Rng(0x2545_f491_4f6c_dd1d);
+    let (mut compared, mut declined) = (0, 0);
+    for case in 0..1200 {
+        let mut rows: Vec<String> = Vec::new();
+        let hostile = rng.below(8) == 0;
+        for _ in 0..10 + rng.below(30) {
+            let mut row = String::new();
+            // Mostly objects (rows without `wrap_root` must be), a few blank rows; in some
+            // cases a row of any kind, or a brace in a string (which moves the split of a
+            // row without a delimiter)
+            match (hostile, rng.below(25)) {
+                (_, 0) => row.push(' '),
+                (true, 1) => random_document(&mut rng, 3, &mut row),
+                (true, 2) => row.push_str("{\"t\":\"}\"}"),
+                // A document over two lines: valid without a delimiter, not with one
+                (true, 3) => row.push_str("{\"a\":\n1}"),
+                _ => {
+                    row.push('{');
+                    for i in 0..1 + rng.below(4) {
+                        if i > 0 {
+                            row.push(',');
+                        }
+                        row.push_str(&format!("\"f{}\":", rng.below(5)));
+                        random_document(&mut rng, 3, &mut row);
+                    }
+                    row.push('}');
+                }
+            }
+            // In some cases a row that is not valid, or has a number simd-json rejects
+            match (hostile, rng.below(20)) {
+                (true, 0) => row.push_str(" x"),
+                (true, 1) => row = format!("{{\"n\":-9223372036854775809,{}", &row[1..]),
+                _ => {}
+            }
+            rows.push(row);
+        }
+        // Repeat some rows, as real ones repeat their schemas
+        for i in 0..rows.len() / 3 {
+            let j = rng.below(rows.len() as u64) as usize;
+            rows.push(rows[i.min(j)].clone());
+        }
+        let config = SchemaInferenceConfig {
+            delimiter: [Some(b'\n'), None][case % 2],
+            wrap_root: [None, Some("w".to_string())][(case / 2) % 2].clone(),
+            schema_uri: [Some("AUTO".to_string()), None, Some("urn:x".to_string())]
+                [(case / 4) % 3]
+                .clone(),
+            max_builders: [None, Some(1), Some(3), Some(7)][(case / 12) % 4],
+            ..Default::default()
+        };
+        let mut interned = get_builder(config.schema_uri.as_deref());
+        let by_interned = process_json_strings_interned(&rows, &config, &mut interned);
+        let mut usual = get_builder(config.schema_uri.as_deref());
+        let by_builders = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            process_json_strings_parallel(&rows, &config, &mut usual)
+        }));
+        match (by_interned, by_builders) {
+            (Some(count), Ok(Ok(expected))) => {
+                assert_eq!(count, expected, "processed count, rows {rows:?}");
+                assert_eq!(
+                    interned.to_schema().to_string(),
+                    usual.to_schema().to_string(),
+                    "rows {rows:?}, config {config:?}"
+                );
+                compared += 1;
+            }
+            (Some(_), Ok(Err(e))) => panic!("interned where the builders fail ({e}): {rows:?}"),
+            (Some(_), Err(_)) => panic!("interned where the builders panic: {rows:?}"),
+            (None, _) => declined += 1,
+        }
+    }
+    eprintln!("interned rows: compared {compared}, declined {declined}");
+    assert!(compared > 700, "compared {compared}, declined {declined}");
+}
+
+
+/// Rows that differ only in what their objects all hold (`required`) are distinct rows, so
+/// each is counted and merged: the interned states give the builders' count and schema.
+#[test]
+fn test_interned_rows_tell_required_apart() {
+    let rows: Vec<String> = [
+        r#"{"l":[{"a":1,"b":2},{"a":3,"b":4}]}"#,
+        r#"{"l":[{"a":1,"b":2},{"a":3}]}"#,
+        r#"{"l":[{"a":1,"b":2},{"a":3,"b":4}]}"#,
+        r#"{"m":{"x":[{"p":1}]}}"#,
+        r#"{"m":{"x":[{"p":1},{"q":2}]}}"#,
+    ]
+    .iter()
+    .flat_map(|row| std::iter::repeat_n(row.to_string(), 3))
+    .collect();
+    for max_builders in [None, Some(1), Some(2)] {
+        let config = SchemaInferenceConfig {
+            max_builders,
+            ..Default::default()
+        };
+        let mut interned = get_builder(config.schema_uri.as_deref());
+        let count = process_json_strings_interned(&rows, &config, &mut interned).unwrap();
+        let mut usual = get_builder(config.schema_uri.as_deref());
+        let expected = process_json_strings_parallel(&rows, &config, &mut usual).unwrap();
+        assert_eq!((count, interned.to_schema()), (expected, usual.to_schema()));
+        assert_eq!(count, 4);
+    }
+}

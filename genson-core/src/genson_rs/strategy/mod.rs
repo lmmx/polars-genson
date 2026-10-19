@@ -11,6 +11,7 @@ use object::ObjectStrategy;
 use scalar::{BooleanStrategy, NullStrategy, NumberStrategy, StringStrategy, TypelessStrategy};
 
 use self::array::ListSchemaStrategy;
+use crate::genson_rs::interned::{RowStates, Strat};
 use crate::genson_rs::node::SchemaNode;
 
 #[derive(Debug, PartialEq)]
@@ -132,6 +133,49 @@ impl BasicSchemaStrategy {
                 }
             }
             (strategy, other) => strategy.add_schema(&other.to_schema()),
+        }
+    }
+
+    /// Whether an interned strategy is of this strategy's kind.
+    pub(crate) fn same_kind_as_interned(&self, strat: Strat) -> bool {
+        matches!(
+            (self, strat),
+            (BasicSchemaStrategy::Object(_), Strat::Object(_))
+                | (BasicSchemaStrategy::List(_), Strat::List(_))
+                | (BasicSchemaStrategy::Null(_), Strat::Null)
+                | (BasicSchemaStrategy::Boolean(_), Strat::Boolean)
+                | (BasicSchemaStrategy::Number(_), Strat::Number(_))
+                | (BasicSchemaStrategy::String(_), Strat::String)
+        )
+    }
+
+    /// A new, empty strategy of an interned strategy's kind.
+    pub(crate) fn new_of_interned_kind(strat: Strat) -> Self {
+        match strat {
+            Strat::Object(_) => BasicSchemaStrategy::Object(ObjectStrategy::new()),
+            Strat::List(_) => BasicSchemaStrategy::List(ListStrategy::new()),
+            Strat::Null => BasicSchemaStrategy::Null(NullStrategy::new()),
+            Strat::Boolean => BasicSchemaStrategy::Boolean(BooleanStrategy::new()),
+            Strat::Number(_) => BasicSchemaStrategy::Number(NumberStrategy::new()),
+            Strat::String => BasicSchemaStrategy::String(StringStrategy::new()),
+        }
+    }
+
+    /// `absorb` of the strategy an interned one (of the same kind) stands for: objects and
+    /// lists merge their child nodes, and of the scalars, which have no keywords, only a
+    /// float adds anything (`number` over `integer`).
+    pub(crate) fn absorb_interned(&mut self, rows: &RowStates, strat: Strat) {
+        match (self, strat) {
+            (BasicSchemaStrategy::Object(strategy), Strat::Object(obj)) => {
+                strategy.absorb_interned(rows, obj)
+            }
+            (BasicSchemaStrategy::List(strategy), Strat::List(items)) => {
+                strategy.absorb_interned(rows, items)
+            }
+            (BasicSchemaStrategy::Number(strategy), Strat::Number(float)) => {
+                strategy.add_number_type(if float { "number" } else { "integer" })
+            }
+            _ => {}
         }
     }
 

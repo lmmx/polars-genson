@@ -10,6 +10,7 @@ type KeySet<T> = HashSet<T, FxBuildHasher>;
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
 
+use crate::genson_rs::interned::RowStates;
 use crate::genson_rs::node::{hash_value, DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 
@@ -423,6 +424,49 @@ impl ObjectStrategy {
             match &mut self.additional_properties {
                 Some(own) => own.absorb(values),
                 None => self.additional_properties = Some(SchemaNode::round_tripped(values)),
+            }
+        }
+    }
+
+    /// `absorb` of the object an interned state stands for: the keywords its schema writes
+    /// (`properties`, and `required` where it requires a key), the intersection of the
+    /// `required` sets, and its properties, merged into the same-named nodes or added
+    /// round-tripped (absorbed into a new node), as `absorb_properties` adds them.
+    pub(crate) fn absorb_interned(&mut self, rows: &RowStates, obj: u32) {
+        let other = rows.obj(obj);
+        if let Value::Object(own) = &mut self.extra_keywords {
+            // A strategy holds a few keywords: looked for in turn, not by hash
+            let has = |own: &Map<String, Value>, key: &str| own.keys().any(|k| k == key);
+            if !other.props.is_empty() && !has(own, "properties") {
+                own.insert("properties".to_string(), json!({}));
+            }
+            if !other.required.is_empty() && !has(own, "required") {
+                own.insert("required".to_string(), Value::Null);
+            }
+        }
+        let required = || {
+            other
+                .required
+                .iter()
+                .map(move |&i| rows.key(other.props[i as usize].0))
+        };
+        match &mut self.required_properties {
+            None => self.required_properties = Some(required().map(str::to_string).collect()),
+            Some(own) if !own.is_empty() => {
+                let keys: KeySet<&str> = required().collect();
+                own.retain(|p| keys.contains(p.as_str()));
+            }
+            Some(_) => {}
+        }
+        for &(key, state) in other.props.iter() {
+            let name = rows.key(key);
+            match self.properties.get_mut(name) {
+                Some(node) => node.absorb_interned(rows, state),
+                None => {
+                    let mut node = SchemaNode::new();
+                    node.absorb_interned(rows, state);
+                    self.properties.insert(name.to_string(), node);
+                }
             }
         }
     }

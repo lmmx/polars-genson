@@ -676,6 +676,84 @@ changed by this work.
   2,164 distinct), so deduplicating whole rows, as inference does, saves little. A
   builder that interned its nodes would build, hash and merge each distinct subtree once
 
+### Inference's rows as interned states
+
+- `RowStates` (`genson_rs/interned.rs`) builds each row's schema from the token tape the
+  typed decoder reads (moved to `tape.rs`) as an interned state: each distinct subtree of
+  a block of rows is stored once, a list's items and a repeated key are a memoised join
+  of states (`add_object` of a value on a node is the node joined with the value's own
+  state), and each state's schema hash, which counts and drops repeated rows as before, is
+  computed once from its parts' hashes. The distinct rows are merged into the builder in
+  order and chunked as `max_builders` chunks them, by `absorb` read from the states
+  (`SchemaNode::absorb_interned`, with `absorb`'s round trip of new properties, schema
+  order of strategies and keyword placeholders), and the `$schema` handling of
+  `add_builders`. Nothing per row is allocated but its new states; serde's validation,
+  the `wrap_root` copy, simd-json's tape, the per-row `SchemaNode` trees, their hashing
+  and their freeing are gone
+- A node skips a state it has absorbed: absorbing one again, after anything else, leaves
+  it as it is. That skips less than the 55x repetition promised: at first 39,582 of
+  268,581 absorbs on rel7k, since a subtree repeats mostly under other paths (the same
+  snak under P31 and P279), and the main tree gains 73,521 properties (claims' 2,269
+  property keys, each with its statements' subtree). Known by the schema hash (`absorb`
+  reads no more of a node than the hash covers) rather than by block and index, the
+  states skip across blocks and the absorbs fall to 142,062; comparing the few keyword
+  names a strategy holds in turn rather than by SipHash takes the rest of the merge to
+  41-84 ms
+- Where the rows might be read differently, nothing changes and the usual path runs,
+  which also raises its errors: a row of several lines (with the `\n` delimiter), one that
+  is not an object (without `wrap_root`), text serde_json rejects as a `Value`, numbers
+  simd-json rejects, a brace inside a string without a delimiter, a field forced to be a
+  map, and a list of 10 items or more whose items hold a node with both an object and a
+  list
+- Found on the way, all in the usual path and left as they are:
+  - simd-json (with `big-int-as-float`) rejects text serde accepts, so inference fails
+    ("invalid JSON input") on a row with a negative integer below `i64::MIN`
+    (`-9223372036854775809`), a float past `f64::MAX` (`1e999`, `1.7976931348623159e308`),
+    or a lone low surrogate (`"\udc00"`); it accepts a lone high one. serde's
+    `IgnoredAny` validation accepts all of these; `serde_json::Value` rejects the floats
+    and both surrogates but reads the integer as a float (`probe_simd.rs`)
+  - Without a delimiter, a row is split after every `}` that closes its braces, counting
+    braces inside strings: `{"t":"}"}` is split in two and fails
+  - `ListStrategy::add_object` merges a list of 10 items or more in parallel pieces with
+    `absorb`, which puts a piece's bare objects after its lists, so where a node of the
+    items holds both a bare object and a list the schema's `anyOf` order depends on the
+    number of threads: one row (`f0` a list of 13 items, among them `{}`, a list and a
+    record) infers the record first with 1-3 threads and the list first with 4 or 8, 20
+    of 20 runs each. The interned path declines such rows, so its output is the usual
+    path's on every machine; a fix (merging the pieces as `add_object` does) would make
+    inference independent of the core count, for the maintainer to decide on
+  - `preprocess_force_field_types` changes a schema only for a field forced to be a map,
+    but walks the whole schema whatever is forced: with wikidata-pq's options (`mainsnak`
+    forced to a record) it reads all 3.45 MB of rel7k's merged schema and changes nothing
+- Instructions, one thread, read and inference (`bench_infer_wpq.rs`, `bench_infer.rs`):
+  rel7k 4.04G at #245 and 2.22G interned (the row phase 0.38G, the merge 0.24G; the rest is
+  rewriting the merged schema: `to_schema`, map unification 0.63G, freeing its `Value`s
+  0.21G); event logs (20,000 rows) 1.84G and 0.61G
+- Time, read and inference, with the schema hash and processed count equal in every run:
+  rel7k on one thread 0.81-1.10 s and 0.30-0.40 s, on four 0.36-0.40 s (CPU 1.05-1.18 s)
+  and 0.21-0.26 s once warm (CPU 0.45-0.54 s; the merge, 44-105 ms, varies most); rowsw with its label maps extracted 0.19-0.20 s and
+  0.06-0.09 s, rows200 0.14-0.16 s and 0.06-0.08 s; and, the default options (Avro): event
+  logs (100,000 rows) 0.37-0.56 s (CPU 1.4-2.1 s) and 0.056-0.062 s (CPU 0.18-0.19 s);
+  narrow200k 0.27-0.38 s and 0.031-0.041 s; label maps 0.18-0.26 s and 0.09-0.17 s, the
+  rest of their cost in map inference after the merge
+- Tests: the row phase against the rows' own builders (`process_json_strings_parallel`)
+  on 1,200 random sets of rows (objects over a few keys, escaped and repeated keys, empty
+  objects, lists short and long, of one kind of item or mixed, every number form, escapes,
+  whitespace; repeated rows; in some sets invalid rows, numbers simd-json rejects, braces
+  in strings and documents over two lines) under both delimiters, with and without
+  `wrap_root`, three `$schema` settings and four chunk sizes: the builders' schemas, key
+  order included, and processed counts, or a decline where the builders fail or might
+  differ; and rows that differ only in `required`. genson-core's other tests (inference
+  now takes the interned path in them) and genson-cli's pass. Of 20 mutants
+  (logs/e37_interned_mutants.txt) 15 fail the tests and 5 are equivalent
+- `process()` on rel7k, 6 interleaved rounds (logs/e35_process_rel7k_interned.txt), median
+  wall, CPU, peak RSS: master 2.679 s, 4.91 s, 449 MB; #244 2.129 s, 3.52 s, 434 MB; #245
+  2.042 s, 3.05 s, 376 MB; interned 1.764 s, 2.23 s, 364 MB. The claims step 1.405, 0.867,
+  0.768 and 0.569 s wall, 3.38, 2.02, 1.60 and 0.90 s CPU; its inference 0.730, 0.403,
+  0.412 and 0.234 s. On rowsw (logs/e36_process_rowsw_interned.txt) #244 5.60 s, #245
+  5.14 s, interned 4.77 s, inference 0.144, 0.146 and 0.050 s. Every table is equal to
+  #237's on both
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building

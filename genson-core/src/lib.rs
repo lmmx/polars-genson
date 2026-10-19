@@ -8,6 +8,7 @@ pub mod normalise;
 #[cfg(feature = "parquet")]
 pub mod parquet;
 pub mod schema;
+mod tape;
 mod value;
 
 // Re-export commonly used items
