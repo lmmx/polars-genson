@@ -517,6 +517,84 @@ changed by this work.
   Polars' writes of the tables 0.90 s. On a release chunk polars-genson's share is
   inference and normalisation, about 1 s of 2.5 s
 
+### Inference and normalisation of release-format claims
+
+- `bench_infer_wpq.rs` times inference on a chunk's claims column with wikidata-pq's
+  claims options and prints a schema hash; `bench_normalise_wpq.rs` times the typed row
+  loop of `normalise_from_parquet` (parse, `normalise_values_pruned` with key/value maps
+  and wikidata-pq's prune names, `values_to_struct_array`) and hashes the rows and pruned
+  values. Instruction counts are callgrind on one thread (`RAYON_NUM_THREADS=1`); a
+  `--toggle-collect` counts only the thread it is toggled on, so a phase that runs on the
+  rayon pool is counted by toggling a function on the worker's side
+- On rel7k at #241's tip, inference is 5.60G instructions. `schema_order`,
+  `absorb_keywords_and_required` and the rest of the merge of each chunk's rows 1.33G,
+  building each row's schema 1.19G (of which simd-json about 0.2G), map unification in
+  `rewrite_objects` 1.63G, hashing rows to skip duplicates 0.56G, `to_schema` 0.20G.
+  55% of the instructions are under `serde_json::to_value` of a `Value`: `json!` turns
+  each value it is given into a `Value` that way, which copies an owned one by
+  serialising it, and map unification wrapped every unified record, array and map with it
+- Built by moving the values in (`value::object`): inference 4.64G where it was 5.58G
+  (-17%), unification 0.72G where it was 1.63G; the normalise bench as a whole (inference,
+  parse, normalisation, decode) 12.75G where it was 15.19G, `apply_map_encoding` having
+  copied every key/value entry the same way
+- Merging a node with one strategy without reordering it (two vectors and moves of a
+  few hundred bytes per node, about 8.4M allocations), and building an object's keyword
+  placeholders only for keys it lacks: the merge 0.69G where it was 1.33G, inference
+  4.01G where it was 4.66G
+- On 4 cores (a patch timing each step, not kept) `to_schema` took 95-115 ms of about
+  450 ms, on one thread, and dropping the builder's tree 20 ms. Writing the properties of
+  an object of 16 or more in parallel, and dropping the tree on the rayon pool: median
+  wall of runs 2-9 in a process, 3 rounds, #241's tip 0.534-0.542 s, moved values
+  0.478-0.505 s, the merge 0.445-0.464 s, parallel `to_schema` 0.391-0.433 s; CPU 1.40 to
+  1.15 s. The schema hash is the same at each step, and `bench_claims` gives the same
+  hashes and processed counts as #241's tip on rows200 (with and without the Wikidata
+  options), slim200, labels, narrow200k, rows20, the collapsed and normalised rows200 and
+  p832 (a first comparison built both binaries into one target directory and compared a
+  binary with itself; the second used separate directories)
+- Not taken: keeping the unified schema so far when the next is equal, rather than
+  cloning it, changed nothing (0.716G and 0.721G): the clones are of each field's first
+  schema, borrowed from the input. Returning `left` when the two halves of
+  `unify_field_schemas_parallel` are equal would skip a unification that can change the
+  schema (two equal nullable arrays unify to a non-nullable one), so it would change
+  output
+- Normalisation read the Avro schema as JSON for every value: `type` looked up up to three
+  times per object against a freshly allocated string, a record's `fields` walked three
+  times, each field's `name` and `type` looked up and `prune` checked twice, all by
+  SipHash. `NormalisePlan` reads the schema once into a tree of node kinds, record fields
+  with their plans, the integer promoted field and the fields `prune` names: on rel7k
+  normalisation is 2.19G where it was 5.41G (-60%), 0.23-0.34 s where it was 0.40-0.54 s
+  on one thread, with the same rows. It is tested against the schema-reading path on
+  2,000 random batches under every option (with rows of the previous batch against each
+  schema) and on schemas inference does not write; seven mutants of the plan all fail
+  the tests
+- `process()` on rel7k, 6 interleaved rounds (logs/e29_process_rel7k.txt), median wall
+  [range], CPU: master 2.553 s [2.374-3.269], 4.66 s; #237 2.486 s, 4.37 s; #241 2.369 s,
+  4.19 s; with the four changes above 2.124 s [2.051-2.423], 3.45 s. The claims step
+  1.227, 1.141, 1.135 and 0.857 s; inference 0.605, 0.552, 0.541 and 0.401 s;
+  normalisation and the typed decode 0.288, 0.258, 0.267 and 0.127 s
+- Every table `process()` writes (`compare_tables.py`) is equal at #237 and with the
+  changes above, on rel7k and on rowsw: 7 and 6 tables, schema and values (pyarrow's
+  `Table.equals`; Polars' `assert_frame_equal` and `DataFrame.equals` ran for over ten
+  minutes on the aliases' list of structs of lists without finishing)
+- `process()` on rowsw, 3 rounds (logs/e30_process_rowsw.txt): master 13.34 s, #241
+  6.99 s, the changes above 6.62 s; `normalise_sitelinks` 3.2-3.5 s throughout. Of its
+  83 MB of sitelinks (the well-known items' own), inference takes 0.75 s, the
+  `normalise_json` expression's normalisation of one row at a time 0.9-1.9 s, and
+  Polars' `json_decode` of its output 0.6-0.8 s
+- The `normalise_json` expression normalising its rows in parallel (in order): on rowsw's
+  sitelinks the expression without its decode takes 1.03-1.04 s where it took 1.84-1.90 s.
+  `process()` (logs/e31_process_parallel_expression.txt): rel7k, 6 rounds, master
+  2.561 s [2.347-2.894], CPU 4.76 s, against 2.056 s [1.973-2.544], CPU 3.46 s (-20% wall,
+  -27% CPU); rowsw, 3 rounds, master 13.74 s [12.71-14.19] against 5.48 s [5.08-6.28].
+  The tables are still equal to #237's on rowsw, and polars-genson-py's tests pass (262,
+  3 skipped)
+- Left with Polars on rel7k: writing the conformed claims (`atomic_sink_parquet`) takes
+  0.89-0.91 s of the 2.12 s, where genson writes the typed claims in 0.13 s. Rewriting the
+  table (14 MB in memory, 94 leaf columns) takes 0.7-1.2 s with `sink_parquet` or
+  `write_parquet` under Polars 2.0 and 1.44.2 (wikidata-pq's), with or without
+  statistics, and 0.27-0.41 s with `write_parquet(use_pyarrow=True)`; reading the whole
+  chunk (`pl.read_parquet`) 0.23 s
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building

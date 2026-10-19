@@ -1,5 +1,5 @@
 use genson_core::normalise::{
-    normalise_values_pruned, prune_schema, MapEncoding, NormaliseConfig, PrunedValue,
+    prune_schema, MapEncoding, NormaliseConfig, NormalisePlan, PrunedValue,
 };
 use genson_core::parquet::{
     avro_record_fields, read_columns, read_string_column_arrays, values_to_struct_array,
@@ -316,16 +316,17 @@ pub fn normalise_from_parquet(
         wrap_root: wrap_root.clone(),
     };
 
-    // Normalise one row, numbering its pruned values with the row's index
+    // Normalise one row, numbering its pruned values with the row's index; the schema is
+    // compiled once for all the rows
+    let plan = NormalisePlan::new(&result.schema, &norm_config, &prune);
     let normalise_row = |row: usize, s: &Option<&str>| -> (serde_json::Value, Vec<PrunedValue>) {
         let Some(s) = s else {
             return (serde_json::Value::Null, Vec::new());
         };
         let v = serde_json::from_str(s).unwrap_or(serde_json::Value::Null);
-        let (mut rows, mut pruned) =
-            normalise_values_pruned(vec![v], &result.schema, &norm_config, &prune);
+        let (normalised, mut pruned) = plan.normalise(v);
         pruned.iter_mut().for_each(|p| p.row = row);
-        (rows.pop().unwrap(), pruned)
+        (normalised, pruned)
     };
     let write_pruned = |pruned: Vec<PrunedValue>| -> PyResult<()> {
         let Some(path) = &prune_output_path else {

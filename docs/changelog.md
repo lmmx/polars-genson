@@ -55,6 +55,13 @@ Release notes for earlier versions are on
   properties writes their schemas in parallel. On the release-format chunk, inference
   takes 0.39–0.43 s on 4 cores where it took 0.45–0.46 s, and 0.53–0.54 s before the
   entry above; the same schemas.
+- **Normalisation reads the schema once.** It looked up each schema node's kind, fields,
+  their names and the fields `prune` names for every value; the schema is now compiled
+  once into a plan (`NormalisePlan` in genson-core, for normalising many values against
+  one schema), and `normalise_from_parquet` and the `normalise_json` expression compile
+  it once for all their rows, which the expression now normalises in parallel. On the
+  release-format chunk, normalisation takes 60% fewer instructions, with the same rows
+  and pruned values.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.

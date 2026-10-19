@@ -285,3 +285,188 @@ fn test_pruned_values_are_the_input_at_their_paths() {
     assert!(pruned_seen > 100, "the rows should prune something: {pruned_seen}");
 }
 
+
+/// `normalise_values_pruned` (by its compiled plan) and the reference that reads the schema
+/// for every value, on the same rows, schema, options and prune names: equal rows and
+/// pruned values, or the same panic. Returns how many values were pruned.
+fn assert_plan_matches(
+    rows: &[Value],
+    schema: &Value,
+    cfg: &NormaliseConfig,
+    prune: &HashSet<String>,
+) -> usize {
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    let message = |e: Box<dyn std::any::Any + Send>| {
+        e.downcast_ref::<&str>()
+            .map(|s| s.to_string())
+            .or_else(|| e.downcast_ref::<String>().cloned())
+    };
+    let plan = catch_unwind(AssertUnwindSafe(|| {
+        normalise_values_pruned(rows.to_vec(), schema, cfg, prune)
+    }))
+    .map_err(message);
+    let reference = catch_unwind(AssertUnwindSafe(|| {
+        normalise_values_pruned_by_schema(rows.to_vec(), schema, cfg, prune)
+    }))
+    .map_err(message);
+    assert_eq!(
+        plan, reference,
+        "rows {rows:?}\nschema {schema}\nprune {prune:?}"
+    );
+    plan.map_or(0, |(_, pruned)| pruned.len())
+}
+
+/// Every option combination `assert_plan_matches` is run with.
+fn normalise_configs() -> Vec<NormaliseConfig> {
+    let mut configs = Vec::new();
+    for map_encoding in [
+        MapEncoding::Mapping,
+        MapEncoding::Entries,
+        MapEncoding::KeyValueEntries,
+    ] {
+        for (empty_as_null, coerce_string) in [(true, false), (false, true)] {
+            for wrap_root in [None, Some("w".to_string())] {
+                configs.push(NormaliseConfig {
+                    empty_as_null,
+                    coerce_string,
+                    map_encoding,
+                    wrap_root,
+                });
+            }
+        }
+    }
+    configs
+}
+
+/// For random rows and schemas inferred from them (records, arrays, maps, promoted scalars,
+/// unions), with and without prune names, under every option: the compiled plan normalises
+/// and prunes as reading the schema does, also for rows of another batch than the schema's.
+#[cfg(feature = "avro")]
+#[test]
+fn test_plan_matches_the_schema_reading_path() {
+    use crate::{infer_json_schema_from_strings, SchemaInferenceConfig};
+    let mut rng = Rng(0x9e37_79b9_7f4a_7c15);
+    let configs = normalise_configs();
+    let keys = random_document_keys();
+    let mut previous: Vec<Value> = Vec::new();
+    let mut pruned_seen = 0;
+    for case in 0..2000 {
+        let rows: Vec<Value> = (0..1 + rng.below(6))
+            .map(|_| {
+                let mut row = json!({"r": random_document(&mut rng, "", 4)});
+                // Strings that coerce, floats beside integers, and an empty map
+                match rng.below(5) {
+                    0 => row["n"] = json!(["1", "x", "2.5", "true"][rng.below(4) as usize]),
+                    1 => {
+                        row["n"] = [json!(1.5), json!(2), json!(-3)][rng.below(3) as usize].clone()
+                    }
+                    2 => row["m"] = json!({}),
+                    _ => {}
+                }
+                row
+            })
+            .collect();
+        let strings: Vec<String> = rows.iter().map(Value::to_string).collect();
+        let config = SchemaInferenceConfig {
+            avro: true,
+            map_threshold: [20, 2, 0][case % 3],
+            unify_maps: case % 2 == 0,
+            wrap_scalars: case % 4 != 3,
+            ..Default::default()
+        };
+        let Ok(inferred) = infer_json_schema_from_strings(&strings, config) else {
+            continue;
+        };
+        let prune: HashSet<String> = keys.iter().filter(|_| rng.below(8) == 0).cloned().collect();
+        let cfg = &configs[case % configs.len()];
+        for prune in [HashSet::new(), prune] {
+            pruned_seen += assert_plan_matches(&rows, &inferred.schema, cfg, &prune);
+            assert_plan_matches(&previous, &inferred.schema, cfg, &prune);
+        }
+        previous = rows;
+    }
+    assert!(
+        pruned_seen > 100,
+        "the rows should prune something: {pruned_seen}"
+    );
+}
+
+/// Schemas inference does not write, for the kinds of node normalisation treats specially:
+/// names and other types it passes values through, records without `fields` or with
+/// fields lacking a name or type, unions of only `null` and empty ones (which panic on a
+/// value as before), and promoted records.
+#[test]
+fn test_plan_matches_on_unusual_schemas() {
+    let schemas = [
+        json!("null"),
+        json!("Named"),
+        json!({"type": "string"}),
+        json!({"type": "fixed", "size": 2}),
+        json!(7),
+        json!({"type": "record"}),
+        json!({"type": "record", "fields": {"a": "int"}}),
+        json!({"type": "record", "fields": [
+            {"name": "a"},
+            {"type": "int"},
+            "x",
+            {"name": 1, "type": "int"},
+            {"name": "b", "type": "long"},
+        ]}),
+        json!(["null"]),
+        json!([]),
+        json!(["string", "int"]),
+        json!(["int", "null", "string"]),
+        json!({"type": "array"}),
+        json!({"type": "map"}),
+        json!({"type": "array", "items": {"type": "map", "values": ["null", "double"]}}),
+        json!({"type": "record", "name": "p", "fields": [
+            {"name": "v__string", "type": ["null", "string"]},
+            {"name": "v__int", "type": ["null", "long"]},
+            {"name": "v__float", "type": ["null", "double"]},
+            {"name": "v__boolean", "type": ["null", "boolean"]},
+        ]}),
+        json!({"type": "record", "name": "r", "fields": [
+            {"name": "a", "type": {"type": "map", "values": {
+                "type": "record",
+                "name": "q",
+                "fields": [
+                    {"name": "x", "type": ["null", "string"]},
+                    {"name": "y", "type": {"type": "array", "items": "boolean"}},
+                ],
+            }}},
+            {"name": "b", "type": ["null", {"type": "array", "items": "int"}]},
+        ]}),
+    ];
+    let values = [
+        json!(null),
+        json!(1),
+        json!(-2),
+        json!(1.5),
+        json!("s"),
+        json!("12"),
+        json!("true"),
+        json!(true),
+        json!([]),
+        json!([1, "a", null]),
+        json!({}),
+        json!({"a": 1, "b": [2], "v__string": "s"}),
+        json!({"a": {"k": {"x": 1, "y": true}, "e": {}}, "b": 3}),
+        json!({"a": "scalar", "b": null}),
+    ];
+    let prunes: [HashSet<String>; 3] = [
+        HashSet::new(),
+        ["x".to_string(), "v__int".to_string()].into(),
+        ["b".to_string(), "a".to_string()].into(),
+    ];
+    for schema in &schemas {
+        for cfg in &normalise_configs() {
+            for prune in &prunes {
+                // One value at a time, so that a value that panics leaves the others tested
+                for value in &values {
+                    assert_plan_matches(std::slice::from_ref(value), schema, cfg, prune);
+                }
+                assert_plan_matches(&values, schema, cfg, prune);
+            }
+        }
+    }
+}
