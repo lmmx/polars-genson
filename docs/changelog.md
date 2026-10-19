@@ -5,6 +5,14 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **A map only ever empty, or holding nulls alone, unifies with one holding values.** Its
+  values are typed `null`, and unifying it with a map of typed values failed: the
+  records holding them were not unified, so a field of such records was not inferred as
+  a map (a map with `{}` in one row beside `{"en": "x"}` in another). Values typed `null`
+  now join typed ones as `null` does: the map holds the type, nullable (`null` and
+  `string`), so the nulls a map may hold stay possible; two maps of `null` values stay
+  `null`. In a record's field, two maps whose values differ only in being nullable now
+  unify too. Schemas change only where such maps failed to unify.
 - **Normalisation no longer panics on a field whose type is `null` alone.** The Avro
   conversion can give a record the fields of a differently shaped one that shares its name
   (#238, avrotize-rs#28), leaving a field typed `["null"]` where the data holds values.

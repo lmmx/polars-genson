@@ -289,8 +289,25 @@ impl OnDag<'_> {
             .iter()
             .map(|&schema| self.extract(schema, kw::ADDITIONAL_PROPERTIES))
             .collect::<Option<_>>()?;
+        let null = self.typed(kw::NULL);
+        let (mut nulls, mut typed) = (false, Vec::new());
+        for v in values {
+            match self.dag.same(v, null) {
+                true => nulls = true,
+                false => typed.push(v),
+            }
+        }
         let values_path = self.join(path, kw::ADDITIONAL_PROPERTIES);
-        let values = self.check_unifiable_schemas(&values, values_path)?;
+        let values = match typed.as_slice() {
+            [] => null,
+            _ => {
+                let values = self.check_unifiable_schemas(&typed, values_path)?;
+                match nulls {
+                    true => self.make_nullable(values),
+                    false => values,
+                }
+            }
+        };
         let object = self.dag.string(kw::OBJECT);
         Some(
             self.dag
@@ -317,6 +334,28 @@ impl OnDag<'_> {
         Some(unified)
     }
 
+    /// `unify_maps_beside_null_values`
+    fn unify_maps_beside_null_values(&mut self, a: Id, b: Id, path: Sym) -> Option<Id> {
+        if !(self.is_map(a) && self.is_map(b)) {
+            return None;
+        }
+        let a_values = self.extract(a, kw::ADDITIONAL_PROPERTIES)?;
+        let b_values = self.extract(b, kw::ADDITIONAL_PROPERTIES)?;
+        let null = self.typed(kw::NULL);
+        let (a_view, b_view) = (self.non_null(a_values), self.non_null(b_values));
+        if !(self.dag.same(a_values, null)
+            || self.dag.same(b_values, null)
+            || self.dag.same(a_view, b_view))
+        {
+            return None;
+        }
+        let map = self.unify_map_schemas(&[a, b], path)?;
+        Some(match self.nullable_type(a).or(self.nullable_type(b)) {
+            Some(_) => self.make_nullable(map),
+            None => map,
+        })
+    }
+
     /// `unify_field_pair`
     fn unify_field_pair(
         &mut self,
@@ -328,6 +367,9 @@ impl OnDag<'_> {
     ) -> Option<Id> {
         if let Some(compatible) = self.schemas_compatible_unequal(unified, new) {
             return Some(compatible);
+        }
+        if let Some(map) = self.unify_maps_beside_null_values(unified, new, field_path) {
+            return Some(map);
         }
         let record_like = |on: &Self, s: Id| on.is_record(s) || on.is_empty_record(s);
         if (self.is_array(unified) && self.is_array(new))

@@ -130,7 +130,11 @@ fn schema(rng: &mut Rng, depth: u32) -> Value {
                 _ => json!({ "type": "array", "items": items }),
             }
         }
-        11 => json!({ "type": "object", "additionalProperties": schema(rng, depth - 1) }),
+        // A map, now and then of values typed null (only ever empty, or holding nulls)
+        11 => match rng.below(4) {
+            0 => json!({ "type": "object", "additionalProperties": { "type": "null" } }),
+            _ => json!({ "type": "object", "additionalProperties": schema(rng, depth - 1) }),
+        },
         12 => [
             json!({ "type": "object" }),
             json!({ "type": "object", "properties": {} }),
@@ -155,11 +159,16 @@ fn schema(rng: &mut Rng, depth: u32) -> Value {
 /// `schema` changed a little, so that the changed and the unchanged unify, or nearly.
 fn vary(rng: &mut Rng, schema: &Value, depth: u32) -> Value {
     let mut varied = schema.clone();
-    match rng.below(10) {
+    match rng.below(12) {
         0 => return scalar(rng),
         1 => return json!({ "type": "null" }),
         2 => return json!({ "type": "array", "items": schema }),
         3 => return json!(["null", schema]),
+        // A map of values typed null, beside a map or anything else
+        10 | 11 => {
+            let t = if rng.chance(3) { json!(["null", "object"]) } else { json!("object") };
+            return json!({ "type": t, "additionalProperties": { "type": "null" } });
+        }
         _ => {}
     }
     let Some(obj) = varied.as_object_mut() else {
@@ -213,8 +222,23 @@ fn vary(rng: &mut Rng, schema: &Value, depth: u32) -> Value {
 /// An object of many fields from one family of schemas: identical, alike once nullability
 /// is set aside, unifiable, or not.
 fn map_candidate(rng: &mut Rng, depth: u32) -> Value {
-    let base = schema(rng, depth);
-    let family: Vec<Value> = (0..1 + rng.below(4)).map(|_| vary(rng, &base, depth)).collect();
+    // Now and then records holding a map, which `vary` can make one of values typed null
+    let base = if rng.chance(10) {
+        let values = schema(rng, depth);
+        json!({ "type": "object", "properties": {
+            "id": { "type": "string" },
+            "m": { "type": "object", "additionalProperties": values }
+        }})
+    } else {
+        schema(rng, depth)
+    };
+    let mut family: Vec<Value> = (0..1 + rng.below(4)).map(|_| vary(rng, &base, depth)).collect();
+    if base["properties"].get("m").is_some() {
+        let mut empty = base.clone();
+        let t = if rng.chance(3) { json!(["null", "object"]) } else { json!("object") };
+        empty["properties"]["m"] = json!({ "type": t, "additionalProperties": { "type": "null" } });
+        family.push(empty);
+    }
     let n = [2, 3, 5, 12, 25, 60][rng.below(6) as usize];
     let names: Vec<String> = (0..n)
         .map(|i| match rng.below(10) {
@@ -533,4 +557,59 @@ fn test_inference_on_dag_matches_values() {
         assert_eq!(by_values, on_dag, "case {case}: {threads} threads, config {config:?}");
     }
     assert!(compared > n * 5 / 6, "{compared} of {n} compared");
+}
+
+/// Records holding a map `m` of values typed null (only ever empty, or holding nulls), of
+/// typed values, or nullable, rewritten on a DAG and in place: the same schemas, and each
+/// way of unifying a map of null values (`null ⊔ T`, `null ⊔ null`, in a record's field)
+/// is reached.
+#[test]
+fn test_rewrite_on_dag_matches_on_maps_of_null_values() {
+    let mut rng = Rng(0x2545_f491_4f6c_dd1d);
+    let ms = [
+        json!({ "type": "object", "additionalProperties": { "type": "null" } }),
+        json!({ "type": ["null", "object"], "additionalProperties": { "type": "null" } }),
+        json!({ "type": "object", "additionalProperties": { "type": "string" } }),
+        json!({ "type": "object", "additionalProperties": { "type": ["null", "string"] } }),
+        json!({ "type": ["null", "object"], "additionalProperties": { "type": "integer" } }),
+        json!({ "type": "object", "additionalProperties": {
+            "type": "object", "properties": { "v": { "type": "string" } } } }),
+    ];
+    let (mut nullable, mut changed) = (0, 0);
+    for case in 0..cases(600) {
+        let config = SchemaInferenceConfig {
+            map_threshold: [0, 1, 2][rng.below(3) as usize],
+            unify_maps: !rng.chance(8),
+            ..random_config(&mut rng)
+        };
+        let n = 2 + rng.below(12);
+        let names: Vec<String> = (0..n).map(|i| format!("P{i}")).collect();
+        // One kind of map of null values beside one of typed values (or none, now and then)
+        let (null_values, typed) = (rng.one(&ms[..2]).clone(), rng.one(&ms[2..]).clone());
+        let only_null = rng.chance(5);
+        let root = record(&mut rng, &names, &mut |rng| {
+            let m = match only_null || rng.chance(3) {
+                true => rng.one(&ms[..2]).clone(),
+                false => typed.clone(),
+            };
+            let m = if rng.chance(2) { null_values.clone() } else { m };
+            json!({ "type": "object", "properties": { "id": { "type": "string" }, "m": m } })
+        });
+        // Under a field, which can become a map where the document's root cannot
+        let root = json!({ "type": "object", "properties": { "c": root } });
+        let threads = if case % 2 == 0 { 1 } else { 4 };
+        let by_values = rewrite_with_values(&root, &config, threads);
+        let on_dag = rewrite_on_dag(&root, &config);
+        assert_eq!(by_values, on_dag, "case {case}: {root}\nconfig {config:?}");
+        let input = root.to_string();
+        changed += usize::from(by_values != input);
+        // Strings made nullable, where no input map held nullable strings
+        let nullable_strings = r#""additionalProperties":{"type":["null","string"]}"#;
+        nullable +=
+            usize::from(by_values.contains(nullable_strings) && !input.contains(nullable_strings));
+    }
+    assert!(
+        changed > cases(600) / 2 && nullable > cases(600) / 20,
+        "{changed} changed, {nullable} nullable"
+    );
 }
