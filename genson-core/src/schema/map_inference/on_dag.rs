@@ -93,16 +93,62 @@ impl<'c> OnDag<'c> {
         {
             return values;
         }
-        let Some(props) = obj
-            .get(kw::PROPERTIES)
-            .and_then(|p| self.dag.as_object(p))
-            .filter(|p| !p.is_empty())
-        else {
+        if let Some(branches) = obj
+            .get(kw::ANY_OF)
+            .and_then(|a| self.dag.as_array(a))
+            .map(<[Id]>::to_vec)
+        {
+            let (mut values, mut no_unify) = (Vec::new(), false);
+            for branch in branches {
+                let t = self
+                    .dag
+                    .get(branch, kw::TYPE)
+                    .and_then(|t| self.dag.as_sym(t));
+                match t {
+                    Some(kw::NULL) => {}
+                    Some(kw::OBJECT) => {
+                        match self
+                            .dag
+                            .get(branch, kw::PROPERTIES)
+                            .and_then(|p| self.dag.as_object(p))
+                        {
+                            Some(props) => {
+                                no_unify |= self.in_no_unify(props);
+                                values.extend(props.values());
+                            }
+                            None => values.extend(
+                                self.dag
+                                    .get(branch, kw::ADDITIONAL_PROPERTIES)
+                                    .filter(|&v| self.dag.as_object(v).is_some()),
+                            ),
+                        }
+                    }
+                    _ => values.push(branch),
+                }
+            }
+            return self.map_value_schema(&values, no_unify, field);
+        }
+        let props = obj.get(kw::PROPERTIES).and_then(|p| self.dag.as_object(p));
+        let no_unify = props.is_some_and(|p| self.in_no_unify(p));
+        let mut values: Vec<Id> = props.into_iter().flat_map(|p| p.values()).collect();
+        let types = obj.get(kw::TYPE).map(|t| match self.dag.as_array(t) {
+            Some(types) => types.to_vec(),
+            None => vec![t],
+        });
+        for t in types.into_iter().flatten() {
+            if !(self.dag.is_sym(t, kw::NULL) || self.dag.is_sym(t, kw::OBJECT)) {
+                values.push(self.dag.object(&[(kw::TYPE, t)]));
+            }
+        }
+        self.map_value_schema(&values, no_unify, field)
+    }
+
+    /// `map_value_schema`
+    fn map_value_schema(&mut self, values: &[Id], no_unify: bool, field: Option<Sym>) -> Id {
+        let Some(&first) = values.first() else {
             return self.typed(kw::NULL);
         };
-        let values: Vec<Id> = props.values().collect();
-        let no_unify = self.in_no_unify(props);
-        let first = self.non_null(values[0]);
+        let first = self.non_null(first);
         if values.iter().all(|&v| {
             let view = self.non_null(v);
             self.dag.same(view, first)
@@ -113,7 +159,7 @@ impl<'c> OnDag<'c> {
             return self.typed(kw::STRING);
         }
         let path = field.unwrap_or(kw::EMPTY);
-        match self.check_unifiable_schemas(&values, path) {
+        match self.check_unifiable_schemas(values, path) {
             Some(unified) => unified,
             None => self.typed(kw::STRING),
         }

@@ -47,7 +47,10 @@ info:
                     "labels": {
                       "type": "object",
                       "additionalProperties": {
-                        "type": "null"
+                        "type": [
+                          "null",
+                          "string"
+                        ]
                       }
                     }
                   },
@@ -100,7 +103,10 @@ info:
                           "labels": {
                             "type": "object",
                             "additionalProperties": {
-                              "type": "null"
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             }
                           }
                         },
@@ -120,9 +126,9 @@ info:
                       }
                     },
                     "required": [
-                      "datatype",
-                      "datavalue",
                       "property",
+                      "datavalue",
+                      "datatype",
                       "property-labels"
                     ]
                   }
