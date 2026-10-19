@@ -87,10 +87,15 @@ impl SchemaInferenceConfig {
     }
 
     pub(crate) fn debug_verbose(&self, args: std::fmt::Arguments) {
-        if self.debug && matches!(self.verbosity, DebugVerbosity::Verbose) {
+        if self.debug_verbose_enabled() {
             let message = format!("{}", args);
             anstream::eprintln!("{}", self.maybe_truncate(message));
         }
+    }
+
+    /// Whether `debug_verbose` prints.
+    pub(crate) fn debug_verbose_enabled(&self) -> bool {
+        self.debug && matches!(self.verbosity, DebugVerbosity::Verbose)
     }
 
     fn maybe_truncate(&self, message: String) -> String {
@@ -160,18 +165,28 @@ macro_rules! profile_verbose {
     };
 }
 
+// `format_args!` evaluates its arguments where it is written, so the macros check that the
+// message prints before building it: an argument such as `serde_json::to_string(schema)`
+// would otherwise run on every call with debugging off.
+
 #[macro_export]
 macro_rules! debug {
-    ($cfg:expr, $($arg:tt)*) => {
-        $cfg.debug(format_args!($($arg)*))
-    };
+    ($cfg:expr, $($arg:tt)*) => {{
+        let cfg = &$cfg;
+        if cfg.debug {
+            cfg.debug(format_args!($($arg)*))
+        }
+    }};
 }
 
 #[macro_export]
 macro_rules! debug_verbose {
-    ($cfg:expr, $($arg:tt)*) => {
-        $cfg.debug_verbose(format_args!($($arg)*))
-    };
+    ($cfg:expr, $($arg:tt)*) => {{
+        let cfg = &$cfg;
+        if cfg.debug_verbose_enabled() {
+            cfg.debug_verbose(format_args!($($arg)*))
+        }
+    }};
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
