@@ -1,5 +1,6 @@
 #![allow(mismatched_lifetime_syntaxes)]
 mod builder;
+pub(crate) mod interned;
 mod node;
 mod strategy;
 

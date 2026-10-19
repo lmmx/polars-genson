@@ -2,6 +2,7 @@ use rayon::prelude::*;
 use serde_json::{json, Value};
 use std::slice::{Iter, IterMut};
 
+use crate::genson_rs::interned::{RowStates, StateId};
 use crate::genson_rs::node::{DataType, SchemaNode};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 
@@ -53,6 +54,11 @@ impl ListStrategy {
     pub(crate) fn absorb(&mut self, other: ListStrategy) {
         let [items] = other.items;
         self.items[0].absorb(items);
+    }
+
+    /// `absorb` of a list whose items' interned state is `items`.
+    pub(crate) fn absorb_interned(&mut self, rows: &RowStates, items: StateId) {
+        self.items[0].absorb_interned(rows, items);
     }
 
     pub(crate) fn items_node(&self) -> &SchemaNode {

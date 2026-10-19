@@ -498,6 +498,72 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
     Ok(processed_count)
 }
 
+/// `process_json_strings_parallel` by way of interned row states: each row's schema is
+/// built from its token tape into states its block of rows shares, then the distinct rows
+/// are merged in order, as there, a repeated subtree merged once. `None`, having changed
+/// nothing, where a row or the options might be read differently: the rows then take the
+/// usual path, which also raises their errors.
+fn process_json_strings_interned<S: AsRef<str> + Sync>(
+    json_strings: &[S],
+    config: &SchemaInferenceConfig,
+    builder: &mut SchemaBuilder,
+) -> Option<usize> {
+    use crate::genson_rs::interned::{RowState, RowStates};
+    // A field forced to be a map is rewritten in each row's schema before the merge
+    if config.force_field_types.values().any(|t| t == "map") {
+        return None;
+    }
+    let ndjson = match config.delimiter {
+        Some(b'\n') => true,
+        None => false,
+        Some(_) => return None,
+    };
+    let t_rows = std::time::Instant::now();
+    let block_len = json_strings
+        .len()
+        .div_ceil(rayon::current_num_threads() * 4)
+        .max(1);
+    let blocks: Vec<(RowStates, Vec<RowState>)> = json_strings
+        .par_chunks(block_len)
+        .map(|rows| {
+            let mut states = RowStates::new();
+            let mut toks = Vec::new();
+            let rows = rows
+                .iter()
+                .map(|row| states.row(row.as_ref(), ndjson, config.wrap_root.as_deref(), &mut toks))
+                .collect::<Result<Vec<_>, _>>()
+                .ok()?;
+            Some((states, rows))
+        })
+        .collect::<Option<_>>()?;
+    profile!(config, "Interned row states took {:?}", t_rows.elapsed());
+
+    // The distinct rows of each chunk of `max_builders`, in order, as the usual path merges
+    let t_merge = std::time::Instant::now();
+    let chunk_size = config.max_builders.unwrap_or(json_strings.len()).max(1);
+    let rows = blocks
+        .iter()
+        .flat_map(|(states, rows)| rows.iter().map(move |row| (states, *row)));
+    let mut seen_hashes = HashSet::new();
+    let mut processed_count = 0;
+    let mut chunk = Vec::with_capacity(chunk_size);
+    let mut rows = rows.peekable();
+    while rows.peek().is_some() {
+        chunk.clear();
+        for (states, row) in rows.by_ref().take(chunk_size) {
+            if let Some((state, hash)) = row {
+                if seen_hashes.insert(hash) {
+                    processed_count += 1;
+                    chunk.push((states, state));
+                }
+            }
+        }
+        builder.add_interned_rows(chunk.iter().copied(), config.schema_uri.as_deref());
+    }
+    profile!(config, "Interned merge took {:?}", t_merge.elapsed());
+    Some(processed_count)
+}
+
 /// Recursively convert fields matching force_field_types BEFORE unification runs.
 /// This ensures structural consistency so that unification can succeed.
 pub(crate) fn preprocess_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
@@ -627,7 +693,10 @@ pub fn infer_json_schema_from_strings<S: AsRef<str> + Sync>(
                 .unwrap_or_else(|_| json_strings.len() >= PARALLEL_THRESHOLD);
 
             let processed_count = if use_parallel {
-                process_json_strings_parallel(json_strings, &config, &mut builder)?
+                match process_json_strings_interned(json_strings, &config, &mut builder) {
+                    Some(processed_count) => processed_count,
+                    None => process_json_strings_parallel(json_strings, &config, &mut builder)?,
+                }
             } else {
                 process_json_strings_sequential(json_strings, &config, &mut builder)?
             };

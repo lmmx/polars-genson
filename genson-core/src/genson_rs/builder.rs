@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
 use std::hash::Hasher;
 
+use crate::genson_rs::interned::{RowStates, StateId};
 use crate::genson_rs::node::{DataType, SchemaNode};
 
 const DEFAULT_SCHEMA_URI: &str = "http://json-schema.org/schema#";
@@ -128,6 +129,32 @@ impl SchemaBuilder {
             objects.push(other.root_node);
         }
         self.root_node.absorb_all(objects);
+        if let Some(uri) = kept_uri {
+            self.root_node.add_object_keyword("$schema", uri.into());
+        }
+    }
+
+    /// `add_builders` of the rows' builders that interned row states stand for (each a
+    /// builder made with `row_uri`'s setting, its root an object): the same result, read
+    /// from the states.
+    pub(crate) fn add_interned_rows<'a>(
+        &mut self,
+        rows: impl IntoIterator<Item = (&'a RowStates, StateId)>,
+        row_uri: Option<&str>,
+    ) {
+        let row_uri = SchemaBuilder::new(row_uri)
+            .emitted_schema_uri()
+            .map(str::to_string);
+        let mut kept_uri = None;
+        for (states, state) in rows {
+            match (&row_uri, &self.schema_uri) {
+                (Some(uri), None) => self.schema_uri = Some(uri.clone()),
+                // `add_schema` merges an unadopted `$schema` into the root as a keyword
+                (Some(uri), Some(_)) => kept_uri = kept_uri.or(Some(uri.clone())),
+                (None, _) => {}
+            }
+            self.root_node.absorb_interned(states, state);
+        }
         if let Some(uri) = kept_uri {
             self.root_node.add_object_keyword("$schema", uri.into());
         }

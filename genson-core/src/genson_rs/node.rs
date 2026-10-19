@@ -2,6 +2,7 @@ use core::panic;
 use std::borrow::{Borrow, Cow};
 use std::hash::Hasher;
 
+use crate::genson_rs::interned::{RowStates, StateId, Strat};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 use crate::genson_rs::strategy::scalar::TypelessStrategy;
 use crate::genson_rs::strategy::BasicSchemaStrategy;
@@ -32,6 +33,25 @@ pub(crate) fn hash_value<H: Hasher>(value: &Value, hasher: &mut H) {
 #[derive(Debug, PartialEq)]
 pub struct SchemaNode {
     active_strategies: Vec<BasicSchemaStrategy>,
+    /// The interned row states absorbed into this node (`absorb_interned`)
+    absorbed: Absorbed,
+}
+
+/// The interned states a node has absorbed. Absorbing one of them again leaves the node as
+/// it is, so this is a record of work not to repeat, and takes no part in comparing nodes.
+#[derive(Default)]
+struct Absorbed(rustc_hash::FxHashSet<u64>);
+
+impl PartialEq for Absorbed {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl std::fmt::Debug for Absorbed {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Absorbed({})", self.0.len())
+    }
 }
 
 /// DataType wraps around different types of schema data that can be added
@@ -57,6 +77,7 @@ impl SchemaNode {
     pub fn new() -> Self {
         SchemaNode {
             active_strategies: vec![],
+            absorbed: Absorbed::default(),
         }
     }
 
@@ -227,6 +248,47 @@ impl SchemaNode {
         for strategy in ordered {
             strategy.hash_schema(hasher);
         }
+    }
+
+    /// `absorb` of the node an interned row state stands for: the same result, read from
+    /// the state. A state this node has absorbed before is skipped, as absorbing it again
+    /// would change nothing.
+    pub(crate) fn absorb_interned(&mut self, rows: &RowStates, state: StateId) {
+        if !self.absorbed.0.insert(rows.identity(state)) {
+            return;
+        }
+        let strats = rows.strats(state);
+        match strats.len() {
+            0 => self.absorb_strategy(BasicSchemaStrategy::Typeless(TypelessStrategy::new())),
+            1 => self.absorb_interned_strategy(rows, strats[0]),
+            _ => {
+                for strat in rows.schema_order(strats) {
+                    self.absorb_interned_strategy(rows, strat);
+                }
+            }
+        }
+    }
+
+    /// `absorb_strategy` of the strategy an interned one stands for.
+    fn absorb_interned_strategy(&mut self, rows: &RowStates, strat: Strat) {
+        if let Some(existing) = self
+            .active_strategies
+            .iter_mut()
+            .find(|existing| existing.same_kind_as_interned(strat))
+        {
+            existing.absorb_interned(rows, strat);
+            return;
+        }
+        let mut created = BasicSchemaStrategy::new_of_interned_kind(strat);
+        if let Some(BasicSchemaStrategy::Typeless(typeless)) = self.active_strategies.last() {
+            created.add_schema(&typeless.to_schema());
+            self.active_strategies.pop();
+        }
+        created.absorb_interned(rows, strat);
+        if self.active_strategies.is_empty() {
+            self.active_strategies.reserve_exact(1);
+        }
+        self.active_strategies.push(created);
     }
 
     /// As `add_schema` with the one subschema `strategy` writes: merged into the strategy of
