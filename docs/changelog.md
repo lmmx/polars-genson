@@ -5,6 +5,10 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **`normalise_json(decode=False)` is faster.** It parsed every row into a `Value`,
+  normalised it and serialised it; rows now go through the typed decoder into Arrow and
+  are written back as JSON, with the same text. Rows the typed decoder declines, and
+  inputs too few rows for the schema's width to pay for its columns, take the old path.
 - **A key missing from some objects is no longer required.** When a field's objects
   were merged, those holding no key in common were not counted, so a key could be
   marked required (and its Avro field non-nullable) although some rows lack it, and

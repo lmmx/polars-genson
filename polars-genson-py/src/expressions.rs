@@ -1,9 +1,8 @@
-use genson_core::normalise::{MapEncoding, NormaliseConfig, NormalisePlan};
+use genson_core::normalise::{normalise_to_json, MapEncoding, NormaliseConfig, NormalisePlan};
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use polars::prelude::*;
 use polars_jsonschema_bridge::deserialise::{schema_to_polars_fields, SchemaFormat};
 use pyo3_polars::derive::polars_expr;
-use rayon::prelude::*;
 use serde::Deserialize;
 use std::panic;
 use std::slice::from_ref;
@@ -525,19 +524,12 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
         };
 
         // The schema is compiled once for all the rows, which are normalised in parallel
-        // (in order)
+        // (in order), decoded typed and written back where the typed decoder takes them
         let plan = NormalisePlan::new(schema, &cfg, &std::collections::HashSet::new());
+        let native_maps = cfg.map_encoding == MapEncoding::Mapping;
+        let fields = genson_core::parquet::avro_record_fields(schema, native_maps).ok();
         let rows: Vec<Option<&str>> = string_chunked.iter().collect();
-        rows.par_iter()
-            .map(|s| {
-                let val = s
-                    .and_then(|st| serde_json::from_str::<serde_json::Value>(st).ok())
-                    .unwrap_or(serde_json::Value::Null);
-
-                let (normed, _) = plan.normalise(val);
-                serde_json::to_string(&normed).unwrap()
-            })
-            .collect::<Vec<String>>()
+        normalise_to_json(&plan, fields.as_ref(), &rows)
     };
 
     force_memory_release();
