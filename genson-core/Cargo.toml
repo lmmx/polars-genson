@@ -24,6 +24,8 @@ simd-json.workspace = true
 sonic-rs = "0.5.6"
 
 [features]
+# Counting allocations by stage (`genson_core::phase`), for the performance scorecard
+alloc-stats = []
 avro = ["avrotize"]
 default = []
 parquet = ["dep:arrow", "dep:parquet"]

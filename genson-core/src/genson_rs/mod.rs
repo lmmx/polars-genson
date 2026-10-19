@@ -5,12 +5,18 @@ mod node;
 mod strategy;
 
 use crate::value::object;
+#[cfg(not(feature = "alloc-stats"))]
 use mimalloc::MiMalloc;
 use rayon::prelude::*;
 
 // Setting the global allocator to mimalloc for more efficient memory allocation
+#[cfg(not(feature = "alloc-stats"))]
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
+
+#[cfg(feature = "alloc-stats")]
+#[global_allocator]
+static GLOBAL: crate::phase::Counting = crate::phase::Counting;
 
 pub use builder::SchemaBuilder;
 pub(crate) use node::{DataType, SchemaNode};

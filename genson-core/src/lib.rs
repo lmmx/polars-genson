@@ -8,6 +8,8 @@ pub mod genson_rs;
 pub mod normalise;
 #[cfg(feature = "parquet")]
 pub mod parquet;
+#[doc(hidden)]
+pub mod phase;
 pub mod schema;
 mod tape;
 mod value;
