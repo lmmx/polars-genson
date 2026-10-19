@@ -28,7 +28,14 @@ pub struct ObjectStrategy {
     additional_properties: Option<SchemaNode>,
     required_properties: Option<KeySet<String>>,
     include_empty_required: bool,
+    /// For each property `absorb_deferred` left empty because an earlier one was given the
+    /// same states: that one's index (`NOT_SAME` for the rest). The schema is written with
+    /// the earlier one's; nothing else reads the properties after `absorb_deferred`.
+    same_as: Vec<u32>,
 }
+
+/// A property not left empty by `absorb_deferred`, in `ObjectStrategy::same_as`.
+const NOT_SAME: u32 = u32::MAX;
 
 /// The compiled `patternProperties` patterns, in the order of `pattern_properties` (which
 /// only grows), compiled when first matched against.
@@ -61,6 +68,7 @@ impl ObjectStrategy {
             additional_properties: None,
             required_properties: None,
             include_empty_required: false,
+            same_as: Vec::new(),
         }
     }
 }
@@ -335,10 +343,10 @@ impl SchemaStrategy for ObjectStrategy {
         let mut schema = self.extra_keywords.clone();
         schema["type"] = "object".into();
         if !self.properties.is_empty() {
-            schema["properties"] = self.properties_to_schema(&self.properties);
+            schema["properties"] = self.properties_to_schema(&self.properties, &self.same_as);
         }
         if !self.pattern_properties.is_empty() {
-            schema["patternProperties"] = self.properties_to_schema(&self.pattern_properties);
+            schema["patternProperties"] = self.properties_to_schema(&self.pattern_properties, &[]);
         }
         if let Some(values) = &self.additional_properties {
             schema["additionalProperties"] = values.to_schema();
@@ -483,11 +491,15 @@ impl ObjectStrategy {
     /// The property absorbs `absorb_interned_deferred` held back, each property's node
     /// taking its states in their order, the properties on their own threads.
     pub(crate) fn absorb_deferred(&mut self, groups: Vec<Vec<(&RowStates, StateId)>>) {
+        self.same_as = Self::same_states(&self.properties, &groups);
+        let same_as = &self.same_as;
         let work: Vec<(&mut SchemaNode, Vec<(&RowStates, StateId)>)> = self
             .properties
             .values_mut()
             .zip(groups)
-            .filter(|(_, states)| !states.is_empty())
+            .enumerate()
+            .filter(|(i, (_, states))| !states.is_empty() && same_as[*i] == NOT_SAME)
+            .map(|(_, work)| work)
             .collect();
         if work.len() > 1
             && work.iter().map(|(_, states)| states.len()).sum::<usize>() >= PAR_MERGE_MIN
@@ -499,6 +511,39 @@ impl ObjectStrategy {
                 node.absorb_interned_all(&states);
             }
         }
+    }
+
+    /// For each property given the same states as an earlier one (once each, in the same
+    /// order, which is all a node's absorbing reads), that one's index: an empty node given
+    /// those states becomes the same subtree. `NOT_SAME` for the rest.
+    fn same_states(
+        properties: &PropMap<SchemaNode>,
+        groups: &[Vec<(&RowStates, StateId)>],
+    ) -> Vec<u32> {
+        let mut same_as = vec![NOT_SAME; properties.len()];
+        if groups.iter().filter(|states| !states.is_empty()).count() < 2 {
+            return same_as;
+        }
+        let mut first: rustc_hash::FxHashMap<Vec<u64>, u32> = Default::default();
+        let mut seen: rustc_hash::FxHashSet<u64> = Default::default();
+        for (i, (node, states)) in properties.values().zip(groups).enumerate() {
+            if states.is_empty() || !node.is_empty() {
+                continue;
+            }
+            seen.clear();
+            let distinct: Vec<u64> = states
+                .iter()
+                .map(|&(rows, state)| rows.identity(state))
+                .filter(|&identity| seen.insert(identity))
+                .collect();
+            match first.entry(distinct) {
+                std::collections::hash_map::Entry::Occupied(earlier) => same_as[i] = *earlier.get(),
+                std::collections::hash_map::Entry::Vacant(entry) => {
+                    entry.insert(i as u32);
+                }
+            }
+        }
+        same_as
     }
 
     /// The part of `absorb_interned` besides the child nodes: the keyword placeholders and
@@ -762,11 +807,11 @@ impl ObjectStrategy {
         let object = dag.string(kw::OBJECT);
         dag.entries.push((kw::TYPE, object));
         if !self.properties.is_empty() {
-            let properties = Self::properties_to_dag(&self.properties, dag);
+            let properties = Self::properties_to_dag(&self.properties, &self.same_as, dag);
             dag.entries.push((kw::PROPERTIES, properties));
         }
         if !self.pattern_properties.is_empty() {
-            let patterns = Self::properties_to_dag(&self.pattern_properties, dag);
+            let patterns = Self::properties_to_dag(&self.pattern_properties, &[], dag);
             dag.entries.push((kw::PATTERN_PROPERTIES, patterns));
         }
         if let Some(values) = &self.additional_properties {
@@ -785,11 +830,11 @@ impl ObjectStrategy {
         let object = dag.string(kw::OBJECT);
         schema.insert(kw::TYPE, object);
         if !self.properties.is_empty() {
-            let properties = Self::properties_to_dag(&self.properties, dag);
+            let properties = Self::properties_to_dag(&self.properties, &self.same_as, dag);
             schema.insert(kw::PROPERTIES, properties);
         }
         if !self.pattern_properties.is_empty() {
-            let patterns = Self::properties_to_dag(&self.pattern_properties, dag);
+            let patterns = Self::properties_to_dag(&self.pattern_properties, &[], dag);
             schema.insert(kw::PATTERN_PROPERTIES, patterns);
         }
         if let Some(values) = &self.additional_properties {
@@ -819,29 +864,45 @@ impl ObjectStrategy {
         Some(dag.array_from(start))
     }
 
-    fn properties_to_dag(properties: &PropMap<SchemaNode>, dag: &mut Dag) -> Id {
+    fn properties_to_dag(properties: &PropMap<SchemaNode>, same_as: &[u32], dag: &mut Dag) -> Id {
         let start = dag.entries.len();
-        for (name, node) in properties {
-            let schema = node.to_dag(dag);
+        for (i, (name, node)) in properties.iter().enumerate() {
+            let schema = match same_as.get(i) {
+                Some(&earlier) if earlier != NOT_SAME => dag.entries[start + earlier as usize].1,
+                _ => node.to_dag(dag),
+            };
             let name = dag.sym(name);
             dag.entries.push((name, schema));
         }
         dag.object_from(start)
     }
 
-    fn properties_to_schema(&self, properties: &PropMap<SchemaNode>) -> Value {
+    fn properties_to_schema(&self, properties: &PropMap<SchemaNode>, same_as: &[u32]) -> Value {
         // Each property's schema is written on its own, so many are written in parallel
-        // (in order)
-        let schemas: Vec<Value> = if properties.len() >= PAR_TO_SCHEMA_MIN {
+        // (in order); one left empty as the same as an earlier one is a copy of its schema
+        let earlier = |i: usize| same_as.get(i).copied().filter(|&e| e != NOT_SAME);
+        let schema =
+            |(i, node): (usize, &SchemaNode)| earlier(i).is_none().then(|| node.to_schema());
+        let schemas: Vec<Option<Value>> = if properties.len() >= PAR_TO_SCHEMA_MIN {
             properties
-                .par_iter()
-                .map(|(_, node)| node.to_schema())
+                .values()
+                .collect::<Vec<_>>()
+                .into_par_iter()
+                .enumerate()
+                .map(schema)
                 .collect()
         } else {
-            properties.values().map(SchemaNode::to_schema).collect()
+            properties.values().enumerate().map(schema).collect()
         };
+        let mut written: Vec<Value> = Vec::with_capacity(properties.len());
+        for (i, schema) in schemas.into_iter().enumerate() {
+            written.push(match earlier(i) {
+                Some(e) => written[e as usize].clone(),
+                None => schema.unwrap(),
+            });
+        }
         let mut schema_properties = Map::with_capacity(properties.len());
-        for (prop, schema) in properties.keys().zip(schemas) {
+        for (prop, schema) in properties.keys().zip(written) {
             schema_properties.insert(prop.clone(), schema);
         }
         Value::Object(schema_properties)
