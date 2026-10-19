@@ -15,7 +15,7 @@
 //! absorbed (known by their schema hash, which covers all `absorb` reads): a subtree the
 //! rows repeat at a node is merged there once.
 
-use crate::tape::{lex, Tok};
+use crate::tape::{lex, unescape, Tok};
 use rustc_hash::FxHashMap;
 use std::borrow::Cow;
 
@@ -418,8 +418,7 @@ impl RowStates {
                         unreachable!("a key is a string")
                     };
                     let key = if escaped {
-                        let quoted = &text[s as usize - 1..e as usize + 1];
-                        Cow::Owned(serde_json::from_str::<String>(quoted).map_err(|_| Unsupported)?)
+                        Cow::Owned(unescape(&text[s as usize..e as usize]))
                     } else {
                         Cow::Borrowed(&text[s as usize..e as usize])
                     };
