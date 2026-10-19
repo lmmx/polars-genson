@@ -546,10 +546,10 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
         .flat_map(|(states, rows)| rows.iter().map(move |row| (states, *row)));
     let mut seen_hashes = HashSet::new();
     let mut processed_count = 0;
-    let mut chunk = Vec::with_capacity(chunk_size);
+    let mut chunks = Vec::new();
     let mut rows = rows.peekable();
     while rows.peek().is_some() {
-        chunk.clear();
+        let mut chunk = Vec::with_capacity(chunk_size);
         for (states, row) in rows.by_ref().take(chunk_size) {
             if let Some((state, hash)) = row {
                 if seen_hashes.insert(hash) {
@@ -558,8 +558,9 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
                 }
             }
         }
-        builder.add_interned_rows(chunk.iter().copied(), config.schema_uri.as_deref());
+        chunks.push(chunk);
     }
+    builder.add_interned_row_chunks(chunks, config.schema_uri.as_deref());
     profile!(config, "Interned merge took {:?}", t_merge.elapsed());
     Some(processed_count)
 }

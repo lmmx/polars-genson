@@ -906,6 +906,45 @@ changed by this work.
   schemas compared are); of 7 mutants (logs/e45_rowstates_mutants.txt) 5 fail them and 2
   are equivalent (a stale or misaligned position falls back to the lookup by hash)
 
+### The interned merge, each property on its own thread
+
+- The interned merge absorbed each distinct row into the builder in turn on one thread,
+  every row's subtree through every node it reaches: on rel7k 6,392 rows into a claims
+  object of 2,269 property keys, 36-136 ms (median about 50) of inference's 0.17-0.24 s
+  on four threads, the longest serial stage left. The usual path already merges its
+  chunks' builders with each property's nodes on their own threads (`absorb_all`)
+- `absorb_interned_all` does the same for the states: a node takes its states in their
+  order, doing all of its own part of `absorb_interned` (the states it skips, its
+  strategies, their order and the typeless one merged into a new one, numbers widened,
+  an object's keyword placeholders, `required` and its new properties' nodes, added
+  empty where they were added before), with each child's states held back
+  (`absorb_interned_deferred`); then each child takes its own states in their order,
+  an object's children on their own threads (`absorb_deferred`). A node reads nothing of
+  its children and they nothing of each other, and each node is given the same states in
+  the same order as before, so the tree is the same. The builder takes the root's rows
+  chunk by chunk, each chunk's `$schema` after its rows as before, and the children's
+  states after the last chunk (`add_interned_row_chunks`)
+- The same schema hashes and processed counts on every corpus; instructions (one thread)
+  within 1% (rel7k 1.39G and 1.41G: the groups)
+- Inference on four threads, 4 interleaved rounds of 6 runs, the first of each dropped
+  (logs/e47_infer_parallel_merge.txt), median wall and CPU, the previous step and now:
+  rel7k 0.236 and 0.167 s (fastest runs 0.158 and 0.124 s), CPU 0.432 and 0.384 s; the
+  merge's own time (genson's profile, 10 runs each) 36-136 ms and 10-35 ms; rowsw with
+  its label maps extracted, event logs and labels within the run-to-run spread (their
+  merges are a few milliseconds)
+- `process()`, 6 interleaved rounds of #249, #250 and this on rel7k, 3 on rowsw
+  (logs/e48_process_rel7k_merge.txt, e49_process_rowsw_merge.txt), median wall 1.711,
+  1.763 and 1.558 s; the claims step 0.500, 0.586 and 0.412 s, its inference 0.189, 0.331
+  and 0.139 s (this series spread widely: 0.164-0.645, 0.151-0.529 and 0.097-0.173 s).
+  rowsw within the spread. Every table equal to #249's on both
+- Tests: `test_interned_merge_keeps_each_chunks_keywords_in_place` (rows that are empty
+  objects, then rows with fields, nested objects and lists, under four chunk sizes, three
+  `$schema` settings and both delimiters: the interned merge gives the rows' builders'
+  schema, compared as text, so keyword order counts) and the interned row tests as
+  before; of 6 mutants
+  (logs/e50_merge_mutants.txt) 3 fail them and 3 are equivalent, one of them taken
+  (a strategy that replaces the typeless one takes its slot)
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building

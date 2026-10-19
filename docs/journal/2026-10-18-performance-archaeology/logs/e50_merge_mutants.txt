@@ -1,0 +1,11 @@
+Mutants of the batched interned merge (genson-core/src/genson_rs/{builder,node}.rs,
+strategy/{object,mod}.rs), each run against the interned tests
+(test_interned_rows_match_the_builders, test_interned_rows_tell_required_apart,
+test_interned_merge_keeps_each_chunks_keywords_in_place). "caught" = a test fails.
+
+survived: $schema after the last chunk          (equivalent: `to_schema` writes `$schema` first, wherever it is among the root's keywords)
+caught: states grouped under the first property  (every property's states given to the first property's node)
+caught: list items not held back                 (a list's items' states dropped)
+caught: properties given each other's states     (the groups handed to the properties in reverse)
+survived: typeless dropped without its slot      (equivalent, and taken: the typeless strategy's slot, which holds nothing back, is where the strategy that replaces it goes)
+survived: states absorbed again                  (equivalent: absorbing a state again leaves the node as it is; it only costs time)

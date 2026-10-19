@@ -12,7 +12,7 @@ use scalar::{BooleanStrategy, NullStrategy, NumberStrategy, StringStrategy, Type
 
 use self::array::ListSchemaStrategy;
 use crate::genson_rs::interned::{RowStates, Strat};
-use crate::genson_rs::node::SchemaNode;
+use crate::genson_rs::node::{DeferredStrategy, SchemaNode};
 
 #[derive(Debug, PartialEq)]
 pub enum BasicSchemaStrategy {
@@ -174,6 +174,45 @@ impl BasicSchemaStrategy {
             }
             (BasicSchemaStrategy::Number(strategy), Strat::Number(float)) => {
                 strategy.add_number_type(if float { "number" } else { "integer" })
+            }
+            _ => {}
+        }
+    }
+
+    /// `absorb_interned`, with the child absorbs added to `deferred`.
+    pub(crate) fn absorb_interned_deferred<'a>(
+        &mut self,
+        rows: &'a RowStates,
+        strat: Strat,
+        deferred: &mut DeferredStrategy<'a>,
+    ) {
+        match (self, strat) {
+            (BasicSchemaStrategy::Object(strategy), Strat::Object(obj)) => {
+                strategy.absorb_interned_deferred(rows, obj, deferred)
+            }
+            (BasicSchemaStrategy::List(_), Strat::List(items)) => {
+                if !matches!(deferred, DeferredStrategy::List(_)) {
+                    *deferred = DeferredStrategy::List(Vec::new());
+                }
+                if let DeferredStrategy::List(states) = deferred {
+                    states.push((rows, items));
+                }
+            }
+            (BasicSchemaStrategy::Number(strategy), Strat::Number(float)) => {
+                strategy.add_number_type(if float { "number" } else { "integer" })
+            }
+            _ => {}
+        }
+    }
+
+    /// The child absorbs `absorb_interned_deferred` held back.
+    pub(crate) fn absorb_deferred(&mut self, deferred: DeferredStrategy) {
+        match (self, deferred) {
+            (BasicSchemaStrategy::Object(strategy), DeferredStrategy::Object(groups)) => {
+                strategy.absorb_deferred(groups)
+            }
+            (BasicSchemaStrategy::List(strategy), DeferredStrategy::List(states)) => {
+                strategy.items_node_mut().absorb_interned_all(&states)
             }
             _ => {}
         }

@@ -2,7 +2,7 @@ use serde_json::{json, Value};
 use std::hash::Hasher;
 
 use crate::genson_rs::interned::{RowStates, StateId};
-use crate::genson_rs::node::{DataType, SchemaNode};
+use crate::genson_rs::node::{DataType, Deferred, SchemaNode};
 
 const DEFAULT_SCHEMA_URI: &str = "http://json-schema.org/schema#";
 const NULL_SCHEMA_URI: &str = "NULL";
@@ -134,30 +134,36 @@ impl SchemaBuilder {
         }
     }
 
-    /// `add_builders` of the rows' builders that interned row states stand for (each a
-    /// builder made with `row_uri`'s setting, its root an object): the same result, read
-    /// from the states.
-    pub(crate) fn add_interned_rows<'a>(
+    /// `add_builders` of each chunk of the rows' builders that interned row states stand
+    /// for, in turn (each a builder made with `row_uri`'s setting, its root an object): the
+    /// same result, read from the states. The root takes every row (and each chunk's
+    /// `$schema`) in turn, and its children their rows' states after the last chunk.
+    pub(crate) fn add_interned_row_chunks<'a>(
         &mut self,
-        rows: impl IntoIterator<Item = (&'a RowStates, StateId)>,
+        chunks: impl IntoIterator<Item = Vec<(&'a RowStates, StateId)>>,
         row_uri: Option<&str>,
     ) {
         let row_uri = SchemaBuilder::new(row_uri)
             .emitted_schema_uri()
             .map(str::to_string);
-        let mut kept_uri = None;
-        for (states, state) in rows {
-            match (&row_uri, &self.schema_uri) {
-                (Some(uri), None) => self.schema_uri = Some(uri.clone()),
-                // `add_schema` merges an unadopted `$schema` into the root as a keyword
-                (Some(uri), Some(_)) => kept_uri = kept_uri.or(Some(uri.clone())),
-                (None, _) => {}
+        let mut deferred = Deferred::default();
+        for chunk in chunks {
+            let mut kept_uri = None;
+            for (states, state) in chunk {
+                match (&row_uri, &self.schema_uri) {
+                    (Some(uri), None) => self.schema_uri = Some(uri.clone()),
+                    // `add_schema` merges an unadopted `$schema` into the root as a keyword
+                    (Some(uri), Some(_)) => kept_uri = kept_uri.or(Some(uri.clone())),
+                    (None, _) => {}
+                }
+                self.root_node
+                    .absorb_interned_deferred(states, state, &mut deferred);
             }
-            self.root_node.absorb_interned(states, state);
+            if let Some(uri) = kept_uri {
+                self.root_node.add_object_keyword("$schema", uri.into());
+            }
         }
-        if let Some(uri) = kept_uri {
-            self.root_node.add_object_keyword("$schema", uri.into());
-        }
+        self.root_node.absorb_deferred(deferred);
     }
 
     pub(crate) fn root_node_mut(&mut self) -> &mut SchemaNode {
