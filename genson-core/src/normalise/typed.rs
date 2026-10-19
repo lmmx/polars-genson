@@ -1,0 +1,1452 @@
+//! Normalisation straight into Arrow: each row's text is read once into a token tape,
+//! validated by `serde_json`'s rules for a `Value`, and a plan compiled against the Arrow
+//! fields walks the tape, appending to Arrow columns. No `Value` is built for a row or for
+//! its normalised form, and a member the schema has no field for is validated, never
+//! decoded.
+//!
+//! The arrays are those `values_to_struct_array` gives for the rows `NormalisePlan`
+//! normalises, and the pruned values those it records. Where that is not shown to hold here,
+//! nothing is decoded (`None`) and the rows take the `Value` path, which also raises the
+//! same errors and panics:
+//!
+//! - a plan for the `entries` map encoding, for no fields at all, or for fields that are not the ones
+//!   `avro_record_fields` gives for the pruned schema (a type other than the one the plan's
+//!   node decodes to, a field that is not nullable, or a name given twice);
+//! - a value that panics there: one not null in a union of only `null` (a field inference
+//!   only saw null), or any in an empty union; and a record pruned by a field after one
+//!   that could panic on its value (the `Value` path reaches that field first);
+//! - a value in a column of nulls;
+//! - more than `arrow-json` decodes in one batch: over `i32::MAX` bytes in a string column
+//!   or items in a list column, or (roughly) `u32::MAX` strings and keys in all.
+
+use super::plan::{Plan, Record};
+use super::{
+    make_promoted_scalar_key, MapEncoding, NormaliseConfig, NormalisePlan, PathSegment, PrunedValue,
+};
+use crate::extract::scan::{plain_prefix, HEX};
+use arrow::array::builder::{
+    ArrayBuilder, BooleanBuilder, Float64Builder, Int64Builder, NullBufferBuilder, StringBuilder,
+};
+use arrow::array::{Array, ArrayRef, ListArray, MapArray, NullArray, StructArray};
+use arrow::buffer::{NullBuffer, OffsetBuffer};
+use arrow::datatypes::{DataType, FieldRef, Fields};
+use arrow::error::ArrowError;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde_json::{Number, Value};
+use std::borrow::Cow;
+use std::sync::Arc;
+
+/// The `Value` path's recursion limit: `serde_json` rejects a 128th level of nesting.
+const MAX_DEPTH: usize = 127;
+
+/// A token of a row's text. A container is followed by its contents (an object by each
+/// member's key and value in turn), and knows the index of the token after its contents.
+#[derive(Clone, Copy, Debug)]
+enum Tok {
+    Null,
+    Bool(bool),
+    /// A number's text
+    Num(u32, u32),
+    /// A string's text inside its quotes, and whether it holds an escape
+    Str(u32, u32, bool),
+    Arr {
+        len: u32,
+        next: u32,
+    },
+    /// An object, with whether a key in it has an escape (its keys are then decoded to be
+    /// compared as `Value` keys are)
+    Obj {
+        len: u32,
+        next: u32,
+        escaped: bool,
+    },
+}
+
+/// Text `serde_json::from_str::<Value>` rejects.
+struct Invalid;
+
+/// Read `row` into `toks`, or reject it as `serde_json::from_str::<Value>` would.
+fn lex(row: &str, toks: &mut Vec<Tok>) -> Result<(), Invalid> {
+    toks.clear();
+    let mut lexer = Lexer {
+        b: row.as_bytes(),
+        row,
+        i: 0,
+        toks,
+    };
+    lexer.ws();
+    lexer.value(0)?;
+    lexer.ws();
+    if lexer.i == lexer.b.len() {
+        Ok(())
+    } else {
+        Err(Invalid)
+    }
+}
+
+struct Lexer<'a> {
+    b: &'a [u8],
+    row: &'a str,
+    i: usize,
+    toks: &'a mut Vec<Tok>,
+}
+
+impl Lexer<'_> {
+    fn peek(&self) -> Option<u8> {
+        self.b.get(self.i).copied()
+    }
+
+    fn ws(&mut self) {
+        while let Some(b' ' | b'\n' | b'\t' | b'\r') = self.peek() {
+            self.i += 1;
+        }
+    }
+
+    fn expect(&mut self, c: u8) -> Result<(), Invalid> {
+        if self.peek() == Some(c) {
+            self.i += 1;
+            Ok(())
+        } else {
+            Err(Invalid)
+        }
+    }
+
+    fn value(&mut self, depth: usize) -> Result<(), Invalid> {
+        match self.peek() {
+            Some(b'{') => self.object(depth + 1),
+            Some(b'[') => self.array(depth + 1),
+            Some(b'"') => {
+                let (start, end, escaped) = self.string()?;
+                self.toks.push(Tok::Str(start, end, escaped));
+                Ok(())
+            }
+            Some(b't') => self.literal(b"true", Tok::Bool(true)),
+            Some(b'f') => self.literal(b"false", Tok::Bool(false)),
+            Some(b'n') => self.literal(b"null", Tok::Null),
+            Some(b'-' | b'0'..=b'9') => {
+                let start = self.i;
+                self.number()?;
+                self.toks.push(Tok::Num(start as u32, self.i as u32));
+                Ok(())
+            }
+            _ => Err(Invalid),
+        }
+    }
+
+    fn literal(&mut self, word: &[u8], tok: Tok) -> Result<(), Invalid> {
+        if self.b[self.i..].starts_with(word) {
+            self.i += word.len();
+            self.toks.push(tok);
+            Ok(())
+        } else {
+            Err(Invalid)
+        }
+    }
+
+    fn array(&mut self, depth: usize) -> Result<(), Invalid> {
+        if depth > MAX_DEPTH {
+            return Err(Invalid);
+        }
+        let at = self.toks.len();
+        self.toks.push(Tok::Null);
+        self.i += 1;
+        self.ws();
+        let mut len = 0;
+        if self.peek() == Some(b']') {
+            self.i += 1;
+        } else {
+            loop {
+                self.ws();
+                self.value(depth)?;
+                len += 1;
+                self.ws();
+                match self.peek() {
+                    Some(b',') => self.i += 1,
+                    Some(b']') => {
+                        self.i += 1;
+                        break;
+                    }
+                    _ => return Err(Invalid),
+                }
+            }
+        }
+        self.toks[at] = Tok::Arr {
+            len,
+            next: self.toks.len() as u32,
+        };
+        Ok(())
+    }
+
+    fn object(&mut self, depth: usize) -> Result<(), Invalid> {
+        if depth > MAX_DEPTH {
+            return Err(Invalid);
+        }
+        let at = self.toks.len();
+        self.toks.push(Tok::Null);
+        self.i += 1;
+        self.ws();
+        let mut len = 0;
+        let mut escaped = false;
+        if self.peek() == Some(b'}') {
+            self.i += 1;
+        } else {
+            loop {
+                self.ws();
+                let (key_start, key_end, key_escaped) = self.string()?;
+                escaped |= key_escaped;
+                self.toks.push(Tok::Str(key_start, key_end, key_escaped));
+                self.ws();
+                self.expect(b':')?;
+                self.ws();
+                self.value(depth)?;
+                len += 1;
+                self.ws();
+                match self.peek() {
+                    Some(b',') => self.i += 1,
+                    Some(b'}') => {
+                        self.i += 1;
+                        break;
+                    }
+                    _ => return Err(Invalid),
+                }
+            }
+        }
+        self.toks[at] = Tok::Obj {
+            len,
+            next: self.toks.len() as u32,
+            escaped,
+        };
+        Ok(())
+    }
+
+    /// A number in JSON's grammar; one that might be out of `f64`'s range is checked with
+    /// `serde_json` itself.
+    fn number(&mut self) -> Result<(), Invalid> {
+        let start = self.i;
+        let digits = |s: &mut Self| {
+            let from = s.i;
+            while let Some(b'0'..=b'9') = s.peek() {
+                s.i += 1;
+            }
+            s.i - from
+        };
+        if self.peek() == Some(b'-') {
+            self.i += 1;
+        }
+        match self.peek() {
+            Some(b'0') => self.i += 1,
+            Some(b'1'..=b'9') => {
+                digits(self);
+            }
+            _ => return Err(Invalid),
+        }
+        let mut plain = true;
+        if self.peek() == Some(b'.') {
+            self.i += 1;
+            if digits(self) == 0 {
+                return Err(Invalid);
+            }
+        }
+        if let Some(b'e' | b'E') = self.peek() {
+            plain = false;
+            self.i += 1;
+            if let Some(b'+' | b'-') = self.peek() {
+                self.i += 1;
+            }
+            if digits(self) == 0 {
+                return Err(Invalid);
+            }
+        }
+        // Without an exponent, only a very long number can be out of range
+        if !plain || self.i - start > 300 {
+            let token = &self.row[start..self.i];
+            if serde_json::from_str::<Value>(token).is_err() {
+                return Err(Invalid);
+            }
+        }
+        Ok(())
+    }
+
+    /// A string: the range of its text inside the quotes, and whether it holds an escape.
+    fn string(&mut self) -> Result<(u32, u32, bool), Invalid> {
+        self.expect(b'"')?;
+        let start = self.i;
+        let mut escaped = false;
+        loop {
+            self.i += plain_prefix(&self.b[self.i..]);
+            match self.peek() {
+                Some(b'"') => {
+                    self.i += 1;
+                    return Ok((start as u32, self.i as u32 - 1, escaped));
+                }
+                Some(b'\\') => {
+                    escaped = true;
+                    // A run of the common escape, `\uXXXX` outside the surrogates
+                    while let Some(&[b'\\', b'u', d0, d1, d2, d3]) = self.b.get(self.i..self.i + 6)
+                    {
+                        let [a, b, c, e] = [d0, d1, d2, d3].map(|x| HEX[x as usize]);
+                        let code = u16::from(a) << 12
+                            | u16::from(b) << 8
+                            | u16::from(c) << 4
+                            | u16::from(e);
+                        if (a | b | c | e) & 0xF0 != 0 || (0xD800..=0xDFFF).contains(&code) {
+                            break;
+                        }
+                        self.i += 6;
+                    }
+                    if self.peek() == Some(b'\\') {
+                        self.i += 1;
+                        self.escape()?;
+                    }
+                }
+                // A control character, or the end of the row
+                _ => return Err(Invalid),
+            }
+        }
+    }
+
+    fn hex4(&mut self) -> Result<u16, Invalid> {
+        let d = self.b.get(self.i..self.i + 4).ok_or(Invalid)?;
+        let [a, b, c, e] = [d[0], d[1], d[2], d[3]].map(|x| HEX[x as usize]);
+        if (a | b | c | e) & 0xF0 != 0 {
+            return Err(Invalid);
+        }
+        self.i += 4;
+        Ok(u16::from(a) << 12 | u16::from(b) << 8 | u16::from(c) << 4 | u16::from(e))
+    }
+
+    /// The escape after a backslash, with `serde_json`'s rules for surrogates: a high one
+    /// must be followed by a `\u` low one, and a low one may not stand alone.
+    fn escape(&mut self) -> Result<(), Invalid> {
+        let Some(c) = self.peek() else {
+            return Err(Invalid);
+        };
+        self.i += 1;
+        match c {
+            b'"' | b'\\' | b'/' | b'b' | b'f' | b'n' | b'r' | b't' => Ok(()),
+            b'u' => match self.hex4()? {
+                0xD800..=0xDBFF => {
+                    self.expect(b'\\')?;
+                    self.expect(b'u')?;
+                    match self.hex4()? {
+                        0xDC00..=0xDFFF => Ok(()),
+                        _ => Err(Invalid),
+                    }
+                }
+                0xDC00..=0xDFFF => Err(Invalid),
+                _ => Ok(()),
+            },
+            _ => Err(Invalid),
+        }
+    }
+}
+
+/// The suffix of a promoted field's name (`name__type`): the scalars that go to it.
+#[derive(Clone, Copy, PartialEq)]
+enum Promoted {
+    No,
+    String,
+    Boolean,
+    Int,
+    Float,
+}
+
+impl Promoted {
+    /// As `promoted_scalar_matches` reads `name`.
+    fn of(name: &str) -> Self {
+        if !name.contains("__") {
+            return Promoted::No;
+        }
+        match name.split("__").last().unwrap_or("") {
+            "string" => Promoted::String,
+            "boolean" => Promoted::Boolean,
+            "int" | "integer" | "long" => Promoted::Int,
+            "float" | "double" | "number" => Promoted::Float,
+            _ => Promoted::No,
+        }
+    }
+}
+
+/// A plan's node compiled against the Arrow type it decodes into.
+enum Node<'p> {
+    String,
+    Int,
+    Double,
+    Boolean,
+    Record(Box<RecordNode<'p>>),
+    Array(Box<Node<'p>>),
+    Map(Box<Node<'p>>),
+    /// A union holding `null` and another branch
+    Nullable(Box<Node<'p>>),
+    /// `["null"]`: a value other than null panics on the `Value` path
+    NullOnly,
+    /// `[]`: any value panics on the `Value` path
+    Never,
+    /// Values kept as they are, in a column of nulls
+    Passthrough,
+}
+
+struct RecordNode<'p> {
+    fields: Vec<FieldNode<'p>>,
+    /// The names `prune` names, without repeats: the record is pruned if it holds a value
+    /// for one
+    pruning: Vec<(&'p str, Promoted)>,
+    has_int_field: bool,
+    /// The slot of each name, the fields' (by index) and then the pruning names', where an
+    /// object's member for it is found
+    slots: FxHashMap<&'p str, u32>,
+    /// The names by slot
+    names: Vec<&'p str>,
+    /// The fields that can be pruned, by index, with the fields before each that could panic
+    prunable: Vec<(usize, Vec<usize>)>,
+}
+
+struct FieldNode<'p> {
+    name: &'p str,
+    promoted: Promoted,
+    node: Node<'p>,
+}
+
+impl<'p> Node<'p> {
+    /// `plan` compiled against `data_type`, if that is the type `avro_to_arrow_type` gives
+    /// for the schema node it was compiled from (under `encoding`'s map type), at every depth.
+    fn new(plan: &'p Plan<'_>, data_type: &DataType, encoding: MapEncoding) -> Option<Self> {
+        Some(match (plan, data_type) {
+            (Plan::String, DataType::Utf8) => Node::String,
+            (Plan::Int, DataType::Int64) => Node::Int,
+            (Plan::Double, DataType::Float64) => Node::Double,
+            (Plan::Boolean, DataType::Boolean) => Node::Boolean,
+            (Plan::Passthrough, DataType::Null) => Node::Passthrough,
+            (Plan::Record(record), DataType::Struct(fields)) => {
+                Node::Record(Box::new(RecordNode::new(record, fields, encoding)?))
+            }
+            (Plan::Array(items), DataType::List(field)) if field.is_nullable() => {
+                Node::Array(Box::new(Node::new(items, field.data_type(), encoding)?))
+            }
+            (Plan::Map(values), DataType::List(field))
+                if encoding == MapEncoding::KeyValueEntries =>
+            {
+                Node::Map(Box::new(Self::entry(values, field.data_type(), encoding)?))
+            }
+            (Plan::Map(values), DataType::Map(field, false))
+                if encoding == MapEncoding::Mapping =>
+            {
+                Node::Map(Box::new(Self::entry(values, field.data_type(), encoding)?))
+            }
+            (Plan::Nullable(Some(branch)), data_type) => {
+                Node::Nullable(Box::new(Node::new(branch, data_type, encoding)?))
+            }
+            (Plan::Nullable(None), DataType::Null) => Node::NullOnly,
+            // A union without null is normalised as its first branch
+            (Plan::Union(first), data_type) => match first.first() {
+                Some(first) => Node::new(first, data_type, encoding)?,
+                None if data_type == &DataType::Null => Node::Never,
+                None => return None,
+            },
+            _ => return None,
+        })
+    }
+
+    /// A map's values compiled against its entries' type: a key string and a value.
+    fn entry(values: &'p Plan<'_>, entry: &DataType, encoding: MapEncoding) -> Option<Self> {
+        let DataType::Struct(entry) = entry else {
+            return None;
+        };
+        match &entry.iter().collect::<Vec<_>>()[..] {
+            [key, value]
+                if key.name() == "key"
+                    && key.data_type() == &DataType::Utf8
+                    && value.name() == "value"
+                    && value.is_nullable() =>
+            {
+                Node::new(values, value.data_type(), encoding)
+            }
+            _ => None,
+        }
+    }
+
+    /// Whether normalising some value against the node gives `Outcome::Pruned`.
+    fn can_prune(&self) -> bool {
+        match self {
+            Node::Record(record) => !record.pruning.is_empty() || !record.prunable.is_empty(),
+            Node::Nullable(branch) => branch.can_prune(),
+            _ => false,
+        }
+    }
+
+    /// Whether normalising some value against the node panics on the `Value` path.
+    fn can_panic(&self) -> bool {
+        match self {
+            Node::Record(record) => record.fields.iter().any(|f| f.node.can_panic()),
+            Node::Array(inner) | Node::Map(inner) | Node::Nullable(inner) => inner.can_panic(),
+            Node::NullOnly | Node::Never => true,
+            _ => false,
+        }
+    }
+
+    /// Whether normalising null against the node panics on the `Value` path: a record gives
+    /// each of its fields null, and only an empty union fails on it.
+    fn panics_on_null(&self) -> bool {
+        match self {
+            Node::Record(record) => record.fields.iter().any(|f| f.node.panics_on_null()),
+            Node::Never => true,
+            _ => false,
+        }
+    }
+}
+
+impl<'p> RecordNode<'p> {
+    fn new(record: &'p Record<'_>, fields: &Fields, encoding: MapEncoding) -> Option<Self> {
+        let plan_fields = record.fields.as_deref().unwrap_or(&[]);
+        if plan_fields.len() != fields.len() {
+            return None;
+        }
+        let mut compiled = Vec::with_capacity(fields.len());
+        for (plan_field, field) in plan_fields.iter().zip(fields.iter()) {
+            if plan_field.name != field.name() || !field.is_nullable() {
+                return None;
+            }
+            compiled.push(FieldNode {
+                name: plan_field.name.as_str(),
+                promoted: Promoted::of(plan_field.name),
+                node: Node::new(&plan_field.plan, field.data_type(), encoding)?,
+            });
+        }
+        let mut pruning: Vec<(&str, Promoted)> = Vec::new();
+        for &name in &record.pruning {
+            if !pruning.iter().any(|(n, _)| *n == name) {
+                pruning.push((name, Promoted::of(name)));
+            }
+        }
+        let names: Vec<&str> = compiled
+            .iter()
+            .map(|f| f.name)
+            .chain(pruning.iter().map(|(n, _)| *n))
+            .collect();
+        let mut slots = FxHashMap::default();
+        for (slot, name) in names.iter().enumerate() {
+            // A field's name given twice (pruning names are not fields') is not decoded here
+            if slots.insert(*name, slot as u32).is_some() {
+                return None;
+            }
+        }
+        let prunable = (0..compiled.len())
+            .filter(|&k| compiled[k].node.can_prune())
+            .map(|k| {
+                (
+                    k,
+                    (0..k).filter(|&j| compiled[j].node.can_panic()).collect(),
+                )
+            })
+            .collect();
+        Some(RecordNode {
+            fields: compiled,
+            pruning,
+            has_int_field: record.has_int_field,
+            slots,
+            names,
+            prunable,
+        })
+    }
+}
+
+/// [`NormalisePlan`] compiled against the Arrow fields its rows decode into: normalises rows
+/// of JSON text straight into a struct array.
+pub struct ArrowPlan<'p> {
+    root: Node<'p>,
+    root_type: DataType,
+    cfg: &'p NormaliseConfig,
+}
+
+impl NormalisePlan<'_> {
+    /// The plan compiled for decoding its rows into `fields` (those `avro_record_fields`
+    /// gives for the schema without the fields `prune` names), or `None` where that is not
+    /// done exactly (see [`ArrowPlan::normalise`]).
+    pub fn to_arrow(&self, fields: &Fields) -> Option<ArrowPlan<'_>> {
+        let root_type = DataType::Struct(fields.clone());
+        // `values_to_struct_array` fails to build a struct array without fields
+        if !matches!(self.root, Plan::Record(_))
+            || fields.is_empty()
+            || self.cfg.map_encoding == MapEncoding::Entries
+        {
+            return None;
+        }
+        Some(ArrowPlan {
+            root: Node::new(&self.root, &root_type, self.cfg.map_encoding)?,
+            root_type,
+            cfg: self.cfg,
+        })
+    }
+}
+
+/// The value of a slot no member was found for.
+const NONE: u32 = u32::MAX;
+
+/// Where a value comes from: a token of the row, nothing (null), or the row wrapped as the
+/// one field of an object (`wrap_root`), the row being `None` where its text was invalid.
+#[derive(Clone, Copy)]
+enum Input<'a> {
+    Null,
+    Tok(usize),
+    Wrapped(&'a str, Option<usize>),
+}
+
+/// A step of the path to a value, as `PathSegment` gives it once a value is pruned.
+enum Seg<'a, 'r> {
+    Field(&'a str),
+    Index(usize),
+    Key(Cow<'r, str>),
+}
+
+/// A column being built, of one of the Arrow types `avro_to_arrow_type` gives.
+enum Column {
+    Utf8(StringBuilder),
+    Int(Int64Builder),
+    Float(Float64Builder),
+    Bool(BooleanBuilder),
+    Null(usize),
+    List {
+        field: FieldRef,
+        offsets: Vec<i32>,
+        valid: NullBufferBuilder,
+        items: Box<Column>,
+    },
+    Struct {
+        fields: Fields,
+        valid: NullBufferBuilder,
+        len: usize,
+        children: Vec<Column>,
+    },
+    Map {
+        field: FieldRef,
+        offsets: Vec<i32>,
+        valid: NullBufferBuilder,
+        keys: StringBuilder,
+        values: Box<Column>,
+    },
+}
+
+/// Something the plan and a column cannot decode exactly as the `Value` path would.
+struct Unsupported;
+
+impl Column {
+    fn new(data_type: &DataType) -> Result<Self, Unsupported> {
+        Ok(match data_type {
+            DataType::Utf8 => Column::Utf8(StringBuilder::new()),
+            DataType::Int64 => Column::Int(Int64Builder::new()),
+            DataType::Float64 => Column::Float(Float64Builder::new()),
+            DataType::Boolean => Column::Bool(BooleanBuilder::new()),
+            DataType::Null => Column::Null(0),
+            DataType::List(field) => Column::List {
+                field: field.clone(),
+                offsets: vec![0],
+                valid: NullBufferBuilder::new(0),
+                items: Box::new(Column::new(field.data_type())?),
+            },
+            DataType::Struct(fields) => Column::Struct {
+                fields: fields.clone(),
+                valid: NullBufferBuilder::new(0),
+                len: 0,
+                children: fields
+                    .iter()
+                    .map(|f| Column::new(f.data_type()))
+                    .collect::<Result<_, _>>()?,
+            },
+            DataType::Map(field, false) => {
+                let DataType::Struct(entry) = field.data_type() else {
+                    return Err(Unsupported);
+                };
+                let [_, value] = &entry.iter().collect::<Vec<_>>()[..] else {
+                    return Err(Unsupported);
+                };
+                Column::Map {
+                    field: field.clone(),
+                    offsets: vec![0],
+                    valid: NullBufferBuilder::new(0),
+                    keys: StringBuilder::new(),
+                    values: Box::new(Column::new(value.data_type())?),
+                }
+            }
+            _ => return Err(Unsupported),
+        })
+    }
+
+    /// A null, as decoding a JSON null gives: in a struct, also in each of its children.
+    fn append_null(&mut self) {
+        match self {
+            Column::Utf8(b) => b.append_null(),
+            Column::Int(b) => b.append_null(),
+            Column::Float(b) => b.append_null(),
+            Column::Bool(b) => b.append_null(),
+            Column::Null(n) => *n += 1,
+            Column::List { offsets, valid, .. } | Column::Map { offsets, valid, .. } => {
+                offsets.push(*offsets.last().unwrap());
+                valid.append_null();
+            }
+            Column::Struct {
+                valid,
+                len,
+                children,
+                ..
+            } => {
+                valid.append_null();
+                *len += 1;
+                children.iter_mut().for_each(Column::append_null);
+            }
+        }
+    }
+
+    fn finish(self) -> Result<ArrayRef, ArrowError> {
+        Ok(match self {
+            Column::Utf8(mut b) => Arc::new(b.finish()),
+            Column::Int(mut b) => Arc::new(b.finish()),
+            Column::Float(mut b) => Arc::new(b.finish()),
+            Column::Bool(mut b) => Arc::new(b.finish()),
+            Column::Null(n) => Arc::new(NullArray::new(n)),
+            Column::List {
+                field,
+                offsets,
+                mut valid,
+                items,
+            } => Arc::new(ListArray::try_new(
+                field,
+                OffsetBuffer::new(offsets.into()),
+                items.finish()?,
+                valid.finish(),
+            )?),
+            Column::Struct {
+                fields,
+                mut valid,
+                len,
+                children,
+            } => Arc::new(Self::finish_struct(fields, valid.finish(), len, children)?),
+            Column::Map {
+                field,
+                offsets,
+                mut valid,
+                keys,
+                values,
+            } => {
+                let DataType::Struct(entry) = field.data_type() else {
+                    unreachable!("a map's entries are a struct")
+                };
+                let len = keys.len();
+                let children = vec![Column::Utf8(keys), *values];
+                let entries = Self::finish_struct(entry.clone(), None, len, children)?;
+                Arc::new(MapArray::try_new(
+                    field,
+                    OffsetBuffer::new(offsets.into()),
+                    entries,
+                    valid.finish(),
+                    false,
+                )?)
+            }
+        })
+    }
+
+    fn finish_struct(
+        fields: Fields,
+        nulls: Option<NullBuffer>,
+        len: usize,
+        children: Vec<Column>,
+    ) -> Result<StructArray, ArrowError> {
+        let children = children
+            .into_iter()
+            .map(Column::finish)
+            .collect::<Result<Vec<_>, _>>()?;
+        if children.is_empty() {
+            return Ok(StructArray::new_empty_fields(len, nulls));
+        }
+        StructArray::try_new(fields, children, nulls)
+    }
+}
+
+/// `s` appended, unless the column would then hold more than `arrow-json` decodes into one.
+fn append_str(b: &mut StringBuilder, s: &str) -> Result<(), Unsupported> {
+    if b.values_slice().len() + s.len() > i32::MAX as usize {
+        return Err(Unsupported);
+    }
+    b.append_value(s);
+    Ok(())
+}
+
+/// The offset `added` items on, unless past what `arrow-json` decodes into a list or map.
+fn push_offset(offsets: &mut Vec<i32>, added: usize) -> Result<(), Unsupported> {
+    let last = *offsets.last().unwrap() as usize;
+    offsets.push(i32::try_from(last + added).map_err(|_| Unsupported)?);
+    Ok(())
+}
+
+/// Whether a key (by its text, without escapes) is given twice among `members`.
+fn has_repeat<'r>(
+    row: &'r str,
+    toks: &[Tok],
+    members: &[(usize, usize)],
+    seen: &mut FxHashSet<&'r str>,
+) -> bool {
+    let key = |&(key, _): &(usize, usize)| match toks[key] {
+        Tok::Str(s, e, _) => &row[s as usize..e as usize],
+        _ => unreachable!("a key is a string"),
+    };
+    if members.len() <= 16 {
+        return (1..members.len()).any(|i| members[..i].iter().any(|m| key(m) == key(&members[i])));
+    }
+    seen.clear();
+    !members.iter().all(|m| seen.insert(key(m)))
+}
+
+/// What appending a value gave: it was appended, or it was emptied by pruning and nothing
+/// was appended (the caller appends a null, or leaves it out).
+enum Put {
+    Kept,
+    Emptied,
+}
+
+/// The decoding of one batch of rows.
+struct Decoder<'a, 'r> {
+    cfg: &'a NormaliseConfig,
+    row: &'r str,
+    toks: Vec<Tok>,
+    row_index: usize,
+    path: Vec<Seg<'a, 'r>>,
+    pruned: Vec<PrunedValue>,
+    /// The members of the maps being decoded (key token, value token), innermost last
+    members: Vec<(usize, usize)>,
+    /// For each object token of the row, where its record's slots start in `slots`, with
+    /// the row they were found for (by `generation`)
+    found: Vec<(u32, u32)>,
+    generation: u32,
+    /// The value token of each record's slot, for the objects found
+    slots: Vec<u32>,
+    seen: FxHashSet<&'r str>,
+    /// The strings and keys `arrow-json` would hold for the normalised rows
+    strings: u64,
+}
+
+impl<'a, 'r> Decoder<'a, 'r> {
+    fn text(&self, (start, end): (u32, u32)) -> &'r str {
+        &self.row[start as usize..end as usize]
+    }
+
+    /// A string token's content, as `Value` holds it.
+    fn str_of(&self, start: u32, end: u32, escaped: bool) -> Cow<'r, str> {
+        if escaped {
+            let quoted = &self.row[start as usize - 1..end as usize + 1];
+            Cow::Owned(serde_json::from_str(quoted).expect("validated string"))
+        } else {
+            Cow::Borrowed(self.text((start, end)))
+        }
+    }
+
+    /// A number token as `Value` holds it.
+    fn number(&self, start: u32, end: u32) -> Number {
+        let text = self.text((start, end));
+        // Up to 18 digits, without a sign, fraction or exponent, fit an i64 either way
+        let (negative, digits) = match text.strip_prefix('-') {
+            Some(digits) => (true, digits),
+            None => (false, text),
+        };
+        if !digits.is_empty()
+            && digits.len() <= 18
+            && digits.bytes().all(|d| d.is_ascii_digit())
+            && (digits.len() == 1 || !digits.starts_with('0'))
+            && !(negative && digits == "0")
+        {
+            let n: i64 = digits.parse().expect("digits");
+            return if negative {
+                Number::from(-n)
+            } else {
+                Number::from(n as u64)
+            };
+        }
+        text.parse().expect("validated number")
+    }
+
+    /// A value's `Value`, built from its text (for a pruned value, or a string field's
+    /// non-string value).
+    fn value_of(&self, input: Input<'_>) -> Value {
+        match input {
+            Input::Null => Value::Null,
+            Input::Tok(i) => match self.toks[i] {
+                Tok::Null => Value::Null,
+                Tok::Bool(b) => Value::Bool(b),
+                Tok::Num(s, e) => Value::Number(self.number(s, e)),
+                Tok::Str(s, e, escaped) => Value::String(self.str_of(s, e, escaped).into_owned()),
+                Tok::Arr { len, .. } => {
+                    let mut items = Vec::with_capacity(len as usize);
+                    let mut j = i + 1;
+                    for _ in 0..len {
+                        items.push(self.value_of(Input::Tok(j)));
+                        j = self.after(j);
+                    }
+                    Value::Array(items)
+                }
+                // A repeated key keeps its first place and takes its last value, as
+                // `serde_json` reads it
+                Tok::Obj { len, .. } => {
+                    let mut members = serde_json::Map::with_capacity(len as usize);
+                    let mut j = i + 1;
+                    for _ in 0..len {
+                        members.insert(
+                            self.key_of(j).into_owned(),
+                            self.value_of(Input::Tok(j + 1)),
+                        );
+                        j = self.after(j + 1);
+                    }
+                    Value::Object(members)
+                }
+            },
+            Input::Wrapped(field, inner) => {
+                let inner = inner.map_or(Value::Null, |i| self.value_of(Input::Tok(i)));
+                Value::Object(std::iter::once((field.to_string(), inner)).collect())
+            }
+        }
+    }
+
+    fn is_null(&self, input: Input<'_>) -> bool {
+        match input {
+            Input::Null => true,
+            Input::Tok(i) => matches!(self.toks[i], Tok::Null),
+            Input::Wrapped(..) => false,
+        }
+    }
+
+    /// The token after the value at `i`.
+    fn after(&self, i: usize) -> usize {
+        match self.toks[i] {
+            Tok::Arr { next, .. } | Tok::Obj { next, .. } => next as usize,
+            _ => i + 1,
+        }
+    }
+
+    fn key_of(&self, key: usize) -> Cow<'r, str> {
+        match self.toks[key] {
+            Tok::Str(s, e, escaped) => self.str_of(s, e, escaped),
+            _ => unreachable!("a key is a string"),
+        }
+    }
+
+    /// Where the slots of `record` for the object at `obj` start in `self.slots`: each
+    /// slot's member as `Value::get` finds it (the last one of that key), found once a row.
+    fn object_slots(&mut self, obj: usize, record: &RecordNode<'_>) -> usize {
+        let (generation, base) = self.found[obj];
+        if generation == self.generation {
+            return base as usize;
+        }
+        let Tok::Obj { len, .. } = self.toks[obj] else {
+            unreachable!("an object")
+        };
+        let base = self.slots.len();
+        self.slots.resize(base + record.names.len(), NONE);
+        let mut j = obj + 1;
+        // Members mostly come in the order of the schema's fields
+        let mut next = 0;
+        for _ in 0..len {
+            let Tok::Str(s, e, escaped) = self.toks[j] else {
+                unreachable!("a key is a string")
+            };
+            let key = self.str_of(s, e, escaped);
+            let slot = match record.names.get(next) {
+                Some(name) if *name == key => Some(next as u32),
+                _ => record.slots.get(&*key).copied(),
+            };
+            if let Some(slot) = slot {
+                self.slots[base + slot as usize] = j as u32 + 1;
+                next = slot as usize + 1;
+            }
+            j = self.after(j + 1);
+        }
+        self.found[obj] = (self.generation, base as u32);
+        base
+    }
+
+    /// The slots of `record` for `input`, where it is an object.
+    fn slots_of(&mut self, record: &RecordNode<'_>, input: Input<'_>) -> Option<usize> {
+        match input {
+            Input::Tok(i) if matches!(self.toks[i], Tok::Obj { .. }) => {
+                Some(self.object_slots(i, record))
+            }
+            _ => None,
+        }
+    }
+
+    /// The input of a record's field (or pruning name) at `slot` (`field_value`): the
+    /// object's member, or a scalar in place of a record that goes to its promoted field.
+    fn field_input<'i>(
+        &self,
+        record: &RecordNode<'_>,
+        input: Input<'i>,
+        slots: Option<usize>,
+        slot: usize,
+        promoted: Promoted,
+    ) -> Input<'i> {
+        match (input, slots) {
+            (Input::Tok(_), Some(base)) => match self.slots[base + slot] {
+                NONE => Input::Null,
+                value => Input::Tok(value as usize),
+            },
+            (Input::Tok(i), None) if self.promoted_matches(i, promoted, record.has_int_field) => {
+                Input::Tok(i)
+            }
+            (Input::Wrapped(field, Some(i)), _) if field == record.names[slot] => Input::Tok(i),
+            _ => Input::Null,
+        }
+    }
+
+    /// `promoted_scalar_matches` on a token.
+    fn promoted_matches(&self, i: usize, promoted: Promoted, has_int_field: bool) -> bool {
+        match (self.toks[i], promoted) {
+            (Tok::Str(..), Promoted::String) => true,
+            (Tok::Bool(_), Promoted::Boolean) => true,
+            (Tok::Num(s, e), Promoted::Int) => {
+                let n = self.number(s, e);
+                n.is_i64() || n.is_u64()
+            }
+            (Tok::Num(s, e), Promoted::Float) => self.number(s, e).is_f64() || !has_int_field,
+            _ => false,
+        }
+    }
+
+    /// Whether normalising `input` against `node` gives `Outcome::Pruned`: a record holding a
+    /// field `prune` names, or with a field that is such a record, through record fields.
+    /// `Unsupported` where a field before the one that prunes could panic, as the `Value`
+    /// path, which normalises the fields in order, would first.
+    fn prunes(&mut self, node: &Node<'_>, input: Input<'_>) -> Result<bool, Unsupported> {
+        match node {
+            Node::Record(record) => {
+                let slots = self.slots_of(record, input);
+                let first = record.fields.len();
+                for (k, &(_, promoted)) in record.pruning.iter().enumerate() {
+                    // `holds`: a value, not null, for the name
+                    let held = self.field_input(record, input, slots, first + k, promoted);
+                    if !self.is_null(held) {
+                        return Ok(true);
+                    }
+                }
+                for (k, could_panic) in &record.prunable {
+                    let field = &record.fields[*k];
+                    let field_input = self.field_input(record, input, slots, *k, field.promoted);
+                    if !self.prunes(&field.node, field_input)? {
+                        continue;
+                    }
+                    // A field before it that holds a value, or that fails on null
+                    for &j in could_panic {
+                        let before = &record.fields[j];
+                        let held = self.field_input(record, input, slots, j, before.promoted);
+                        if !self.is_null(held) || before.node.panics_on_null() {
+                            return Err(Unsupported);
+                        }
+                    }
+                    return Ok(true);
+                }
+                Ok(false)
+            }
+            Node::Nullable(branch) if !self.is_null(input) => self.prunes(branch, input),
+            _ => Ok(false),
+        }
+    }
+
+    fn record_pruned(&mut self, input: Input<'_>) {
+        let value = self.value_of(input);
+        let path = self
+            .path
+            .iter()
+            .map(|seg| match seg {
+                Seg::Field(name) => PathSegment::Key(name.to_string()),
+                Seg::Index(i) => PathSegment::Index(*i),
+                Seg::Key(key) => PathSegment::Key(key.to_string()),
+            })
+            .collect();
+        self.pruned.push(PrunedValue {
+            row: self.row_index,
+            path,
+            value,
+        });
+    }
+
+    /// Normalise `input` against `node` and append it to `col`.
+    fn put(
+        &mut self,
+        node: &'a Node<'a>,
+        col: &mut Column,
+        input: Input<'a>,
+        field_name: Option<&str>,
+    ) -> Result<Put, Unsupported> {
+        let cfg = self.cfg;
+        let tok = match input {
+            Input::Tok(i) => Some(self.toks[i]),
+            Input::Null | Input::Wrapped(..) => None,
+        };
+        let null = self.is_null(input);
+        match (node, col) {
+            (Node::String, Column::Utf8(b)) => {
+                match tok {
+                    _ if null => {
+                        b.append_null();
+                        return Ok(Put::Kept);
+                    }
+                    Some(Tok::Str(s, e, escaped)) => append_str(b, &self.str_of(s, e, escaped))?,
+                    _ => append_str(b, &self.value_of(input).to_string())?,
+                }
+                self.strings += 1;
+            }
+            (Node::Int, Column::Int(b)) => match tok {
+                Some(Tok::Num(s, e)) => b.append_option(self.number(s, e).as_i64()),
+                Some(Tok::Str(s, e, escaped)) if cfg.coerce_string => {
+                    b.append_option(self.str_of(s, e, escaped).parse::<i64>().ok())
+                }
+                _ => b.append_null(),
+            },
+            (Node::Double, Column::Float(b)) => match tok {
+                Some(Tok::Num(s, e)) => b.append_option(self.number(s, e).as_f64()),
+                Some(Tok::Str(s, e, escaped)) if cfg.coerce_string => b.append_option(
+                    self.str_of(s, e, escaped)
+                        .parse::<f64>()
+                        .ok()
+                        .filter(|f| f.is_finite()),
+                ),
+                _ => b.append_null(),
+            },
+            (Node::Boolean, Column::Bool(b)) => match tok {
+                Some(Tok::Bool(v)) => b.append_value(v),
+                Some(Tok::Str(s, e, escaped)) if cfg.coerce_string => {
+                    match &*self.str_of(s, e, escaped) {
+                        "true" | "1" => b.append_value(true),
+                        "false" | "0" => b.append_value(false),
+                        _ => b.append_null(),
+                    }
+                }
+                _ => b.append_null(),
+            },
+            (
+                Node::Record(record),
+                Column::Struct {
+                    valid,
+                    len,
+                    children,
+                    ..
+                },
+            ) => {
+                // `Node::new` has checked the children are the fields' columns, in order
+                let slots = self.slots_of(record, input);
+                for (k, (field, child)) in record.fields.iter().zip(children.iter_mut()).enumerate()
+                {
+                    let field_input = self.field_input(record, input, slots, k, field.promoted);
+                    self.path.push(Seg::Field(field.name));
+                    let put = self.put(&field.node, child, field_input, Some(field.name));
+                    self.path.pop();
+                    if let Put::Emptied = put? {
+                        child.append_null();
+                    }
+                }
+                // Each field's key
+                self.strings += record.fields.len() as u64;
+                valid.append_non_null();
+                *len += 1;
+            }
+            (
+                Node::Array(items),
+                Column::List {
+                    offsets,
+                    valid,
+                    items: item_col,
+                    ..
+                },
+            ) => match (tok, input) {
+                _ if null => {
+                    offsets.push(*offsets.last().unwrap());
+                    valid.append_null();
+                }
+                (Some(Tok::Arr { len, .. }), Input::Tok(i)) => {
+                    if len == 0 && cfg.empty_as_null {
+                        offsets.push(*offsets.last().unwrap());
+                        valid.append_null();
+                        return Ok(Put::Kept);
+                    }
+                    let mut kept = 0;
+                    let mut j = i + 1;
+                    for index in 0..len as usize {
+                        if self.put_item(items, item_col, Input::Tok(j), index, field_name)? {
+                            kept += 1;
+                        }
+                        j = self.after(j);
+                    }
+                    if kept == 0 && len > 0 {
+                        return Ok(Put::Emptied);
+                    }
+                    push_offset(offsets, kept)?;
+                    valid.append_non_null();
+                }
+                // Any other value is normalised as an array of itself
+                _ => {
+                    if !self.put_item(items, item_col, input, 0, field_name)? {
+                        return Ok(Put::Emptied);
+                    }
+                    push_offset(offsets, 1)?;
+                    valid.append_non_null();
+                }
+            },
+            (Node::Map(values), col @ (Column::List { .. } | Column::Map { .. })) => {
+                return self.put_map(values, col, input, field_name)
+            }
+            (Node::Nullable(branch), col) => {
+                if !null {
+                    return self.put(branch, col, input, field_name);
+                }
+                col.append_null();
+            }
+            (Node::NullOnly, col) if null => col.append_null(),
+            (Node::Passthrough, Column::Null(n)) if null => *n += 1,
+            _ => return Err(Unsupported),
+        }
+        Ok(Put::Kept)
+    }
+
+    /// An array's item: kept (`true`), or pruned or emptied and left out.
+    fn put_item(
+        &mut self,
+        items: &'a Node<'a>,
+        col: &mut Column,
+        item: Input<'a>,
+        index: usize,
+        field_name: Option<&str>,
+    ) -> Result<bool, Unsupported> {
+        self.path.push(Seg::Index(index));
+        let kept = self.put_or_prune(items, col, item, field_name);
+        self.path.pop();
+        kept
+    }
+
+    /// An array's item or a map's value, recorded if it is pruned (`false`), else put.
+    fn put_or_prune(
+        &mut self,
+        node: &'a Node<'a>,
+        col: &mut Column,
+        item: Input<'a>,
+        field_name: Option<&str>,
+    ) -> Result<bool, Unsupported> {
+        if node.can_prune() && self.prunes(node, item)? {
+            self.record_pruned(item);
+            return Ok(false);
+        }
+        Ok(matches!(self.put(node, col, item, field_name)?, Put::Kept))
+    }
+
+    /// A map: each entry normalised against `values`, as a key/value list or a map.
+    fn put_map(
+        &mut self,
+        values: &'a Node<'a>,
+        col: &mut Column,
+        input: Input<'a>,
+        field_name: Option<&str>,
+    ) -> Result<Put, Unsupported> {
+        let cfg = self.cfg;
+        // The column's offsets and validity, and its entries' keys and values
+        let (offsets, valid, keys, value_col, mut entries) = match col {
+            Column::List {
+                offsets,
+                valid,
+                items,
+                ..
+            } => match &mut **items {
+                Column::Struct {
+                    valid: entry_valid,
+                    len,
+                    children,
+                    ..
+                } => match &mut children[..] {
+                    [Column::Utf8(keys), value_col] => {
+                        (offsets, valid, keys, value_col, Some((entry_valid, len)))
+                    }
+                    _ => return Err(Unsupported),
+                },
+                _ => return Err(Unsupported),
+            },
+            Column::Map {
+                offsets,
+                valid,
+                keys,
+                values: value_col,
+                ..
+            } => (offsets, valid, keys, &mut **value_col, None),
+            _ => return Err(Unsupported),
+        };
+        let i = match input {
+            Input::Tok(i) if !matches!(self.toks[i], Tok::Null) => i,
+            Input::Wrapped(..) => return Err(Unsupported),
+            _ => {
+                offsets.push(*offsets.last().unwrap());
+                valid.append_null();
+                return Ok(Put::Kept);
+            }
+        };
+        // The entries as `Value`'s map holds them: each key at its first place, with its last
+        // value
+        let first = self.members.len();
+        let mut wrapped_key = None;
+        match self.toks[i] {
+            Tok::Obj { len, escaped, .. } => {
+                if len == 0 && cfg.empty_as_null {
+                    offsets.push(*offsets.last().unwrap());
+                    valid.append_null();
+                    return Ok(Put::Kept);
+                }
+                let mut j = i + 1;
+                for _ in 0..len {
+                    self.members.push((j, j + 1));
+                    j = self.after(j + 1);
+                }
+                if escaped
+                    || has_repeat(self.row, &self.toks, &self.members[first..], &mut self.seen)
+                {
+                    self.dedup_members(first);
+                }
+            }
+            // Scalar fallback: wrap under a promoted key
+            tok => {
+                let scalar_type = match tok {
+                    Tok::Str(..) => "string",
+                    Tok::Num(s, e) if self.number(s, e).is_i64() => "int",
+                    Tok::Num(..) => "float",
+                    Tok::Bool(_) => "boolean",
+                    _ => "unknown",
+                };
+                wrapped_key = Some(make_promoted_scalar_key(
+                    field_name.unwrap_or(""),
+                    scalar_type,
+                ));
+                self.members.push((usize::MAX, i));
+            }
+        }
+        let len = self.members.len() - first;
+        let mut kept = 0;
+        let mut result = Ok(());
+        // A kept entry's strings: its key, and in a key/value list the entry's two keys
+        let entry_strings = if entries.is_some() { 3 } else { 1 };
+        for m in first..self.members.len() {
+            let (key_tok, value_tok) = self.members[m];
+            let key = match wrapped_key.take() {
+                Some(k) => Cow::Owned(k),
+                None => self.key_of(key_tok),
+            };
+            self.path.push(Seg::Key(key.clone()));
+            let put = self.put_or_prune(values, value_col, Input::Tok(value_tok), Some(&key));
+            self.path.pop();
+            match put.and_then(|kept| {
+                if kept {
+                    append_str(keys, &key).map(|_| true)
+                } else {
+                    Ok(false)
+                }
+            }) {
+                Ok(true) => {
+                    if let Some((entry_valid, entry_len)) = entries.as_mut() {
+                        entry_valid.append_non_null();
+                        **entry_len += 1;
+                    }
+                    self.strings += entry_strings;
+                    kept += 1;
+                }
+                Ok(false) => {}
+                Err(e) => {
+                    result = Err(e);
+                    break;
+                }
+            }
+        }
+        self.members.truncate(first);
+        result?;
+        if kept == 0 && len > 0 {
+            return Ok(Put::Emptied);
+        }
+        push_offset(offsets, kept)?;
+        valid.append_non_null();
+        Ok(Put::Kept)
+    }
+
+    /// The members since `first` as `Value`'s map holds them: a repeated key at its first
+    /// place with its last value.
+    fn dedup_members(&mut self, first: usize) {
+        let mut out: Vec<(usize, usize)> = Vec::new();
+        let mut names: Vec<Cow<'r, str>> = Vec::new();
+        for m in first..self.members.len() {
+            let (key, value) = self.members[m];
+            let name = self.key_of(key);
+            match names.iter().position(|n| *n == name) {
+                Some(at) => out[at].1 = value,
+                None => {
+                    names.push(name);
+                    out.push((key, value));
+                }
+            }
+        }
+        self.members.truncate(first);
+        self.members.extend(out);
+    }
+}
+
+impl ArrowPlan<'_> {
+    /// `rows` normalised and decoded into one struct array, with the values pruned from them
+    /// (numbered from `first_row`): the same as normalising each row with
+    /// [`NormalisePlan::normalise`] (a row that is not valid JSON being `null`) and decoding
+    /// them with `values_to_struct_array`, without building a `Value`. `None` where that
+    /// cannot be done exactly (see the module docs), for the `Value` path to take.
+    pub fn normalise(
+        &self,
+        rows: &[Option<&str>],
+        first_row: usize,
+    ) -> Option<(StructArray, Vec<PrunedValue>)> {
+        let mut col = Column::new(&self.root_type).ok()?;
+        let mut d = Decoder {
+            cfg: self.cfg,
+            row: "",
+            toks: Vec::new(),
+            row_index: 0,
+            path: Vec::new(),
+            pruned: Vec::new(),
+            members: Vec::new(),
+            found: Vec::new(),
+            generation: 0,
+            slots: Vec::new(),
+            seen: FxHashSet::default(),
+            strings: 0,
+        };
+        let wrap_root = self.cfg.wrap_root.as_deref();
+        for (i, row) in rows.iter().enumerate() {
+            let Some(row) = row else {
+                col.append_null();
+                continue;
+            };
+            let valid = lex(row, &mut d.toks).is_ok();
+            d.row = row;
+            d.row_index = first_row + i;
+            d.slots.clear();
+            if d.found.len() < d.toks.len() {
+                d.found.resize(d.toks.len(), (0, 0));
+            }
+            d.generation = d.generation.wrapping_add(1);
+            if d.generation == 0 {
+                d.found.fill((0, 0));
+                d.generation = 1;
+            }
+            let input = match (wrap_root, valid) {
+                (Some(field), valid) => Input::Wrapped(field, valid.then_some(0)),
+                (None, true) => Input::Tok(0),
+                (None, false) => Input::Null,
+            };
+            if self.root.can_prune() && d.prunes(&self.root, input).ok()? {
+                d.record_pruned(input);
+                col.append_null();
+            } else if let Put::Emptied = d.put(&self.root, &mut col, input, None).ok()? {
+                col.append_null();
+            }
+        }
+        // `arrow-json` holds no more strings in a batch than its tape's `u32` offsets count
+        if d.strings >= u64::from(u32::MAX) / 2 {
+            return None;
+        }
+        let array = col.finish().ok()?;
+        let array = array.as_any().downcast_ref::<StructArray>()?.clone();
+        Some((array, d.pruned))
+    }
+}

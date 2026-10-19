@@ -5,6 +5,10 @@ use std::collections::HashSet;
 
 mod plan;
 pub use plan::NormalisePlan;
+#[cfg(feature = "parquet")]
+mod typed;
+#[cfg(feature = "parquet")]
+pub use typed::ArrowPlan;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]

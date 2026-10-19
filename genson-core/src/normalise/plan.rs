@@ -11,7 +11,7 @@ use serde_json::{json, Map, Value};
 use std::collections::HashSet;
 
 /// A schema node as normalisation reads it.
-enum Plan<'s> {
+pub(super) enum Plan<'s> {
     String,
     Int,
     Double,
@@ -29,19 +29,19 @@ enum Plan<'s> {
     Passthrough,
 }
 
-struct Record<'s> {
+pub(super) struct Record<'s> {
     /// `None` where the schema's `fields` is not an array: the record is always `{}`
-    fields: Option<Vec<Field<'s>>>,
+    pub(super) fields: Option<Vec<Field<'s>>>,
     /// Whether a promoted record holds an integer field (see `field_value`)
-    has_int_field: bool,
+    pub(super) has_int_field: bool,
     /// The fields named in `prune`: the record is pruned if it holds a value for one
-    pruning: Vec<&'s str>,
+    pub(super) pruning: Vec<&'s str>,
 }
 
 /// A record field normalisation writes: one with a name and a type, not named in `prune`.
-struct Field<'s> {
-    name: &'s String,
-    plan: Plan<'s>,
+pub(super) struct Field<'s> {
+    pub(super) name: &'s String,
+    pub(super) plan: Plan<'s>,
 }
 
 impl<'s> Plan<'s> {
@@ -127,8 +127,8 @@ impl<'s> Record<'s> {
 /// An Avro schema compiled for normalising values against it, with the same results as
 /// `normalise_values_pruned`. Compile a schema once to normalise many values against it.
 pub struct NormalisePlan<'s> {
-    root: Plan<'s>,
-    cfg: &'s NormaliseConfig,
+    pub(super) root: Plan<'s>,
+    pub(super) cfg: &'s NormaliseConfig,
     /// Nothing can be pruned without `prune`, so a record's input need not stay whole
     take: bool,
 }

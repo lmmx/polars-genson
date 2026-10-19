@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-mod scan;
+pub(crate) mod scan;
 
 /// One distinct subtree removed from the rows.
 #[derive(Debug, Clone, PartialEq)]

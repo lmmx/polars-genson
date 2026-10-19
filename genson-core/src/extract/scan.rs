@@ -463,7 +463,7 @@ impl<'a> Scanner<'a, '_> {
 }
 
 /// Each byte's value as a hex digit, or 0xFF.
-static HEX: [u8; 256] = {
+pub(crate) static HEX: [u8; 256] = {
     let mut table = [0xFF; 256];
     let mut i = 0;
     while i < 10 {
@@ -482,7 +482,7 @@ static HEX: [u8; 256] = {
 /// How many bytes at the start of `s` are none of a quote, a backslash and a control
 /// character, read eight at a time: in a word, the lowest byte that is zero (or below a
 /// bound) is flagged exactly, so its index is the count.
-fn plain_prefix(s: &[u8]) -> usize {
+pub(crate) fn plain_prefix(s: &[u8]) -> usize {
     const ONES: u64 = 0x0101_0101_0101_0101;
     const HIGHS: u64 = 0x8080_8080_8080_8080;
     let zero = |v: u64| v.wrapping_sub(ONES) & !v & HIGHS;
