@@ -5,6 +5,15 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **A field forced to a map keeps its values' type when it is a scalar in some rows.**
+  `force_field_types={"labels": "map"}` on a field that held `{"en": "x"}` in some rows
+  and `"s"` in others (or only ever `"s"`) gave a map of `null` values, as the union, the
+  type list (`["object", "string"]`) or the scalar type left it no properties to read its
+  values from; normalisation kept the strings regardless only because a `null`-typed
+  value passed through. Such a map now takes its records' values with the scalar, which
+  normalisation wraps into the map as a value (`labels__string`): `map<string>` here,
+  `map<int>` for integers, strings where they differ. On Wikidata claims fixtures, the
+  forced `labels` maps hold strings where they held `null`.
 - **A map only ever empty, or holding nulls alone, unifies with one holding values.** Its
   values are typed `null`, and unifying it with a map of typed values failed: the
   records holding them were not unified, so a field of such records was not inferred as

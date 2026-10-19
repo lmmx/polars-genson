@@ -67,7 +67,7 @@ info:
                             "type": {
                               "name": "labels",
                               "type": "map",
-                              "values": "null"
+                              "values": "string"
                             }
                           }
                         ]
@@ -128,7 +128,7 @@ info:
                                     "type": {
                                       "name": "labels",
                                       "type": "map",
-                                      "values": "null"
+                                      "values": "string"
                                     }
                                   }
                                 ]
