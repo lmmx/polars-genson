@@ -141,6 +141,13 @@ impl NumberStrategy {
     pub fn number_type(&self) -> &'static str {
         self.number_type
     }
+
+    /// Merge another number type into this one: `"number"` takes precedence.
+    pub fn add_number_type(&mut self, number_type: &str) {
+        if number_type == "number" {
+            self.number_type = "number";
+        }
+    }
 }
 
 impl ScalarSchemaStrategy for NumberStrategy {
@@ -158,9 +165,8 @@ impl ScalarSchemaStrategy for NumberStrategy {
 impl SchemaStrategy for NumberStrategy {
     fn add_schema(&mut self, schema: &Value) {
         self.add_extra_keywords(schema);
-        // "number" takes precedence over "integer" if both are present
-        if schema["type"] == "number" {
-            self.number_type = "number";
+        if let Some(number_type) = schema["type"].as_str() {
+            self.add_number_type(number_type);
         }
     }
 

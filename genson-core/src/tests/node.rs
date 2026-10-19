@@ -352,3 +352,39 @@ fn test_add_schemas_merges_a_property_the_node_already_holds() {
         }
     }
 }
+
+/// A scalar node absorbing another of its kind leaves what `add_schema` of the other's
+/// schema does: bare scalars of every type both ways round, and targets with keywords.
+#[test]
+fn test_absorb_scalar_matches_adding_its_schema() {
+    let scalars = ["null", "true", "1", "1.5", "\"s\""];
+    let schemas = [
+        json!({"type": "string", "format": "date"}),
+        json!({"type": "integer", "minimum": 0}),
+        json!({"type": "number", "minimum": 0}),
+    ];
+    let target = |i: usize| match scalars.get(i) {
+        Some(s) => node_of(&[s.to_string()]),
+        None => {
+            let mut node = SchemaNode::new();
+            node.add_schema(DataType::Schema(&schemas[i - scalars.len()]));
+            node
+        }
+    };
+    for i in 0..scalars.len() + schemas.len() {
+        for other in scalars {
+            let other = || node_of(&[other.to_string()]);
+            let mut by_schema = target(i);
+            by_schema.add_schema(DataType::Schema(&other().to_schema()));
+            let mut absorbed = target(i);
+            absorbed.absorb(other());
+            assert_eq!(
+                absorbed,
+                by_schema,
+                "{} absorbing {}",
+                target(i).to_schema(),
+                other().to_schema()
+            );
+        }
+    }
+}

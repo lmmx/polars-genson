@@ -114,7 +114,8 @@ impl BasicSchemaStrategy {
 
     /// Merge `other`, of the same kind, into this strategy: the same as
     /// `self.add_schema(&other.to_schema())`. Objects and lists merge their child nodes
-    /// directly; the other kinds hold no more than a few keywords, so take that route.
+    /// directly, and a scalar without keywords adds nothing but a `number` over an
+    /// `integer`; other scalars hold no more than a few keywords, so take that route.
     pub fn absorb(&mut self, other: BasicSchemaStrategy) {
         match (self, other) {
             (BasicSchemaStrategy::Object(strategy), BasicSchemaStrategy::Object(other)) => {
@@ -122,6 +123,13 @@ impl BasicSchemaStrategy {
             }
             (BasicSchemaStrategy::List(strategy), BasicSchemaStrategy::List(other)) => {
                 strategy.absorb(other)
+            }
+            (strategy, other) if strategy.same_kind(&other) && other.bare_type().is_some() => {
+                if let (BasicSchemaStrategy::Number(strategy), Some(number_type)) =
+                    (strategy, other.bare_type())
+                {
+                    strategy.add_number_type(number_type);
+                }
             }
             (strategy, other) => strategy.add_schema(&other.to_schema()),
         }
