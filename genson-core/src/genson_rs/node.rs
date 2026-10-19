@@ -127,13 +127,15 @@ impl SchemaNode {
     /// difference: an object that saw no key in all of its values limits `required` to
     /// nothing, where its schema, which has no `required`, would not limit it at all.
     pub fn absorb(&mut self, other: SchemaNode) {
-        if other.active_strategies.is_empty() {
+        let mut strategies = other.active_strategies;
+        match strategies.len() {
             // An empty node's schema is `{}`, which only ever adds a typeless strategy
-            self.absorb_strategy(BasicSchemaStrategy::Typeless(TypelessStrategy::new()));
-            return;
-        }
-        for strategy in Self::schema_order(other.active_strategies) {
-            self.absorb_strategy(strategy);
+            0 => self.absorb_strategy(BasicSchemaStrategy::Typeless(TypelessStrategy::new())),
+            // One strategy is already in schema order
+            1 => self.absorb_strategy(strategies.pop().unwrap()),
+            _ => Self::schema_order(strategies)
+                .into_iter()
+                .for_each(|strategy| self.absorb_strategy(strategy)),
         }
     }
 

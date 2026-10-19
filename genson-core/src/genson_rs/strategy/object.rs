@@ -462,10 +462,12 @@ impl ObjectStrategy {
     /// The part of `absorb` besides the child nodes: the keywords `add_extra_keywords`
     /// records from `other`'s schema, and the intersection of the `required` sets.
     fn absorb_keywords_and_required(&mut self, other: &mut ObjectStrategy) {
-        let keywords: Vec<(String, Value)> = other
-            .schema_keys()
-            .into_iter()
-            .map(|key| {
+        if let Value::Object(own) = &mut self.extra_keywords {
+            // Only a key this strategy has not recorded is added, so only those are built
+            for key in other.schema_keys() {
+                if own.contains_key(key) {
+                    continue;
+                }
                 let placeholder = match key {
                     "properties" | "patternProperties" | "additionalProperties"
                         if other.writes(key) || other.extra_keywords[key].is_object() =>
@@ -475,12 +477,7 @@ impl ObjectStrategy {
                     "required" => Value::Null,
                     _ => other.extra_keywords[key].clone(),
                 };
-                (key.to_string(), placeholder)
-            })
-            .collect();
-        if let Value::Object(own) = &mut self.extra_keywords {
-            for (key, placeholder) in keywords {
-                own.entry(key).or_insert(placeholder);
+                own.insert(key.to_string(), placeholder);
             }
         }
 
@@ -647,12 +644,25 @@ fn absorb_properties(properties: &mut PropMap<SchemaNode>, other: PropMap<Schema
     }
 }
 
+/// Properties from which an object writes its properties' schemas in parallel.
+const PAR_TO_SCHEMA_MIN: usize = 16;
+
 impl ObjectStrategy {
     fn properties_to_schema(&self, properties: &PropMap<SchemaNode>) -> Value {
+        // Each property's schema is written on its own, so many are written in parallel
+        // (in order)
+        let schemas: Vec<Value> = if properties.len() >= PAR_TO_SCHEMA_MIN {
+            properties
+                .par_iter()
+                .map(|(_, node)| node.to_schema())
+                .collect()
+        } else {
+            properties.values().map(SchemaNode::to_schema).collect()
+        };
         let mut schema_properties = Map::with_capacity(properties.len());
-        properties.iter().for_each(|(prop, node)| {
-            schema_properties.insert(prop.clone(), node.to_schema());
-        });
+        for (prop, schema) in properties.keys().zip(schemas) {
+            schema_properties.insert(prop.clone(), schema);
+        }
         Value::Object(schema_properties)
     }
 }
