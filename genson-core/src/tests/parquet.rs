@@ -142,3 +142,17 @@ fn test_null_rows_and_kept_columns_roundtrip() {
     let err = write_string_column_with(out.path().to_str().unwrap(), "json", strings, &short, None);
     assert!(err.unwrap_err().contains("has 2 rows"));
 }
+
+#[test]
+fn test_output_is_zstd_compressed() {
+    use parquet::file::reader::{FileReader, SerializedFileReader};
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_str().unwrap();
+    let strings: Vec<String> = (0..100).map(|i| format!(r#"{{"a": {i}}}"#)).collect();
+    write_string_column(path, "json", strings.clone(), None).unwrap();
+
+    let reader = SerializedFileReader::new(File::open(path).unwrap()).unwrap();
+    let column = reader.metadata().row_group(0).column(0);
+    assert_eq!(column.compression(), compression());
+    assert_eq!(read_string_column(path, "json").unwrap(), strings);
+}

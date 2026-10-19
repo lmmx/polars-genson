@@ -1,0 +1,75 @@
+# run_acct.py, bench_claims no-count, 3 alternated processes of 4 runs per build: s50 = 1a2b591 (#232), sdbg = e4044c7 (#233), sscalar = eca2fb8 (#234)
+## phases (lines cut at 330 characters)
+[s50 rows200 W r1] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.455 user=1.695 sys=0.048 faults=607 cold 0.4355s| rewrite_objects warm wall=0.473 user=1.112 sys=0.131 faults=9,436 cold 0.4125s|
+[s50 rows200 D r1] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.474 user=1.635 sys=0.052 faults=614 cold 0.42s| rewrite_objects warm wall=0.041 user=0.102 sys=0.049 faults=83 cold 0.0408s|
+[s50 slim200 W r1] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.042 user=0.146 sys=0.005 faults=30 cold 0.0368s| rewrite_objects warm wall=0.029 user=0.054 sys=0.005 faults=20 cold 0.0333s|
+[s50 labels D r1] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.106 user=0.356 sys=0.009 faults=146 cold 0.1s| rewrite_objects warm wall=0.000 user=0.000 sys=0.000 cold 0.0002s|
+[sdbg rows200 W r1] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.448 user=1.663 sys=0.039 faults=572 cold 0.4156s| rewrite_objects warm wall=0.342 user=0.785 sys=0.104 faults=7,788 cold 0.3373s|
+[sdbg rows200 D r1] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.497 user=1.801 sys=0.052 faults=662 cold 0.3955s| rewrite_objects warm wall=0.055 user=0.099 sys=0.105 faults=87 cold 0.0241s|
+[sdbg slim200 W r1] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.038 user=0.128 sys=0.003 faults=1 cold 0.0353s| rewrite_objects warm wall=0.021 user=0.039 sys=0.009 cold 0.0219s|
+[sdbg labels D r1] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.095 user=0.314 sys=0.003 faults=89 cold 0.108s| rewrite_objects warm wall=0.000 user=0.000 sys=0.000 cold 0.0002s|
+[sscalar rows200 W r1] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.372 user=1.383 sys=0.035 faults=422 cold 0.4032s| rewrite_objects warm wall=0.385 user=0.815 sys=0.201 faults=9,687 cold 0.3533s|
+[sscalar rows200 D r1] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.404 user=1.473 sys=0.037 faults=517 cold 0.3979s| rewrite_objects warm wall=0.048 user=0.104 sys=0.103 faults=92 cold 0.0447s|
+[sscalar slim200 W r1] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.040 user=0.141 sys=0.007 cold 0.0461s| rewrite_objects warm wall=0.025 user=0.043 sys=0.013 faults=14 cold 0.0267s|
+[sscalar labels D r1] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.115 user=0.368 sys=0.003 faults=154 cold 0.1176s| rewrite_objects warm wall=0.000 user=0.001 sys=0.000 cold 0.0003s|
+[s50 rows200 W r2] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.470 user=1.733 sys=0.071 faults=615 cold 0.4678s| rewrite_objects warm wall=0.446 user=0.981 sys=0.163 faults=8,169 cold 0.3969s|
+[s50 rows200 D r2] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.466 user=1.703 sys=0.043 faults=415 cold 0.4218s| rewrite_objects warm wall=0.045 user=0.097 sys=0.079 faults=88 cold 0.039s|
+[s50 slim200 W r2] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.044 user=0.151 sys=0.000 faults=1 cold 0.0416s| rewrite_objects warm wall=0.029 user=0.057 sys=0.000 faults=2 cold 0.023s|
+[s50 labels D r2] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.102 user=0.354 sys=0.003 faults=131 cold 0.1017s| rewrite_objects warm wall=0.000 user=0.001 sys=0.000 cold 0.0002s|
+[sdbg rows200 W r2] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.505 user=1.859 sys=0.053 faults=551 cold 0.4197s| rewrite_objects warm wall=0.325 user=0.770 sys=0.141 faults=7,408 cold 0.3391s|
+[sdbg rows200 D r2] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.442 user=1.634 sys=0.045 faults=612 cold 0.4489s| rewrite_objects warm wall=0.060 user=0.099 sys=0.105 faults=101 cold 0.068s|
+[sdbg slim200 W r2] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.039 user=0.138 sys=0.000 faults=2 cold 0.043s| rewrite_objects warm wall=0.021 user=0.046 sys=0.003 faults=1 cold 0.0213s|
+[sdbg labels D r2] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.097 user=0.321 sys=0.007 faults=159 cold 0.1153s| rewrite_objects warm wall=0.000 user=0.001 sys=0.000 cold 0.0003s|
+[sscalar rows200 W r2] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.351 user=1.356 sys=0.038 faults=403 cold 0.3427s| rewrite_objects warm wall=0.326 user=0.756 sys=0.122 faults=5,522 cold 0.3379s|
+[sscalar rows200 D r2] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.395 user=1.421 sys=0.032 faults=558 cold 0.4089s| rewrite_objects warm wall=0.044 user=0.097 sys=0.070 faults=67 cold 0.047s|
+[sscalar slim200 W r2] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.036 user=0.129 sys=0.000 cold 0.0315s| rewrite_objects warm wall=0.021 user=0.039 sys=0.006 cold 0.0164s|
+[sscalar labels D r2] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.090 user=0.301 sys=0.001 faults=87 cold 0.092s| rewrite_objects warm wall=0.000 user=0.000 sys=0.000 cold 0.0004s|
+[s50 rows200 W r3] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.486 user=1.762 sys=0.065 faults=586 cold 0.4726s| rewrite_objects warm wall=0.480 user=1.139 sys=0.131 faults=10,347 cold 0.4275s|
+[s50 rows200 D r3] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.538 user=1.924 sys=0.059 faults=860 cold 0.4362s| rewrite_objects warm wall=0.057 user=0.097 sys=0.136 faults=124 cold 0.044s|
+[s50 slim200 W r3] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.043 user=0.157 sys=0.000 cold 0.0412s| rewrite_objects warm wall=0.029 user=0.052 sys=0.014 faults=14 cold 0.0258s|
+[s50 labels D r3] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.109 user=0.348 sys=0.008 faults=124 cold 0.1001s| rewrite_objects warm wall=0.000 user=0.001 sys=0.000 cold 0.0003s|
+[sdbg rows200 W r3] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.418 user=1.585 sys=0.043 faults=589 cold 0.4373s| rewrite_objects warm wall=0.304 user=0.710 sys=0.111 faults=5,628 cold 0.3394s|
+[sdbg rows200 D r3] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.487 user=1.768 sys=0.059 faults=743 cold 0.444s| rewrite_objects warm wall=0.051 user=0.089 sys=0.098 faults=92 cold 0.0509s|
+[sdbg slim200 W r3] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.042 user=0.150 sys=0.000 faults=1 cold 0.0365s| rewrite_objects warm wall=0.026 user=0.056 sys=0.004 cold 0.0183s|
+[sdbg labels D r3] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.118 user=0.405 sys=0.001 faults=173 cold 0.1145s| rewrite_objects warm wall=0.000 user=0.001 sys=0.000 cold 0.0007s|
+[sscalar rows200 W r3] rows200.ndjson W: 1 process(es) x 4 runs; output hashes {'849254075cdd3844'}| chunk.merge warm wall=0.376 user=1.426 sys=0.025 faults=489 cold 0.3906s| rewrite_objects warm wall=0.343 user=0.800 sys=0.140 faults=7,632 cold 0.3547s|
+[sscalar rows200 D r3] rows200.ndjson D: 1 process(es) x 4 runs; output hashes {'b044387a11c95954'}| chunk.merge warm wall=0.373 user=1.367 sys=0.014 faults=442 cold 0.3388s| rewrite_objects warm wall=0.041 user=0.095 sys=0.047 faults=95 cold 0.0388s|
+[sscalar slim200 W r3] slim200.ndjson W: 1 process(es) x 4 runs; output hashes {'686e7b8b04ddb5c7'}| chunk.merge warm wall=0.041 user=0.137 sys=0.000 cold 0.0308s| rewrite_objects warm wall=0.026 user=0.051 sys=0.003 cold 0.0204s|
+[sscalar labels D r3] labels.ndjson D: 1 process(es) x 4 runs; output hashes {'22f8e5cfb8ce1ca5'}| chunk.merge warm wall=0.090 user=0.295 sys=0.000 faults=123 cold 0.0925s| rewrite_objects warm wall=0.000 user=0.000 sys=0.000 cold 0.0002s|
+## totals
+[s50 rows200 W r1] total warm wall=2.042 user=5.666 sys=1.895 faults=170,930 cold 3.407s
+[s50 rows200 D r1] total warm wall=1.559 user=4.117 sys=0.811 faults=150,597 cold 2.424s
+[s50 slim200 W r1] total warm wall=0.118 user=0.326 sys=0.008 faults=182 cold 0.1181s
+[s50 labels D r1] total warm wall=0.153 user=0.496 sys=0.007 faults=252 cold 0.1484s
+[sdbg rows200 W r1] total warm wall=1.912 user=4.758 sys=1.416 faults=134,670 cold 2.52s
+[sdbg rows200 D r1] total warm wall=1.570 user=4.219 sys=0.859 faults=197,829 cold 2.149s
+[sdbg slim200 W r1] total warm wall=0.086 user=0.258 sys=0.003 faults=3 cold 0.0887s
+[sdbg labels D r1] total warm wall=0.142 user=0.470 sys=0.009 faults=189 cold 0.1357s
+[sscalar rows200 W r1] total warm wall=2.029 user=4.662 sys=1.808 faults=147,843 cold 2.002s
+[sscalar rows200 D r1] total warm wall=1.285 user=3.646 sys=0.676 faults=156,158 cold 1.719s
+[sscalar slim200 W r1] total warm wall=0.088 user=0.265 sys=0.010 faults=1 cold 0.1262s
+[sscalar labels D r1] total warm wall=0.121 user=0.420 sys=0.004 faults=121 cold 0.143s
+[s50 rows200 W r2] total warm wall=2.170 user=5.252 sys=1.783 faults=150,747 cold 2.67s
+[s50 rows200 D r2] total warm wall=1.504 user=4.200 sys=0.758 faults=166,304 cold 2.159s
+[s50 slim200 W r2] total warm wall=0.108 user=0.290 sys=0.012 faults=163 cold 0.1022s
+[s50 labels D r2] total warm wall=0.142 user=0.479 sys=0.012 faults=322 cold 0.147s
+[sdbg rows200 W r2] total warm wall=1.941 user=4.966 sys=1.893 faults=137,043 cold 2.719s
+[sdbg rows200 D r2] total warm wall=1.423 user=3.959 sys=0.889 faults=171,189 cold 2.221s
+[sdbg slim200 W r2] total warm wall=0.089 user=0.275 sys=0.004 cold 0.09s
+[sdbg labels D r2] total warm wall=0.143 user=0.468 sys=0.007 faults=216 cold 0.142s
+[sscalar rows200 W r2] total warm wall=2.281 user=4.793 sys=2.494 faults=157,583 cold 2.06s
+[sscalar rows200 D r2] total warm wall=1.421 user=3.913 sys=0.865 faults=150,074 cold 1.438s
+[sscalar slim200 W r2] total warm wall=0.102 user=0.295 sys=0.008 faults=169 cold 0.094s
+[sscalar labels D r2] total warm wall=0.137 user=0.461 sys=0.006 faults=401 cold 0.1447s
+[s50 rows200 W r3] total warm wall=2.137 user=4.912 sys=1.945 faults=152,780 cold 2.276s
+[s50 rows200 D r3] total warm wall=1.438 user=4.125 sys=0.793 faults=178,207 cold 2.053s
+[s50 slim200 W r3] total warm wall=0.105 user=0.298 sys=0.013 faults=1,426 cold 0.1086s
+[s50 labels D r3] total warm wall=0.126 user=0.439 sys=0.011 faults=185 cold 0.1432s
+[sdbg rows200 W r3] total warm wall=2.121 user=4.787 sys=2.033 faults=115,564 cold 2.13s
+[sdbg rows200 D r3] total warm wall=1.419 user=4.150 sys=0.677 faults=163,254 cold 1.968s
+[sdbg slim200 W r3] total warm wall=0.109 user=0.312 sys=0.004 faults=3 cold 0.0891s
+[sdbg labels D r3] total warm wall=0.143 user=0.489 sys=0.007 faults=231 cold 0.1522s
+[sscalar rows200 W r3] total warm wall=1.794 user=4.452 sys=1.298 faults=176,340 cold 2.041s
+[sscalar rows200 D r3] total warm wall=1.270 user=3.738 sys=0.564 faults=128,218 cold 1.628s
+[sscalar slim200 W r3] total warm wall=0.107 user=0.283 sys=0.029 faults=2,782 cold 0.0905s
+[sscalar labels D r3] total warm wall=0.125 user=0.413 sys=0.008 faults=200 cold 0.129s

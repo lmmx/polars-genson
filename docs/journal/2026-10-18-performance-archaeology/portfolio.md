@@ -68,3 +68,18 @@ production shape (2.3–2.9 s per 200 rows, Parquet read 13–15%) and ~70% on f
 - The fold for the production shape: no faster on slim200
 - Sequential `ListStrategy` folds (no nested rayon fold for arrays of 10+ items): within
   the run-to-run spread, same hashes; rows200 has 120 such arrays
+
+## Implementation (stack #231–#237)
+
+| PR | Work package | Effect measured on the stack |
+|---|---|---|
+| #231 | this journal | — |
+| #232 | #1, map unification's `required` (fixes #50) | only `required` and nullability change; on wikidata-pq's path only absences, same values |
+| #233 | #4, lazy debug macros (#229) | rows200 W `rewrite_objects` 0.473 → 0.325 s |
+| #234 | #4, bare scalar merge (#229) | rows200 `chunk.merge` −17–19%, labels total CPU −12% |
+| #235 | found on the way: integers beyond 64 bits panicked | — |
+| #236 | #2 increment, taking record fields without `prune` (fixes #72) | −11.5% instructions on rows20, −7.4% on slim200; with `prune` unchanged |
+| #237 | #6, zstd Parquet output (#194) | typed 16 → 5 MB, JSON 212 → 27 MB on rows200 |
+
+Not taken: lazy validation (#229, #194 4c: trailing bytes would be accepted). Open: #227,
+#228 beyond #72, #230 (canonical keyword order), #238 (Avro record names).
