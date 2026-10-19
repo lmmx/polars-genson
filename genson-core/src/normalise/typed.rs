@@ -102,6 +102,13 @@ struct FieldNode<'p> {
 }
 
 impl<'p> Node<'p> {
+    /// Whether a null input appends a null alone, as `Column::append_null` does: not for a
+    /// record (a record of nulls), nor `[]` (which the `Value` path cannot normalise null
+    /// against).
+    fn null_is_null(&self) -> bool {
+        !matches!(self, Node::Record(_) | Node::Never)
+    }
+
     /// `plan` compiled against `data_type`, if that is the type `avro_to_arrow_type` gives
     /// for the schema node it was compiled from (under `encoding`'s map type), at every depth.
     fn new(plan: &'p Plan<'_>, data_type: &DataType, encoding: MapEncoding) -> Option<Self> {
@@ -365,28 +372,51 @@ impl Column {
         })
     }
 
-    /// A null, as decoding a JSON null gives: in a struct, also in each of its children.
+    /// A null, as decoding a JSON null gives. A struct's children take theirs when next
+    /// written to, or when it is finished (`pad`).
     fn append_null(&mut self) {
+        self.append_nulls(1);
+    }
+
+    /// `n` nulls.
+    fn append_nulls(&mut self, n: usize) {
         match self {
-            Column::Utf8(b) => b.append_null(),
-            Column::Int(b) => b.append_null(),
-            Column::Float(b) => b.append_null(),
-            Column::Bool(b) => b.append_null(),
-            Column::Null(n) => *n += 1,
+            Column::Utf8(b) => b.append_nulls(n),
+            Column::Int(b) => b.append_nulls(n),
+            Column::Float(b) => b.append_nulls(n),
+            Column::Bool(b) => b.append_nulls(n),
+            Column::Null(k) => *k += n,
             Column::List { offsets, valid, .. } | Column::Map { offsets, valid, .. } => {
-                offsets.push(*offsets.last().unwrap());
-                valid.append_null();
+                let last = *offsets.last().unwrap();
+                offsets.extend(std::iter::repeat_n(last, n));
+                valid.append_n_nulls(n);
             }
-            Column::Struct {
-                valid,
-                len,
-                children,
-                ..
-            } => {
-                valid.append_null();
-                *len += 1;
-                children.iter_mut().for_each(Column::append_null);
+            Column::Struct { valid, len, .. } => {
+                valid.append_n_nulls(n);
+                *len += n;
             }
+        }
+    }
+
+    /// The rows the column holds.
+    fn len(&self) -> usize {
+        match self {
+            Column::Utf8(b) => b.len(),
+            Column::Int(b) => b.len(),
+            Column::Float(b) => b.len(),
+            Column::Bool(b) => b.len(),
+            Column::Null(n) => *n,
+            Column::List { offsets, .. } | Column::Map { offsets, .. } => offsets.len() - 1,
+            Column::Struct { len, .. } => *len,
+        }
+    }
+
+    /// A struct's child brought to the struct's `rows` with nulls: the rows it was not
+    /// written for, its field absent or the struct null, are null.
+    fn pad(&mut self, rows: usize) {
+        let missing = rows - self.len();
+        if missing > 0 {
+            self.append_nulls(missing);
         }
     }
 
@@ -446,7 +476,10 @@ impl Column {
     ) -> Result<StructArray, ArrowError> {
         let children = children
             .into_iter()
-            .map(Column::finish)
+            .map(|mut child| {
+                child.pad(len);
+                child.finish()
+            })
             .collect::<Result<Vec<_>, _>>()?;
         if children.is_empty() {
             return Ok(StructArray::new_empty_fields(len, nulls));
@@ -831,9 +864,16 @@ impl<'a, 'r> Decoder<'a, 'r> {
             ) => {
                 // `Node::new` has checked the children are the fields' columns, in order
                 let slots = self.slots_of(record, input);
+                let row = *len;
                 for (k, (field, child)) in record.fields.iter().zip(children.iter_mut()).enumerate()
                 {
                     let field_input = self.field_input(record, input, slots, k, field.promoted);
+                    // A field null here is a null its child takes when next written to: of
+                    // a wide record's fields, most are absent from each row
+                    if matches!(field_input, Input::Null) && field.node.null_is_null() {
+                        continue;
+                    }
+                    child.pad(row);
                     self.path.push(Seg::Field(field.name));
                     let put = self.put(&field.node, child, field_input, Some(field.name));
                     self.path.pop();
