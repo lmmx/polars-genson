@@ -7,6 +7,16 @@ use crate::schema::{
 };
 use serde_json::{json, Map, Value};
 
+/// The cases of a test: all of them optimised, a quarter in a debug build, which runs each
+/// many times slower.
+fn cases(n: usize) -> usize {
+    if cfg!(debug_assertions) {
+        n / 4
+    } else {
+        n
+    }
+}
+
 /// A small deterministic generator (xorshift), so the cases are the same on every run.
 struct Rng(u64);
 
@@ -284,7 +294,7 @@ fn rewrite_on_dag(schema: &Value, config: &SchemaInferenceConfig) -> String {
 fn test_rewrite_on_dag_matches_rewrite_objects() {
     let mut rng = Rng(0x9e37_79b9_7f4a_7c15);
     let (mut changed, mut mapped) = (0, 0);
-    let cases = 3000;
+    let cases = cases(3000);
     for case in 0..cases {
         let config = random_config(&mut rng);
         let root = match rng.below(5) {
@@ -354,8 +364,8 @@ fn document(rng: &mut Rng, depth: u32, out: &mut String) {
 #[test]
 fn test_to_dag_matches_to_schema() {
     let mut rng = Rng(0x2545_f491_4f6c_dd1d);
-    let mut compared = 0;
-    for case in 0..600 {
+    let (mut compared, n) = (0, cases(600));
+    for case in 0..n {
         let uri = [None, Some("NULL"), Some("AUTO"), Some("urn:x")][case % 4];
         let mut inputs: Vec<Result<Value, String>> = Vec::new();
         for _ in 0..1 + rng.below(12) {
@@ -391,7 +401,7 @@ fn test_to_dag_matches_to_schema() {
             "case {case}"
         );
     }
-    assert!(compared > 400, "{compared} compared");
+    assert!(compared > n * 2 / 3, "{compared} of {n} compared");
 }
 
 /// A statement as Wikidata writes them, its value's kind set by its property (or, now and
@@ -493,8 +503,8 @@ fn claims_config() -> SchemaInferenceConfig {
 #[test]
 fn test_inference_on_dag_matches_values() {
     let mut rng = Rng(0x6a09_e667_f3bc_c908);
-    let mut compared = 0;
-    for case in 0..240 {
+    let (mut compared, n) = (0, cases(240));
+    for case in 0..n {
         let rows: Vec<String> = (0..5 + rng.below(40)).map(|_| claims_row(&mut rng)).collect();
         let mut config = match case % 3 {
             0 => claims_config(),
@@ -522,5 +532,5 @@ fn test_inference_on_dag_matches_values() {
         compared += usize::from(by_values.is_ok());
         assert_eq!(by_values, on_dag, "case {case}: {threads} threads, config {config:?}");
     }
-    assert!(compared > 200, "{compared} compared");
+    assert!(compared > n * 5 / 6, "{compared} of {n} compared");
 }
