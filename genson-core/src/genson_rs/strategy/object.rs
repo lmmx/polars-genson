@@ -10,9 +10,11 @@ type KeySet<T> = HashSet<T, FxBuildHasher>;
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
 
+use crate::dag::{kw, Dag, Id, Sym};
 use crate::genson_rs::interned::{RowStates, StateId};
 use crate::genson_rs::node::{hash_value, DataType, DeferredStrategy, SchemaNode, PAR_MERGE_MIN};
 use crate::genson_rs::strategy::base::SchemaStrategy;
+use crate::genson_rs::strategy::keywords;
 
 #[derive(Debug, PartialEq)]
 pub struct ObjectStrategy {
@@ -750,6 +752,48 @@ fn absorb_properties(properties: &mut PropMap<SchemaNode>, other: PropMap<Schema
 const PAR_TO_SCHEMA_MIN: usize = 16;
 
 impl ObjectStrategy {
+    /// `to_schema` as a DAG.
+    pub(crate) fn to_dag(&self, dag: &mut Dag) -> Id {
+        let mut schema = keywords(&self.extra_keywords, dag);
+        let object = dag.string(kw::OBJECT);
+        schema.insert(kw::TYPE, object);
+        if !self.properties.is_empty() {
+            let properties = Self::properties_to_dag(&self.properties, dag);
+            schema.insert(kw::PROPERTIES, properties);
+        }
+        if !self.pattern_properties.is_empty() {
+            let patterns = Self::properties_to_dag(&self.pattern_properties, dag);
+            schema.insert(kw::PATTERN_PROPERTIES, patterns);
+        }
+        if let Some(values) = &self.additional_properties {
+            let values = values.to_dag(dag);
+            schema.insert(kw::ADDITIONAL_PROPERTIES, values);
+        }
+        let mut required: Vec<&str> = self
+            .required_properties
+            .iter()
+            .flatten()
+            .map(String::as_str)
+            .collect();
+        required.sort();
+        if !required.is_empty() || self.include_empty_required {
+            let names: Vec<Id> = required.iter().map(|name| dag.str(name)).collect();
+            let required = dag.array(&names);
+            schema.insert(kw::REQUIRED, required);
+        } else {
+            schema.shift_remove(kw::REQUIRED);
+        }
+        schema.build(dag)
+    }
+
+    fn properties_to_dag(properties: &PropMap<SchemaNode>, dag: &mut Dag) -> Id {
+        let entries: Vec<(Sym, Id)> = properties
+            .iter()
+            .map(|(name, node)| (dag.sym(name), node.to_dag(dag)))
+            .collect();
+        dag.object(&entries)
+    }
+
     fn properties_to_schema(&self, properties: &PropMap<SchemaNode>) -> Value {
         // Each property's schema is written on its own, so many are written in parallel
         // (in order)

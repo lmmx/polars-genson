@@ -1,0 +1,21 @@
+# callgrind, one thread (bench_infer_wpq_1t, bench_infer_1t), inclusive instructions under
+# --toggle-collect='genson_core::schema::infer_json_schema_from_strings*'
+
+rel7k, #251 (cg_pm_rel7k)
+  inference                          1,405M
+  row phase (RowStates::row)           574M
+  SchemaBuilder::to_schema             205M
+  rewrite_objects                      398M   (unified_values 369M)
+
+rel7k, the DAG rewrite (cg_dag_rel7k)
+  inference                          1,049.8M
+  row phase (RowStates::row)           589.0M
+  merge (absorb_deferred)              157.1M
+  rewrite_merged                       232.9M
+    SchemaBuilder::to_dag              134.6M
+    OnDag::rewrite_objects              96.5M
+  to_avro_schema                        53.8M
+
+labels (Avro conversion is most of it)
+  #251        1,391.7M  (to_avro_schema 1,064.3M)
+  DAG         1,395.6M  (to_avro_schema 1,063.7M)

@@ -665,10 +665,75 @@ fn convert_to_map(schema: &mut Value, field_name: &str, config: &SchemaInference
     }
 }
 
+/// How the merged schema is rewritten (map inference and unification).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum Rewrite {
+    /// Written out as `Value`s and rewritten in place: the way debugging takes, so that it
+    /// reports as it did
+    Values,
+    /// Written out as a DAG, each distinct part once, and rewritten there: only the
+    /// rewritten schema is written out as `Value`s
+    Dag,
+}
+
+/// The builder's schema, rewritten.
+fn rewrite_merged(builder: SchemaBuilder, config: &SchemaInferenceConfig, way: Rewrite) -> Value {
+    // It changes only a field forced to be a map
+    let forced_maps = config.force_field_types.values().any(|t| t == "map");
+    match way {
+        Rewrite::Values => {
+            let mut schema = builder.to_schema();
+            // The builder's tree is freed on the rayon pool while the schema is rewritten
+            rayon::spawn(move || drop(builder));
+            profile!(
+                config,
+                "Applying force field types ({})",
+                current_time_hms()
+            );
+            if forced_maps {
+                preprocess_force_field_types(&mut schema, config);
+            }
+            profile!(config, "Rewriting objects ({})", current_time_hms());
+            rewrite_objects(&mut schema, None, config, true);
+            schema
+        }
+        Rewrite::Dag => {
+            let mut on = OnDag::new(crate::dag::Dag::new(), config);
+            let mut schema = builder.to_dag(&mut on.dag);
+            rayon::spawn(move || drop(builder));
+            profile!(
+                config,
+                "Applying force field types ({})",
+                current_time_hms()
+            );
+            if forced_maps {
+                schema = on.preprocess_force_field_types(schema);
+            }
+            profile!(config, "Rewriting objects ({})", current_time_hms());
+            schema = on.rewrite_objects(schema, None, true);
+            on.dag.to_value(schema)
+        }
+    }
+}
+
 /// Infer JSON schema from a collection of JSON strings
 pub fn infer_json_schema_from_strings<S: AsRef<str> + Sync>(
     json_strings: &[S],
     config: SchemaInferenceConfig,
+) -> Result<SchemaInferenceResult, String> {
+    let way = if config.debug {
+        Rewrite::Values
+    } else {
+        Rewrite::Dag
+    };
+    infer_json_schema_from_strings_by(json_strings, config, way)
+}
+
+/// `infer_json_schema_from_strings`, its merged schema rewritten the given way.
+pub(crate) fn infer_json_schema_from_strings_by<S: AsRef<str> + Sync>(
+    json_strings: &[S],
+    config: SchemaInferenceConfig,
+    way: Rewrite,
 ) -> Result<SchemaInferenceResult, String> {
     profile!(
         config,
@@ -703,20 +768,7 @@ pub fn infer_json_schema_from_strings<S: AsRef<str> + Sync>(
             };
 
             // Get final schema
-            let mut final_schema = builder.to_schema();
-            // The builder's tree is freed on the rayon pool while the schema is rewritten
-            rayon::spawn(move || drop(builder));
-            profile!(
-                config,
-                "Applying force field types ({})",
-                current_time_hms()
-            );
-            // It changes only a field forced to be a map
-            if config.force_field_types.values().any(|t| t == "map") {
-                preprocess_force_field_types(&mut final_schema, &config);
-            }
-            profile!(config, "Rewriting objects ({})", current_time_hms());
-            rewrite_objects(&mut final_schema, None, &config, true);
+            let mut final_schema = rewrite_merged(builder, &config, way);
             profile!(config, "Reordering unions ({})", current_time_hms());
             reorder_unions(&mut final_schema);
 

@@ -2,6 +2,7 @@ use core::panic;
 use std::borrow::{Borrow, Cow};
 use std::hash::Hasher;
 
+use crate::dag::{kw, Dag, Id};
 use crate::genson_rs::interned::{RowStates, StateId, Strat};
 use crate::genson_rs::strategy::base::SchemaStrategy;
 use crate::genson_rs::strategy::scalar::TypelessStrategy;
@@ -581,6 +582,52 @@ impl SchemaNode {
     }
 
     /// Convert the current schema node to a JSON schema
+    /// `to_schema` as a DAG.
+    pub(crate) fn to_dag(&self, dag: &mut Dag) -> Id {
+        let mut scalar_schemas: Vec<Id> = vec![];
+        let mut generated_schemas: Vec<Id> = vec![];
+        for strategy in &self.active_strategies {
+            let schema = strategy.to_dag(dag);
+            let Some(keywords) = dag.as_object(schema) else {
+                panic!("Invalid schema type for strategy {:?}", strategy);
+            };
+            if keywords.len() == 1 && keywords.first().is_some_and(|(k, _)| k == kw::TYPE) {
+                scalar_schemas.push(schema);
+            } else {
+                generated_schemas.push(schema);
+            }
+        }
+        if scalar_schemas.len() == 1 {
+            generated_schemas.push(scalar_schemas[0]);
+        } else if !scalar_schemas.is_empty() {
+            let mut types: Vec<&str> = scalar_schemas
+                .iter()
+                .map(|&schema| {
+                    let js_type = dag.get(schema, kw::TYPE).and_then(|t| dag.as_sym(t));
+                    dag.name(js_type.unwrap())
+                })
+                .collect();
+            types.sort();
+            types.dedup();
+            if types.len() == 1 {
+                generated_schemas.push(scalar_schemas[0]);
+            } else {
+                let types: Vec<String> = types.into_iter().map(str::to_string).collect();
+                let types: Vec<Id> = types.iter().map(|t| dag.str(t)).collect();
+                let types = dag.array(&types);
+                generated_schemas.push(dag.object(&[(kw::TYPE, types)]));
+            }
+        }
+        match generated_schemas.as_slice() {
+            [schema] => *schema,
+            [] => dag.object(&[]),
+            schemas => {
+                let any_of = dag.array(schemas);
+                dag.object(&[(kw::ANY_OF, any_of)])
+            }
+        }
+    }
+
     pub fn to_schema(&self) -> Value {
         // Scalar strategies produce `{"type": t}`; keep those apart so they can be
         // collapsed into one entry (a single type, or a sorted type list) at the end.

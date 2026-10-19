@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
 use std::hash::Hasher;
 
+use crate::dag::{kw, Dag, Id, ObjBuf};
 use crate::genson_rs::interned::{RowStates, StateId};
 use crate::genson_rs::node::{DataType, Deferred, SchemaNode};
 
@@ -218,6 +219,26 @@ impl SchemaBuilder {
             base_schema_map.insert(key, value);
         }
         base_schema
+    }
+
+    /// `to_schema` as a DAG.
+    pub(crate) fn to_dag(&self, dag: &mut Dag) -> Id {
+        let mut schema = ObjBuf::default();
+        match self.schema_uri.as_deref() {
+            Some(NULL_SCHEMA_URI) => {}
+            uri => {
+                let uri = dag.str(uri.unwrap_or(DEFAULT_SCHEMA_URI));
+                schema.insert(kw::SCHEMA, uri);
+            }
+        }
+        let node = self.root_node.to_dag(dag);
+        let Some(node) = dag.as_object(node) else {
+            panic!("node schema must be an object")
+        };
+        for (key, value) in node.iter() {
+            schema.insert(key, value);
+        }
+        schema.build(dag)
     }
 
     fn get_base_schema(&self) -> Value {

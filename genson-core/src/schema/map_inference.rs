@@ -4,8 +4,10 @@ use crate::value::object;
 use crate::{debug, profile_verbose};
 use rayon::prelude::*;
 use serde_json::Value;
+mod on_dag;
 mod unification;
 use super::current_time_hms;
+pub(crate) use on_dag::OnDag;
 use unification::*;
 
 const PARALLEL_PROP_THRESHOLD: usize = 3;

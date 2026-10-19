@@ -945,6 +945,48 @@ changed by this work.
   (logs/e50_merge_mutants.txt) 3 fail them and 3 are equivalent, one of them taken
   (a strategy that replaces the typeless one takes its slot)
 
+### The merged schema as a DAG
+
+- After the merge, inference wrote the builder's schema out as `Value`s and rewrote it in
+  place. On rel7k that schema is 3.45 MB of JSON, 261,798 values, and only 5,586 of them
+  are distinct: its 2,269 claims property keys hold 755 distinct schemas, and those share
+  most of their parts. Writing it out was 205M instructions (one thread), rewriting it
+  398M, of inference's 1.41G; the rewritten schema is 4 KB
+- The builder now writes its schema as a hash-consed DAG (`dag.rs`, `SchemaBuilder::to_dag`,
+  each strategy's `to_dag` beside its `to_schema`): each distinct value is stored once and
+  named by an id, keys and strings by symbols. The rewrite runs on the DAG
+  (`map_inference/on_dag.rs`, `on_dag/unification.rs`), function for function and case for
+  case the one of `map_inference.rs` and `unification.rs`, with ids for `Value`s, and only
+  the rewritten schema becomes a `Value`:
+  - `Value` equality, which ignores the order of an object's keys, is `Dag::same`: the
+    two ids, or the ids of their canonical forms (keys sorted), computed once per value
+  - a schema is rewritten once per field and position it is met in, and a pair unified
+    once per path, remembered: each is a function of these and the config
+  - pairs unify as `check_unifiable_schemas` unifies them; the owned ways of
+    `unification.rs` give the same schemas (`test_owned_unification_matches_the_borrowed`),
+    and with ids nothing is moved. What runs on the rayon pool there runs in turn here,
+    by the same halves, to the same result
+  - debugging keeps the `Value` way, so that it reports as it did
+- The same schema hashes and processed counts on every corpus. Instructions, one thread
+  (logs/e52_dag_instructions.txt): rel7k 1.41G and 1.05G, writing and rewriting the
+  schema 603M and 233M (writing the DAG 135M, rewriting it 96M); labels 1.392G and
+  1.396G (its Avro conversion is 1.06G of both)
+- Inference, four threads, 2 interleaved rounds of 5 runs (logs/e51_infer_dag.txt),
+  median wall and CPU, #251 and now: rel7k 0.136 and 0.080 s, CPU 0.340 and 0.170 s;
+  rowsw with its label maps extracted 0.042 and 0.024 s, CPU 0.093 and 0.053 s; event
+  logs, narrow200k, labels and rows200 within the run-to-run spread
+- The rewrite on the DAG runs on one thread, and on rel7k on four it is now the longest
+  stage: writing the DAG is mostly hashing property names into symbols
+- Tests: `test_to_dag_matches_to_schema` (builders of random rows and random schemas,
+  four `$schema` settings), `test_rewrite_on_dag_matches_rewrite_objects` (3,000 random
+  schemas, adversarial ones among them: legacy nullable wrappers, `anyOf`s, maps with
+  properties, tuples, empty records and items, fields named as keywords, map candidates of
+  one family of schemas; under random configs of thresholds, unification, scalar
+  promotion and forced types; the `Value` way on one thread and on four) and
+  `test_inference_on_dag_matches_values` (240 sets of claims rows and other JSON under
+  wikidata-pq's config, the defaults and random configs, three chunk sizes, 1, 2 and 4
+  threads), each comparing schemas as text, so key order counts
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building

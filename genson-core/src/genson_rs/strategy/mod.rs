@@ -11,8 +11,32 @@ use object::ObjectStrategy;
 use scalar::{BooleanStrategy, NullStrategy, NumberStrategy, StringStrategy, TypelessStrategy};
 
 use self::array::ListSchemaStrategy;
+use crate::dag::{kw, Dag, Id, ObjBuf};
 use crate::genson_rs::interned::{RowStates, Strat};
 use crate::genson_rs::node::{DeferredStrategy, SchemaNode};
+
+/// A strategy's extra keywords as a DAG object being built: where its `to_schema` starts.
+pub(crate) fn keywords(extra: &Value, dag: &mut Dag) -> ObjBuf {
+    match extra {
+        Value::Object(map) => ObjBuf(
+            map.iter()
+                .map(|(key, value)| (dag.sym(key), dag.intern_value(value)))
+                .collect(),
+        ),
+        _ => ObjBuf::default(),
+    }
+}
+
+/// A list's `to_schema` as a DAG, given its items' schema if it has items.
+fn list_to_dag(extra: &Value, items: Option<Id>, dag: &mut Dag) -> Id {
+    let mut schema = keywords(extra, dag);
+    let array = dag.string(kw::ARRAY);
+    schema.insert(kw::TYPE, array);
+    if let Some(items) = items {
+        schema.insert(kw::ITEMS, items);
+    }
+    schema.build(dag)
+}
 
 #[derive(Debug, PartialEq)]
 pub enum BasicSchemaStrategy {
@@ -258,6 +282,43 @@ impl BasicSchemaStrategy {
                     }
                     None => crate::genson_rs::node::hash_value(&self.to_schema(), hasher),
                 }
+            }
+        }
+    }
+
+    /// `to_schema` as a DAG.
+    pub(crate) fn to_dag(&self, dag: &mut Dag) -> Id {
+        let typed = |extra: &Value, js_type: &str, dag: &mut Dag| {
+            let mut schema = keywords(extra, dag);
+            let js_type = dag.str(js_type);
+            schema.insert(kw::TYPE, js_type);
+            schema.build(dag)
+        };
+        match self {
+            BasicSchemaStrategy::Object(strategy) => strategy.to_dag(dag),
+            BasicSchemaStrategy::List(strategy) => {
+                let items = strategy.get_items().next().map(|items| items.to_dag(dag));
+                list_to_dag(strategy.get_extra_keywords(), items, dag)
+            }
+            BasicSchemaStrategy::Tuple(strategy) => {
+                let items: Vec<Id> = strategy.get_items().map(|item| item.to_dag(dag)).collect();
+                let items = (!items.is_empty()).then(|| dag.array(&items));
+                list_to_dag(strategy.get_extra_keywords(), items, dag)
+            }
+            BasicSchemaStrategy::Null(strategy) => {
+                typed(strategy.get_extra_keywords(), "null", dag)
+            }
+            BasicSchemaStrategy::Boolean(strategy) => {
+                typed(strategy.get_extra_keywords(), "boolean", dag)
+            }
+            BasicSchemaStrategy::Number(strategy) => {
+                typed(strategy.get_extra_keywords(), strategy.number_type(), dag)
+            }
+            BasicSchemaStrategy::String(strategy) => {
+                typed(strategy.get_extra_keywords(), "string", dag)
+            }
+            BasicSchemaStrategy::Typeless(strategy) => {
+                keywords(strategy.get_extra_keywords(), dag).build(dag)
             }
         }
     }
