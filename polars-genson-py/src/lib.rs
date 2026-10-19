@@ -3,9 +3,11 @@ use pyo3::prelude::*;
 mod expressions;
 mod parquet_io;
 mod schema;
+mod typed;
 
 use parquet_io::{infer_from_parquet, normalise_from_parquet, read_parquet_metadata};
 use schema::{json_to_schema, schema_to_json};
+use typed::normalise_json_typed;
 
 #[pyfunction]
 fn avro_to_polars_fields(schema_json: String, debug: bool) -> PyResult<Vec<(String, String)>> {
@@ -30,6 +32,7 @@ fn _polars_genson(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(normalise_from_parquet, m)?)?;
     m.add_function(wrap_pyfunction!(read_parquet_metadata, m)?)?;
     m.add_function(wrap_pyfunction!(avro_to_polars_fields, m)?)?;
+    m.add_function(wrap_pyfunction!(normalise_json_typed, m)?)?;
     Ok(())
 }
 

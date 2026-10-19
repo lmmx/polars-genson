@@ -1,5 +1,6 @@
 [dependencies]
 anstream = { workspace = true }
+arrow = { features = ["ffi"], version = "60.0.0" }
 genson-core = { features = ["avro", "parquet"], workspace = true }
 openssl = { optional = true, version = "0.10" }
 polars.workspace = true
