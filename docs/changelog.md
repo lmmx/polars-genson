@@ -69,11 +69,9 @@ Release notes for earlier versions are on
   (#238, avrotize-rs#28), leaving a field typed `["null"]` where the data holds values.
   Normalising such a value panicked; it is now `null`, as a value a field's type cannot
   hold is anywhere else. The record's lost fields are a separate bug, in the conversion.
-- **A key missing from some objects is no longer required.** When a field's objects
-  were merged, those holding no key in common were not counted, so a key could be
-  marked required (and its Avro field non-nullable) although some rows lack it, and
-  which keys were required could depend on the order of the rows or vary from run to
-  run. Schemas change only by keys dropped from `required`.
+
+## 1.0.3
+
 - **A field some map values lack is no longer required.** Map unification made a
   record field required (and its Avro field non-nullable) whenever every record it
   unified listed the field, though a record that was itself unified lists every field
@@ -81,6 +79,28 @@ Release notes for earlier versions are on
   required, depending on the order of the values, and normalised output held a record of
   nulls where the field was missing; it now holds `null`. Schemas change only by fields
   dropped from `required` and made nullable.
+- **Inference, normalisation and Parquet I/O do far less work**
+  ([#256](https://github.com/lmmx/polars-genson/issues/256)). Inference reads each row
+  once as interned states and rewrites the merged schema as a hash-consed DAG, never
+  writing it out. Normalisation compiles the schema into a plan once (`NormalisePlan` in
+  genson-core) and writes rows straight into Arrow, and the `normalise_json` expression
+  normalises its rows in parallel. Values are moved rather than copied. Inferred schemas
+  and normalised output are unchanged, except by the two fixes in this release. On
+  genson-core's scorecard corpora (`scripts/scorecard.py`: instructions on one thread,
+  wall time on 4 threads), from 1.0.2 with the row-hashing change below to 1.0.3:
+
+  | corpus | instructions | wall time |
+  |---|---|---|
+  | claims (2,000 Wikidata-like rows, wikidata-pq's options) | −91% | 1,762 → 233 ms |
+  | events (20,000 event logs) | −77% | 90 → 17 ms |
+  | narrow (100,000 small records) | −81% | 186 → 23 ms |
+  | labels (1,000 label maps) | −54% | 171 → 83 ms |
+  | entities (150 wide entities) | −59% | 201 → 81 ms |
+  | the claims, normalised | −78% | 1,109 → 423 ms |
+
+  A field forced to `"map"` takes the slower per-row path: 20% fewer instructions there,
+  with no measurable change in time. These are genson-core's workloads; the Python
+  package runs the same code.
 - **Parquet output is zstd-compressed.** genson wrote every Parquet file uncompressed;
   typed output, string output, lookup tables and pruned values are now written with
   zstd (level 1). On 200 rows of Wikidata claims the typed output is 5 MB where it was
@@ -106,41 +126,32 @@ Release notes for earlier versions are on
   ranges of about equal size, each decoded by its own reader. Decoding the claims of a
   chunk written as wikidata-pq writes them (Polars, zstd level 9) takes 0.05–0.06 s on
   4 cores where it took 0.3–0.4 s.
-- **Less copying in map unification and normalisation.** `json!` copies each value it is
-  given by serialising it; map unification built each unified record, array and map
-  that way, so every level of a unified schema copied everything beneath it again, and
-  normalisation built every map entry of the key/value encodings that way. The values
-  are now moved in. On a release-format chunk of wikidata-pq's claims (7,128 rows),
-  inference takes 17% fewer instructions, with the same schemas and rows.
-- **Faster merging and schema writing in inference.** Merging each row's schema into the
-  running one moved every node's strategies through two new vectors to order them, and
-  rebuilt every object's recorded keywords, though nearly always there was one strategy
-  and no keyword new; those cases are now merged as they are. An object of 16 or more
-  properties writes their schemas in parallel. On the release-format chunk, inference
-  takes 0.39–0.43 s on 4 cores where it took 0.45–0.46 s, and 0.53–0.54 s before the
-  entry above; the same schemas.
-- **Normalisation reads the schema once.** It looked up each schema node's kind, fields,
-  their names and the fields `prune` names for every value; the schema is now compiled
-  once into a plan (`NormalisePlan` in genson-core, for normalising many values against
-  one schema), and `normalise_from_parquet` and the `normalise_json` expression compile
-  it once for all their rows, which the expression now normalises in parallel. On the
-  release-format chunk, normalisation takes 60% fewer instructions, with the same rows
-  and pruned values.
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.
-- **`wrap_root` wraps each document as written.** Duplicate keys and number formatting
-  now reach inference unchanged, as without `wrap_root`.
-- **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
-  on large rows with default options. See [How inference works](concepts/inference.md).
 - **Less time spent deduplicating rows.** Given 10 or more strings, inference hashes each
   string's schema to skip duplicates; a scalar field is now hashed without building its
   schema, for 6–17% less CPU time on Wikidata claims and on narrow rows.
   `SchemaBuilder::schema_hash` gives the same values as before.
+
+## 1.0.2
+
 - **`SchemaBuilder::add_schemas` keeps what the builder already held** (genson-core
   Rust API). Given schemas with more than 3 properties between them, it replaced the
   builder's schema for each of those properties instead of merging into it. Inference,
   genson-cli and the Python package do not call it.
+
+## 1.0.1
+
+- **A key missing from some objects is no longer required.** When a field's objects
+  were merged, those holding no key in common were not counted, so a key could be
+  marked required (and its Avro field non-nullable) although some rows lack it, and
+  which keys were required could depend on the order of the rows or vary from run to
+  run. Schemas change only by keys dropped from `required`.
+- **`wrap_root` wraps each document as written.** Duplicate keys and number formatting
+  now reach inference unchanged, as without `wrap_root`.
+- **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
+  on large rows with default options. See [How inference works](concepts/inference.md).
 
 ## 1.0.0
 
