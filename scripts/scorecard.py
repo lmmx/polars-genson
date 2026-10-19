@@ -177,14 +177,15 @@ def quartiles(xs):
     return q[0], q[1], q[2]
 
 
-def timed(a, b):
-    """The change in a median time, and whether it is clear of the runs' spread."""
+def timed(a, b, instructions_moved=True):
+    """The change in a median time, and whether it is clear of the runs' spread. A time that
+    moves while the instructions do not is noise, so it is inconclusive too."""
     if not a or not b:
         return "–"
     (a25, am, a75), (b25, bm, b75) = quartiles(a), quartiles(b)
     verdict = "faster" if b75 < a25 else "slower" if b25 > a75 else "inconclusive"
     pct = (bm - am) / am * 100
-    if abs(pct) < 3:
+    if abs(pct) < 3 or not instructions_moved:
         verdict = "inconclusive"
     return f"{am * 1e3:.1f} → {bm * 1e3:.1f} ms ({pct:+.0f}%, {verdict})"
 
@@ -211,7 +212,7 @@ def report(base, head, cumulative=None, run_url=None):
     lines.append(
         "Instructions: one thread, callgrind, by stage"
         + (" (a revision without stage markers is attributed by function name, approximately)" if "legacy" in attributions else "")
-        + f". Times: release build, all threads, {len(next(iter(head['corpora'].values()))['timing']['wall'])} runs each, interleaved ABBA, median and verdict against the runs' spread."
+        + f". Times: release build, all threads, {len(next(iter(head['corpora'].values()))['timing']['wall'])} runs each, interleaved ABBA, median and verdict against the runs' spread (inconclusive unless the instructions moved too)."
     )
     lines += ["", "| corpus | instructions | per byte | wall | CPU | allocations | output |", "|---|---|---|---|---|---|---|"]
     gains, losses, remaining = [], [], []
@@ -223,7 +224,14 @@ def report(base, head, cumulative=None, run_url=None):
         per_byte = f"{bt / b['bytes']:.1f} → {ht / h['bytes']:.1f}"
         allocs = allocations(b, h)
         same = b["schema_hash"] == h["schema_hash"] and b["processed"] == h["processed"]
-        lines.append(f"| {corpus} | {millions(bt)} → {millions(ht)} ({change(bt, ht)}) | {per_byte} | {timed(b['timing']['wall'], h['timing']['wall'])} | {timed(b['timing']['cpu'], h['timing']['cpu'])} | {allocs} | {'identical' if same else '**changed**'} |")
+        moved = abs(ht - bt) > 0.005 * bt
+        wall, cpu = timed(b["timing"]["wall"], h["timing"]["wall"], moved), timed(b["timing"]["cpu"], h["timing"]["cpu"], moved)
+        lines.append(f"| {corpus} | {millions(bt)} → {millions(ht)} ({change(bt, ht)}) | {per_byte} | {wall} | {cpu} | {allocs} | {'identical' if same else '**changed**'} |")
+        # Stages are compared only when both revisions mark them: one attributed by function
+        # name puts what inlining hides under `unattributed`
+        if b["attribution"] != "markers" or h["attribution"] != "markers":
+            remaining += [(h["instructions"]["stages"].get(s, 0) / ht if ht else 0, corpus, s, h["instructions"]["stages"].get(s, 0)) for s in STAGES]
+            continue
         for stage in STAGES + ["unattributed"]:
             bs = b["instructions"]["stages"].get(stage, 0) if stage != "unattributed" else b["instructions"]["unattributed"]
             hs = h["instructions"]["stages"].get(stage, 0) if stage != "unattributed" else h["instructions"]["unattributed"]
@@ -232,9 +240,12 @@ def report(base, head, cumulative=None, run_url=None):
                 (gains if delta < 0 else losses).append((delta, corpus, stage, bs, hs))
             remaining.append((hs / ht if ht else 0, corpus, stage, hs))
     lines.append("")
+    if "legacy" in attributions:
+        lines.append("**Stage changes:** not compared, as a revision predates the stage markers and is attributed by function name; the totals are exact.")
     if gains:
         lines.append("**Largest reductions:** " + "; ".join(f"{c} {s} {millions(-d)} fewer ({change(a, b)})" for d, c, s, a, b in sorted(gains)[:5]))
-    lines.append("**Increases:** " + ("; ".join(f"{c} {s} +{millions(d)} ({change(a, b)})" for d, c, s, a, b in sorted(losses, reverse=True)[:5]) if losses else "none above 1% of a corpus"))
+    if "legacy" not in attributions:
+        lines.append("**Increases:** " + ("; ".join(f"{c} {s} +{millions(d)} ({change(a, b)})" for d, c, s, a, b in sorted(losses, reverse=True)[:5]) if losses else "none above 1% of a corpus"))
     top = sorted([r for r in remaining if r[2] != "unattributed"], reverse=True)[:5]
     lines.append("**Largest remaining costs:** " + "; ".join(f"{c} {s} {millions(n)} ({share * 100:.0f}% of it)" for share, c, s, n in top))
     lines += ["", "<details><summary>Stages by corpus</summary>", ""]

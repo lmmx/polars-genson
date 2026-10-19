@@ -60,7 +60,7 @@ workload into each revision's worktree.
 
 | corpus | rows | what it exercises |
 |---|---|---|
-| `claims` | 2,000 Wikidata-like claims objects, 15 MB | wikidata-pq's config: the interned path, map inference and unification of many properties, forced records and promoted scalars, Avro |
+| `claims` | 2,000 Wikidata-like claims objects, 15 MB (each property's values of one datatype, as in Wikidata) | wikidata-pq's config: the interned path, map inference and unification of many properties, forced records and promoted scalars, Avro |
 | `events` | 20,000 event logs of several kinds | records that differ by kind, the defaults |
 | `narrow` | 100,000 small records | the row phase on many short rows |
 | `labels` | 1,000 maps of languages' labels | a map of records |
@@ -74,8 +74,12 @@ Short runs on a shared machine are noisy, and the second of two runs back to bac
 be faster. So each process times a warm-up run and a measured one, the revisions take turns
 in the order base, head, head, base and so on, and the report gives the median with a
 verdict: *faster* or *slower* only when the change is at least 3% and the two revisions'
-interquartile ranges do not overlap, otherwise *inconclusive*. Instruction counts are the
-measure to trust; a time that moves with no change in instructions is noise.
+interquartile ranges do not overlap, and the instructions moved too (by more than 0.5%),
+otherwise *inconclusive*: a time that moves with no change in instructions is noise.
+
+Stage changes are listed only when both revisions have the stage markers. A revision
+attributed by function name puts what inlining hides under `unattributed`, so its stages
+are shown but not compared; the totals are exact either way.
 
 ## Running it
 

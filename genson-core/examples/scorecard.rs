@@ -47,13 +47,10 @@ const LANGUAGES: [&str; 40] = [
     "zh-hant", "zh-hans", "pt-br", "eo", "la", "cy", "ga", "eu", "gl",
 ];
 
-/// A snak's value, by the datatype a property holds (and, now and then, another).
+/// A snak's value, of the datatype its property holds: one per property, as in Wikidata,
+/// so that values differ in kind across properties but not within one.
 fn datavalue(rng: &mut Rng, property: u64, out: &mut String) {
-    let kind = if rng.chance(40) {
-        rng.below(7)
-    } else {
-        property % 7
-    };
+    let kind = property % 7;
     let (value, t) = match kind {
         0 | 1 => (format!("\"v{}\"", rng.below(100_000)), "string"),
         2 => {
