@@ -470,3 +470,396 @@ fn test_plan_matches_on_unusual_schemas() {
         }
     }
 }
+
+/// Random JSON text for the typed decoder: objects with keys from a small set (some
+/// promoted, some repeated or escaped), arrays, numbers in every form `serde_json` reads
+/// differently, escaped strings, and whitespace of every kind between tokens.
+#[cfg(feature = "parquet")]
+fn random_text(rng: &mut Rng, depth: u32, out: &mut String) {
+    let ws = |rng: &mut Rng, out: &mut String| {
+        if rng.below(4) == 0 {
+            out.push_str([" ", "\n", "\t", "\r", "  "][rng.below(5) as usize]);
+        }
+    };
+    let keys = [
+        "a",
+        "b",
+        "c",
+        "id",
+        "v__string",
+        "v__int",
+        "v__float",
+        "v__boolean",
+        "v",
+    ];
+    ws(rng, out);
+    // Now and then something `serde_json` rejects, making the row invalid
+    if rng.below(60) == 0 {
+        out.push_str(
+            [
+                "0123",
+                "-012",
+                "00",
+                "1.",
+                ".5",
+                "+1",
+                "1e",
+                "--1",
+                "nul",
+                "tru",
+                "\"\\x\"",
+                "\"\\ud800\"",
+                "\"\\udc00x\"",
+                "\"a\tb\"",
+                "[1,]",
+                "{\"a\":1,}",
+                "{\"a\" 1}",
+                "1e999",
+            ][rng.below(18) as usize],
+        );
+        return;
+    }
+    let pick = if depth == 0 {
+        3 + rng.below(6)
+    } else {
+        rng.below(9)
+    };
+    match pick {
+        0 | 1 => {
+            out.push('{');
+            let n = rng.below(5);
+            for i in 0..n {
+                if i > 0 {
+                    out.push(',');
+                }
+                ws(rng, out);
+                let key = keys[rng.below(keys.len() as u64) as usize];
+                match rng.below(12) {
+                    0 => out.push_str(&format!("\"\\u{:04x}{}\"", key.as_bytes()[0], &key[1..])),
+                    _ => out.push_str(&format!("\"{key}\"")),
+                }
+                ws(rng, out);
+                out.push(':');
+                random_text(rng, depth - 1, out);
+            }
+            ws(rng, out);
+            out.push('}');
+        }
+        2 => {
+            out.push('[');
+            let n = rng.below(4);
+            for i in 0..n {
+                if i > 0 {
+                    out.push(',');
+                }
+                random_text(rng, depth - 1, out);
+            }
+            ws(rng, out);
+            out.push(']');
+        }
+        3 => out.push_str("null"),
+        4 => out.push_str(["true", "false"][rng.below(2) as usize]),
+        5 | 6 => out.push_str(
+            [
+                "0",
+                "-0",
+                "12",
+                "-12",
+                "1.5",
+                "-0.0",
+                "1e2",
+                "-1.25E-3",
+                "2.5e+3",
+                "123456789012345678901234",
+                "9223372036854775807",
+                "9223372036854775808",
+                "-9223372036854775808",
+                "-9223372036854775809",
+                "18446744073709551615",
+                "18446744073709551616",
+                "999999999999999999",
+                "1000000000000000000",
+                "0.1",
+                "100",
+            ][rng.below(20) as usize],
+        ),
+        _ => out.push_str(
+            [
+                "\"s\"",
+                "\"\"",
+                "\"a\\nb\"",
+                "\"\\u00e9t\\u00e9\"",
+                "\"\\ud83d\\ude00\"",
+                "\"q\\\"q\"",
+                "\"12\"",
+                "\"-3\"",
+                "\"2.5\"",
+                "\"true\"",
+                "\"0\"",
+                "\"nan\"",
+                "\"inf\"",
+                "\"1e999\"",
+                "\"caf\u{e9}\"",
+            ][rng.below(15) as usize],
+        ),
+    }
+    ws(rng, out);
+}
+
+/// The typed rows the `Value` path gives: each row parsed (`null` if invalid), normalised
+/// and decoded with `values_to_struct_array`; `Err` if any of it panics or fails.
+#[cfg(feature = "parquet")]
+fn typed_by_value(
+    rows: &[Option<String>],
+    plan: &NormalisePlan<'_>,
+    fields: &arrow::datatypes::Fields,
+) -> Result<(arrow::array::StructArray, Vec<PrunedValue>), String> {
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    catch_unwind(AssertUnwindSafe(|| {
+        let mut values = Vec::new();
+        let mut pruned = Vec::new();
+        for (i, row) in rows.iter().enumerate() {
+            let Some(row) = row else {
+                values.push(Value::Null);
+                continue;
+            };
+            let v = serde_json::from_str(row).unwrap_or(Value::Null);
+            let (normalised, mut row_pruned) = plan.normalise(v);
+            row_pruned.iter_mut().for_each(|p| p.row = i);
+            pruned.extend(row_pruned);
+            values.push(normalised);
+        }
+        crate::parquet::values_to_struct_array(&values, fields).map(|a| (a, pruned))
+    }))
+    .unwrap_or_else(|_| Err("panicked".to_string()))
+}
+
+/// For random JSON text (valid, invalid and null rows), schemas inferred from the valid
+/// rows (wrapped, with a field beside them or not, or as they are; with all of them or all
+/// but the last) and every option and prune set: the typed decoder gives the arrays and
+/// pruned values the `Value` path gives, or declines (`None`) where that path fails or
+/// might differ, and declines rarely.
+#[cfg(feature = "parquet")]
+#[test]
+fn test_typed_decode_matches_the_value_path() {
+    use crate::{infer_json_schema_from_strings, SchemaInferenceConfig};
+    let mut rng = Rng(0xd1b5_4a32_d192_ed03);
+    let configs: Vec<NormaliseConfig> = normalise_configs()
+        .into_iter()
+        .filter(|c| c.map_encoding != MapEncoding::Entries)
+        .collect();
+    let prunes: [HashSet<String>; 4] = [
+        HashSet::new(),
+        ["v__string".to_string()].into(),
+        ["a".to_string(), "v__int".to_string()].into(),
+        ["b".to_string()].into(),
+    ];
+    let (mut decoded, mut declined, mut failing, mut pruned_seen) = (0, 0, 0, 0);
+    let mut decoded_unwrapped = 0;
+    for case in 0..2500 {
+        // Mostly with each row wrapped as `w`, else the rows as they are: then mostly objects,
+        // for a record at the root
+        let wrap = case % 5 != 4;
+        let mut rows: Vec<Option<String>> = Vec::new();
+        for _ in 0..1 + rng.below(6) {
+            let mut text = String::new();
+            if !wrap && rng.below(8) != 0 {
+                text.push_str("{\"a\":");
+                random_text(&mut rng, 3, &mut text);
+                text.push_str(",\"v\":");
+                random_text(&mut rng, 3, &mut text);
+                text.push('}');
+            } else {
+                random_text(&mut rng, 4, &mut text);
+            }
+            let text = match rng.below(14) {
+                0 => text[..text.len() / 2].to_string(),
+                1 => format!("{text} x"),
+                2 => format!("{text}\n{text}"),
+                _ => text,
+            };
+            rows.push(if rng.below(15) == 0 { None } else { Some(text) });
+        }
+        // Now and then the schema is inferred without the last row, which then need not fit
+        // it, or with a field beside the wrapped row
+        let inferred_from = match case % 7 {
+            3 => &rows[..rows.len() - 1],
+            _ => &rows[..],
+        };
+        let beside = case % 6 == 1;
+        let strings: Vec<String> = inferred_from
+            .iter()
+            .flatten()
+            .filter_map(|r| serde_json::from_str::<Value>(r).ok())
+            .map(|v| match (wrap, beside) {
+                (true, true) => json!({"w": v, "a": "x"}),
+                (true, false) => json!({"w": v}),
+                (false, _) => v,
+            })
+            .map(|v| v.to_string())
+            .collect();
+        if strings.is_empty() {
+            continue;
+        }
+        let config = SchemaInferenceConfig {
+            avro: true,
+            map_threshold: [20, 2, 0][case % 3],
+            unify_maps: case % 2 == 0,
+            wrap_scalars: case % 4 != 3,
+            ..Default::default()
+        };
+        let Ok(inferred) = infer_json_schema_from_strings(&strings, config) else {
+            continue;
+        };
+        let cfg = &configs[case % configs.len()];
+        let cfg = NormaliseConfig {
+            wrap_root: wrap.then(|| "w".to_string()),
+            ..cfg.clone()
+        };
+        if inferred.schema.get("type") != Some(&json!("record")) {
+            continue;
+        }
+        let prune = &prunes[case % prunes.len()];
+        let mut out_schema = inferred.schema.clone();
+        prune_schema(&mut out_schema, prune);
+        let native = cfg.map_encoding == MapEncoding::Mapping;
+        let Ok(fields) = crate::parquet::avro_record_fields(&out_schema, native) else {
+            continue;
+        };
+        let plan = NormalisePlan::new(&inferred.schema, &cfg, prune);
+        let reference = typed_by_value(&rows, &plan, &fields);
+        let borrowed: Vec<Option<&str>> = rows.iter().map(Option::as_deref).collect();
+        let typed = plan
+            .to_arrow(&fields)
+            .and_then(|p| p.normalise(&borrowed, 0));
+        match (typed, reference) {
+            (Some(typed), Ok(reference)) => {
+                assert_eq!(
+                    typed.0, reference.0,
+                    "rows {rows:?}\nschema {}",
+                    inferred.schema
+                );
+                assert_eq!(
+                    typed.1, reference.1,
+                    "rows {rows:?}\nschema {}",
+                    inferred.schema
+                );
+                pruned_seen += typed.1.len();
+                decoded += 1;
+                decoded_unwrapped += usize::from(!wrap);
+            }
+            (Some(typed), Err(e)) => {
+                panic!(
+                    "decoded {typed:?} where the Value path fails ({e}): rows {rows:?}\nschema {}",
+                    inferred.schema
+                )
+            }
+            (None, Ok(_)) => declined += 1,
+            (None, Err(_)) => failing += 1,
+        }
+    }
+    eprintln!("typed decode: decoded {decoded} ({decoded_unwrapped} unwrapped), declined {declined}, failing {failing}, pruned {pruned_seen}");
+    assert!(
+        decoded > 500,
+        "decoded {decoded}, declined {declined}, failing {failing}"
+    );
+    assert!(
+        declined * 20 < decoded,
+        "decoded {decoded}, declined {declined}"
+    );
+    assert!(pruned_seen > 20, "pruned {pruned_seen}");
+    assert!(
+        decoded_unwrapped > 50,
+        "decoded {decoded_unwrapped} unwrapped"
+    );
+}
+
+/// Rows nested 127 deep are read, and 128 deep are invalid (null), as `serde_json` reads
+/// them: in a string field, the one array written out and the other row null.
+#[cfg(feature = "parquet")]
+#[test]
+fn test_typed_decode_depth_limit() {
+    let schema = json!({
+        "type": "record",
+        "name": "document",
+        "fields": [{"name": "w", "type": ["null", "string"]}]
+    });
+    let cfg = NormaliseConfig {
+        wrap_root: Some("w".to_string()),
+        ..Default::default()
+    };
+    let prune = HashSet::new();
+    let plan = NormalisePlan::new(&schema, &cfg, &prune);
+    let fields = crate::parquet::avro_record_fields(&schema, false).unwrap();
+    let nested = |depth: usize| Some(format!("{}1{}", "[".repeat(depth), "]".repeat(depth)));
+    let rows = vec![nested(127), nested(128)];
+    let borrowed: Vec<Option<&str>> = rows.iter().map(Option::as_deref).collect();
+    let typed = plan
+        .to_arrow(&fields)
+        .and_then(|p| p.normalise(&borrowed, 0))
+        .unwrap();
+    assert_eq!(typed, typed_by_value(&rows, &plan, &fields).unwrap());
+    let w = typed
+        .0
+        .column(0)
+        .as_any()
+        .downcast_ref::<arrow::array::StringArray>()
+        .unwrap();
+    assert_eq!(w.value(0), nested(127).unwrap());
+    assert!(arrow::array::Array::is_null(w, 1));
+}
+
+/// A record pruned by a field after one that could panic: where that earlier field holds a
+/// value (inference only saw it null), the `Value` path panics before it reaches the
+/// pruning, so the typed decoder declines; where it is null, both prune the record. A field
+/// of an empty union panics even on null.
+#[cfg(feature = "parquet")]
+#[test]
+fn test_typed_decode_declines_a_prune_after_a_panic() {
+    let schema = |a_type: Value| {
+        json!({
+            "type": "record",
+            "name": "document",
+            "fields": [
+                {"name": "a", "type": a_type},
+                {"name": "b", "type": ["null", {
+                    "type": "record",
+                    "name": "b",
+                    "fields": [
+                        {"name": "x", "type": ["null", "long"]},
+                        {"name": "y", "type": ["null", "string"]}
+                    ]
+                }]}
+            ]
+        })
+    };
+    let cfg = NormaliseConfig::default();
+    let prune: HashSet<String> = ["x".to_string()].into();
+    let row = |text: &str| vec![Some(text.to_string())];
+    let (held, null) = (
+        row(r#"{"a": 1, "b": {"x": 1}}"#),
+        row(r#"{"a": null, "b": {"x": 1}}"#),
+    );
+    for (a_type, null_prunes) in [(json!(["null"]), true), (json!([]), false)] {
+        let schema = schema(a_type);
+        let plan = NormalisePlan::new(&schema, &cfg, &prune);
+        let mut out_schema = schema.clone();
+        prune_schema(&mut out_schema, &prune);
+        let fields = crate::parquet::avro_record_fields(&out_schema, false).unwrap();
+        let decode = |rows: &[Option<String>]| {
+            let borrowed: Vec<Option<&str>> = rows.iter().map(Option::as_deref).collect();
+            plan.to_arrow(&fields)
+                .and_then(|p| p.normalise(&borrowed, 0))
+        };
+        assert!(typed_by_value(&held, &plan, &fields).is_err());
+        assert!(decode(&held).is_none());
+        if null_prunes {
+            let typed = decode(&null).unwrap();
+            assert_eq!(typed.1.len(), 1);
+            assert_eq!(typed, typed_by_value(&null, &plan, &fields).unwrap());
+        } else {
+            assert!(typed_by_value(&null, &plan, &fields).is_err());
+            assert!(decode(&null).is_none());
+        }
+    }
+}

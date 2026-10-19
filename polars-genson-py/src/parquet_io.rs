@@ -365,6 +365,9 @@ pub fn normalise_from_parquet(
     if typed {
         let fields = avro_record_fields(&out_schema, map_encoding == "mapping")
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
+        // Rows go straight from their text into Arrow where the plan can do that exactly,
+        // else (a batch at a time) by way of `Value`s
+        let arrow_plan = plan.to_arrow(&fields);
         // Several batches per thread so uneven row sizes still spread over the pool
         let batch_rows = json_strings
             .len()
@@ -374,6 +377,12 @@ pub fn normalise_from_parquet(
             .par_chunks(batch_rows)
             .enumerate()
             .map(|(b, chunk)| {
+                let decoded = arrow_plan
+                    .as_ref()
+                    .and_then(|p| p.normalise(chunk, b * batch_rows));
+                if let Some((array, pruned)) = decoded {
+                    return Ok((array, vec![pruned]));
+                }
                 let (rows, pruned): (Vec<_>, Vec<_>) = chunk
                     .iter()
                     .enumerate()
