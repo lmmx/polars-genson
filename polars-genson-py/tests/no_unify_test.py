@@ -12,10 +12,12 @@ OPTIONS = {"map_threshold": 0, "unify_maps": True}
 
 
 def frame():
+    """A frame of the rows in one String column `j`."""
     return pl.DataFrame({"j": ROWS})
 
 
 def test_infer_json_schema_method_matches_the_expression():
+    """The method infers the schema the expression does, with and without `no_unify`."""
     df = frame()
     for no_unify in [None, {"qualifiers"}]:
         kw = {**OPTIONS, **({"no_unify": no_unify} if no_unify else {})}
@@ -24,6 +26,7 @@ def test_infer_json_schema_method_matches_the_expression():
 
 
 def test_no_unify_keeps_the_record():
+    """A record holding a `no_unify` key is not unified into a map."""
     df = frame()
     unified = df.genson.infer_json_schema("j", **OPTIONS)["properties"]["r"]
     kept = df.genson.infer_json_schema("j", no_unify={"qualifiers"}, **OPTIONS)["properties"]["r"]
@@ -32,6 +35,7 @@ def test_no_unify_keeps_the_record():
 
 
 def test_infer_polars_schema_honours_no_unify():
+    """infer_polars_schema keeps the record as a struct of its fields."""
     df = frame()
     unified = df.genson.infer_polars_schema("j", **OPTIONS)
     kept = df.genson.infer_polars_schema("j", no_unify={"qualifiers"}, **OPTIONS)
@@ -40,6 +44,7 @@ def test_infer_polars_schema_honours_no_unify():
 
 
 def test_normalise_json_honours_no_unify():
+    """normalise_json keeps the record by the typed, schema and text routes alike."""
     df = frame()
     kept = df.genson.normalise_json("j", no_unify={"qualifiers"}, **OPTIONS)
     assert [f.name for f in kept.schema["r"].fields] == ["qualifiers", "x"]

@@ -37,6 +37,7 @@ def via_text(df: pl.DataFrame, map_encoding: str, unnest: bool, **kw) -> pl.Data
 
 
 def assert_routes_agree(rows, map_encoding="mapping", unnest=True, **kw):
+    """The typed route gives the same frame, and schema, as the JSON text route."""
     df = pl.DataFrame({"j": rows}, schema={"j": pl.String})
     typed = df.genson.normalise_json(
         "j", map_encoding=map_encoding, unnest=unnest, **kw
@@ -76,6 +77,7 @@ def random_rows(rng: random.Random, n: int) -> list[str | None]:
 @mark.parametrize("map_encoding", ["mapping", "kv"])
 @mark.parametrize("unnest", [True, False])
 def test_claims_fixture(map_encoding, unnest):
+    """Wikidata claims decode the same by either route."""
     rows = (DATA / "claims_fixture_x4.jsonl").read_text().splitlines()
     assert_routes_agree(rows, map_encoding, unnest, **WIKIDATA)
 
@@ -94,12 +96,14 @@ def test_claims_fixture(map_encoding, unnest):
     ids=["maps", "promoted scalars", "coerced strings", "empty kept", "big integer", "wrap_root", "null and empty rows"],
 )
 def test_cases(rows, kw):
+    """Each case decodes the same by either route, with either map encoding."""
     assert_routes_agree(rows, **kw)
     assert_routes_agree(rows, "kv", **kw)
 
 
 @mark.parametrize("seed", range(40))
 def test_random_rows(seed):
+    """Random rows decode the same by either route, where the text route can decode them."""
     rng = random.Random(seed)
     rows = random_rows(rng, rng.randrange(1, 60))
     kw = {"map_threshold": rng.choice([0, 2, 20]), "unify_maps": rng.random() < 0.5}
