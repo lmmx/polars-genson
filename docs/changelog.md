@@ -5,6 +5,14 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **A value where the schema types `null` normalises to `null`, so the rows decode.** A
+  record field or a list's items typed `null` (as the Avro conversion types those only
+  ever null or empty) kept any value given there as it was, though the column is
+  `Null` and cannot hold it: `normalise_json`'s output failed to decode. Such a value
+  reaches there when a union's other branch is wrapped into its first. It is now
+  `null`, as a value a field's type cannot hold is anywhere else, and the typed decoder
+  takes these rows rather than leaving them to the slower path. Output changes only
+  there: with `decode=False`, the JSON held the value; decoded, it failed.
 - **A field forced to a map keeps its values' type when it is a scalar in some rows.**
   `force_field_types={"labels": "map"}` on a field that held `{"en": "x"}` in some rows
   and `"s"` in others (or only ever `"s"`) gave a map of `null` values, as the union, the

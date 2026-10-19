@@ -21,7 +21,8 @@ pub(super) enum Plan<'s> {
     Array(Box<Plan<'s>>),
     /// A map of its values' plan
     Map(Box<Plan<'s>>),
-    /// A union holding `null`, with its first other branch: none in `["null"]`
+    /// A union holding `null`, with its first other branch: none in `["null"]`, and for
+    /// `"null"`, which holds nothing else either
     Nullable(Option<Box<Plan<'s>>>),
     /// A union without `null`, by its first branch: none in `[]`
     Union(Vec<Plan<'s>>),
@@ -54,6 +55,7 @@ impl<'s> Plan<'s> {
             Value::String(t) if t == "int" || t == "long" => Plan::Int,
             Value::String(t) if t == "double" || t == "float" => Plan::Double,
             Value::String(t) if t == "boolean" => Plan::Boolean,
+            Value::String(t) if t == "null" => Plan::Nullable(None),
             Value::Object(obj) if kind(obj) == Some("record") => {
                 Plan::Record(Record::new(obj, prune))
             }
