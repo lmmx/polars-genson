@@ -220,21 +220,68 @@ impl SchemaInferenceResult {
 /// the type `null`. Left untyped, avrotize expands them to a generic union whose first
 /// non-null branch is `boolean`, so the column became `List(Boolean)` and could not be
 /// concatenated with a batch where the array has values.
+///
+/// An untyped array in an `anyOf` with scalars instead takes their types: normalisation
+/// wraps such a scalar into the array (its first branch), so typed `null` the array held
+/// values it could not decode (`List(Null)` holding `["x"]`).
 #[cfg(feature = "avro")]
 fn type_empty_array_items_as_null(schema: &mut Value) {
     match schema {
         Value::Object(obj) => {
-            if obj.get("type").and_then(|t| t.as_str()) == Some("array")
-                && obj
-                    .get("items")
-                    .is_some_and(|i| i.as_object().is_some_and(|o| o.is_empty()))
-            {
+            if let Some(Value::Array(branches)) = obj.get_mut("anyOf") {
+                type_empty_array_items_by_scalars(branches);
+            }
+            if is_untyped_array(obj) {
                 obj.insert("items".to_string(), serde_json::json!({"type": "null"}));
             }
             obj.values_mut().for_each(type_empty_array_items_as_null);
         }
         Value::Array(arr) => arr.iter_mut().for_each(type_empty_array_items_as_null),
         _ => {}
+    }
+}
+
+#[cfg(feature = "avro")]
+fn is_untyped_array(obj: &serde_json::Map<String, Value>) -> bool {
+    obj.get("type").and_then(|t| t.as_str()) == Some("array")
+        && obj
+            .get("items")
+            .is_some_and(|i| i.as_object().is_some_and(|o| o.is_empty()))
+}
+
+/// The scalar types of an `anyOf`'s other branches (`null` aside) as the items of its
+/// untyped arrays.
+#[cfg(feature = "avro")]
+fn type_empty_array_items_by_scalars(branches: &mut [Value]) {
+    let mut scalars: Vec<Value> = Vec::new();
+    for branch in branches.iter() {
+        let types = match branch.get("type") {
+            Some(Value::String(t)) => vec![t.as_str()],
+            Some(Value::Array(ts)) => ts.iter().filter_map(Value::as_str).collect(),
+            _ => continue,
+        };
+        // Only a branch that is scalars alone: one with any other keyword is not wrapped
+        if branch.as_object().is_some_and(|o| o.len() != 1) {
+            continue;
+        }
+        for t in types {
+            let scalar = matches!(t, "string" | "integer" | "number" | "boolean");
+            if scalar && !scalars.iter().any(|s| s == t) {
+                scalars.push(Value::String(t.to_string()));
+            }
+        }
+    }
+    let items = match scalars.len() {
+        0 => return,
+        1 => serde_json::json!({"type": scalars[0]}),
+        _ => serde_json::json!({"type": scalars}),
+    };
+    for branch in branches.iter_mut() {
+        if let Some(obj) = branch.as_object_mut() {
+            if is_untyped_array(obj) {
+                obj.insert("items".to_string(), items.clone());
+            }
+        }
     }
 }
 

@@ -5,6 +5,12 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **A field that is a scalar in some rows and an empty list in the rest decodes.** Its
+  Avro schema typed the list's items `null` (the list was empty in every row), but
+  normalisation wraps the scalar into the list, so `normalise_json`'s output (`["x"]`
+  under `List(Null)`) failed to decode, whatever `empty_as_null`. Such a list's items now
+  take the scalars' types (`List(String)`, holding `["x"]`). Schemas change only there:
+  an empty list beside records, or one that is ever non-empty, is as before.
 - **A key missing from some objects is no longer required.** When a field's objects
   were merged, those holding no key in common were not counted, so a key could be
   marked required (and its Avro field non-nullable) although some rows lack it, and
