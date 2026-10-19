@@ -6,7 +6,7 @@ xxhash-rust = { workspace = true }
 
 # Optional dependencies
 arrow = { optional = true, version = "60.0.0" }
-avrotize = { optional = true, version = "0.1.1" }
+avrotize = { optional = true, version = "0.1.2" }
 crustrace = { features = ["debug"], optional = true, version = "0.1.9" }
 crustrace-mermaid = { optional = true, version = "0.1.6" }
 parquet = { optional = true, version = "60.0.0" }

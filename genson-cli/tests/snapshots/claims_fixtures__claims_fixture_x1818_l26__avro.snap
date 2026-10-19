@@ -153,9 +153,6 @@ info:
                           "string"
                         ]
                       }
-                    ],
-                    "dependencies": [
-                      "null"
                     ]
                   }
                 }

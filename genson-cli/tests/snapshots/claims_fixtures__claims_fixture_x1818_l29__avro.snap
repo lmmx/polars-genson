@@ -85,9 +85,6 @@ info:
                               "string"
                             ]
                           }
-                        ],
-                        "dependencies": [
-                          "null"
                         ]
                       }
                     },

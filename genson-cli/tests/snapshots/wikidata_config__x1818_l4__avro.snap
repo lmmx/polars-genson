@@ -389,9 +389,6 @@ info:
                                     "string"
                                   ]
                                 }
-                              ],
-                              "dependencies": [
-                                "null"
                               ]
                             }
                           },

@@ -264,9 +264,6 @@ info:
                                 "string"
                               ]
                             }
-                          ],
-                          "dependencies": [
-                            "null"
                           ]
                         }
                       ]
