@@ -1,0 +1,17 @@
+Mutants of the owned pair unification (genson-core/src/schema/map_inference/unification.rs),
+each run against test_owned_unification_matches_the_borrowed (3,000 random pairs and runs
+of 3-23 schemas: owned against borrowed, key order included). "caught" = the test fails.
+
+caught: only-a after only-b                (fields of only the schema so far placed after those of only the next)
+caught: required by either                 (a field required by one of the two kept required)
+caught: nullable type the other way round  (`[T, "null"]` for `["null", T]` where the next is the null schema)
+caught: empty arrays keep empty items      (`{"type": "array", "items": {}}` for two arrays without items)
+caught: no item promotion detour           (a scalar item among records unified the owned way, without promotion)
+caught: anyOf fields owned                 (records with `anyOf` fields unified the owned way)
+caught: wrapper unwrapped the wrong side   (`["null", X]` read as `"null"`)
+caught: only-a not nullable                (a field of only the schema so far left as it is)
+caught: map and empty record owned         (a map and an empty record unified the owned way)
+survived: empty b not a record             (equivalent: an empty record as the next schema goes the borrowed way, which gives the same schema)
+caught: compatible keeps existing type     (a nullable-compatible pair left with the existing `type`)
+caught: equal fields unified anyway        (a field equal in both unified rather than kept: `[T, "null"]` becomes `["null", T]`)
+survived: legacy items owned               (equivalent, and taken: an array in a legacy nullable wrapper unwrapped and its items moved, as the borrowed way reads them)

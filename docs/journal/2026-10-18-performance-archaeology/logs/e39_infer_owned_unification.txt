@@ -1,0 +1,28 @@
+## round 1 base
+rel7k: 0.502s cpu=0.889s hash=f28ce5092ffb26 | 0.252s cpu=0.488s hash=f28ce5092ffb26 | 0.235s cpu=0.469s hash=f28ce5092ffb26 | 0.287s cpu=0.542s hash=f28ce5092ffb26 | 0.222s cpu=0.443s hash=f28ce5092ffb26 | 
+rowsw slim: 0.050s cpu=0.106s hash=310ea3b25fcb40a4 | 0.046s cpu=0.099s hash=310ea3b25fcb40a4 | 0.049s cpu=0.102s hash=310ea3b25fcb40a4 | 0.047s cpu=0.102s hash=310ea3b25fcb40a4 | 0.059s cpu=0.121s hash=310ea3b25fcb40a4 | 
+events: 0.077s cpu=0.262s hash=e08369e68a940b8b | 0.063s cpu=0.215s hash=e08369e68a940b8b | 0.078s cpu=0.262s hash=e08369e68a940b8b | 0.070s cpu=0.245s hash=e08369e68a940b8b | 0.072s cpu=0.252s hash=e08369e68a940b8b | 
+narrow200k: 0.038s cpu=0.128s hash=9b78817e579a07f3 | 0.037s cpu=0.124s hash=9b78817e579a07f3 | 0.039s cpu=0.126s hash=9b78817e579a07f3 | 0.040s cpu=0.131s hash=9b78817e579a07f3 | 0.041s cpu=0.127s hash=9b78817e579a07f3 | 
+labels: 0.132s cpu=0.152s hash=2c69c94b09a32ef9 | 0.127s cpu=0.151s hash=2c69c94b09a32ef9 | 0.100s cpu=0.124s hash=2c69c94b09a32ef9 | 0.118s cpu=0.140s hash=2c69c94b09a32ef9 | 0.134s cpu=0.138s hash=2c69c94b09a32ef9 | 
+rows200: 4.191s cpu=12.885s hash=11b3ed7ddec9d6b1 | 2.737s cpu=6.412s hash=11b3ed7ddec9d6b1 | 2.676s cpu=6.204s hash=11b3ed7ddec9d6b1 | 2.463s cpu=5.839s hash=11b3ed7ddec9d6b1 | 2.378s cpu=5.847s hash=11b3ed7ddec9d6b1 | 
+## round 1 a
+rel7k: 0.161s cpu=0.313s hash=f28ce5092ffb26 | 0.164s cpu=0.339s hash=f28ce5092ffb26 | 0.149s cpu=0.299s hash=f28ce5092ffb26 | 0.164s cpu=0.331s hash=f28ce5092ffb26 | 0.166s cpu=0.335s hash=f28ce5092ffb26 | 
+rowsw slim: 0.042s cpu=0.095s hash=310ea3b25fcb40a4 | 0.041s cpu=0.094s hash=310ea3b25fcb40a4 | 0.040s cpu=0.089s hash=310ea3b25fcb40a4 | 0.036s cpu=0.082s hash=310ea3b25fcb40a4 | 0.050s cpu=0.099s hash=310ea3b25fcb40a4 | 
+events: 0.076s cpu=0.246s hash=e08369e68a940b8b | 0.068s cpu=0.232s hash=e08369e68a940b8b | 0.073s cpu=0.221s hash=e08369e68a940b8b | 0.063s cpu=0.214s hash=e08369e68a940b8b | 0.061s cpu=0.207s hash=e08369e68a940b8b | 
+narrow200k: 0.033s cpu=0.114s hash=9b78817e579a07f3 | 0.032s cpu=0.113s hash=9b78817e579a07f3 | 0.042s cpu=0.125s hash=9b78817e579a07f3 | 0.040s cpu=0.125s hash=9b78817e579a07f3 | 0.041s cpu=0.137s hash=9b78817e579a07f3 | 
+labels: 0.127s cpu=0.155s hash=2c69c94b09a32ef9 | 0.124s cpu=0.150s hash=2c69c94b09a32ef9 | 0.103s cpu=0.127s hash=2c69c94b09a32ef9 | 0.103s cpu=0.125s hash=2c69c94b09a32ef9 | 0.138s cpu=0.158s hash=2c69c94b09a32ef9 | 
+rows200: 2.887s cpu=7.529s hash=11b3ed7ddec9d6b1 | 2.370s cpu=5.654s hash=11b3ed7ddec9d6b1 | 2.255s cpu=5.317s hash=11b3ed7ddec9d6b1 | 2.284s cpu=5.435s hash=11b3ed7ddec9d6b1 | 2.028s cpu=4.893s hash=11b3ed7ddec9d6b1 | 
+## round 2 base
+rel7k: 0.173s cpu=0.364s hash=f28ce5092ffb26 | 0.172s cpu=0.365s hash=f28ce5092ffb26 | 0.206s cpu=0.393s hash=f28ce5092ffb26 | 0.192s cpu=0.407s hash=f28ce5092ffb26 | 0.186s cpu=0.405s hash=f28ce5092ffb26 | 
+rowsw slim: 0.040s cpu=0.089s hash=310ea3b25fcb40a4 | 0.041s cpu=0.087s hash=310ea3b25fcb40a4 | 0.042s cpu=0.098s hash=310ea3b25fcb40a4 | 0.041s cpu=0.097s hash=310ea3b25fcb40a4 | 0.040s cpu=0.096s hash=310ea3b25fcb40a4 | 
+events: 0.064s cpu=0.205s hash=e08369e68a940b8b | 0.064s cpu=0.220s hash=e08369e68a940b8b | 0.064s cpu=0.221s hash=e08369e68a940b8b | 0.075s cpu=0.234s hash=e08369e68a940b8b | 0.059s cpu=0.212s hash=e08369e68a940b8b | 
+narrow200k: 0.036s cpu=0.118s hash=9b78817e579a07f3 | 0.033s cpu=0.117s hash=9b78817e579a07f3 | 0.040s cpu=0.117s hash=9b78817e579a07f3 | 0.037s cpu=0.112s hash=9b78817e579a07f3 | 0.038s cpu=0.120s hash=9b78817e579a07f3 | 
+labels: 0.103s cpu=0.128s hash=2c69c94b09a32ef9 | 0.110s cpu=0.130s hash=2c69c94b09a32ef9 | 0.113s cpu=0.136s hash=2c69c94b09a32ef9 | 0.114s cpu=0.138s hash=2c69c94b09a32ef9 | 0.114s cpu=0.139s hash=2c69c94b09a32ef9 | 
+rows200: 3.033s cpu=8.208s hash=11b3ed7ddec9d6b1 | 2.412s cpu=5.691s hash=11b3ed7ddec9d6b1 | 2.383s cpu=5.542s hash=11b3ed7ddec9d6b1 | 2.324s cpu=5.327s hash=11b3ed7ddec9d6b1 | 2.220s cpu=5.224s hash=11b3ed7ddec9d6b1 | 
+## round 2 a
+rel7k: 0.167s cpu=0.331s hash=f28ce5092ffb26 | 0.166s cpu=0.328s hash=f28ce5092ffb26 | 0.195s cpu=0.393s hash=f28ce5092ffb26 | 0.181s cpu=0.332s hash=f28ce5092ffb26 | 0.243s cpu=0.482s hash=f28ce5092ffb26 | 
+rowsw slim: 0.039s cpu=0.084s hash=310ea3b25fcb40a4 | 0.049s cpu=0.095s hash=310ea3b25fcb40a4 | 0.037s cpu=0.083s hash=310ea3b25fcb40a4 | 0.034s cpu=0.071s hash=310ea3b25fcb40a4 | 0.036s cpu=0.076s hash=310ea3b25fcb40a4 | 
+events: 0.072s cpu=0.241s hash=e08369e68a940b8b | 0.070s cpu=0.212s hash=e08369e68a940b8b | 0.056s cpu=0.192s hash=e08369e68a940b8b | 0.058s cpu=0.197s hash=e08369e68a940b8b | 0.067s cpu=0.207s hash=e08369e68a940b8b | 
+narrow200k: 0.043s cpu=0.137s hash=9b78817e579a07f3 | 0.041s cpu=0.133s hash=9b78817e579a07f3 | 0.038s cpu=0.131s hash=9b78817e579a07f3 | 0.034s cpu=0.115s hash=9b78817e579a07f3 | 0.041s cpu=0.138s hash=9b78817e579a07f3 | 
+labels: 0.115s cpu=0.143s hash=2c69c94b09a32ef9 | 0.112s cpu=0.137s hash=2c69c94b09a32ef9 | 0.114s cpu=0.138s hash=2c69c94b09a32ef9 | 0.115s cpu=0.141s hash=2c69c94b09a32ef9 | 0.110s cpu=0.132s hash=2c69c94b09a32ef9 | 
+rows200: 3.005s cpu=8.157s hash=11b3ed7ddec9d6b1 | 2.404s cpu=5.546s hash=11b3ed7ddec9d6b1 | 2.350s cpu=5.313s hash=11b3ed7ddec9d6b1 | 2.137s cpu=5.050s hash=11b3ed7ddec9d6b1 | 2.408s cpu=5.583s hash=11b3ed7ddec9d6b1 | 
