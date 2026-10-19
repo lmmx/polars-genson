@@ -1,0 +1,80 @@
+Ir                       file:function
+--------------------------------------------------------------------------------
+20,897,007,926 (153.0%)  genson-core/src/schema/map_inference/unification.rs:genson_core::schema::map_inference::unification::unify_field_schemas_parallel'2 
+20,738,201,090 (151.8%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon_core::join::join::call<core::option::Option<serde_json::value::Value>, genson_core::schema::map_infere
+20,738,124,930 (151.8%)  genson-core/src/schema/map_inference/unification.rs:rayon_core::join::join_context::<rayon_core::join::join::call<core::option::Option<serde_json::value::Value>, genson_core::
+15,499,338,505 (113.5%)  rayon-core-1.13.0/src/registry.rs:genson_core::schema::map_inference::unification::unify_field_schemas_parallel'2
+12,430,391,043 (91.02%)  ./nptl/./nptl/pthread_create.c:start_thread 
+12,430,390,280 (91.02%)  std/src/sys/thread/unix.rs:<std::sys::thread::unix::Thread>::new::thread_start 
+12,430,386,987 (91.02%)  alloc/src/boxed.rs:<std::sys::thread::unix::Thread>::new::thread_start
+12,430,386,985 (91.02%)  core/src/ops/function.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closure#
+12,430,386,958 (91.02%)  std/src/thread/lifecycle.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closu
+12,430,386,392 (91.02%)  std/src/sys/backtrace.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>
+12,430,386,391 (91.02%)  rayon-core-1.13.0/src/registry.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closur
+12,430,386,390 (91.02%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::ThreadBuilder>::run 
+12,430,379,792 (91.02%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::WorkerThread>::wait_until_cold 
+12,430,289,630 (91.02%)  rayon-core-1.13.0/src/job.rs:<rayon_core::registry::WorkerThread>::wait_until_cold
+11,221,204,819 (82.16%)  serde_json-1.0.145/src/value/ser.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>>'2 
+ 9,869,644,438 (72.27%)  serde_core-1.0.228/src/ser/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value>'2
+ 9,633,434,587 (70.54%)  serde_json-1.0.145/src/ser.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>>'2
+ 9,429,762,740 (69.05%)  serde_core-1.0.228/src/ser/impls.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>'2 
+ 8,828,775,530 (64.64%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2 
+ 8,681,931,801 (63.57%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb'2 
+ 8,657,109,120 (63.39%)  serde_json-1.0.145/src/value/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value>
+ 8,552,727,220 (62.62%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::sli
+ 8,552,726,020 (62.62%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon:
+ 8,552,725,882 (62.62%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::str
+ 8,512,993,012 (62.33%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::node::SchemaNode>::add_object'2
+ 8,455,432,314 (61.91%)  serde_json-1.0.145/src/value/ser.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>'2
+ 8,106,530,079 (59.36%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_strategy'2 
+ 8,022,871,387 (58.74%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb'2 
+ 6,735,719,676 (49.32%)  genson-core/src/schema/map_inference/unification.rs:genson_core::schema::map_inference::unification::check_unifiable_schemas'2 
+ 6,544,616,537 (47.92%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc
+ 6,352,209,040 (46.51%)  genson-core/src/schema/map_inference/unification.rs:genson_core::schema::map_inference::unification::check_unifiable_schemas 
+ 5,927,101,733 (43.40%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::add_object'2
+ 5,811,302,823 (42.55%)  genson-core/src/schema/map_inference/unification.rs:genson_core::schema::map_inference::unification::unify_field_schemas_parallel 
+ 5,688,686,669 (41.65%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon_core::join::join::call<core::option::Option<serde_json::value::Value>, genson_core::schema::map_infere
+ 5,688,684,429 (41.65%)  genson-core/src/schema/map_inference/unification.rs:rayon_core::join::join_context::<rayon_core::join::join::call<core::option::Option<serde_json::value::Value>, genson_core::
+ 5,686,305,852 (41.64%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::absorb'2
+ 5,529,800,885 (40.49%)  rayon-core-1.13.0/src/job.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_core:
+ 5,529,800,329 (40.49%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_
+ 5,397,752,602 (39.52%)  rayon-core-1.13.0/src/registry.rs:genson_core::schema::map_inference::unification::unify_field_schemas_parallel
+ 5,241,523,481 (38.38%)  genson-core/src/schema/map_inference/unification.rs:genson_core::schema::map_inference::unification::unify_field_schemas_sequential 
+ 5,194,552,089 (38.03%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value>'2 
+ 5,088,141,454 (37.26%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::genson_
+ 5,088,082,089 (37.26%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::vec::DrainProducer<(&mut genson_core::gen
+ 4,376,046,005 (32.04%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2 
+ 4,318,476,795 (31.62%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2 
+ 4,276,364,625 (31.31%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::str
+ 4,276,364,600 (31.31%)  rayon-core-1.13.0/src/job.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_core:
+ 4,276,364,489 (31.31%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_
+ 4,276,364,466 (31.31%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::sli
+ 4,276,364,334 (31.31%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string:
+ 4,276,364,266 (31.31%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon:
+ 4,276,363,213 (31.31%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string:
+ 4,276,275,192 (31.31%)  genson-core/src/schema.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<alloc::string::String>
+ 4,198,146,687 (30.74%)  genson-core/src/genson_rs/strategy/object.rs:genson_core::genson_rs::strategy::object::absorb_properties'2 
+ 3,671,229,002 (26.88%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::to_schema'2 
+ 3,559,443,247 (26.06%)  genson-core/src/genson_rs/strategy/mod.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema'2 
+ 3,471,012,172 (25.41%)  genson-core/src/schema/map_inference/unification.rs:genson_core::schema::map_inference::unification::unify_field_schemas 
+ 3,280,350,798 (24.02%)  genson-core/src/genson_rs/strategy/object.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode
+ 3,264,090,425 (23.90%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(&mut genson_core::genson_rs::node::SchemaNode, alloc::ve
+ 3,057,082,164 (22.38%)  genson-core/src/schema/map_inference/unification.rs:genson_core::schema::map_inference::unification::unify_field_schemas_sequential'2 
+ 2,904,654,677 (21.27%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value> as core::clone::Clone>::clone'2 
+ 2,791,859,125 (20.44%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_json_schema_into 
+ 2,791,857,565 (20.44%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_multi_json_objects_schema 
+ 2,791,844,647 (20.44%)  rayon-1.11.0/src/iter/plumbing/mod.rs:genson_core::genson_rs::build_multi_json_objects_schema
+ 2,791,844,567 (20.44%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json
+ 2,778,069,977 (20.34%)  alloc/src/vec/mod.rs:<alloc::vec::Vec<serde_json::value::Value>>::extend_desugared::<core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<indexmap::map::iter::Ite
+ 2,777,783,595 (20.34%)  genson-core/src/schema/map_inference/unification.rs:<alloc::vec::Vec<serde_json::value::Value>>::extend_desugared::<core::iter::adapters::GenericShunt<core::iter::adapters::ma
+ 2,542,078,644 (18.61%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::BasicSchemaStrategy>::hash_schema::<xxhash_rust::xxh64::Xxh64>'2
+ 2,431,280,001 (17.80%)  rayon-1.11.0/src/split_producer.rs:<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema::{closure#0}, &mut > as rayon::iter::plumbing:
+ 2,431,278,681 (17.80%)  rayon-1.11.0/src/iter/fold.rs:<rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt_re
+ 2,431,276,601 (17.80%)  genson-core/src/genson_rs/mod.rs:<rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt
+ 2,431,275,761 (17.80%)  genson-core/src/genson_rs/mod.rs:genson_core::genson_rs::build_single_json_object_schema 
+ 2,336,089,090 (17.10%)  genson-core/src/genson_rs/strategy/object.rs:<genson_core::genson_rs::strategy::object::ObjectStrategy as genson_core::genson_rs::strategy::base::SchemaStrategy>::to_schema'2 
+ 2,236,018,303 (16.37%)  genson-core/src/genson_rs/node.rs:<genson_core::genson_rs::node::SchemaNode>::absorb_all'2 
+ 2,215,913,737 (16.23%)  serde_core-1.0.228/src/ser/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value> 
+ 2,181,986,522 (15.98%)  serde_json-1.0.145/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value> as core::clone::Clone>::clone'2
+ 2,132,061,634 (15.61%)  serde_core-1.0.228/src/ser/impls.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer> 
+ 2,128,453,757 (15.58%)  serde_json-1.0.145/src/value/mod.rs:<serde_json::value::ser::SerializeMap as serde_core::ser::SerializeMap>::serialize_entry::<alloc::string::String, serde_json::value::Value>

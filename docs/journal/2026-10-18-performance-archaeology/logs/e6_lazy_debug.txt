@@ -1,0 +1,12 @@
+[time r1] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[time r1]   rewrite_objects        warm wall=0.427 user=0.990 sys=0.102 faults=5,094   cold 0.4048s
+[time r1]   total                  warm wall=2.095 user=5.071 sys=1.308 faults=143,369   cold 3.138s
+[lazydbg r1] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[lazydbg r1]   rewrite_objects        warm wall=0.309 user=0.763 sys=0.092 faults=6,051   cold 0.3698s
+[lazydbg r1]   total                  warm wall=1.933 user=4.944 sys=1.249 faults=141,471   cold 2.493s
+[time r2] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[time r2]   rewrite_objects        warm wall=0.438 user=0.980 sys=0.109 faults=7,179   cold 0.4172s
+[time r2]   total                  warm wall=2.067 user=5.055 sys=1.472 faults=149,401   cold 1.637s
+[lazydbg r2] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[lazydbg r2]   rewrite_objects        warm wall=0.341 user=0.804 sys=0.104 faults=6,875   cold 0.3107s
+[lazydbg r2]   total                  warm wall=1.789 user=4.845 sys=0.803 faults=140,629   cold 2.521s

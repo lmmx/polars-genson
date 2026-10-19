@@ -1,0 +1,60 @@
+Ir                      file:function
+--------------------------------------------------------------------------------
+5,298,693,237 (481.5%)  serde_json-1.0.145/src/value/de.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2 
+4,470,547,537 (406.2%)  serde_core-1.0.228/src/de/mod.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2
+1,001,252,650 (90.98%)  ./nptl/./nptl/pthread_create.c:start_thread 
+1,001,251,887 (90.98%)  std/src/sys/thread/unix.rs:<std::sys::thread::unix::Thread>::new::thread_start 
+1,001,248,594 (90.98%)  alloc/src/boxed.rs:<std::sys::thread::unix::Thread>::new::thread_start
+1,001,248,592 (90.98%)  core/src/ops/function.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closure#1
+1,001,248,565 (90.98%)  std/src/thread/lifecycle.rs:<std::thread::lifecycle::spawn_unchecked<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()>::{closur
+1,001,247,999 (90.98%)  std/src/sys/backtrace.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure#0}, ()> 
+1,001,247,998 (90.98%)  rayon-core-1.13.0/src/registry.rs:std::sys::backtrace::__rust_begin_short_backtrace::<<rayon_core::registry::DefaultSpawn as rayon_core::registry::ThreadSpawn>::spawn::{closure
+1,001,247,997 (90.98%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::ThreadBuilder>::run 
+1,001,191,980 (90.97%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::registry::WorkerThread>::wait_until_cold 
+1,001,182,004 (90.97%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<core::option::Option<alloc::string::String>
+1,001,181,981 (90.97%)  rayon-core-1.13.0/src/job.rs:<rayon_core::registry::WorkerThread>::wait_until_cold
+1,001,181,979 (90.97%)  rayon-core-1.13.0/src/job.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_core::
+1,001,181,868 (90.97%)  rayon-core-1.13.0/src/registry.rs:<rayon_core::job::StackJob<rayon_core::latch::LatchRef<rayon_core::latch::LockLatch>, <rayon_core::registry::Registry>::in_worker_cold<rayon_c
+1,001,181,845 (90.97%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<core::option::Op
+1,001,181,713 (90.97%)  rayon-core-1.13.0/src/registry.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<core::option::Option<alloc::string::String>>, r
+1,001,181,645 (90.97%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<core::option
+1,001,181,410 (90.97%)  rayon-core-1.13.0/src/join/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<core::option::Op
+1,001,181,010 (90.97%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<core::option
+1,001,180,964 (90.97%)  rayon-1.11.0/src/iter/plumbing/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<core::option::Option<alloc::string::String>
+1,001,176,289 (90.97%)  core/src/iter/adapters/mod.rs:<core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<core::option::Option<alloc::string::String>>, genson_co
+  831,302,989 (75.53%)  serde_json-1.0.145/src/de.rs:<core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<core::option::Option<alloc::string::String>>, genson_cor
+  831,302,789 (75.53%)  serde_json-1.0.145/src/value/de.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>> 
+  830,400,748 (75.45%)  serde_core-1.0.228/src/de/mod.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>
+  815,957,455 (74.14%)  genson-core/src/extract.rs:genson_core::extract::strip'2 
+  641,829,585 (58.32%)  serde_json-1.0.145/src/de.rs:<serde_json::de::MapAccess<serde_json::read::StrRead> as serde_core::de::MapAccess>::next_value_seed::<core::marker::PhantomData<serde_json::value:
+  641,710,377 (58.31%)  serde_core-1.0.228/src/de/mod.rs:<serde_json::de::MapAccess<serde_json::read::StrRead> as serde_core::de::MapAccess>::next_value_seed::<core::marker::PhantomData<serde_json::va
+  613,263,822 (55.72%)  alloc/src/vec/mod.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<core::option::Option<alloc::string::String>>, rayon::iter::m
+  468,131,127 (42.54%)  serde_json-1.0.145/src/de.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2
+  422,968,712 (38.43%)  serde_json-1.0.145/src/read.rs:<serde_json::read::StrRead as serde_json::read::Read>::parse_str 
+  387,912,835 (35.25%)  alloc/src/vec/spec_from_iter_nested.rs:rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<core::option::Option<alloc::string::String
+  233,608,154 (21.23%)  indexmap-2.14.2/src/map.rs:<serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::StrRead>>'2
+  226,472,044 (20.58%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::insert_full 
+  181,400,060 (16.48%)  serde_json-1.0.145/src/read.rs:serde_json::read::parse_unicode_escape::<serde_json::read::SliceRead> 
+  180,930,054 (16.44%)  genson-core/src/extract.rs:<genson_core::extract::Lookup>::insert 
+  162,689,632 (14.78%)  genson-core/src/extract.rs:<core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<core::option::Option<alloc::string::String>>, genson_core:
+  159,981,582 (14.54%)  genson-core/src/extract.rs:genson_core::extract::strip 
+  154,650,272 (14.05%)  core/src/hash/mod.rs:<std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&alloc::string::String> 
+  131,067,468 (11.91%)  core/src/cmp.rs:<genson_core::extract::Lookup>::insert
+  131,049,313 (11.91%)  serde_json-1.0.145/src/value/mod.rs:<serde_json::value::Value as core::cmp::PartialEq>::eq 
+  127,570,355 (11.59%)  indexmap-2.14.2/src/map.rs:<serde_json::value::Value as core::cmp::PartialEq>::eq
+  106,516,118 ( 9.68%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::get_index_of::<alloc::string::String> 
+   99,307,837 ( 9.02%)  ???:0x000000000001f540 
+   98,974,492 ( 8.99%)  ???:(below main) 
+   98,974,480 ( 8.99%)  ./csu/../csu/libc-start.c:__libc_start_main@@GLIBC_2.34 
+   98,519,744 ( 8.95%)  ./csu/../sysdeps/nptl/libc_start_call_main.h:(below main) 
+   98,492,173 ( 8.95%)  ???:main 
+   98,492,161 ( 8.95%)  std/src/rt.rs:std::rt::lang_start_internal 
+   98,381,598 ( 8.94%)  core/src/ops/function.rs:std::rt::lang_start_internal
+   98,381,597 ( 8.94%)  std/src/rt.rs:std::rt::lang_start::<()>::{closure#0} 
+   98,381,591 ( 8.94%)  std/src/sys/backtrace.rs:std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> 
+   98,381,588 ( 8.94%)  core/src/ops/function.rs:std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+   98,381,587 ( 8.94%)  genson-core/examples/bench_extract.rs:bench_extract::main 
+   68,394,814 ( 6.21%)  core/src/hash/sip.rs:<core::hash::sip::Hasher<core::hash::sip::Sip13Rounds> as core::hash::Hasher>::write 
+   65,614,196 ( 5.96%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value> 
+   63,684,660 ( 5.79%)  core/src/hash/sip.rs:<std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&alloc::string::String>
+   63,319,600 ( 5.75%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms 

@@ -1,0 +1,20 @@
+[time r1] slim200.ndjson W: 1 process(es) x 6 runs; output hashes {'65df34683ec8d758'}
+[time r1]   chunk.parallel         warm wall=0.027 user=0.080 sys=0.014 faults=916   cold 0.11s
+[time r1]   chunk.merge            warm wall=0.040 user=0.149 sys=0.001 faults=15   cold 0.0426s
+[time r1]   rewrite_objects        warm wall=0.023 user=0.050 sys=0.004   cold 0.0377s
+[time r1]   total                  warm wall=0.097 user=0.294 sys=0.016 faults=935   cold 0.229s
+[fold r1] slim200.ndjson W: 1 process(es) x 6 runs; output hashes {'65df34683ec8d758'}
+[fold r1]   chunk.parallel         warm wall=0.086 user=0.225 sys=0.016 faults=1,490   cold 0.0677s
+[fold r1]   chunk.merge            warm wall=0.000 user=0.000 sys=0.000   cold 0s
+[fold r1]   rewrite_objects        warm wall=0.029 user=0.053 sys=0.015 faults=7   cold 0.0331s
+[fold r1]   total                  warm wall=0.127 user=0.288 sys=0.030 faults=2,259   cold 0.115s
+[time r2] slim200.ndjson W: 1 process(es) x 6 runs; output hashes {'65df34683ec8d758'}
+[time r2]   chunk.parallel         warm wall=0.027 user=0.083 sys=0.008 faults=1,262   cold 0.0363s
+[time r2]   chunk.merge            warm wall=0.041 user=0.154 sys=0.000 faults=19   cold 0.0358s
+[time r2]   rewrite_objects        warm wall=0.025 user=0.049 sys=0.009   cold 0.0234s
+[time r2]   total                  warm wall=0.106 user=0.301 sys=0.017 faults=1,294   cold 0.1099s
+[fold r2] slim200.ndjson W: 1 process(es) x 6 runs; output hashes {'65df34683ec8d758'}
+[fold r2]   chunk.parallel         warm wall=0.088 user=0.219 sys=0.004 faults=219   cold 0.0717s
+[fold r2]   chunk.merge            warm wall=0.000 user=0.000 sys=0.000   cold 0s
+[fold r2]   rewrite_objects        warm wall=0.029 user=0.060 sys=0.008   cold 0.0309s
+[fold r2]   total                  warm wall=0.127 user=0.299 sys=0.011 faults=219   cold 0.1167s

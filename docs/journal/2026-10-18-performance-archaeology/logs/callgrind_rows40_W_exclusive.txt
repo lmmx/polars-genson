@@ -1,0 +1,40 @@
+Ir                    file:function
+--------------------------------------------------------------------------------
+998,089,755 ( 7.31%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms 
+642,003,708 ( 4.70%)  serde_json-1.0.145/src/ser.rs:<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>> as serde_core::ser::Serializer>::serialize_str 
+481,174,523 ( 3.52%)  serde_json-1.0.145/src/read.rs:<serde_json::read::SliceRead as serde_json::read::Read>::ignore_str 
+470,406,320 ( 3.44%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_zero_aligned_at 
+386,908,954 ( 2.83%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/include/mimalloc/internal.h:mi_free
+338,440,858 ( 2.48%)  core/src/hash/sip.rs:<core::hash::sip::Hasher<core::hash::sip::Sip13Rounds> as core::hash::Hasher>::write 
+334,994,621 ( 2.45%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value>'2 
+280,028,986 ( 2.05%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/free.c:mi_free 
+262,515,275 ( 1.92%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc.c:_mi_page_malloc 
+244,831,425 ( 1.79%)  simd-json-0.17.0/src/impls/avx2/deser.rs:simd_json::impls::avx2::deser::parse_str 
+244,355,171 ( 1.79%)  serde_json-1.0.145/src/value/ser.rs:<serde_json::value::Value as serde_core::ser::Serialize>::serialize::<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>>>'2 
+218,320,459 ( 1.60%)  ./string/../sysdeps/x86_64/multiarch/memcmp-avx2-movbe.S:__memcmp_avx2_movbe 
+176,728,625 ( 1.29%)  simd-json-0.17.0/src/charutils.rs:simd_json::stringparse::handle_unicode_codepoint
+163,009,911 ( 1.19%)  xxhash-rust-0.8.15/src/xxh64.rs:<xxhash_rust::xxh64::Xxh64>::update 
+154,437,618 ( 1.13%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_malloc_aligned 
+150,232,343 ( 1.10%)  core/src/slice/iter/macros.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_sc
+134,302,015 ( 0.98%)  alloc/src/raw_vec/mod.rs:<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>> as serde_core::ser::Serializer>::serialize_str
+134,047,102 ( 0.98%)  alloc/src/vec/mod.rs:<&mut serde_json::ser::Serializer<&mut alloc::vec::Vec<u8>> as serde_core::ser::Serializer>::serialize_str
+130,490,208 ( 0.96%)  core/src/hash/sip.rs:<std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&alloc::string::String>
+127,699,830 ( 0.94%)  core/src/slice/memchr.rs:<core::str::iter::SplitInternal<char>>::next_inclusive
+120,185,661 ( 0.88%)  core/src/ptr/non_null.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema:
+119,205,641 ( 0.87%)  alloc/src/raw_vec/mod.rs:<alloc::raw_vec::RawVecInner>::finish_grow 
+106,485,537 ( 0.78%)  serde_json-1.0.145/src/value/ser.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>'2
+100,440,250 ( 0.74%)  indexmap-2.14.2/src/map.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::insert_full 
+ 98,519,203 ( 0.72%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/include/mimalloc/internal.h:mi_heap_malloc_zero_aligned_at
+ 90,192,367 ( 0.66%)  core/src/ptr/mod.rs:core::ptr::drop_glue::<serde_json::value::Value> 
+ 90,139,162 ( 0.66%)  genson-core/src/genson_rs/mod.rs:rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects
+ 86,993,472 ( 0.64%)  core/src/intrinsics/mod.rs:<std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&alloc::string::String>
+ 83,570,370 ( 0.61%)  simd-json-0.17.0/src/lib.rs:<simd_json::Deserializer>::_find_structural_bits::<simd_json::impls::avx2::stage1::SimdInput> 
+ 82,711,163 ( 0.61%)  core/src/slice/memchr.rs:<core::iter::adapters::map::Map<core::iter::adapters::take::Take<std::io::Lines<std::io::buffered::bufreader::BufReader<std::fs::File>>>, <core::result::
+ 79,756,092 ( 0.58%)  serde_json-1.0.145/src/read.rs:genson_core::schema::validate_json
+ 79,406,476 ( 0.58%)  serde_core-1.0.228/src/ser/impls.rs:<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>'2 
+ 77,218,809 ( 0.57%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned 
+ 77,218,809 ( 0.57%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/alloc-aligned.c:mi_heap_malloc_aligned_at 
+ 76,386,353 ( 0.56%)  indexmap-2.14.2/src/inner.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::insert_full
+ 75,219,393 ( 0.55%)  simd-json-0.17.0/src/stage2.rs:<simd_json::Deserializer>::from_slice_with_buffers
+ 73,270,102 ( 0.54%)  libmimalloc-sys-0.1.44/c_src/mimalloc/v2/src/page.c:_mi_malloc_generic 
+ 73,086,420 ( 0.54%)  hashbrown-0.17.1/src/raw.rs:<indexmap::map::IndexMap<alloc::string::String, serde_json::value::Value>>::insert_full

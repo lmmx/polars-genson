@@ -1,0 +1,26 @@
+# run_acct.py, bench_claims no-count; time = master 36198dd, listseq = + proto_list_seq.py; warm median of runs 2-4 per process, 3 processes alternating
+# arrays: rows200 32,403 under 10 items, 120 of 10 or more (3,742 items); slim200 the same; labels none; narrow200k 200,000 under 10
+[time rows200 W r1] output hashes {'ab63cbfae2d3dbf7'} total                  warm wall=2.124 user=5.454 sys=1.660
+[time rows200 D r1] output hashes {'b044387a11c95954'} total                  warm wall=1.523 user=4.455 sys=0.719
+[time labels D r1] output hashes {'22f8e5cfb8ce1ca5'} total                  warm wall=0.151 user=0.495 sys=0.013
+[time narrow200k D r1] output hashes {'c5e9db34b114ce53'} total                  warm wall=0.943 user=2.141 sys=0.584
+[listseq rows200 W r1] output hashes {'ab63cbfae2d3dbf7'} total                  warm wall=2.094 user=5.294 sys=1.002
+[listseq rows200 D r1] output hashes {'b044387a11c95954'} total                  warm wall=1.279 user=3.882 sys=0.626
+[listseq labels D r1] output hashes {'22f8e5cfb8ce1ca5'} total                  warm wall=0.150 user=0.489 sys=0.010
+[listseq narrow200k D r1] output hashes {'c5e9db34b114ce53'} total                  warm wall=0.921 user=2.003 sys=0.482
+[time rows200 W r2] output hashes {'ab63cbfae2d3dbf7'} total                  warm wall=2.312 user=5.210 sys=1.580
+[time rows200 D r2] output hashes {'b044387a11c95954'} total                  warm wall=1.526 user=4.194 sys=0.663
+[time labels D r2] output hashes {'22f8e5cfb8ce1ca5'} total                  warm wall=0.176 user=0.598 sys=0.008
+[time narrow200k D r2] output hashes {'c5e9db34b114ce53'} total                  warm wall=0.962 user=2.000 sys=0.579
+[listseq rows200 W r2] output hashes {'ab63cbfae2d3dbf7'} total                  warm wall=2.329 user=5.274 sys=1.778
+[listseq rows200 D r2] output hashes {'b044387a11c95954'} total                  warm wall=1.503 user=4.090 sys=0.870
+[listseq labels D r2] output hashes {'22f8e5cfb8ce1ca5'} total                  warm wall=0.164 user=0.512 sys=0.015
+[listseq narrow200k D r2] output hashes {'c5e9db34b114ce53'} total                  warm wall=1.007 user=2.190 sys=0.550
+[time rows200 W r3] output hashes {'ab63cbfae2d3dbf7'} total                  warm wall=2.093 user=5.499 sys=0.813
+[time rows200 D r3] output hashes {'b044387a11c95954'} total                  warm wall=1.542 user=4.559 sys=0.777
+[time labels D r3] output hashes {'22f8e5cfb8ce1ca5'} total                  warm wall=0.135 user=0.463 sys=0.011
+[time narrow200k D r3] output hashes {'c5e9db34b114ce53'} total                  warm wall=0.934 user=2.238 sys=0.474
+[listseq rows200 W r3] output hashes {'ab63cbfae2d3dbf7'} total                  warm wall=1.797 user=4.739 sys=1.004
+[listseq rows200 D r3] output hashes {'b044387a11c95954'} total                  warm wall=1.656 user=4.581 sys=0.978
+[listseq labels D r3] output hashes {'22f8e5cfb8ce1ca5'} total                  warm wall=0.176 user=0.601 sys=0.016
+[listseq narrow200k D r3] output hashes {'c5e9db34b114ce53'} total                  warm wall=0.909 user=2.024 sys=0.500

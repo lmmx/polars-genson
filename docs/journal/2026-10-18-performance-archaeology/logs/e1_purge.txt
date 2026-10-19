@@ -1,0 +1,48 @@
+[purge=default] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[purge=default]   chunk.parallel         warm wall=0.808 user=2.292 sys=0.636 faults=150,761   cold 1.802s
+[purge=default]   chunk.merge            warm wall=0.476 user=1.792 sys=0.051 faults=675   cold 0.521s
+[purge=default]   to_schema              warm wall=0.155 user=0.111 sys=0.036 faults=7,932   cold 0.5501s
+[purge=default]   preprocess_force       warm wall=0.010 user=0.010 sys=0.000   cold 0.014s
+[purge=default]   rewrite_objects        warm wall=0.427 user=1.040 sys=0.110 faults=7,715   cold 0.4204s
+[purge=default]   total                  warm wall=1.987 user=5.173 sys=0.871 faults=166,900   cold 3.347s
+[purge=default]   process: minor faults 829,101, major 0, user 26.83s, sys 10.48s, peak RSS 1223 MB
+[purge=-1] rows200.ndjson W: 1 process(es) x 5 runs; output hashes {'ab63cbfae2d3dbf7'}
+[purge=-1]   chunk.parallel         warm wall=0.624 user=2.224 sys=0.059 faults=5   cold 1.076s
+[purge=-1]   chunk.merge            warm wall=0.414 user=1.590 sys=0.001 faults=2   cold 0.4385s
+[purge=-1]   to_schema              warm wall=0.094 user=0.093 sys=0.000   cold 0.6042s
+[purge=-1]   preprocess_force       warm wall=0.012 user=0.010 sys=0.000   cold 0.0139s
+[purge=-1]   rewrite_objects        warm wall=0.403 user=0.971 sys=0.028 faults=1   cold 0.5021s
+[purge=-1]   total                  warm wall=1.597 user=4.997 sys=0.087 faults=8   cold 2.673s
+[purge=-1]   process: minor faults 886, major 0, user 25.11s, sys 2.89s, peak RSS 1350 MB
+[purge=default] rows200.ndjson D: 1 process(es) x 5 runs; output hashes {'b044387a11c95954'}
+[purge=default]   chunk.parallel         warm wall=0.732 user=2.148 sys=0.611 faults=182,062   cold 0.6689s
+[purge=default]   chunk.merge            warm wall=0.486 user=1.704 sys=0.046 faults=779   cold 0.4668s
+[purge=default]   to_schema              warm wall=0.118 user=0.095 sys=0.024 faults=5,796   cold 0.1249s
+[purge=default]   preprocess_force       warm wall=0.010 user=0.010 sys=0.000   cold 0.0086s
+[purge=default]   rewrite_objects        warm wall=0.042 user=0.100 sys=0.051 faults=41   cold 0.0548s
+[purge=default]   total                  warm wall=1.438 user=4.149 sys=0.765 faults=188,682   cold 1.364s
+[purge=default]   process: minor faults 874,807, major 0, user 20.69s, sys 3.71s, peak RSS 1244 MB
+[purge=-1] rows200.ndjson D: 1 process(es) x 5 runs; output hashes {'b044387a11c95954'}
+[purge=-1]   chunk.parallel         warm wall=0.631 user=2.207 sys=0.066 faults=5   cold 0.622s
+[purge=-1]   chunk.merge            warm wall=0.430 user=1.646 sys=0.001 faults=0   cold 0.4269s
+[purge=-1]   to_schema              warm wall=0.117 user=0.094 sys=0.000   cold 0.6222s
+[purge=-1]   preprocess_force       warm wall=0.010 user=0.010 sys=0.000   cold 0.0086s
+[purge=-1]   rewrite_objects        warm wall=0.019 user=0.071 sys=0.000   cold 0.0167s
+[purge=-1]   total                  warm wall=1.274 user=4.027 sys=0.091 faults=6   cold 1.734s
+[purge=-1]   process: minor faults 882, major 0, user 20.43s, sys 1.29s, peak RSS 1352 MB
+[purge=default] narrow200k.ndjson D: 1 process(es) x 5 runs; output hashes {'c5e9db34b114ce53'}
+[purge=default]   chunk.parallel         warm wall=0.501 user=1.319 sys=0.289 faults=56   cold 0.4933s
+[purge=default]   chunk.merge            warm wall=0.000 user=0.001 sys=0.000 faults=2   cold 0.0005s
+[purge=default]   to_schema              warm wall=0.000 user=0.000 sys=0.000   cold 0s
+[purge=default]   preprocess_force       warm wall=0.000 user=0.000 sys=0.000   cold 0s
+[purge=default]   rewrite_objects        warm wall=0.000 user=0.000 sys=0.000   cold 0s
+[purge=default]   total                  warm wall=0.907 user=2.102 sys=0.479 faults=60   cold 0.915s
+[purge=default]   process: minor faults 545, major 0, user 10.49s, sys 2.45s, peak RSS 48 MB
+[purge=-1] narrow200k.ndjson D: 1 process(es) x 5 runs; output hashes {'c5e9db34b114ce53'}
+[purge=-1]   chunk.parallel         warm wall=0.591 user=1.413 sys=0.332 faults=0   cold 0.5342s
+[purge=-1]   chunk.merge            warm wall=0.001 user=0.001 sys=0.000   cold 0.0006s
+[purge=-1]   to_schema              warm wall=0.000 user=0.000 sys=0.000   cold 0s
+[purge=-1]   preprocess_force       warm wall=0.000 user=0.000 sys=0.000   cold 0s
+[purge=-1]   rewrite_objects        warm wall=0.000 user=0.000 sys=0.000   cold 0.0001s
+[purge=-1]   total                  warm wall=1.035 user=2.199 sys=0.517 faults=0   cold 0.9656s
+[purge=-1]   process: minor faults 212, major 0, user 11.04s, sys 2.68s, peak RSS 48 MB
