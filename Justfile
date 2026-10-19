@@ -133,13 +133,87 @@ bench *args:
 
 [working-directory: 'bench']
 bench-update:
-    #!/usr/bin/env -S bash -euo pipefail
-    uv sync -P polars-genson
-    echo -e "\n---\n" >> README.md
-    echo "## "$(uv pip show polars-genson | head -2 | cut -d " " -f 2- | tr '[A-Z]' '[a-z]') >> README.md
-    printf "\n\`\`\`py" >> README.md
-    just bench | grep -v 100% >> README.md
-    echo -e "\`\`\`" >> README.md
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Compare PyPI releases with the versions already recorded in README.md.
+    mapfile -t missing < <(
+        uv run --no-project --with packaging python - <<'PY'
+    import json
+    import re
+    import urllib.request
+    from pathlib import Path
+    from packaging.version import Version
+
+    readme = Path("README.md").read_text()
+    recorded = set(re.findall(
+        r"(?m)^## polars-genson (\d+\.\d+\.\d+)\s*$",
+        readme,
+    ))
+
+    with urllib.request.urlopen(
+        "https://pypi.org/pypi/polars-genson/json"
+    ) as response:
+        releases = json.load(response)["releases"]
+
+    available = sorted(
+        (
+            v for v, files in releases.items()
+            if files
+            and any(not f.get("yanked", False) for f in files)
+            and not Version(v).is_prerelease
+            and not Version(v).is_devrelease
+        ),
+        key=Version,
+        reverse=True, # Newest first
+    )
+
+    for version in available:
+        if version not in recorded:
+            print(version)
+    PY
+    )
+
+    if ((${#missing[@]} == 0)); then
+        echo "README.md already contains every available release."
+        exit 0
+    fi
+
+    printf 'Missing versions: %s\n' "${missing[*]}"
+
+    tmp=$(mktemp)
+    trap 'rm -f "$tmp"' EXIT
+
+    for version in "${missing[@]}"; do
+        echo
+        echo "=== Benchmarking polars-genson $version ==="
+
+        # Isolated environment, pinned genson version, no changes
+        # to bench/.venv or bench/uv.lock.
+        if ! uv run --no-project --python 3.13 \
+            --exclude-newer-package polars=P0D \
+            --exclude-newer-package polars-genson=P0D \
+            --with "polars-genson[polars]==$version" \
+            --with pytest-benchmark \
+            python -m pytest -q bench_test.py \
+            --benchmark-only > "$tmp" 2>&1; then
+            echo "SKIPPED $version: benchmark failed"
+            cat "$tmp"
+            continue
+        fi
+
+        {
+            printf '\n---\n\n## polars-genson %s\n\n```py\n' "$version"
+            grep -v '100%' "$tmp" || true
+            printf '```\n'
+        } >> README.md
+
+        echo "Recorded $version in README.md"
+    done
+
+    echo
+    echo "Done. Review: git diff -- README.md"
+
 
 # -------------------------------------
 
