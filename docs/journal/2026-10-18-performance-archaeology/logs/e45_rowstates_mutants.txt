@@ -1,0 +1,11 @@
+Mutants of the row phase's lookups and position caches (genson-core/src/genson_rs/interned.rs),
+each run against test_interned_rows_match_the_builders and test_interned_rows_tell_required_apart.
+"caught" = a test fails.
+
+caught: previous object taken whatever its properties   (the previous row's object at the position taken without comparing)
+caught: previous key taken whatever its text            (the previous row's key at the position taken without comparing)
+survived: previous object kept stale                    (equivalent: a position keeps its first object, so a later row compares against it and, where it differs, finds its own by hash)
+caught: list found by the empty state                   (every list given the state of the empty list's)
+caught: row object found by its first property          (a row object looked up by a prefix of its properties)
+caught: braces read the other way round                 (`{` and `}` swapped in the split rule's count)
+survived: positions not reset per row                   (equivalent: positions run on across rows, so the comparisons miss and the lookups by hash find the same keys and objects)
