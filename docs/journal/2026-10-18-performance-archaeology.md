@@ -987,6 +987,29 @@ changed by this work.
   wikidata-pq's config, the defaults and random configs, three chunk sizes, 1, 2 and 4
   threads), each comparing schemas as text, so key order counts
 
+### Writing the DAG without allocating per node
+
+- Writing the DAG was 135M instructions of rel7k's 233M for the DAG stage: for each of
+  the builder's 82,617 nodes a few vectors and objects being built, and the type names
+  and `required` names hashed into symbols and interned again (291,367 interns and
+  229,162 symbol lookups for 5,589 distinct values; logs/e53_dag_build_counts.txt)
+- Now `{"type": t}` and each symbol's string are made once per DAG and taken by id, a
+  node of one strategy is its strategy's schema, and the entries and items of the objects
+  and arrays being built go on two stacks the DAG keeps (`object_from`, `array_from`);
+  a strategy with extra keywords takes the way it took
+- Against #252 (the same release profile, logs/e55_dag_build_instructions.txt): writing
+  the DAG rel7k 134.6M and 67.8M instructions, rowsw 21.3M and 11.7M, rows200 390.0M and
+  233.7M; the DAG stage 232.9M and 164.7M, 42.7M and 32.9M, 439.7M and 283.3M; inference
+  1.050G and 0.982G (-6.5%), 0.400G and 0.391G, 16.93G and 16.76G; the rest unchanged.
+  Allocations writing the DAG on rel7k 283,959 and 31,116 (8.5 and 2.2 MB requested),
+  in inference 1,409,831 and 1,156,988: what writing the DAG no longer allocates, and no
+  more. Interns 291,367 and 82,922; symbol lookups 229,162 and 170,429, now mostly the
+  properties' names and `required` (25.2M of the 67.8M). Peak RSS unchanged (the input
+  is most of it)
+- Inference, four threads, 2 interleaved rounds of 5 runs (logs/e54_infer_dag_build.txt):
+  rel7k 0.076 and 0.066 s, CPU 0.165 and 0.154 s; the rest within the spread
+- What is left is not in writing the DAG: halving it gained 6.5% of rel7k's inference
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
