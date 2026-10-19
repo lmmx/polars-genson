@@ -318,12 +318,9 @@ pub fn write_string_column_with(
 
     check_keep_len(keep, array.len())?;
     let schema = output_schema(field, keep, metadata)?;
-    let mut writer = open_writer(path, schema.clone())?;
-    write_batch(&mut writer, &schema, keep, 0, array)?;
-    writer
-        .close()
-        .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
-    Ok(())
+    let writer = open_writer(path, schema.clone())?;
+    let batch = batch_of(&schema, keep, 0, array)?;
+    write_batches(writer, &schema, vec![batch])
 }
 
 /// Write an `extract_invariants` lookup table: `field`, `key` and `value` (as JSON).
@@ -468,22 +465,92 @@ fn open_writer(path: &str, schema: SchemaRef) -> Result<ArrowWriter<File>, Strin
         .map_err(|e| format!("Failed to create Parquet writer: {}", e))
 }
 
-/// Write `array` as one batch, with the rows of each `keep` column starting at `offset`.
-fn write_batch(
-    writer: &mut ArrowWriter<File>,
+/// `array` as one batch, with the rows of each `keep` column starting at `offset`.
+fn batch_of(
     schema: &SchemaRef,
     keep: &[(FieldRef, ArrayRef)],
     offset: usize,
     array: ArrayRef,
-) -> Result<(), String> {
+) -> Result<RecordBatch, String> {
     let len = array.len();
     let mut columns: Vec<ArrayRef> = keep.iter().map(|(_, a)| a.slice(offset, len)).collect();
     columns.push(array);
-    let batch = RecordBatch::try_new(schema.clone(), columns)
-        .map_err(|e| format!("Failed to create RecordBatch: {}", e))?;
-    writer
-        .write(&batch)
-        .map_err(|e| format!("Failed to write RecordBatch: {}", e))
+    RecordBatch::try_new(schema.clone(), columns)
+        .map_err(|e| format!("Failed to create RecordBatch: {}", e))
+}
+
+/// Write `batches` with `writer` and close it: the same file, byte for byte, as
+/// `ArrowWriter::write` of each batch and `close` write, with each row group's columns
+/// encoded in parallel. The rows go to row groups as there, `max_row_group_row_count` to
+/// each (`open_writer` sets no byte limit or content-defined chunking), and each column's
+/// writer is handed its leaf of each batch in turn, as `ArrowWriter`'s are.
+fn write_batches(
+    writer: ArrowWriter<File>,
+    schema: &SchemaRef,
+    batches: Vec<RecordBatch>,
+) -> Result<(), String> {
+    use parquet::arrow::arrow_writer::{compute_leaves, ArrowColumnChunk, ArrowLeafColumn};
+    let failed = |e: parquet::errors::ParquetError| format!("Failed to write Parquet: {}", e);
+    let (mut file_writer, factory) = writer.into_serialized_writer().map_err(failed)?;
+    let props = file_writer.properties();
+    debug_assert!(props.max_row_group_bytes().is_none());
+    debug_assert!(props.content_defined_chunking().is_none());
+    let max_rows = props.max_row_group_row_count().unwrap_or(usize::MAX);
+    let mut row_groups: Vec<Vec<RecordBatch>> = Vec::new();
+    let mut current: Vec<RecordBatch> = Vec::new();
+    let mut buffered = 0;
+    for batch in batches {
+        let mut remaining = batch;
+        while remaining.num_rows() > 0 {
+            let rows = (max_rows - buffered).min(remaining.num_rows());
+            current.push(remaining.slice(0, rows));
+            remaining = remaining.slice(rows, remaining.num_rows() - rows);
+            buffered += rows;
+            if buffered >= max_rows {
+                row_groups.push(std::mem::take(&mut current));
+                buffered = 0;
+            }
+        }
+    }
+    if !current.is_empty() {
+        row_groups.push(current);
+    }
+    for (index, batches) in row_groups.iter().enumerate() {
+        let writers = factory.create_column_writers(index).map_err(failed)?;
+        let columns = writers.len();
+        // Each batch's leaf columns, in the order of the column writers
+        let leaves: Vec<Vec<ArrowLeafColumn>> = batches
+            .par_iter()
+            .map(|batch| {
+                let mut leaves = Vec::with_capacity(columns);
+                for (field, column) in schema.fields().iter().zip(batch.columns()) {
+                    leaves.extend(compute_leaves(field, column)?);
+                }
+                Ok(leaves)
+            })
+            .collect::<Result<_, parquet::errors::ParquetError>>()
+            .map_err(failed)?;
+        let chunks: Vec<ArrowColumnChunk> = writers
+            .into_par_iter()
+            .enumerate()
+            .map(|(i, mut writer)| {
+                for batch_leaves in &leaves {
+                    writer.write(&batch_leaves[i])?;
+                }
+                writer.close()
+            })
+            .collect::<Result<_, _>>()
+            .map_err(failed)?;
+        let mut row_group = file_writer.next_row_group().map_err(failed)?;
+        for chunk in chunks {
+            chunk.append_to_row_group(&mut row_group).map_err(failed)?;
+        }
+        row_group.close().map_err(failed)?;
+    }
+    file_writer
+        .close()
+        .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
+    Ok(())
 }
 
 pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, String> {
@@ -645,17 +712,15 @@ pub fn write_struct_column_with(
         true,
     ));
     let schema = output_schema(field, keep, metadata)?;
-    let mut writer = open_writer(path, schema.clone())?;
+    let writer = open_writer(path, schema.clone())?;
     let mut offset = 0;
+    let mut batches = Vec::with_capacity(arrays.len());
     for array in arrays {
         let len = array.len();
-        write_batch(&mut writer, &schema, keep, offset, Arc::new(array))?;
+        batches.push(batch_of(&schema, keep, offset, Arc::new(array))?);
         offset += len;
     }
-    writer
-        .close()
-        .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
-    Ok(())
+    write_batches(writer, &schema, batches)
 }
 
 #[cfg(test)]
