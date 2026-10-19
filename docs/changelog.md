@@ -5,11 +5,13 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
-- **A key missing from some objects is no longer required.** When a field's objects
-  were merged, those holding no key in common were not counted, so a key could be
-  marked required (and its Avro field non-nullable) although some rows lack it, and
-  which keys were required could depend on the order of the rows or vary from run to
-  run. Schemas change only by keys dropped from `required`.
+- **Inference and normalisation do far less work.** On genson-core's scorecard corpora,
+  against 1.0.2's code: Wikidata-like claims under wikidata-pq's options take 91% fewer
+  instructions and 87% less wall time (1.76 s to 0.23 s on 4 threads); event logs,
+  narrow records, label maps and wide entities 54–81% fewer instructions and 52–88%
+  less time; normalising the claims 78% fewer instructions and 62% less time. The
+  entries below say where.
+
 - **A field some map values lack is no longer required.** Map unification made a
   record field required (and its Avro field non-nullable) whenever every record it
   unified listed the field, though a record that was itself unified lists every field
@@ -65,18 +67,53 @@ Release notes for earlier versions are on
 - **An integer beyond the 64-bit range no longer panics.** Inference read it with
   simd-json, which failed on it after serde_json had accepted the input; it is now a
   `number`, as serde_json reads it when normalising.
-- **`wrap_root` wraps each document as written.** Duplicate keys and number formatting
-  now reach inference unchanged, as without `wrap_root`.
-- **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
-  on large rows with default options. See [How inference works](concepts/inference.md).
 - **Less time spent deduplicating rows.** Given 10 or more strings, inference hashes each
   string's schema to skip duplicates; a scalar field is now hashed without building its
   schema, for 6–17% less CPU time on Wikidata claims and on narrow rows.
   `SchemaBuilder::schema_hash` gives the same values as before.
+- **Inference reads each row once, into shared states, and never writes out its merged
+  schema.** Each row is read into a token tape and its schema built as an interned state,
+  each distinct part stored once; rows are merged by state, each property's states on
+  their own threads; and the merged schema, written before as `Value`s and rewritten (on
+  Wikidata claims, 3.45 MB of JSON rewritten to 4 KB), is a hash-consed DAG on which map
+  inference and unification run, a property given the same states as an earlier one
+  sharing its subtree. Rows with braces in their strings take this path too, and a row
+  that cannot be read exactly as before takes the old one. The schemas are the same.
+  Debugging keeps the old rewrite, so its output is as before.
+- **Typed `normalise_from_parquet` output is decoded straight into Arrow.** Each row is
+  read once and normalised into Arrow builders against a plan compiled for the output's
+  fields, with no `Value` built for it (`ArrowPlan` in genson-core). Batches it cannot
+  decode exactly as before take the old path, which also raises the same errors.
+- **Parquet output encodes each row group's columns in parallel,** byte for byte the
+  file written before.
+- **Smaller savings in inference and normalisation.** Debug messages are built only when
+  they print; a bare scalar is merged without building its schema; unification moves the
+  schema so far into its result instead of copying it; a pass over the merged schema
+  that changed nothing unless a field is forced to be a map runs only then; and without
+  `prune`, normalisation takes each record's fields out of its input instead of copying
+  them (#72).
+- **New in genson-core's Rust API** (additions only): `NormalisePlan` and `ArrowPlan`,
+  `extract_invariants_from` and `extract_invariants_by_value`, and in `parquet`,
+  `read_string_column_arrays`, `read_string_column_parts` and `StringColumn`.
+
+## 1.0.2
+
 - **`SchemaBuilder::add_schemas` keeps what the builder already held** (genson-core
   Rust API). Given schemas with more than 3 properties between them, it replaced the
   builder's schema for each of those properties instead of merging into it. Inference,
   genson-cli and the Python package do not call it.
+
+## 1.0.1
+
+- **A key missing from some objects is no longer required.** When a field's objects
+  were merged, those holding no key in common were not counted, so a key could be
+  marked required (and its Avro field non-nullable) although some rows lack it, and
+  which keys were required could depend on the order of the rows or vary from run to
+  run. Schemas change only by keys dropped from `required`.
+- **`wrap_root` wraps each document as written.** Duplicate keys and number formatting
+  now reach inference unchanged, as without `wrap_root`.
+- **Faster inference.** About twice as fast on Wikidata claims with `unify_maps`, and
+  on large rows with default options. See [How inference works](concepts/inference.md).
 
 ## 1.0.0
 
