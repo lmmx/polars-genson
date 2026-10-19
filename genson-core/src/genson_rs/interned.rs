@@ -76,6 +76,11 @@ pub(crate) struct RowStates {
     state_ids: FxHashMap<Box<[Strat]>, StateId>,
     objs: Vec<Obj>,
     obj_ids: FxHashMap<Obj, u32>,
+    /// The state of an object as a row holds it (every property required), by its
+    /// properties: found again without building its `Obj`
+    row_objects: FxHashMap<Box<[(KeyId, StateId)]>, StateId>,
+    /// The state of a list, by its items' state
+    lists: FxHashMap<StateId, StateId>,
     joins: FxHashMap<(StateId, StateId), StateId>,
     /// Each state's schema hash, once computed (`hash`)
     hashes: Vec<Option<u64>>,
@@ -84,6 +89,13 @@ pub(crate) struct RowStates {
     key_hashes: Vec<u64>,
     /// Scratch: an object's members while it is read
     members: Vec<(KeyId, StateId)>,
+    /// The previous row's keys and objects (row objects' states), by their position in it:
+    /// a row shaped as the one before finds them by comparing rather than by hash
+    last_keys: Vec<KeyId>,
+    last_objects: Vec<StateId>,
+    /// The position in the row of the next key and of the next object to end
+    key_at: usize,
+    object_at: usize,
 }
 
 impl RowStates {
@@ -95,11 +107,17 @@ impl RowStates {
             state_ids: FxHashMap::default(),
             objs: Vec::new(),
             obj_ids: FxHashMap::default(),
+            row_objects: FxHashMap::default(),
+            lists: FxHashMap::default(),
             joins: FxHashMap::default(),
             hashes: Vec::new(),
             mixed: Vec::new(),
             key_hashes: Vec::new(),
             members: Vec::new(),
+            last_keys: Vec::new(),
+            last_objects: Vec::new(),
+            key_at: 0,
+            object_at: 0,
         };
         for strats in [
             &[][..],
@@ -109,7 +127,7 @@ impl RowStates {
             &[Strat::Number(true)],
             &[Strat::String],
         ] {
-            states.state(strats.into());
+            states.state(strats);
         }
         states
     }
@@ -133,15 +151,15 @@ impl RowStates {
         self.hashes[state as usize].expect("a row's states are hashed")
     }
 
-    fn state(&mut self, strats: Box<[Strat]>) -> StateId {
-        if let Some(&id) = self.state_ids.get(&strats) {
+    fn state(&mut self, strats: &[Strat]) -> StateId {
+        if let Some(&id) = self.state_ids.get(strats) {
             return id;
         }
         let id = self.states.len() as StateId;
-        self.states.push(strats.clone());
+        self.states.push(strats.into());
         self.hashes.push(None);
         self.mixed.push(None);
-        self.state_ids.insert(strats, id);
+        self.state_ids.insert(strats.into(), id);
         id
     }
 
@@ -155,7 +173,63 @@ impl RowStates {
                 id
             }
         };
-        self.state(Box::new([Strat::Object(id)]))
+        self.state(&[Strat::Object(id)])
+    }
+
+    /// The state of an object a row holds, of these properties, all of them required.
+    fn row_object(&mut self, first: usize) -> StateId {
+        let at = self.object_at;
+        self.object_at += 1;
+        // The previous row's object here, if it has these properties
+        if let Some(&state) = self.last_objects.get(at) {
+            let [Strat::Object(obj)] = *self.strats(state) else {
+                unreachable!("a row object's state is its object")
+            };
+            if *self.objs[obj as usize].props == self.members[first..] {
+                self.members.truncate(first);
+                return state;
+            }
+        }
+        let state = self.new_row_object(first);
+        match self.last_objects.get_mut(at) {
+            Some(last) => *last = state,
+            None => self.last_objects.push(state),
+        }
+        state
+    }
+
+    fn new_row_object(&mut self, first: usize) -> StateId {
+        if let Some(&state) = self.row_objects.get(&self.members[first..]) {
+            self.members.truncate(first);
+            return state;
+        }
+        let props: Box<[(KeyId, StateId)]> = self.members[first..].into();
+        self.members.truncate(first);
+        let required = (0..props.len() as u32).collect();
+        let state = self.object(Obj {
+            props: props.clone(),
+            required,
+        });
+        self.row_objects.insert(props, state);
+        state
+    }
+
+    /// The id of a row's next key: the previous row's key at its position, if it is the
+    /// same text.
+    fn row_key(&mut self, key: &str) -> KeyId {
+        let at = self.key_at;
+        self.key_at += 1;
+        if let Some(&last) = self.last_keys.get(at) {
+            if *self.keys[last as usize] == *key {
+                return last;
+            }
+        }
+        let id = self.key_id(key);
+        match self.last_keys.get_mut(at) {
+            Some(last) => *last = id,
+            None => self.last_keys.push(id),
+        }
+        id
     }
 
     fn key_id(&mut self, key: &str) -> KeyId {
@@ -190,7 +264,7 @@ impl RowStates {
                 None => strats.push(other),
             }
         }
-        let joined = self.state(strats.into());
+        let joined = self.state(&strats);
         self.joins.insert((a, b), joined);
         joined
     }
@@ -291,6 +365,7 @@ impl RowStates {
         if !ndjson && !read_whole(text, wrap_root.is_some()) {
             return Err(Unsupported);
         }
+        (self.key_at, self.object_at) = (0, 0);
         let mut state = self.value(text, toks, 0)?;
         if let Some(field) = wrap_root {
             let key = self.key_id(field);
@@ -323,7 +398,14 @@ impl RowStates {
                 if len as usize >= LONG_LIST && self.mixed(items) {
                     return Err(Unsupported);
                 }
-                self.state(Box::new([Strat::List(items)]))
+                match self.lists.get(&items) {
+                    Some(&state) => state,
+                    None => {
+                        let state = self.state(&[Strat::List(items)]);
+                        self.lists.insert(items, state);
+                        state
+                    }
+                }
             }
             Tok::Obj { len, .. } => {
                 let first = self.members.len();
@@ -341,7 +423,7 @@ impl RowStates {
                     } else {
                         Cow::Borrowed(&text[s as usize..e as usize])
                     };
-                    let key = self.key_id(&key);
+                    let key = self.row_key(&key);
                     let value = self.value(text, toks, j + 1)?;
                     // A key given again adds its value to the same property
                     let seen = match &mut positions {
@@ -366,10 +448,7 @@ impl RowStates {
                     }
                     j = after(toks, j + 1);
                 }
-                let props: Box<[(KeyId, StateId)]> = self.members[first..].into();
-                self.members.truncate(first);
-                let required = (0..props.len() as u32).collect();
-                self.object(Obj { props, required })
+                self.row_object(first)
             }
         })
     }
@@ -512,17 +591,15 @@ fn after(toks: &[Tok], i: usize) -> usize {
 fn read_whole(text: &str, wrapped: bool) -> bool {
     let text = text.trim_end().as_bytes();
     let mut depth = i32::from(wrapped);
-    for (i, &byte) in text.iter().enumerate() {
-        match byte {
-            b'{' => depth += 1,
-            b'}' => {
-                depth -= 1;
-                // The wrapping object's own `}` comes after the text
-                if depth == 0 && (wrapped || i + 1 < text.len()) {
-                    return false;
-                }
+    for i in memchr::memchr2_iter(b'{', b'}', text) {
+        if text[i] == b'{' {
+            depth += 1;
+        } else {
+            depth -= 1;
+            // The wrapping object's own `}` comes after the text
+            if depth == 0 && (wrapped || i + 1 < text.len()) {
+                return false;
             }
-            _ => {}
         }
     }
     true

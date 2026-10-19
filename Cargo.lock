@@ -1406,6 +1406,7 @@ dependencies = [
  "criterion",
  "crustrace",
  "crustrace-mermaid",
+ "memchr",
  "mimalloc",
  "ordermap",
  "parquet",

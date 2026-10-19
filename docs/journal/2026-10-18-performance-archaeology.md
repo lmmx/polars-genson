@@ -872,6 +872,40 @@ changed by this work.
   and 0.018-0.026 s, rows200 (with the rule above) 1.48-1.57 s and 0.45-0.55 s; rel7k,
   whose rewritten schema is small, is unchanged
 
+### The row phase's lookups
+
+- At the stack's top so far (`bench_infer_1t.rs` and `bench_infer_wpq_1t.rs`: inference in a
+  one-thread pool, so that every stage runs on the thread callgrind follows, counted from
+  `infer_json_schema_from_strings`), inference is 1.45G instructions on rel7k (the row
+  phase 0.64G: lexing 0.23G, interning 0.32G; the rewrite 0.40G, `to_schema` 0.21G, Avro
+  0.05G), 1.69G on narrow200k (the row phase 1.62G, 96%: lexing 0.55G, interning 0.81G)
+  and 0.61G on event logs (20,000 rows; the row phase 92%). narrow200k has 8 distinct
+  schemas in 200,000 rows and event logs 456 in 20,000, so nearly every row's interning
+  finds what it builds already there
+- Interning a row's object built its `Obj` (two boxed slices) and the boxed strategies of
+  its state to look them up, and freed them when they were there; a list built its boxed
+  strategies the same way. A row's objects (every property required) are now found by
+  their properties as a slice, lists by their items' state, and states by a borrowed
+  slice, with nothing allocated unless the state is new
+- Rows of the same shape repeat their keys and objects at the same positions: a row's
+  keys and objects are first compared with the previous row's at their position (the
+  key's text, the object's properties) and found by hash only if they differ
+- Without a delimiter, the scan for braces that close the row early (`read_whole`) reads
+  only the braces, found with `memchr2`
+- Instructions, inference on one thread, the previous step and now: narrow200k 1.69G and
+  1.20G (-29%), event logs 0.61G and 0.45G (-27%), rel7k 1.45G and 1.39G (-4%), labels
+  1.49G and 1.39G (the rest is avrotize); the same schema hashes and processed counts. On
+  rel7k the lookups alone gave 1.37G: the position caches cost its rows, whose shapes
+  rarely repeat, 0.015G (a variant that stops looking when the previous row's lookups
+  mostly missed costs more: the bookkeeping changes how `value` is inlined)
+- Read and inference on four threads, both built alike, 4 interleaved rounds of 6 runs, the
+  first of each dropped (logs/e46_infer_rowstates.txt), median wall and CPU: event logs
+  0.067 and 0.058 s, CPU 0.226 and 0.184 s; narrow200k 0.035 and 0.032 s, CPU 0.116 and
+  0.097 s; labels and rel7k within the run-to-run spread (0.120/0.117 and 0.196/0.206 s)
+- Tests: the interned row tests as before (the states are the same, so the builders and
+  schemas compared are); of 7 mutants (logs/e45_rowstates_mutants.txt) 5 fail them and 2
+  are equivalent (a stale or misaligned position falls back to the lookup by hash)
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
