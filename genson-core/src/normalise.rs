@@ -450,12 +450,15 @@ fn normalise_inner(
         Value::Array(types) => {
             // Typical Avro union is ["null", T]
             if types.iter().any(|t| t == "null") {
-                if value.is_null() {
-                    Kept(Value::Null)
-                } else {
-                    // normalise against the first non-null branch
-                    let branch = types.iter().find(|t| *t != "null").unwrap();
-                    normalise_inner(value, branch, cfg, field_name, prune, pruned)
+                // normalise against the first non-null branch. A union of `null` alone, as
+                // the Avro conversion can give a record field whose record shares its name
+                // with a differently shaped one (#238), holds nothing else: a value is null
+                // there, as a value its type cannot hold is anywhere else.
+                match types.iter().find(|t| *t != "null") {
+                    Some(branch) if !value.is_null() => {
+                        normalise_inner(value, branch, cfg, field_name, prune, pruned)
+                    }
+                    _ => Kept(Value::Null),
                 }
             } else {
                 // pick first type

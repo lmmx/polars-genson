@@ -5,6 +5,11 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **Normalisation no longer panics on a field whose type is `null` alone.** The Avro
+  conversion can give a record the fields of a differently shaped one that shares its name
+  (#238, avrotize-rs#28), leaving a field typed `["null"]` where the data holds values.
+  Normalising such a value panicked; it is now `null`, as a value a field's type cannot
+  hold is anywhere else. The record's lost fields are a separate bug, in the conversion.
 - **A key missing from some objects is no longer required.** When a field's objects
   were merged, those holding no key in common were not counted, so a key could be
   marked required (and its Avro field non-nullable) although some rows lack it, and
