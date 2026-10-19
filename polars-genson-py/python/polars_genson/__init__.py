@@ -979,6 +979,7 @@ class GensonNamespace:
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,
+                no_unify=no_unify,
                 **fft,
                 **fpft,
                 force_scalar_promotion=(
@@ -1107,6 +1108,7 @@ class GensonNamespace:
                 map_threshold=map_threshold,
                 map_max_required_keys=map_max_required_keys,
                 unify_maps=unify_maps,
+                no_unify=no_unify,
                 force_field_types=force_field_types,
                 force_parent_field_types=force_parent_field_types,
                 force_scalar_promotion=(
@@ -1263,6 +1265,7 @@ class GensonNamespace:
             map_threshold=map_threshold,
             map_max_required_keys=map_max_required_keys,
             unify_maps=unify_maps,
+            no_unify=no_unify,
             force_field_types=force_field_types,
             force_parent_field_types=force_parent_field_types,
             force_scalar_promotion=(
@@ -1295,7 +1298,7 @@ class GensonNamespace:
                             map_threshold=map_threshold,
                             map_max_required_keys=map_max_required_keys,
                             unify_maps=unify_maps,
-                            no_unify=None,
+                            no_unify=no_unify,
                             force_field_types=force_field_types,
                             force_parent_field_types=force_parent_field_types,
                             force_scalar_promotion=force_scalar_promotion,
@@ -1323,6 +1326,7 @@ class GensonNamespace:
                     map_threshold=map_threshold,
                     map_max_required_keys=map_max_required_keys,
                     unify_maps=unify_maps,
+                    no_unify=no_unify,
                     force_field_types=force_field_types,
                     force_parent_field_types=force_parent_field_types,
                     force_scalar_promotion=(
