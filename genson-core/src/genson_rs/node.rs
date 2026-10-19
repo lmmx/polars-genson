@@ -584,8 +584,17 @@ impl SchemaNode {
     /// Convert the current schema node to a JSON schema
     /// `to_schema` as a DAG.
     pub(crate) fn to_dag(&self, dag: &mut Dag) -> Id {
+        // A node of one strategy (most are) is that strategy's schema
+        if let [strategy] = self.active_strategies.as_slice() {
+            let schema = strategy.to_dag(dag);
+            if dag.as_object(schema).is_none() {
+                panic!("Invalid schema type for strategy {:?}", strategy);
+            }
+            return schema;
+        }
+        // Scalar schemas (only a type) apart, so they collapse into one type or a type list
+        let start = dag.items.len();
         let mut scalar_schemas: Vec<Id> = vec![];
-        let mut generated_schemas: Vec<Id> = vec![];
         for strategy in &self.active_strategies {
             let schema = strategy.to_dag(dag);
             let Some(keywords) = dag.as_object(schema) else {
@@ -594,11 +603,11 @@ impl SchemaNode {
             if keywords.len() == 1 && keywords.first().is_some_and(|(k, _)| k == kw::TYPE) {
                 scalar_schemas.push(schema);
             } else {
-                generated_schemas.push(schema);
+                dag.items.push(schema);
             }
         }
         if scalar_schemas.len() == 1 {
-            generated_schemas.push(scalar_schemas[0]);
+            dag.items.push(scalar_schemas[0]);
         } else if !scalar_schemas.is_empty() {
             let mut types: Vec<&str> = scalar_schemas
                 .iter()
@@ -610,19 +619,20 @@ impl SchemaNode {
             types.sort();
             types.dedup();
             if types.len() == 1 {
-                generated_schemas.push(scalar_schemas[0]);
+                dag.items.push(scalar_schemas[0]);
             } else {
                 let types: Vec<String> = types.into_iter().map(str::to_string).collect();
                 let types: Vec<Id> = types.iter().map(|t| dag.str(t)).collect();
                 let types = dag.array(&types);
-                generated_schemas.push(dag.object(&[(kw::TYPE, types)]));
+                let schema = dag.object(&[(kw::TYPE, types)]);
+                dag.items.push(schema);
             }
         }
-        match generated_schemas.as_slice() {
-            [schema] => *schema,
-            [] => dag.object(&[]),
-            schemas => {
-                let any_of = dag.array(schemas);
+        match dag.items.len() - start {
+            1 => dag.items.pop().unwrap(),
+            0 => dag.object(&[]),
+            _ => {
+                let any_of = dag.array_from(start);
                 dag.object(&[(kw::ANY_OF, any_of)])
             }
         }

@@ -128,6 +128,13 @@ pub(crate) struct Dag {
     indexes: FxHashMap<Id, FxHashMap<Sym, Id>>,
     /// Each value with its objects' keys sorted (`UNSET` where not yet computed)
     canonical: Vec<Id>,
+    /// Each symbol's string value, and `{"type": <symbol>}` (`UNSET` where not yet made)
+    strings: Vec<Id>,
+    typed: Vec<Id>,
+    /// The entries of the objects being built, innermost last (`object_from`)
+    pub(crate) entries: Vec<(Sym, Id)>,
+    /// The items of the arrays being built, innermost last (`array_from`)
+    pub(crate) items: Vec<Id>,
     scratch: Vec<u32>,
 }
 
@@ -148,6 +155,10 @@ impl Dag {
             number_ids: FxHashMap::default(),
             indexes: FxHashMap::default(),
             canonical: Vec::new(),
+            strings: Vec::new(),
+            typed: Vec::new(),
+            entries: Vec::new(),
+            items: Vec::new(),
             scratch: Vec::new(),
         };
         for word in kw::WORDS {
@@ -218,7 +229,56 @@ impl Dag {
     }
 
     pub(crate) fn string(&mut self, sym: Sym) -> Id {
-        self.intern_tagged(STRING, [sym])
+        if let Some(&id) = self.strings.get(sym as usize).filter(|&&id| id != UNSET) {
+            return id;
+        }
+        let id = self.intern_tagged(STRING, [sym]);
+        if self.strings.len() <= sym as usize {
+            self.strings.resize(sym as usize + 1, UNSET);
+        }
+        self.strings[sym as usize] = id;
+        id
+    }
+
+    /// `{"type": t}`
+    pub(crate) fn typed(&mut self, t: Sym) -> Id {
+        if let Some(&id) = self.typed.get(t as usize).filter(|&&id| id != UNSET) {
+            return id;
+        }
+        let t_id = self.string(t);
+        let id = self.object(&[(kw::TYPE, t_id)]);
+        if self.typed.len() <= t as usize {
+            self.typed.resize(t as usize + 1, UNSET);
+        }
+        self.typed[t as usize] = id;
+        id
+    }
+
+    /// The object of the entries pushed since `start`, which are taken off.
+    pub(crate) fn object_from(&mut self, start: usize) -> Id {
+        self.scratch.clear();
+        self.scratch.push(OBJECT);
+        for &(k, v) in &self.entries[start..] {
+            self.scratch.extend([k, v]);
+        }
+        self.entries.truncate(start);
+        self.intern_scratch()
+    }
+
+    /// The array of the items pushed since `start`, which are taken off.
+    pub(crate) fn array_from(&mut self, start: usize) -> Id {
+        self.scratch.clear();
+        self.scratch.push(ARRAY);
+        self.scratch.extend_from_slice(&self.items[start..]);
+        self.items.truncate(start);
+        self.intern_scratch()
+    }
+
+    /// The string items pushed since `start` sorted by their strings, as `str`s sort.
+    pub(crate) fn sort_string_items(&mut self, start: usize) {
+        let (terms, names) = (&self.terms, &self.names);
+        let name = |id: Id| &*names[terms[id as usize][1] as usize];
+        self.items[start..].sort_unstable_by(|&a, &b| name(a).cmp(name(b)));
     }
 
     pub(crate) fn str(&mut self, s: &str) -> Id {

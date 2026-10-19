@@ -11,7 +11,7 @@ use object::ObjectStrategy;
 use scalar::{BooleanStrategy, NullStrategy, NumberStrategy, StringStrategy, TypelessStrategy};
 
 use self::array::ListSchemaStrategy;
-use crate::dag::{kw, Dag, Id, ObjBuf};
+use crate::dag::{kw, Dag, Id, ObjBuf, Sym};
 use crate::genson_rs::interned::{RowStates, Strat};
 use crate::genson_rs::node::{DeferredStrategy, SchemaNode};
 
@@ -27,8 +27,20 @@ pub(crate) fn keywords(extra: &Value, dag: &mut Dag) -> ObjBuf {
     }
 }
 
+/// Whether a strategy's extra keywords are none, as they mostly are.
+pub(crate) fn is_empty_object(extra: &Value) -> bool {
+    extra.as_object().is_some_and(|map| map.is_empty())
+}
+
 /// A list's `to_schema` as a DAG, given its items' schema if it has items.
 fn list_to_dag(extra: &Value, items: Option<Id>, dag: &mut Dag) -> Id {
+    if is_empty_object(extra) {
+        let array = dag.string(kw::ARRAY);
+        return match items {
+            Some(items) => dag.object(&[(kw::TYPE, array), (kw::ITEMS, items)]),
+            None => dag.object(&[(kw::TYPE, array)]),
+        };
+    }
     let mut schema = keywords(extra, dag);
     let array = dag.string(kw::ARRAY);
     schema.insert(kw::TYPE, array);
@@ -288,9 +300,12 @@ impl BasicSchemaStrategy {
 
     /// `to_schema` as a DAG.
     pub(crate) fn to_dag(&self, dag: &mut Dag) -> Id {
-        let typed = |extra: &Value, js_type: &str, dag: &mut Dag| {
+        let typed = |extra: &Value, js_type: Sym, dag: &mut Dag| {
+            if is_empty_object(extra) {
+                return dag.typed(js_type);
+            }
             let mut schema = keywords(extra, dag);
-            let js_type = dag.str(js_type);
+            let js_type = dag.string(js_type);
             schema.insert(kw::TYPE, js_type);
             schema.build(dag)
         };
@@ -306,16 +321,21 @@ impl BasicSchemaStrategy {
                 list_to_dag(strategy.get_extra_keywords(), items, dag)
             }
             BasicSchemaStrategy::Null(strategy) => {
-                typed(strategy.get_extra_keywords(), "null", dag)
+                typed(strategy.get_extra_keywords(), kw::NULL, dag)
             }
             BasicSchemaStrategy::Boolean(strategy) => {
-                typed(strategy.get_extra_keywords(), "boolean", dag)
+                typed(strategy.get_extra_keywords(), kw::BOOLEAN, dag)
             }
-            BasicSchemaStrategy::Number(strategy) => {
-                typed(strategy.get_extra_keywords(), strategy.number_type(), dag)
-            }
+            BasicSchemaStrategy::Number(strategy) => typed(
+                strategy.get_extra_keywords(),
+                match strategy.number_type() {
+                    "integer" => kw::INTEGER,
+                    _ => kw::NUMBER,
+                },
+                dag,
+            ),
             BasicSchemaStrategy::String(strategy) => {
-                typed(strategy.get_extra_keywords(), "string", dag)
+                typed(strategy.get_extra_keywords(), kw::STRING, dag)
             }
             BasicSchemaStrategy::Typeless(strategy) => {
                 keywords(strategy.get_extra_keywords(), dag).build(dag)
