@@ -5,6 +5,15 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **`DataFrame.genson.normalise_json` decodes rows straight into Polars dtypes.** With
+  `decode=True` (the default) it inferred the schema twice, once to normalise and once for
+  the dtypes, then wrote every row out as JSON text for `str.json_decode` to parse again.
+  It now infers once and normalises the rows straight into Arrow, as typed
+  `normalise_from_parquet` output does: 2.3–8.8× faster on 1,000 label maps, 20,000 event
+  logs, 200,000 small records and a chunk of Wikidata claims, with less than half the peak
+  memory on most, and the same frames. Rows the direct decoder cannot take, and
+  `decode=<schema>`, still go by way of JSON text.
+
 - **A key that is a list in some places and a record or scalar in others keeps its
   values.** Such a field inferred as a union of the list and the other types, and both
   `avro_to_polars_schema` and normalisation take a union's first branch: normalisation

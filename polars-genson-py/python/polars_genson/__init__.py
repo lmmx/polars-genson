@@ -15,6 +15,7 @@ from ._polars_genson import avro_to_polars_fields as _rust_avro_to_polars_fields
 from ._polars_genson import infer_from_parquet as _rust_infer_from_parquet
 from ._polars_genson import json_to_schema as _rust_json_to_schema
 from ._polars_genson import normalise_from_parquet as _rust_normalise_from_parquet
+from ._polars_genson import normalise_json_typed as _rust_normalise_json_typed
 from ._polars_genson import read_parquet_metadata as _rust_read_parquet_metadata
 from ._polars_genson import schema_to_json as _rust_schema_to_json
 from .dtypes import _parse_polars_dtype, contains_map
@@ -454,6 +455,49 @@ def normalise_json(
     │ {"id": "2", "labels": {"en":"Hello"}}│
     └──────────────────────────────────────┘
     """
+    kwargs = _normalise_kwargs(
+        ignore_outer_array=ignore_outer_array,
+        ndjson=ndjson,
+        empty_as_null=empty_as_null,
+        coerce_strings=coerce_strings,
+        map_encoding=map_encoding,
+        profile=profile,
+        map_threshold=map_threshold,
+        map_max_required_keys=map_max_required_keys,
+        unify_maps=unify_maps,
+        no_unify=no_unify,
+        force_field_types=force_field_types,
+        force_parent_field_types=force_parent_field_types,
+        force_scalar_promotion=force_scalar_promotion,
+        wrap_scalars=wrap_scalars,
+        wrap_root=wrap_root,
+        no_root_map=no_root_map,
+        max_builders=max_builders,
+    )
+    return plug(expr, changes_length=True, **kwargs)
+
+
+def _normalise_kwargs(
+    *,
+    ignore_outer_array,
+    ndjson,
+    empty_as_null,
+    coerce_strings,
+    map_encoding,
+    profile,
+    map_threshold,
+    map_max_required_keys,
+    unify_maps,
+    no_unify,
+    force_field_types,
+    force_parent_field_types,
+    force_scalar_promotion,
+    wrap_scalars,
+    wrap_root,
+    no_root_map,
+    max_builders,
+) -> dict:
+    """The keyword arguments the Rust side reads for normalisation."""
     kwargs = {
         "ignore_outer_array": ignore_outer_array,
         "ndjson": ndjson,
@@ -477,8 +521,7 @@ def normalise_json(
         kwargs["force_field_types"] = force_field_types
     if force_parent_field_types is not None:
         kwargs["force_parent_field_types"] = force_parent_field_types
-
-    return plug(expr, changes_length=True, **kwargs)
+    return kwargs
 
 
 def infer_from_parquet(
@@ -1238,6 +1281,38 @@ class GensonNamespace:
                 )
 
             if decode is True:
+                # Inferred once, and the rows normalised straight into Polars dtypes
+                typed = _rust_normalise_json_typed(
+                    self._df.get_column(column),
+                    orjson.dumps(
+                        _normalise_kwargs(
+                            ignore_outer_array=ignore_outer_array,
+                            ndjson=ndjson,
+                            empty_as_null=empty_as_null,
+                            coerce_strings=coerce_strings,
+                            map_encoding=map_encoding,
+                            profile=profile,
+                            map_threshold=map_threshold,
+                            map_max_required_keys=map_max_required_keys,
+                            unify_maps=unify_maps,
+                            no_unify=None,
+                            force_field_types=force_field_types,
+                            force_parent_field_types=force_parent_field_types,
+                            force_scalar_promotion=force_scalar_promotion,
+                            wrap_scalars=wrap_scalars,
+                            wrap_root=wrap_root_field,
+                            no_root_map=no_root_map,
+                            max_builders=max_builders,
+                        )
+                    ).decode(),
+                )
+                if typed is not None:
+                    series, avro_schema = typed
+                    dtype = pl.Struct(
+                        avro_to_polars_schema(avro_schema, map_encoding=map_encoding)
+                    )
+                    result = series.cast(dtype).to_frame()
+                    return result.unnest(column) if unnest else result
                 # Infer Avro schema and convert it to Polars Schema
                 schema = self.infer_polars_schema(
                     column,
