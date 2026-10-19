@@ -9,6 +9,10 @@ pub use plan::NormalisePlan;
 mod typed;
 #[cfg(feature = "parquet")]
 pub use typed::ArrowPlan;
+#[cfg(feature = "parquet")]
+mod json;
+#[cfg(feature = "parquet")]
+pub use json::normalise_to_json;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]

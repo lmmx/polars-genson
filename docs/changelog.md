@@ -5,6 +5,10 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **`normalise_json(decode=False)` is faster.** It parsed every row into a `Value`,
+  normalised it and serialised it; rows now go through the typed decoder into Arrow and
+  are written back as JSON, with the same text. Rows the typed decoder declines, and
+  inputs too few rows for the schema's width to pay for its columns, take the old path.
 - **`no_unify` works through the `DataFrame.genson` methods.** `infer_json_schema`,
   `infer_polars_schema` and `normalise_json` on `df.genson` accepted `no_unify` but never
   passed it on, so a map candidate holding a key it names was still unified into a map. The
