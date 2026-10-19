@@ -133,3 +133,21 @@ fn test_forced_map_integer_values_in_parallel() {
     let values = forced_map_values_parallel(&rows);
     assert_eq!(values["type"], json!("integer"), "{values}");
 }
+
+/// A field forced to a map that is a scalar in some rows, or all, takes the scalar with its
+/// values (normalisation wraps the scalar into the map as a value): before, the union left
+/// the map with nothing to type, and its values were typed null though they held strings.
+#[test]
+fn test_forced_map_beside_a_scalar_takes_the_scalar_with_its_values() {
+    for (rows, t) in [
+        (&[r#"{"m": {"en": "x"}}"#, r#"{"m": "s"}"#][..], "string"),
+        (&[r#"{"m": "s"}"#, r#"{"m": {"en": "x"}}"#][..], "string"),
+        (&[r#"{"m": {"a": 1}}"#, r#"{"m": 5}"#][..], "integer"),
+        (&[r#"{"m": {}}"#, r#"{"m": "s"}"#][..], "string"),
+        (&[r#"{"m": "s"}"#][..], "string"),
+        (&[r#"{"m": {"a": 1}}"#, r#"{"m": "s"}"#][..], "string"),
+    ] {
+        let values = forced_map_values(rows);
+        assert_eq!(values["type"], json!(t), "{rows:?}: {values}");
+    }
+}

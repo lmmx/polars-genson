@@ -52,32 +52,76 @@ fn contains_anyof(value: &Value) -> bool {
 /// Value schema for an object forced to be a map: the values' common schema when they
 /// share one (unified if they differ, unless a key is in `no_unify`), otherwise string,
 /// which holds every value as text so none is lost. An object empty in every row has no
-/// values to type: null, as for an always-empty array's items.
+/// values to type: null, as for an always-empty array's items. An object that is
+/// something else in some rows or all (a union, or scalar types) takes its records' values
+/// with its other branches or types, which normalisation wraps into the map as values.
 pub(crate) fn forced_map_value_schema(
     obj: &serde_json::Map<String, Value>,
     field_name: Option<&str>,
     config: &SchemaInferenceConfig,
 ) -> Value {
-    let string = || serde_json::json!({ "type": "string" });
     if let Some(values) = obj.get("additionalProperties").filter(|v| v.is_object()) {
         return values.clone();
     }
-    let Some(props) = obj
-        .get("properties")
-        .and_then(|p| p.as_object())
-        .filter(|p| !p.is_empty())
-    else {
+    if let Some(Value::Array(branches)) = obj.get("anyOf") {
+        let (mut values, mut no_unify) = (Vec::new(), false);
+        for branch in branches {
+            match branch.get("type").and_then(Value::as_str) {
+                Some("null") => {}
+                Some("object") => match branch.get("properties").and_then(Value::as_object) {
+                    Some(props) => {
+                        no_unify |= props.keys().any(|k| config.no_unify.contains(k.as_str()));
+                        values.extend(props.values());
+                    }
+                    None => {
+                        values.extend(branch.get("additionalProperties").filter(|v| v.is_object()))
+                    }
+                },
+                _ => values.push(branch),
+            }
+        }
+        return map_value_schema(&values, no_unify, field_name, config);
+    }
+    let props = obj.get("properties").and_then(|p| p.as_object());
+    let no_unify = props.is_some_and(|p| p.keys().any(|k| config.no_unify.contains(k.as_str())));
+    // A scalar in some rows (`["object", "string"]`) or all (`"string"`): the scalar too
+    let types: Vec<&Value> = match obj.get("type") {
+        Some(Value::Array(types)) => types.iter().collect(),
+        Some(t) => vec![t],
+        None => Vec::new(),
+    };
+    let scalars: Vec<Value> = types
+        .into_iter()
+        .filter(|t| *t != "null" && *t != "object")
+        .map(|t| serde_json::json!({ "type": t }))
+        .collect();
+    let values: Vec<&Value> = props
+        .into_iter()
+        .flat_map(|p| p.values())
+        .chain(&scalars)
+        .collect();
+    map_value_schema(&values, no_unify, field_name, config)
+}
+
+/// The schema of a map's `values`: see `forced_map_value_schema`.
+fn map_value_schema(
+    values: &[&Value],
+    no_unify: bool,
+    field_name: Option<&str>,
+    config: &SchemaInferenceConfig,
+) -> Value {
+    let string = || serde_json::json!({ "type": "string" });
+    let Some(first) = values.first() else {
         return serde_json::json!({ "type": "null" });
     };
-    let first = non_null_view(props.values().next().unwrap());
-    if props.values().all(|v| non_null_view(v).eq(&first)) {
+    let first = non_null_view(first);
+    if values.iter().all(|v| non_null_view(v).eq(&first)) {
         return first.to_value();
     }
-    if props.keys().any(|k| config.no_unify.contains(k.as_str())) {
+    if no_unify {
         return string();
     }
-    let schemas: Vec<&Value> = props.values().collect();
-    check_unifiable_schemas(&schemas, field_name.unwrap_or(""), config).unwrap_or_else(string)
+    check_unifiable_schemas(values, field_name.unwrap_or(""), config).unwrap_or_else(string)
 }
 
 /// Process anyOf unions in a schema recursively
