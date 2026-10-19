@@ -51,15 +51,19 @@ impl<'a> Obj<'a> {
     }
 
     pub(crate) fn iter(self) -> impl Iterator<Item = (Sym, Id)> + 'a {
-        self.0.chunks_exact(2).map(|pair| (pair[0], pair[1]))
+        self.0
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|pair| (pair[0], pair[1]))
     }
 
     pub(crate) fn keys(self) -> impl Iterator<Item = Sym> + 'a {
-        self.0.chunks_exact(2).map(|pair| pair[0])
+        self.0.as_chunks::<2>().0.iter().map(|pair| pair[0])
     }
 
     pub(crate) fn values(self) -> impl Iterator<Item = Id> + 'a {
-        self.0.chunks_exact(2).map(|pair| pair[1])
+        self.0.as_chunks::<2>().0.iter().map(|pair| pair[1])
     }
 
     pub(crate) fn first(self) -> Option<(Sym, Id)> {
@@ -190,7 +194,12 @@ impl Dag {
         let id = self.terms.len() as Id;
         let term: Box<[u32]> = self.scratch.as_slice().into();
         if term[0] == OBJECT && term.len() / 2 > INDEXED_MIN {
-            let index = term[1..].chunks_exact(2).map(|p| (p[0], p[1])).collect();
+            let index = term[1..]
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .map(|p| (p[0], p[1]))
+                .collect();
             self.indexes.insert(id, index);
         }
         self.ids.insert(term.clone(), id);
@@ -344,7 +353,9 @@ impl Dag {
             return self.indexes[&id].get(&key).copied();
         }
         term[1..]
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .find(|pair| pair[0] == key)
             .map(|pair| pair[1])
     }
