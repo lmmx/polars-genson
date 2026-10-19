@@ -312,3 +312,86 @@ impl Lexer<'_> {
         }
     }
 }
+
+/// The text of a string token holding an escape (`Tok::Str`'s range, inside the quotes),
+/// unescaped as `serde_json` reads it. The lexer has checked every escape
+/// (`Lexer::escape`), so each is whole and a high surrogate is followed by a low one.
+pub(crate) fn unescape(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    unescape_into(raw, &mut out);
+    out
+}
+
+/// `unescape` written to `out` (which cannot fail: a `String`, or a string builder's
+/// value), so that it need not be built apart first. At most `raw.len()` bytes.
+pub(crate) fn unescape_into(raw: &str, out: &mut impl std::fmt::Write) {
+    let b = raw.as_bytes();
+    let hex4 = |i: usize| {
+        b[i..i + 4]
+            .iter()
+            .fold(0u32, |n, &d| n << 4 | u32::from(HEX[d as usize]))
+    };
+    let mut i = 0;
+    loop {
+        let run = plain_prefix(&b[i..]);
+        let _ = out.write_str(&raw[i..i + run]);
+        i += run;
+        if i == b.len() {
+            return;
+        }
+        let c = match b[i + 1] {
+            b'"' => '"',
+            b'\\' => '\\',
+            b'/' => '/',
+            b'b' => '\u{8}',
+            b'f' => '\u{c}',
+            b'n' => '\n',
+            b'r' => '\r',
+            b't' => '\t',
+            _ => {
+                let mut code = hex4(i + 2);
+                i += 6;
+                if (0xD800..0xDC00).contains(&code) {
+                    code = 0x10000 + ((code - 0xD800) << 10) + (hex4(i + 2) - 0xDC00);
+                    i += 6;
+                }
+                let _ = out.write_char(char::from_u32(code).expect("a checked escape"));
+                continue;
+            }
+        };
+        let _ = out.write_char(c);
+        i += 2;
+    }
+}
+
+#[cfg(test)]
+mod unescape_tests {
+    use super::*;
+
+    /// Random strings of every escape (surrogate pairs and `\u0000` among them) beside
+    /// ASCII and other characters, as the lexer takes them: each unescapes as `serde_json`
+    /// reads it.
+    #[test]
+    fn test_unescape_matches_serde_json() {
+        let pieces = [
+            r#"\""#, r"\\", r"\/", r"\b", r"\f", r"\n", r"\r", r"\t", r"A", r"é", r"中", r"😀",
+            r"􏿿", r"\u0000", r"￿", "a", "xyz", "é", "中", "😀", " ", "12345678",
+        ];
+        let mut state = 0x9e37_79b9_7f4a_7c15u64;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        for _ in 0..20_000 {
+            let s: String = (0..next() % 14)
+                .map(|_| pieces[(next() % pieces.len() as u64) as usize])
+                .collect();
+            let quoted = format!("\"{s}\"");
+            assert!(lex(&quoted, &mut Vec::new()).is_ok(), "{quoted}");
+            let expected: String = serde_json::from_str(&quoted).unwrap();
+            assert_eq!(unescape(&s), expected, "{s}");
+        }
+    }
+}

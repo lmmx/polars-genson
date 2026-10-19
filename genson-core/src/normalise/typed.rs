@@ -22,7 +22,7 @@ use super::plan::{Plan, Record};
 use super::{
     make_promoted_scalar_key, MapEncoding, NormaliseConfig, NormalisePlan, PathSegment, PrunedValue,
 };
-use crate::tape::{lex, Tok};
+use crate::tape::{lex, unescape, unescape_into, Tok};
 use arrow::array::builder::{
     ArrayBuilder, BooleanBuilder, Float64Builder, Int64Builder, NullBufferBuilder, StringBuilder,
 };
@@ -525,8 +525,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
     /// A string token's content, as `Value` holds it.
     fn str_of(&self, start: u32, end: u32, escaped: bool) -> Cow<'r, str> {
         if escaped {
-            let quoted = &self.row[start as usize - 1..end as usize + 1];
-            Cow::Owned(serde_json::from_str(quoted).expect("validated string"))
+            Cow::Owned(unescape(self.text((start, end))))
         } else {
             Cow::Borrowed(self.text((start, end)))
         }
@@ -779,7 +778,16 @@ impl<'a, 'r> Decoder<'a, 'r> {
                         b.append_null();
                         return Ok(Put::Kept);
                     }
-                    Some(Tok::Str(s, e, escaped)) => append_str(b, &self.str_of(s, e, escaped))?,
+                    // Unescaped into the column, no longer than its text
+                    Some(Tok::Str(s, e, true)) => {
+                        let raw = self.text((s, e));
+                        if b.values_slice().len() + raw.len() > i32::MAX as usize {
+                            return Err(Unsupported);
+                        }
+                        unescape_into(raw, b);
+                        b.append_value("");
+                    }
+                    Some(Tok::Str(s, e, false)) => append_str(b, self.text((s, e)))?,
                     _ => append_str(b, &self.value_of(input).to_string())?,
                 }
                 self.strings += 1;
