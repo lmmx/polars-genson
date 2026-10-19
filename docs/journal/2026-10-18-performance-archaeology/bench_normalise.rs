@@ -3,7 +3,8 @@
 //! `normalise_values_pruned`, then either `serde_json::to_string` (string output) or, with
 //! TYPED=1, `values_to_struct_array` over all rows (typed output). Prints each stage's time.
 //! MAPPING=1 writes maps as objects (the `mapping` encoding) instead of key/value lists;
-//! OUT=path writes the normalised rows as NDJSON.
+//! OUT=path writes the normalised rows as NDJSON. PRUNE=a,b prunes records holding those
+//! fields (`normalise_values_pruned`'s `prune`).
 //!
 //! Copy to genson-core/examples/ and run (needs the `parquet` feature):
 //! `cargo run --release -p genson-core --features parquet --example bench_normalise -- rows.ndjson avro.json`
@@ -30,8 +31,13 @@ fn main() {
         },
         wrap_root: Some("claims".to_string()),
     };
-    let prune = HashSet::new();
+    // PRUNE=a,b passes those names as `prune`; wikidata-pq's are
+    // mainsnak__string,value__string,value,error
+    let prune: HashSet<String> = std::env::var("PRUNE")
+        .map(|p| p.split(',').map(String::from).collect())
+        .unwrap_or_default();
     let (mut parse, mut norm, mut ser) = (Duration::ZERO, Duration::ZERO, Duration::ZERO);
+    let (mut pruned_values, mut pruned_rows) = (0, 0);
     let mut out_bytes = 0usize;
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     let mut normalised = Vec::with_capacity(rows.len());
@@ -41,7 +47,9 @@ fn main() {
         let v: serde_json::Value = serde_json::from_str(s).unwrap();
         parse += t.elapsed();
         let t = Instant::now();
-        let (mut out, _) = normalise_values_pruned(vec![v], &schema, &cfg, &prune);
+        let (mut out, pruned) = normalise_values_pruned(vec![v], &schema, &cfg, &prune);
+        pruned_values += pruned.len();
+        pruned_rows += usize::from(!pruned.is_empty());
         let n = out.pop().unwrap();
         norm += t.elapsed();
         let t = Instant::now();
@@ -56,13 +64,15 @@ fn main() {
         normalised.push(n);
     }
     println!(
-        "rows {} parse {:.3}s normalise {:.3}s serialise {:.3}s (output {} MB, hash {:x})",
+        "rows {} parse {:.3}s normalise {:.3}s serialise {:.3}s (output {} MB, hash {:x}, {} values pruned from {} rows)",
         rows.len(),
         parse.as_secs_f64(),
         norm.as_secs_f64(),
         ser.as_secs_f64(),
         out_bytes / 1_000_000,
-        std::hash::Hasher::finish(&hasher)
+        std::hash::Hasher::finish(&hasher),
+        pruned_values,
+        pruned_rows
     );
     if std::env::var("TYPED").is_ok() {
         let fields =

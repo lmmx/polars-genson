@@ -384,6 +384,33 @@ changed by this work.
   0.5–0.7 s, write 0.03–0.04 s: 2.3–2.9 s, of which extract, normalise and decode 70–75%
   and the Parquet read 13–15%
 
+### Taking record fields in normalisation (#72)
+
+- `proto_norm_move.py` takes fields only without `prune`; wikidata-pq passes `prune`
+  (`QUARANTINE_FIELDS`), so three designs were measured against 29bb476 with
+  `bench_normalise.rs` (`PRUNE=` added, and a count of pruned values) and checked with
+  `diff_prune.rs` (logs/e20_normalise_take.txt)
+- Taking fields and, with `prune`, keeping a copy of each row to normalise again where
+  anything is pruned: no row of rows200 or slim200 prunes anything, and the copy costs
+  about what taking saves (rows200 with `prune` 5.0–6.0 s against 5.9–6.4 s)
+- Deciding first whether a record is pruned (a read-only look into its record-typed
+  fields: only records are pruned whole, arrays and maps drop their pruned items) and then
+  taking every field: the same outputs and pruned values as copying on 4,000 random cases
+  (1,318 values pruned, the same hash), rows200 without `prune` 4.4–5.2 s against
+  6.7–9.0 s, but slim200 with `prune` 0.51–0.62 s against 0.27–0.43 s: on rows with the
+  label maps extracted the look costs more than the copies
+- Taken: fields are taken without `prune` and copied with it, as before: the same hash on
+  the 4,000 cases, slim200 with `prune` unchanged (0.30–0.40 s against 0.34–0.38 s),
+  without it 0.26–0.32 s against 0.35–1.13 s, rows200 without `prune` 4.9–7.3 s against
+  5.1–10.0 s (the VM was noisy); callgrind over the whole bench process (parse, normalise,
+  serialise): rows20 3.978G against 4.497G instructions (−11.5%), slim200 2.990G against
+  3.227G (−7.4%)
+- `random_document` keys extend their parent's key by a letter: with keys reused at every
+  depth, genson's Avro schema names two records of different fields alike (a record is
+  named after its key) and `normalise_inner`'s union branch panics on `unwrap` of the
+  first non-null branch of `["null"]`; that happens on master too (50 of 4,000 random
+  cases even with the path keys, the same 50 in every build), and is left as it is
+
 ### Nested parallel fold of long arrays
 
 - `ListStrategy::add_object` folds an array of 10 or more items with rayon inside a worker
