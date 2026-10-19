@@ -8,7 +8,8 @@ sources) or, with `WIKIDATA_RELEASE` set, as a release's split chunks
 (`data/chunk_0.parquet`, with the release's claims schema and its `entity` table), with
 the working directory there (its quarantine directory is relative). Prints
 the wall and CPU time of the call (user + system, all threads), the peak RSS, and the wall
-time of each step, by wrapping the functions `process()` calls, and the `[profile]` stage
+time of each step (and its CPU time, all threads), by wrapping the functions `process()`
+calls, and the `[profile]` stage
 lines polars-genson prints (summed by name; wikidata-pq passes `profile=True` for claims). With `MAP_ENCODING=kv`,
 `normalise_from_parquet` and `avro_to_polars_schema` get `map_encoding="kv"`
 (polars-genson >= 1.0 defaults to maps; wikidata-pq's tables are key/value lists).
@@ -38,10 +39,13 @@ if os.environ.get("MAP_ENCODING") == "kv":
         polars_genson.normalise_from_parquet, map_encoding="kv")
     process.avro_to_polars_schema = functools.partial(
         polars_genson.avro_to_polars_schema, map_encoding="kv")
-steps = {}
+steps, cpu_steps = {}, {}
+def cpu_now():
+    r = resource.getrusage(resource.RUSAGE_SELF)
+    return r.ru_utime + r.ru_stime
 def timed(name, fn):
     def run(*a, **k):
-        t = time.perf_counter()
+        t, c = time.perf_counter(), cpu_now()
         try:
             return fn(*a, **k)
         finally:
@@ -51,6 +55,7 @@ def timed(name, fn):
                 "atomic_sink_parquet": lambda: f"sink:{Path(a[1]).parent.name}",
             }.get(name, lambda: name)()
             steps[key] = steps.get(key, 0) + time.perf_counter() - t
+            cpu_steps[key] = cpu_steps.get(key, 0) + cpu_now() - c
     return run
 for name in ["normalise_map_direct", "normalise_sitelinks", "normalise_claims_direct",
              "atomic_sink_parquet", "check_ids", "lookup_to_long", "schema_to_dict"]:
@@ -64,7 +69,8 @@ claims = pl.read_parquet(work / "results" / "claims" / "chunk_0.parquet")
 print(json.dumps({"wall": t1 - t0,
     "cpu": (r1.ru_utime - r0.ru_utime) + (r1.ru_stime - r0.ru_stime),
     "maxrss_mb": r1.ru_maxrss / 1024, "rows": claims.height,
-    "steps": {k: round(v, 3) for k, v in steps.items()}}))
+    "steps": {k: round(v, 3) for k, v in steps.items()},
+    "cpu_steps": {k: round(v, 3) for k, v in cpu_steps.items()}}))
 """
 
 python, chunk, runs = sys.argv[1], sys.argv[2], int(sys.argv[3])

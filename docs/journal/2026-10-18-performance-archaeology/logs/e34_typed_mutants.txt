@@ -1,0 +1,33 @@
+# Mutants of genson-core/src/normalise/typed.rs (tools: mutate_typed.py in the scratchpad;
+# each mutant applied alone, `cargo test --release -p genson-core --features parquet,avro
+# --lib test_typed_decode`, file restored after)
+# First pass, against test_typed_decode_matches_the_value_path as first written:
+caught: first member wins in a record
+caught: no repeated map keys
+caught: float promotion ignores has_int_field
+caught: -0 as an integer
+caught: \r not whitespace
+survived: pruning ignores earlier panics
+caught: empty array not null
+caught: map scalar type by u64
+caught: array path index 0
+caught: coerced float keeps infinities
+caught: dedup keeps the first value
+survived: depth limit 128
+caught: emptied map not emptied
+caught: pruning name null counts as held
+caught: nullable record null as empty record
+survived: wrapped invalid row matches
+caught: leading zero accepted
+caught: lone low surrogate accepted
+# After the test infers some schemas without the last row or with a field beside the
+# wrapped row, and test_typed_decode_depth_limit:
+caught: depth limit 128
+caught: wrapped invalid row matches
+survived: pruning ignores earlier panics
+# After test_typed_decode_declines_a_prune_after_a_panic (which found the decline too
+# broad: a null field before the pruning one cannot panic, unless it is an empty union),
+# with the narrower rule and its two mutants:
+caught: pruning ignores earlier panics
+caught: earlier null never panics
+caught: earlier value never panics

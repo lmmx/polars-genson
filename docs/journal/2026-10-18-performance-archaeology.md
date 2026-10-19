@@ -595,6 +595,87 @@ changed by this work.
   statistics, and 0.27-0.41 s with `write_parquet(use_pyarrow=True)`; reading the whole
   chunk (`pl.read_parquet`) 0.23 s
 
+### Normalisation straight into Arrow
+
+- `ArrowPlan` (`NormalisePlan::to_arrow`, `normalise/typed.rs`) is the normalisation plan
+  compiled against the Arrow fields the rows decode into. Each row is read once into a
+  token tape, validated by serde_json's rules for a `Value` (whitespace, number grammar
+  and range, escapes and surrogates, the 127-level limit), and the compiled plan walks
+  the tape and appends to Arrow builders: no `Value` for the row, none for its normalised
+  form, no JSON written for arrow-json to read back, and members the schema has no field
+  for are validated but never decoded. `normalise_from_parquet`'s typed batches use it,
+  each batch falling back to the `Value` path where the plan declines (`None`): the
+  `entries` encoding, fields other than `avro_record_fields`' for the pruned schema (or
+  none: `values_to_struct_array` fails on a struct without fields), a value in `["null"]`
+  or `[]` (a panic there), a record pruned by a field after one that could panic on its
+  value, a value in a column of nulls, and batches past arrow-json's limits (`i32` offsets
+  of a string, list or map column; `u32` tape offsets, which arrow-json's `finish` checks
+  twice, where the second check was meant for its elements)
+- Instructions on rel7k's claims, one thread (`bench_typed_wpq.rs`, `ONLY=`, callgrind
+  toggled on `measured`): the `Value` path 3.87G; the first tape decoder 1.38G, of which
+  `can_prune` recomputed at every array item took 11%, a `String` allocated per field per
+  row for the pruned values' path 10%, linear member lookups 15%, and reading the
+  promoted suffix of field names 7%; compiled once (pruning flags, promoted kinds, a
+  name-to-slot table per record with the next field tried first, borrowed path segments
+  made `PathSegment`s only when a value is pruned) 0.79G. Allocator instructions 699M
+  against 1M, `memcpy` 152M against 27M. What is left: the lexer (about a quarter), the
+  plan's dispatch, null structs appended to every descendant
+- Time, the `Value` path against the tape, `bench_typed_wpq.rs` (one thread; rayon's four
+  with `THREADS=1`), arrays and pruned values equal in every run: rel7k 0.54-1.16 s
+  against 0.06-0.10 s, four threads 0.13-0.19 s against 0.016-0.019 s; rowsw with its label
+  maps extracted (2,185 rows, 6.9 MB) 0.32-0.42 s against 0.03-0.05 s, four threads 0.10 s
+  against 0.011-0.012 s; rows200 and rows3000p the same way 6-21x on one thread, 7.5-11x
+  on four; rowsw as it is (322 MB of claims) 11.6 s against 1.8 s
+- Other rows (`bench_typed.rs`, the schema inferred from them, key/value maps): event logs
+  from `gen_events.py` (100,000 rows, 58.5 MB: a payload per event type, optional and null
+  fields, lists of records, integers and floats in one field, escaped and non-ASCII
+  strings; `python gen_events.py 100000 events.ndjson`) 1.06-2.11 s against 0.20-0.24 s,
+  four threads 4.6-5.6x; narrow records (narrow200k) 5.4-5.7x, four threads 4.1-6.2x;
+  label maps (labels) 3.2-4.4x, four threads 2.4-2.9x (a map's keys are hashed for
+  repeats and copied). Equal too with native
+  maps, `wrap_root`, and prunes. Pruning many rows whole is slower to record, each pruned
+  value being built as a `Value` from the tape: event logs pruned by `display_name` and
+  `closed_at` (40,498 values, whole rows, the actor being a field of the row) 1.7-2.7 s
+  against 0.94-0.99 s; the instructions are 18% above the unpruned run's, the time is system
+  time (6.6 s against 3.4 s over the process) from the pruned values' memory
+- Tests: the decoder against the `Value` path on 2,500 random batches of valid, invalid
+  and null rows (whitespace, every number form, escapes, surrogates, repeated and escaped
+  keys, promoted names) under every option and prune set, with rows wrapped, beside a
+  field or not, and schemas inferred from all the rows or all but the last; at the depth
+  limit; a prune after a field that panics. 21 mutants all fail the tests
+  (logs/e34_typed_mutants.txt): the first pass left three alive, each a gap in the test
+  (rows that do not fit their schema, a root field beside the wrapped row, depth 128),
+  and closing the third found the decline too broad (a null field cannot panic unless it
+  is an empty union)
+- `process()` on rel7k, 6 interleaved rounds (logs/e32_process_rel7k_typed.txt), median
+  wall [range], CPU, peak RSS: master 2.628 s [2.553-2.802], 4.93 s, 457 MB; #244 2.040 s
+  [1.970-2.236], 3.49 s, 434 MB; with the tape 1.928 s [1.801-2.144], 2.95 s, 384 MB.
+  Normalisation and the typed decode 0.326, 0.142 and 0.019 s; `normalise_claims_direct`
+  1.30, 0.86 and 0.72 s wall, 3.34, 2.04 and 1.55 s CPU. On rowsw, 3 rounds
+  (logs/e33_process_rowsw_typed.txt), 13.25, 5.19 and 5.18 s, the claims' decode 0.194,
+  0.087 and 0.011 s. Every table is equal to #237's on both. polars-genson-py's tests pass
+  (262, 3 skipped)
+- Left in the claims step on rel7k: inference, 0.40 s of its 0.72 s
+- Found on the way: inference panics, caught and reported as invalid input, on a string
+  that is a bare scalar (`12`): `trim_to_object` trims it to nothing and
+  `is_json_object_array` indexes the empty slice. Two builds of different worktrees in one
+  `CARGO_TARGET_DIR` share genson-core's metadata hash, and an example built after the
+  other worktree's linked the stale library
+
+### Inference's row phase, stage by stage
+
+- `bench_rows_phase.rs` on rel7k, one thread, the second of two runs: serde validation
+  0.014 s, the `wrap_root` copy 0.014 s, simd-json's tape 0.024 s, the rows' builders 0.223 s
+  (tape included), their hashes 0.093 s, merging the 6,392 distinct ones (chunks of 100)
+  0.359 s, the final `to_schema` 0.124 s (a 3.45 MB schema). The tape and validation are a
+  small part; building, hashing and merging the rows' trees are most of it
+- Each of those is linear in the size of all the rows' trees, and the trees repeat
+  (`bench_repeats.rs`, each node's schema at each depth): rel7k's 7,128 rows hold 680,582
+  schema nodes, 12,275 of them distinct (55x); rowsw's 2,185 rows (label maps in place)
+  3,995,858 nodes, 9,401 distinct (425x). The rows themselves mostly differ (6,392 and
+  2,164 distinct), so deduplicating whole rows, as inference does, saves little. A
+  builder that interned its nodes would build, hash and merge each distinct subtree once
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building
@@ -616,7 +697,5 @@ changed by this work.
 - No timing on a Wikidata chunk file (`chunk_*.parquet`): the corpora are rows200 (and
   slim200 from it), labels and narrow200k, and the chunk-shaped files above, made from
   them and from 60 fetched entities
-- No normaliser writing to Arrow from the tape: the floor above is a walk that appends
-  strings, without schema dispatch, nested builders or null buffers
 - Disk throughput on the machines that run wikidata-pq, which decides what the
   uncompressed output costs in wall time
