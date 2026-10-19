@@ -41,15 +41,21 @@ info:
                     "fields": [
                       {
                         "name": "id",
-                        "type": "string"
+                        "type": [
+                          "null",
+                          "string"
+                        ]
                       },
                       {
                         "name": "labels",
-                        "type": {
-                          "name": "labels",
-                          "type": "map",
-                          "values": "string"
-                        }
+                        "type": [
+                          "null",
+                          {
+                            "name": "labels",
+                            "type": "map",
+                            "values": "string"
+                          }
+                        ]
                       },
                       {
                         "name": "datavalue__string",
@@ -105,23 +111,38 @@ info:
                             },
                             {
                               "name": "time",
-                              "type": "string"
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             },
                             {
                               "name": "timezone",
-                              "type": "int"
+                              "type": [
+                                "null",
+                                "int"
+                              ]
                             },
                             {
                               "name": "before",
-                              "type": "int"
+                              "type": [
+                                "null",
+                                "int"
+                              ]
                             },
                             {
                               "name": "after",
-                              "type": "int"
+                              "type": [
+                                "null",
+                                "int"
+                              ]
                             },
                             {
                               "name": "calendarmodel",
-                              "type": "string"
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             },
                             {
                               "name": "latitude",
@@ -181,15 +202,21 @@ info:
                             "fields": [
                               {
                                 "name": "id",
-                                "type": "string"
+                                "type": [
+                                  "null",
+                                  "string"
+                                ]
                               },
                               {
                                 "name": "labels",
-                                "type": {
-                                  "name": "labels",
-                                  "type": "map",
-                                  "values": "string"
-                                }
+                                "type": [
+                                  "null",
+                                  {
+                                    "name": "labels",
+                                    "type": "map",
+                                    "values": "string"
+                                  }
+                                ]
                               },
                               {
                                 "name": "datavalue__string",

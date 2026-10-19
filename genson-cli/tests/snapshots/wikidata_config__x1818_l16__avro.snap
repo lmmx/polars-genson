@@ -57,35 +57,53 @@ info:
                         "fields": [
                           {
                             "name": "datavalue__string",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "id",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "labels",
-                            "type": {
-                              "name": "labels",
-                              "type": "map",
-                              "values": "string"
-                            }
+                            "type": [
+                              "null",
+                              {
+                                "name": "labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            ]
                           },
                           {
                             "name": "amount",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "unit",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "unit-labels",
-                            "type": {
-                              "name": "unit-labels",
-                              "type": "map",
-                              "values": "string"
-                            }
+                            "type": [
+                              "null",
+                              {
+                                "name": "unit-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            ]
                           },
                           {
                             "name": "upperBound",
@@ -164,15 +182,21 @@ info:
                               "fields": [
                                 {
                                   "name": "id",
-                                  "type": "string"
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
                                 },
                                 {
                                   "name": "labels",
-                                  "type": {
-                                    "name": "labels",
-                                    "type": "map",
-                                    "values": "string"
-                                  }
+                                  "type": [
+                                    "null",
+                                    {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "string"
+                                    }
+                                  ]
                                 },
                                 {
                                   "name": "datavalue__string",
@@ -314,40 +338,58 @@ info:
                                 "fields": [
                                   {
                                     "name": "time",
-                                    "type": "string"
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
                                   },
                                   {
                                     "name": "timezone",
-                                    "type": "int"
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
                                   },
                                   {
                                     "name": "before",
-                                    "type": "int"
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
                                   },
                                   {
                                     "name": "after",
-                                    "type": "int"
+                                    "type": [
+                                      "null",
+                                      "int"
+                                    ]
                                   },
                                   {
                                     "name": "precision",
-                                    "type": {
-                                      "type": "record",
-                                      "name": "precision",
-                                      "namespace": "genson.document_types.claims_values_types.references_values_types.datavalue_types",
-                                      "fields": [
-                                        {
-                                          "name": "precision__integer",
-                                          "type": [
-                                            "null",
-                                            "int"
-                                          ]
-                                        }
-                                      ]
-                                    }
+                                    "type": [
+                                      "null",
+                                      {
+                                        "type": "record",
+                                        "name": "precision",
+                                        "namespace": "genson.document_types.claims_values_types.references_values_types.datavalue_types",
+                                        "fields": [
+                                          {
+                                            "name": "precision__integer",
+                                            "type": [
+                                              "null",
+                                              "int"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   },
                                   {
                                     "name": "calendarmodel",
-                                    "type": "string"
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
                                   },
                                   {
                                     "name": "datavalue__string",

@@ -39,7 +39,10 @@ info:
                   }
                 },
                 "datavalue": {
-                  "type": "object",
+                  "type": [
+                    "null",
+                    "object"
+                  ],
                   "properties": {
                     "id": {
                       "type": [
@@ -95,18 +98,13 @@ info:
                         "string"
                       ]
                     }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ]
+                  }
                 }
               },
               "required": [
                 "property",
                 "datatype",
-                "property-labels",
-                "datavalue"
+                "property-labels"
               ]
             },
             "rank": {

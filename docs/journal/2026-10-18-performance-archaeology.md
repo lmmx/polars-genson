@@ -335,8 +335,23 @@ changed by this work.
   structs: a time value, or a P585/P580 qualifier, of unknown value would take the place
   of a later date and be listed undated; the committed outputs (London, London in French,
   Vienna) list no undated row
-- Not run: a release-format (official dump) chunk through either build; the published
-  claims are release format, the reproduction philippesaade format
+- A release-format chunk: `release_chunk.py` writes the entity JSON of 60 items
+  (`Special:EntityData`, the dumps' format) as one chunk with wikidata-pq's
+  `dump.write_chunk`, and `repro_wpq_required.py` runs it with `WIKIDATA_RELEASE` set
+  (the release `claims_schema` and check) (logs/e18_release_format.txt): under 0.9.6 and
+  at master `mainsnak.datavalue` and 16 of its fields are non-nullable, the 33 mainsnaks
+  without a `datavalue` (of 33,168) hold a struct of nulls and 32,869 absent `precision`s
+  are structs of nulls; with the fix (the branch's `unification.rs`) none of them, 33
+  statements with a null `datavalue`, the check passing with the same inferred Polars
+  schema in all three (sha d3272d17ab24d516), and 0 of 60 rows different from 0.9.6's
+  once a struct of nulls is read as a null (32,935 structs of nulls = 32,869 + 33 + 33,
+  the last the `precision` of each empty `datavalue`)
+- `check_snapshot_diffs.py` walks each genson-cli snapshot the fix changes against HEAD
+  and accepts only `required` entries or lists removed, a type made nullable (`"default":
+  null` beside it), a record of nulls become `null`, and an Avro `"null"` made optional
+  written `["null"]` (as master writes any optional field of type null): 48 snapshots, 176
+  types made nullable, 33 `required` lists and 16 entries removed, 33 records of nulls,
+  3 `["null"]`, nothing else (logs/e19_snapshot_check.txt)
 
 ### The small fixes together
 

@@ -57,19 +57,28 @@ info:
                         "fields": [
                           {
                             "name": "id",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "labels",
-                            "type": {
-                              "name": "labels",
-                              "type": "map",
-                              "values": "string"
-                            }
+                            "type": [
+                              "null",
+                              {
+                                "name": "labels",
+                                "type": "map",
+                                "values": "string"
+                              }
+                            ]
                           },
                           {
                             "name": "datavalue__string",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "time",
@@ -177,15 +186,21 @@ info:
                                 "fields": [
                                   {
                                     "name": "id",
-                                    "type": "string"
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
                                   },
                                   {
                                     "name": "labels",
-                                    "type": {
-                                      "name": "labels",
-                                      "type": "map",
-                                      "values": "string"
-                                    }
+                                    "type": [
+                                      "null",
+                                      {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    ]
                                   },
                                   {
                                     "name": "datavalue__string",
@@ -312,15 +327,21 @@ info:
                               "fields": [
                                 {
                                   "name": "id",
-                                  "type": "string"
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ]
                                 },
                                 {
                                   "name": "labels",
-                                  "type": {
-                                    "name": "labels",
-                                    "type": "map",
-                                    "values": "string"
-                                  }
+                                  "type": [
+                                    "null",
+                                    {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "string"
+                                    }
+                                  ]
                                 },
                                 {
                                   "name": "datavalue__string",

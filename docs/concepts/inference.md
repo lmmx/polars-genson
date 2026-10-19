@@ -95,7 +95,7 @@ one kind:
 |---------------------------|-------------------------------------------------------------------------|
 | arrays                    | an array of the items unified; an array only ever seen empty fits any array |
 | maps (and empty records)  | a map of the values unified                                             |
-| records                   | a record of every field seen: unified field by field, required and non-null where every record has the field, nullable otherwise |
+| records                   | a record of every field seen: unified field by field, required and non-null where every record requires the field, nullable otherwise |
 | scalars of one type       | that type, nullable                                                     |
 
 Within a record field, two schemas that differ only in being nullable merge into the

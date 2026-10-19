@@ -55,74 +55,83 @@ info:
                     },
                     {
                       "name": "datavalue",
-                      "type": {
-                        "type": "record",
-                        "name": "datavalue",
-                        "namespace": "genson.document_types.claims_values_types.mainsnak_types",
-                        "fields": [
-                          {
-                            "name": "id",
-                            "type": "string"
-                          },
-                          {
-                            "name": "labels",
-                            "type": {
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "datavalue",
+                          "namespace": "genson.document_types.claims_values_types.mainsnak_types",
+                          "fields": [
+                            {
+                              "name": "id",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
                               "name": "labels",
-                              "type": "map",
-                              "values": "string"
+                              "type": [
+                                "null",
+                                {
+                                  "name": "labels",
+                                  "type": "map",
+                                  "values": "string"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "datavalue__string",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "time",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
+                            },
+                            {
+                              "name": "timezone",
+                              "type": [
+                                "null",
+                                "int"
+                              ]
+                            },
+                            {
+                              "name": "before",
+                              "type": [
+                                "null",
+                                "int"
+                              ]
+                            },
+                            {
+                              "name": "after",
+                              "type": [
+                                "null",
+                                "int"
+                              ]
+                            },
+                            {
+                              "name": "precision",
+                              "type": [
+                                "null",
+                                "int"
+                              ]
+                            },
+                            {
+                              "name": "calendarmodel",
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             }
-                          },
-                          {
-                            "name": "datavalue__string",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "time",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          },
-                          {
-                            "name": "timezone",
-                            "type": [
-                              "null",
-                              "int"
-                            ]
-                          },
-                          {
-                            "name": "before",
-                            "type": [
-                              "null",
-                              "int"
-                            ]
-                          },
-                          {
-                            "name": "after",
-                            "type": [
-                              "null",
-                              "int"
-                            ]
-                          },
-                          {
-                            "name": "precision",
-                            "type": [
-                              "null",
-                              "int"
-                            ]
-                          },
-                          {
-                            "name": "calendarmodel",
-                            "type": [
-                              "null",
-                              "string"
-                            ]
-                          }
-                        ]
-                      }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }

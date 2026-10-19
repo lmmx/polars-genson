@@ -94,61 +94,64 @@ info:
               },
               {
                 "name": "references",
-                "type": {
-                  "type": "array",
-                  "items": {
-                    "name": "references",
-                    "type": "map",
-                    "values": {
-                      "type": "array",
-                      "items": {
-                        "type": "record",
-                        "name": "references_values",
-                        "namespace": "genson.document_types.claims_values_types",
-                        "fields": [
-                          {
-                            "name": "property",
-                            "type": "string"
-                          },
-                          {
-                            "name": "datavalue",
-                            "type": {
-                              "type": "record",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": {
+                      "name": "references",
+                      "type": "map",
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "references_values",
+                          "namespace": "genson.document_types.claims_values_types",
+                          "fields": [
+                            {
+                              "name": "property",
+                              "type": "string"
+                            },
+                            {
                               "name": "datavalue",
-                              "namespace": "genson.document_types.claims_values_types.references_values_types",
-                              "fields": [
-                                {
-                                  "name": "id",
-                                  "type": "string"
-                                },
-                                {
-                                  "name": "labels",
-                                  "type": {
+                              "type": {
+                                "type": "record",
+                                "name": "datavalue",
+                                "namespace": "genson.document_types.claims_values_types.references_values_types",
+                                "fields": [
+                                  {
+                                    "name": "id",
+                                    "type": "string"
+                                  },
+                                  {
                                     "name": "labels",
-                                    "type": "map",
-                                    "values": "null"
+                                    "type": {
+                                      "name": "labels",
+                                      "type": "map",
+                                      "values": "null"
+                                    }
                                   }
-                                }
-                              ]
-                            }
-                          },
-                          {
-                            "name": "datatype",
-                            "type": "string"
-                          },
-                          {
-                            "name": "property-labels",
-                            "type": {
+                                ]
+                              }
+                            },
+                            {
+                              "name": "datatype",
+                              "type": "string"
+                            },
+                            {
                               "name": "property-labels",
-                              "type": "map",
-                              "values": "string"
+                              "type": {
+                                "name": "property-labels",
+                                "type": "map",
+                                "values": "string"
+                              }
                             }
-                          }
-                        ]
+                          ]
+                        }
                       }
                     }
                   }
-                }
+                ]
               },
               {
                 "name": "qualifiers",

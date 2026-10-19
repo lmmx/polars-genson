@@ -129,11 +129,7 @@ info:
                         "string"
                       ]
                     }
-                  },
-                  "required": [
-                    "id",
-                    "labels"
-                  ]
+                  }
                 },
                 "datatype": {
                   "type": "string"

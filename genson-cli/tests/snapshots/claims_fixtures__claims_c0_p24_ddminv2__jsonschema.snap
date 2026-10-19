@@ -77,7 +77,10 @@ info:
               "type": "string"
             },
             "references": {
-              "type": "array",
+              "type": [
+                "null",
+                "array"
+              ],
               "items": {
                 "type": "object",
                 "additionalProperties": {
@@ -176,8 +179,7 @@ info:
           },
           "required": [
             "mainsnak",
-            "rank",
-            "references"
+            "rank"
           ]
         }
       }

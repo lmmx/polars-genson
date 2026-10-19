@@ -272,15 +272,21 @@ info:
                                 "fields": [
                                   {
                                     "name": "id",
-                                    "type": "string"
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ]
                                   },
                                   {
                                     "name": "labels",
-                                    "type": {
-                                      "name": "labels",
-                                      "type": "map",
-                                      "values": "string"
-                                    }
+                                    "type": [
+                                      "null",
+                                      {
+                                        "name": "labels",
+                                        "type": "map",
+                                        "values": "string"
+                                      }
+                                    ]
                                   },
                                   {
                                     "name": "time",

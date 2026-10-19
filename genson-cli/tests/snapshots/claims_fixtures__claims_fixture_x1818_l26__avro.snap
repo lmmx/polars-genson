@@ -41,27 +41,30 @@ info:
                     "fields": [
                       {
                         "name": "precision",
-                        "type": {
-                          "type": "record",
-                          "name": "precision",
-                          "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
-                          "fields": [
-                            {
-                              "name": "precision__number",
-                              "type": [
-                                "null",
-                                "float"
-                              ]
-                            },
-                            {
-                              "name": "precision__integer",
-                              "type": [
-                                "null",
-                                "int"
-                              ]
-                            }
-                          ]
-                        }
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "precision",
+                            "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
+                            "fields": [
+                              {
+                                "name": "precision__number",
+                                "type": [
+                                  "null",
+                                  "float"
+                                ]
+                              },
+                              {
+                                "name": "precision__integer",
+                                "type": [
+                                  "null",
+                                  "int"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       },
                       {
                         "name": "id",

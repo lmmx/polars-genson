@@ -41,83 +41,97 @@ info:
                     "fields": [
                       {
                         "name": "latitude",
-                        "type": {
-                          "type": "record",
-                          "name": "latitude",
-                          "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
-                          "fields": [
-                            {
-                              "name": "latitude__integer",
-                              "type": [
-                                "null",
-                                "int"
-                              ]
-                            },
-                            {
-                              "name": "latitude__number",
-                              "type": [
-                                "null",
-                                "float"
-                              ]
-                            }
-                          ]
-                        }
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "latitude",
+                            "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
+                            "fields": [
+                              {
+                                "name": "latitude__integer",
+                                "type": [
+                                  "null",
+                                  "int"
+                                ]
+                              },
+                              {
+                                "name": "latitude__number",
+                                "type": [
+                                  "null",
+                                  "float"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       },
                       {
                         "name": "longitude",
-                        "type": {
-                          "type": "record",
-                          "name": "longitude",
-                          "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
-                          "fields": [
-                            {
-                              "name": "longitude__integer",
-                              "type": [
-                                "null",
-                                "int"
-                              ]
-                            },
-                            {
-                              "name": "longitude__number",
-                              "type": [
-                                "null",
-                                "float"
-                              ]
-                            }
-                          ]
-                        }
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "longitude",
+                            "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
+                            "fields": [
+                              {
+                                "name": "longitude__integer",
+                                "type": [
+                                  "null",
+                                  "int"
+                                ]
+                              },
+                              {
+                                "name": "longitude__number",
+                                "type": [
+                                  "null",
+                                  "float"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       },
                       {
                         "name": "altitude",
-                        "type": "null"
+                        "type": [
+                          "null"
+                        ]
                       },
                       {
                         "name": "precision",
-                        "type": {
-                          "type": "record",
-                          "name": "precision",
-                          "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
-                          "fields": [
-                            {
-                              "name": "precision__integer",
-                              "type": [
-                                "null",
-                                "int"
-                              ]
-                            },
-                            {
-                              "name": "precision__number",
-                              "type": [
-                                "null",
-                                "float"
-                              ]
-                            }
-                          ]
-                        }
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "precision",
+                            "namespace": "genson.document_types.claims_values_types.mainsnak_values_types",
+                            "fields": [
+                              {
+                                "name": "precision__integer",
+                                "type": [
+                                  "null",
+                                  "int"
+                                ]
+                              },
+                              {
+                                "name": "precision__number",
+                                "type": [
+                                  "null",
+                                  "float"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       },
                       {
                         "name": "globe",
-                        "type": "string"
+                        "type": [
+                          "null",
+                          "string"
+                        ]
                       },
                       {
                         "name": "id",
