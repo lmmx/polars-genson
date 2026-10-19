@@ -243,18 +243,22 @@ def report(base, head, cumulative=None, run_url=None):
     if "legacy" in attributions:
         lines.append("**Stage changes:** not compared, as a revision predates the stage markers and is attributed by function name; the totals are exact.")
     if gains:
-        lines.append("**Largest reductions:** " + "; ".join(f"{c} {s} {millions(-d)} fewer ({change(a, b)})" for d, c, s, a, b in sorted(gains)[:5]))
+        lines.append("**Largest reductions:** " + "; ".join(f"{c}: `{s}` {millions(-d)} fewer ({change(a, b)})" for d, c, s, a, b in sorted(gains)[:5]))
     if "legacy" not in attributions:
-        lines.append("**Increases:** " + ("; ".join(f"{c} {s} +{millions(d)} ({change(a, b)})" for d, c, s, a, b in sorted(losses, reverse=True)[:5]) if losses else "none above 1% of a corpus"))
+        lines.append("**Increases:** " + ("; ".join(f"{c}: `{s}` +{millions(d)} ({change(a, b)})" for d, c, s, a, b in sorted(losses, reverse=True)[:5]) if losses else "none above 1% of a corpus"))
     top = sorted([r for r in remaining if r[2] != "unattributed"], reverse=True)[:5]
-    lines.append("**Largest remaining costs:** " + "; ".join(f"{c} {s} {millions(n)} ({share * 100:.0f}% of it)" for share, c, s, n in top))
+    lines.append("**Largest remaining costs:** " + "; ".join(f"{c}: `{s}` {millions(n)} ({share * 100:.0f}% of it)" for share, c, s, n in top))
     lines += ["", "<details><summary>Stages by corpus</summary>", ""]
     for corpus, h in head["corpora"].items():
         b = base["corpora"].get(corpus)
         if not b:
             continue
         ht = h["instructions"]["total"]
-        lines += [f"**{corpus}** ({h['rows']:,} rows, {h['bytes'] / 1e6:.1f} MB)", "",
+        # As above: a revision attributed by function name has its stages shown, not compared
+        compared = b["attribution"] == "markers" and h["attribution"] == "markers"
+        legacy = " and ".join(side for side, r in (("base", b), ("head", h)) if r["attribution"] != "markers")
+        note = "" if compared else f"; the {legacy}'s stages by function name, approximate and not compared"
+        lines += [f"**{corpus}** ({h['rows']:,} rows, {h['bytes'] / 1e6:.1f} MB{note})", "",
                   "| stage | base | head | change | share of head | allocations (head) | peak live (head) |", "|---|---|---|---|---|---|---|"]
         allocs = {s["stage"]: s for s in h.get("allocations", [])}
         missing = "not collected" if not h.get("allocations") else "0"
@@ -270,7 +274,8 @@ def report(base, head, cumulative=None, run_url=None):
             a = allocs.get(stage)
             alloc = f"{a['allocations']:,} ({a['bytes'] / 1e6:.1f} MB)" if a else (missing if stage not in ("unattributed", "total") else "")
             peak = f"{a['peak_live'] / 1e6:.1f} MB" if a else ""
-            lines.append(f"| {stage} | {millions(bs)} | {millions(hs)} | {change(bs, hs)} | {hs / ht * 100:.1f}% | {alloc} | {peak} |")
+            delta = change(bs, hs) if compared or stage == "total" else "—"
+            lines.append(f"| {stage} | {millions(bs)} | {millions(hs)} | {delta} | {hs / ht * 100:.1f}% | {alloc} | {peak} |")
         rss = h["timing"]["peak_rss_kb"]
         if rss:
             lines.append(f"\nPeak RSS (head, whole process): {max(rss) / 1024:.0f} MB")
