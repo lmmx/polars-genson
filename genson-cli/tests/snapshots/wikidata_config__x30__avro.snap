@@ -250,9 +250,6 @@ info:
                                 "string"
                               ]
                             }
-                          ],
-                          "dependencies": [
-                            "null"
                           ]
                         }
                       ]
@@ -639,9 +636,6 @@ info:
                                       "string"
                                     ]
                                   }
-                                ],
-                                "dependencies": [
-                                  "null"
                                 ]
                               }
                             ]
