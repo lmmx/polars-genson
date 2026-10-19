@@ -1,4 +1,5 @@
 use crate::schema::core::make_promoted_scalar_key;
+use crate::value::object;
 use serde_json::{json, Value};
 use std::collections::HashSet;
 
@@ -43,13 +44,16 @@ fn apply_map_encoding(m: serde_json::Map<String, Value>, encoding: MapEncoding) 
     match encoding {
         MapEncoding::Mapping => Value::Object(m),
         MapEncoding::Entries => {
-            let arr: Vec<Value> = m.into_iter().map(|(k, v)| json!({ k: v })).collect();
+            let arr: Vec<Value> = m
+                .into_iter()
+                .map(|(k, v)| Value::Object([(k, v)].into_iter().collect()))
+                .collect();
             Value::Array(arr)
         }
         MapEncoding::KeyValueEntries => {
             let arr: Vec<Value> = m
                 .into_iter()
-                .map(|(k, v)| json!({ "key": k, "value": v }))
+                .map(|(k, v)| object([("key", Value::String(k)), ("value", v)]))
                 .collect();
             Value::Array(arr)
         }

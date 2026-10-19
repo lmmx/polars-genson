@@ -5,6 +5,7 @@ use std::hash::Hasher;
 use crate::genson_rs::strategy::base::SchemaStrategy;
 use crate::genson_rs::strategy::scalar::TypelessStrategy;
 use crate::genson_rs::strategy::BasicSchemaStrategy;
+use crate::value::object;
 use ordermap::OrderMap;
 use serde_json::{json, Value};
 
@@ -460,7 +461,7 @@ impl SchemaNode {
         if generated_schemas.len() == 1 {
             generated_schemas.swap_remove(0)
         } else if !generated_schemas.is_empty() {
-            json!({"anyOf": generated_schemas})
+            object([("anyOf", Value::Array(generated_schemas))])
         } else {
             json!({})
         }

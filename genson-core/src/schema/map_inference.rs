@@ -1,5 +1,6 @@
 // genson-core/src/schema/map_inference.rs
 use crate::schema::core::{make_promoted_scalar_key, SchemaInferenceConfig};
+use crate::value::object;
 use crate::{debug, profile_verbose};
 use rayon::prelude::*;
 use serde_json::Value;
@@ -480,7 +481,7 @@ fn unified_values(
             let items: Option<Vec<&Value>> = children.iter().map(|s| s.get("items")).collect();
             items
                 .and_then(|items| check_unifiable_item_schemas(&items, path, config))
-                .map(|items| serde_json::json!({ "type": "array", "items": items }))
+                .map(|items| object([("type", "array".into()), ("items", items)]))
         } else {
             check_unifiable_schemas(&children, path, config)
         };

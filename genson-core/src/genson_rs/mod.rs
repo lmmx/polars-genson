@@ -3,9 +3,9 @@ mod builder;
 mod node;
 mod strategy;
 
+use crate::value::object;
 use mimalloc::MiMalloc;
 use rayon::prelude::*;
-use serde_json::json;
 
 // Setting the global allocator to mimalloc for more efficient memory allocation
 #[global_allocator]
@@ -65,9 +65,13 @@ pub fn build_json_schema(
                 .unwrap()
                 .shift_remove("$schema");
             if let Some(schema_uri) = schema_uri {
-                json!({"$schema": schema_uri, "type": "array", "items": inner_schema})
+                object([
+                    ("$schema", schema_uri),
+                    ("type", "array".into()),
+                    ("items", inner_schema),
+                ])
             } else {
-                json!({"type": "array", "items": inner_schema})
+                object([("type", "array".into()), ("items", inner_schema)])
             }
         }
     } else {

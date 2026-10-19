@@ -2,6 +2,7 @@
 use crate::{
     debug, debug_verbose,
     schema::core::{make_promoted_scalar_key, SchemaInferenceConfig},
+    value::object,
 };
 use rayon::prelude::*;
 use serde_json::{json, Map, Value};
@@ -282,7 +283,12 @@ fn unify_array_schemas(
     }
     match items_schemas.as_slice() {
         [] => return Some(json!({ "type": "array" })),
-        [only] => return Some(json!({ "type": "array", "items": only })),
+        [only] => {
+            return Some(object([
+                ("type", "array".into()),
+                ("items", (*only).clone()),
+            ]))
+        }
         _ => {}
     }
 
@@ -291,10 +297,7 @@ fn unify_array_schemas(
         check_unifiable_item_schemas(&items_schemas, &format!("{}.items", path), config)
     {
         debug!(config, "{}: Successfully unified array items", path);
-        Some(json!({
-            "type": "array",
-            "items": unified_items
-        }))
+        Some(object([("type", "array".into()), ("items", unified_items)]))
     } else {
         debug!(config, "{}: Failed to unify array items", path);
         None
@@ -368,10 +371,10 @@ fn unify_map_schemas(
             config,
             "{}: Successfully unified map additionalProperties", path
         );
-        Some(json!({
-            "type": "object",
-            "additionalProperties": unified_additional_props
-        }))
+        Some(object([
+            ("type", "object".into()),
+            ("additionalProperties", unified_additional_props),
+        ]))
     } else {
         debug!(config, "{}: Failed to unify map additionalProperties", path);
         None
@@ -579,10 +582,10 @@ fn unify_record_schemas(
     }
 
     debug!(config, "{}: Record schemas unified successfully", path);
-    let mut result = json!({
-        "type": "object",
-        "properties": properties
-    });
+    let mut result = object([
+        ("type", "object".into()),
+        ("properties", Value::Object(properties)),
+    ]);
     if !required.is_empty() {
         result["required"] = json!(required);
     }
@@ -599,7 +602,10 @@ fn make_nullable(mut schema: Value) -> Value {
             schema
         }
         Some(Value::String(_) | Value::Array(_)) => schema,
-        _ => json!({ "anyOf": [{ "type": "null" }, schema] }),
+        _ => object([(
+            "anyOf",
+            Value::Array(vec![json!({ "type": "null" }), schema]),
+        )]),
     }
 }
 
