@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3](https://github.com/lmmx/polars-genson/compare/genson-core-v1.0.2...genson-core-v1.0.3) - 2026-10-19
+
+### <!-- 2 -->Bug Fixes
+
+- *(core)* a union of a list and other types is one list holding their values ([#262](https://github.com/lmmx/polars-genson/pull/262))
+- *(core)* an empty list beside scalars takes their type as its items ([#261](https://github.com/lmmx/polars-genson/pull/261))
+- *(core)* a value where the schema types null normalises to null ([#265](https://github.com/lmmx/polars-genson/pull/265))
+- *(core)* a forced map keeps its values' type when it is a scalar in some rows ([#264](https://github.com/lmmx/polars-genson/pull/264))
+- *(core)* a map of null values unifies with one of typed values as nullable ([#263](https://github.com/lmmx/polars-genson/pull/263))
+- *(core)* a value in a union of null alone normalises to null, not a panic ([#260](https://github.com/lmmx/polars-genson/pull/260))
+
+### <!-- 3 -->Performance
+
+- normalise_json(decode=False) writes its JSON from the typed decoder ([#269](https://github.com/lmmx/polars-genson/pull/269))
+- *(core)* pad a record's absent fields with nulls in bulk, when next written ([#268](https://github.com/lmmx/polars-genson/pull/268))
+- *(core)* unescape strings directly rather than through serde_json ([#266](https://github.com/lmmx/polars-genson/pull/266))
+
+### <!-- 9 -->Other
+
+- *(deps)* bump avrotize to 0.1.2 ([#270](https://github.com/lmmx/polars-genson/pull/270))
+
 ## [1.0.2](https://github.com/lmmx/polars-genson/compare/genson-core-v1.0.1...genson-core-v1.0.2) - 2026-10-19
 
 ### <!-- 2 -->Bug Fixes
