@@ -1124,3 +1124,96 @@ fn test_union_of_an_array_and_other_branches_it_cannot_hold_stays() {
         assert!(schema.to_string().contains("anyOf"), "{rows:?}: {schema}");
     }
 }
+
+/// For random JSON text (valid, invalid and missing rows), schemas inferred from the valid
+/// rows (wrapped or not) and every option and map encoding: `normalise_to_json` gives each
+/// row's text as `serde_json::to_string` gives it for the `Value` path, the typed decoder
+/// taking the rows in most cases.
+#[cfg(feature = "parquet")]
+#[test]
+fn test_normalise_to_json_matches_the_value_path() {
+    use crate::{infer_json_schema_from_strings, SchemaInferenceConfig};
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    let mut rng = Rng(0x94d0_49bb_1331_11eb);
+    let configs = normalise_configs();
+    let (mut compared, mut typed_cases) = (0, 0);
+    for case in 0..2500 {
+        let wrap = case % 5 != 4;
+        let mut rows: Vec<Option<String>> = Vec::new();
+        for _ in 0..1 + rng.below(8) {
+            let mut text = String::new();
+            if !wrap && rng.below(8) != 0 {
+                text.push_str("{\"a\":");
+                random_text(&mut rng, 3, &mut text);
+                text.push_str(",\"v\":");
+                random_text(&mut rng, 3, &mut text);
+                text.push('}');
+            } else {
+                random_text(&mut rng, 4, &mut text);
+            }
+            let half = (0..=text.len() / 2)
+                .rev()
+                .find(|&i| text.is_char_boundary(i))
+                .unwrap_or(0);
+            let text = match rng.below(14) {
+                0 => text[..half].to_string(),
+                1 => format!("{text} x"),
+                _ => text,
+            };
+            rows.push(if rng.below(15) == 0 { None } else { Some(text) });
+        }
+        let strings: Vec<String> = rows
+            .iter()
+            .flatten()
+            .filter_map(|r| serde_json::from_str::<Value>(r).ok())
+            .map(|v| if wrap { json!({ "w": v }) } else { v })
+            .map(|v| v.to_string())
+            .collect();
+        if strings.is_empty() {
+            continue;
+        }
+        let config = SchemaInferenceConfig {
+            avro: true,
+            map_threshold: [20, 2, 0][case % 3],
+            unify_maps: case % 2 == 0,
+            ..Default::default()
+        };
+        let Ok(inferred) = infer_json_schema_from_strings(&strings, config) else {
+            continue;
+        };
+        if inferred.schema.get("type") != Some(&json!("record")) {
+            continue;
+        }
+        let cfg = NormaliseConfig {
+            wrap_root: wrap.then(|| "w".to_string()),
+            ..configs[case % configs.len()].clone()
+        };
+        let plan = NormalisePlan::new(&inferred.schema, &cfg, &HashSet::new());
+        let borrowed: Vec<Option<&str>> = rows.iter().map(Option::as_deref).collect();
+        let reference = catch_unwind(AssertUnwindSafe(|| {
+            borrowed
+                .iter()
+                .map(|row| {
+                    let value = row
+                        .and_then(|row| serde_json::from_str(row).ok())
+                        .unwrap_or(Value::Null);
+                    serde_json::to_string(&plan.normalise(value).0).unwrap()
+                })
+                .collect::<Vec<String>>()
+        }));
+        // Where the `Value` path panics, so does its fallback here
+        let Ok(reference) = reference else {
+            continue;
+        };
+        let native = cfg.map_encoding == MapEncoding::Mapping;
+        let fields = crate::parquet::avro_record_fields(&inferred.schema, native).ok();
+        let typed = fields.as_ref().and_then(|f| plan.to_arrow(f)?.normalise(&borrowed, 0));
+        typed_cases += usize::from(typed.is_some());
+        let json = normalise_to_json(&plan, fields.as_ref(), &borrowed);
+        assert_eq!(json, reference, "rows {rows:?}\nschema {}\ncfg {cfg:?}", inferred.schema);
+        compared += 1;
+    }
+    eprintln!("normalise_to_json: {compared} compared, {typed_cases} typed");
+    // The typed decoder declines the entries encoding, among the configs
+    assert!(compared > 1500 && typed_cases * 2 > compared, "{compared} compared, {typed_cases} typed");
+}
