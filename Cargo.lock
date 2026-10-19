@@ -487,9 +487,9 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "avrotize"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38bfb541d218d6c829414aad28bdad0392685ebdfda48a8211ed3b85f5163a57"
+checksum = "1bec2c61b8aa2f79f28bd00d81a0f836a946072d9f7f03c09f9d2a86053d1cda"
 dependencies = [
  "regex",
  "reqwest",

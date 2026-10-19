@@ -171,9 +171,6 @@ info:
                                 "string"
                               ]
                             }
-                          ],
-                          "dependencies": [
-                            "null"
                           ]
                         }
                       }
