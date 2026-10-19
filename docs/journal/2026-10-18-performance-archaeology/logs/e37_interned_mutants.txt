@@ -1,0 +1,26 @@
+# Mutants of the interned row phase (genson_rs/interned.rs, node.rs, strategy/object.rs,
+# builder.rs; tools: mutate_interned.py in the scratchpad), each applied alone against
+# test_interned_rows_match_the_builders and test_interned_rows_tell_required_apart.
+caught: join keeps a's required
+caught: join narrows number
+caught: repeated key a second property
+caught: coarse identity
+caught: bare object counts as written
+caught: negative big integer read
+caught: long mixed lists read
+caught: hash ignores property order
+caught: escaped key read raw
+caught: required placeholder first
+caught: required not intersected
+caught: new property not round-tripped
+# These three survived the first pass, each a gap in the test (a `}` inside a string, a
+# document over two lines, rows differing only in `required`), and were caught after
+caught: braces in strings read
+caught: several lines read
+caught: hash ignores required
+# Equivalent: no output can differ
+survived: bare strategies unsorted (bare strategies' order among themselves is never written: the schema sorts them)
+survived: exponent is an integer (an integer text with an exponent fails to parse as one, and is a float either way)
+survived: typeless dropped (an empty node's schema is `{}`, as a typeless one's)
+survived: schema uri never adopted (the base schema then writes the default `$schema` itself)
+survived: schema keyword never kept (the keyword repeats the base schema's `$schema`)
