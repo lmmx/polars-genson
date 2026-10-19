@@ -5,6 +5,12 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **A field that is a scalar in some rows and an empty list in the rest decodes.** Its
+  Avro schema typed the list's items `null` (the list was empty in every row), but
+  normalisation wraps the scalar into the list, so `normalise_json`'s output (`["x"]`
+  under `List(Null)`) failed to decode, whatever `empty_as_null`. Such a list's items now
+  take the scalars' types (`List(String)`, holding `["x"]`). Schemas change only there:
+  an empty list beside records, or one that is ever non-empty, is as before.
 - **A value where the schema types `null` normalises to `null`, so the rows decode.** A
   record field or a list's items typed `null` (as the Avro conversion types those only
   ever null or empty) kept any value given there as it was, though the column is
