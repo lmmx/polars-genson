@@ -5,6 +5,10 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **`no_unify` works through the `DataFrame.genson` methods.** `infer_json_schema`,
+  `infer_polars_schema` and `normalise_json` on `df.genson` accepted `no_unify` but never
+  passed it on, so a map candidate holding a key it names was still unified into a map. The
+  expression functions (`polars_genson.infer_json_schema` and the rest) were not affected.
 - **`DataFrame.genson.normalise_json` decodes rows straight into Polars dtypes.** With
   `decode=True` (the default) it inferred the schema twice, once to normalise and once for
   the dtypes, then wrote every row out as JSON text for `str.json_decode` to parse again.
