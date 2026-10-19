@@ -1,0 +1,13 @@
+# callgrind, one thread, #252 (21b1e5a) and this, the same release profile with line tables
+# (bench_infer_wpq_1t, bench_infer_1t), inclusive instructions; the same schema hashes
+| corpus | to_dag | DAG stage (to_dag, rewrite, to_value) | inference |
+|---|---|---|---|
+| rel7k | 134.6M -> 67.8M (-50%) | 232.9M -> 164.7M (-29%) | 1,049.8M -> 981.5M (-6.5%) |
+| rowsw | 21.3M -> 11.7M (-45%) | 42.7M -> 32.9M (-23%) | 400.5M -> 390.8M (-2.4%) |
+| events | (below the profile's threshold) | | 2,090.6M -> 2,090.5M (0.0%) |
+| narrow200k | | | 1,200.8M -> 1,200.8M (0.0%) |
+| labels | | | 1,395.5M -> 1,394.1M (-0.1%) |
+| rows200 | 390.0M -> 233.7M (-40%) | 439.7M -> 283.3M (-36%) | 16,925.1M -> 16,762.9M (-1.0%) |
+rel7k, this: ObjectStrategy::required_to_dag 25.2M of to_dag's 67.8M; OnDag::rewrite_objects 95.1M; Dag::to_value 0.2M
+peak RSS (3 runs, whole process, KB): rel7k 117120-121632 and 124068-124956; rowsw 474864-536072 and 517612-540028;
+rows200 537092-538464 and 537820-539232; labels 47808-47936 and 42372-48008

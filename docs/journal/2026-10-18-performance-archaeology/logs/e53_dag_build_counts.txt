@@ -1,0 +1,45 @@
+# instrument.py counters (debug builds of #252 21b1e5a and this, one thread), to_dag only: #252 | this
+# columns: stage, allocations, requested bytes, distinct terms, time (debug); counts: to_dag, then the rewrite
+## rel7k
+to_dag	283959	8525452	5589	149.889198ms	to_dag	31116	2152764	5589	92.996388ms
+count	sym lookups	229162	1025	count	sym lookups	170429	1025
+count	interns	291367	46727	count	interns	82922	31716
+count	builder nodes visited	82617	0	count	builder nodes visited	82617	0
+count	objects interned	112196	24449	count	objects interned	53467	24449
+## rowsw
+to_dag	47278	1481143	1458	30.863947ms	to_dag	8214	522739	1458	16.19212ms
+count	sym lookups	34243	344	count	sym lookups	27165	344
+count	interns	48577	10450	count	interns	19695	7416
+count	builder nodes visited	12496	0	count	builder nodes visited	12496	0
+count	objects interned	19597	5746	count	objects interned	12523	5746
+## events
+to_dag	582	30386	91	293.69µs	to_dag	388	26330	91	263.349µs
+count	sym lookups	222	0	count	sym lookups	170	0
+count	interns	270	62	count	interns	133	62
+count	builder nodes visited	65	0	count	builder nodes visited	65	0
+count	objects interned	106	62	count	objects interned	59	62
+## narrow200k
+to_dag	175	9234	31	98.31µs	to_dag	149	8934	31	93.876µs
+count	sym lookups	50	0	count	sym lookups	42	0
+count	interns	41	13	count	interns	33	13
+count	builder nodes visited	11	0	count	builder nodes visited	11	0
+count	objects interned	16	13	count	objects interned	13	13
+## labels
+to_dag	6259	230494	16	2.989678ms	to_dag	1543	122122	16	1.827558ms
+count	sym lookups	4281	0	count	sym lookups	3335	0
+count	interns	5686	950	count	interns	2378	950
+count	builder nodes visited	1420	0	count	builder nodes visited	1420	0
+count	objects interned	2369	950	count	objects interned	1424	950
+## rows200
+to_dag	674044	24760497	9859	421.381776ms	to_dag	29255	5531845	9859	160.523841ms
+count	sym lookups	625413	242	count	sym lookups	419269	242
+count	interns	646149	9300	count	interns	30855	7985
+count	builder nodes visited	213684	0	count	builder nodes visited	213684	0
+count	objects interned	225053	7627	count	objects interned	18913	7627
+# whole inference allocations and requested bytes: #252 | this
+rel7k      1,409,831 (166.8 MB) | 1,156,988 (160.5 MB)
+rowsw        348,006 (74.2 MB)  |   308,942 (73.2 MB)
+rows200   11,175,401 (12.99 GB) | 10,530,612 (12.97 GB)
+labels       822,327 (1.247 GB) |   817,611 (1.246 GB)
+events        81,222 (57.4 MB)  |    81,028 (57.4 MB)
+narrow200k     5,457 (21.8 MB)  |     5,431 (21.8 MB)
