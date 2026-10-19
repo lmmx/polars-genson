@@ -292,6 +292,41 @@ fn extract_field_from_nullable_schema<'a>(
     normalise_nullable(schema).get(field_name)
 }
 
+/// Whether a map's values are typed null: the map was only ever empty, or held nulls alone.
+fn is_null_values(values: &Value) -> bool {
+    values
+        .as_object()
+        .is_some_and(|o| o.len() == 1 && o.get("type") == Some(&Value::from("null")))
+}
+
+/// Two maps one of which has values typed null, or whose values differ only in being
+/// nullable (as a map unified with one of null values is), unified as
+/// `unify_map_schemas` unifies them (`null ⊔ T` is nullable `T`), nullable where either map
+/// is. A record field's two maps are otherwise unified only where alike.
+fn unify_maps_beside_null_values(
+    a: &Value,
+    b: &Value,
+    path: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    if !(is_map_schema(a) && is_map_schema(b)) {
+        return None;
+    }
+    let values = |s| extract_field_from_nullable_schema(s, "additionalProperties");
+    let (a_values, b_values) = (values(a)?, values(b)?);
+    if !(is_null_values(a_values)
+        || is_null_values(b_values)
+        || non_null_view(a_values).eq(&non_null_view(b_values)))
+    {
+        return None;
+    }
+    let map = unify_map_schemas(&[a, b], path, config)?;
+    Some(match nullable_type(a).or(nullable_type(b)) {
+        Some(_) => make_nullable(map),
+        None => map,
+    })
+}
+
 /// Unify array schemas by unifying their items
 fn unify_array_schemas(
     schemas: &[&Value],
@@ -408,12 +443,22 @@ fn unify_map_schemas(
         return None;
     };
 
+    // Values typed null (a map only ever empty, or holding nulls alone) join the others as
+    // null does: `null ⊔ T` is `T` made nullable, and `null ⊔ null` is null
+    let (nulls, typed): (Vec<&Value>, Vec<&Value>) = additional_props_schemas
+        .iter()
+        .partition(|v| is_null_values(v));
+    let unified = match typed.as_slice() {
+        [] => Some(json!({ "type": "null" })),
+        _ => check_unifiable_schemas(&typed, &format!("{}.additionalProperties", path), config)
+            .map(|values| match nulls.is_empty() {
+                true => values,
+                false => make_nullable(values),
+            }),
+    };
+
     // Recursively unify the additionalProperties
-    if let Some(unified_additional_props) = check_unifiable_schemas(
-        &additional_props_schemas,
-        &format!("{}.additionalProperties", path),
-        config,
-    ) {
+    if let Some(unified_additional_props) = unified {
         debug!(
             config,
             "{}: Successfully unified map additionalProperties", path
@@ -478,6 +523,9 @@ fn unify_field_pair(
             None => unified,
         },
     };
+    if let Some(map) = unify_maps_beside_null_values(&unified, new, field_path, config) {
+        return Some(map);
+    }
     let record_like = |s: &Value| is_object_schema(s) || is_empty_record_schema(s);
     if (is_array_schema(&unified) && is_array_schema(new))
         || (record_like(&unified) && record_like(new))
@@ -927,6 +975,11 @@ fn unify_pair(a: Value, b: &Value, path: &str, config: &SchemaInferenceConfig) -
         && (is_map_schema(b) || is_empty_record_schema(b))
     {
         if !(is_map_schema(&a) && is_map_schema(b)) {
+            return check_unifiable_schemas(&[&a, b], path, config);
+        }
+        // Two maps, one with values typed null: as `unify_map_schemas` unifies them
+        let null_values = |s: &Value| s.get("additionalProperties").is_some_and(is_null_values);
+        if null_values(&a) || null_values(b) {
             return check_unifiable_schemas(&[&a, b], path, config);
         }
         // Two maps: their values unified
