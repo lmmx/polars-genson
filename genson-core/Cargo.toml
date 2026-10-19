@@ -14,6 +14,7 @@ tracing = { optional = true, version = "0.1.41" }
 tracing-subscriber = { optional = true, version = "0.3.20" }
 
 # Vendored from genson-rs
+memchr.workspace = true
 mimalloc.workspace = true
 ordermap.workspace = true
 rayon.workspace = true

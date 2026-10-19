@@ -54,6 +54,7 @@ pyo3-polars = { features = ["derive"], version = "0.28.0" }
 #   "preserve_order",
 # ], path = "vendor/genson-rs", version = "0.2.0" }
 indexmap = { version = "2.11.4" }
+memchr = "2.7.6"
 mimalloc = "0.1.47"
 ordermap = { features = ["rayon"], version = "0.5.9" }
 rayon = "1.11.0"
