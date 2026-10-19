@@ -1,6 +1,6 @@
 //! Parquet file I/O for reading and writing string columns
 
-use arrow::array::{Array, ArrayRef, StringArray};
+use arrow::array::{Array, ArrayRef, LargeStringArray, StringArray, StringViewArray};
 use arrow::datatypes::{DataType, Field, FieldRef, Schema, SchemaRef};
 use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
@@ -40,6 +40,52 @@ pub fn read_string_column_opt(
     path: &str,
     column_name: &str,
 ) -> Result<Vec<Option<String>>, String> {
+    let column = read_string_column_arrays(path, column_name)?;
+    Ok(column
+        .rows()
+        .into_iter()
+        .map(|row| row.map(str::to_string))
+        .collect())
+}
+
+/// A string column read from a Parquet file, as the Arrow arrays it was decoded into: its
+/// rows are borrowed from them (see [`StringColumn::rows`]) rather than copied out.
+pub struct StringColumn {
+    arrays: Vec<ArrayRef>,
+}
+
+impl StringColumn {
+    /// One entry per row, in order (`None` for null rows).
+    pub fn rows(&self) -> Vec<Option<&str>> {
+        let mut rows = Vec::with_capacity(self.len());
+        for array in &self.arrays {
+            if let Some(a) = array.as_any().downcast_ref::<StringArray>() {
+                rows.extend(a.iter());
+            } else if let Some(a) = array.as_any().downcast_ref::<LargeStringArray>() {
+                rows.extend(a.iter());
+            } else if let Some(a) = array.as_any().downcast_ref::<StringViewArray>() {
+                rows.extend(a.iter());
+            }
+        }
+        rows
+    }
+
+    /// The number of rows.
+    pub fn len(&self) -> usize {
+        self.arrays.iter().map(|a| a.len()).sum()
+    }
+
+    /// Whether the column has no rows.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+/// Read a string column from a Parquet file, decoding that column only.
+///
+/// # Errors
+/// As for [`read_string_column`].
+pub fn read_string_column_arrays(path: &str, column_name: &str) -> Result<StringColumn, String> {
     let file =
         File::open(path).map_err(|e| format!("Failed to open Parquet file '{}': {}", path, e))?;
 
@@ -56,13 +102,8 @@ pub fn read_string_column_opt(
             available.join(", ")
         )
     })?;
-
-    // Clone the data type so we don't hold a reference to schema/builder
-    let data_type = field.data_type().clone();
-
-    // Ensure it's actually a string column
-    match &data_type {
-        DataType::Utf8 | DataType::LargeUtf8 => {}
+    match field.data_type() {
+        DataType::Utf8 | DataType::LargeUtf8 | DataType::Utf8View => {}
         other => {
             return Err(format!(
                 "Column '{}' has type {:?}, but must be Utf8 or LargeUtf8 (string)",
@@ -71,50 +112,21 @@ pub fn read_string_column_opt(
         }
     }
 
+    // Decode the one column: the others (in wikidata-pq's chunks, every other table's JSON)
+    // are not read
+    let mask = ProjectionMask::roots(builder.parquet_schema(), [column_index]);
     let reader = builder
+        .with_projection(mask)
         .build()
         .map_err(|e| format!("Failed to create Parquet reader: {}", e))?;
-
-    let mut strings = Vec::new();
-
-    // Process all record batches
-    for batch_result in reader {
-        let batch = batch_result.map_err(|e| format!("Failed to read record batch: {}", e))?;
-
-        // Around line 66-76, replace the downcast logic:
-
-        let column = batch.column(column_index);
-
-        // Handle both StringArray and LargeStringArray
-        let strings_in_batch: Vec<Option<String>> = match &data_type {
-            DataType::Utf8 => {
-                let string_array = column
-                    .as_any()
-                    .downcast_ref::<StringArray>()
-                    .ok_or_else(|| "Failed to downcast column to StringArray".to_string())?;
-
-                (0..string_array.len())
-                    .map(|i| (!string_array.is_null(i)).then(|| string_array.value(i).to_string()))
-                    .collect()
-            }
-            DataType::LargeUtf8 => {
-                use arrow::array::LargeStringArray;
-                let string_array = column
-                    .as_any()
-                    .downcast_ref::<LargeStringArray>()
-                    .ok_or_else(|| "Failed to downcast column to LargeStringArray".to_string())?;
-
-                (0..string_array.len())
-                    .map(|i| (!string_array.is_null(i)).then(|| string_array.value(i).to_string()))
-                    .collect()
-            }
-            _ => unreachable!("Type already validated"),
-        };
-
-        strings.extend(strings_in_batch);
-    }
-
-    Ok(strings)
+    let arrays = reader
+        .map(|batch| {
+            batch
+                .map(|b| b.column(0).clone())
+                .map_err(|e| format!("Failed to read record batch: {}", e))
+        })
+        .collect::<Result<_, _>>()?;
+    Ok(StringColumn { arrays })
 }
 
 /// Write strings to a Parquet file as a single string column

@@ -131,6 +131,18 @@ fn test_null_rows_and_kept_columns_roundtrip() {
     assert_eq!(read_string_column_opt(src_path, "json").unwrap(), strings);
     assert_eq!(read_string_column(src_path, "json").unwrap().len(), 2);
 
+    // The arrays reader decodes the one column and borrows its rows, nulls included
+    let column = read_string_column_arrays(src_path, "json").unwrap();
+    let borrowed: Vec<Option<String>> = column
+        .rows()
+        .into_iter()
+        .map(|row| row.map(String::from))
+        .collect();
+    assert_eq!(borrowed, strings);
+    assert_eq!(column.len(), 3);
+    let ids_read = read_string_column_arrays(src_path, "id").unwrap();
+    assert_eq!(ids_read.rows(), vec![Some("Q1"), Some("Q2"), Some("Q3")]);
+
     let kept = read_columns(src_path, &["id".to_string()]).unwrap();
     assert_eq!(kept.len(), 1);
     assert_eq!(kept[0].0.name(), "id");

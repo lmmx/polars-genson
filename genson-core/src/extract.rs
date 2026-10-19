@@ -91,6 +91,15 @@ pub fn extract_invariants(
     rows: Vec<Option<String>>,
     spec: &[(String, String)],
 ) -> Result<Extracted, String> {
+    extract_invariants_from(&rows, spec)
+}
+
+/// [`extract_invariants`] on borrowed rows, such as those of a
+/// [`crate::parquet::StringColumn`].
+pub fn extract_invariants_from<S: AsRef<str> + Sync>(
+    rows: &[Option<S>],
+    spec: &[(String, String)],
+) -> Result<Extracted, String> {
     let chunk = rows.len().div_ceil(rayon::current_num_threads() * 4).max(1);
     // Each chunk keeps its own distinct entries, so repeats are dropped as they are seen
     let chunks: Vec<(Vec<Option<String>>, Lookup)> = rows
@@ -101,8 +110,9 @@ pub fn extract_invariants(
                 .iter()
                 .map(|row| {
                     let Some(s) = row else { return Ok(None) };
+                    let s = s.as_ref();
                     let Ok(mut v) = serde_json::from_str::<Value>(s) else {
-                        return Ok(Some(s.clone()));
+                        return Ok(Some(s.to_string()));
                     };
                     strip(&mut v, spec, &mut lookup)?;
                     Ok(Some(serde_json::to_string(&v).unwrap()))
@@ -111,7 +121,6 @@ pub fn extract_invariants(
             Ok((slim, lookup))
         })
         .collect::<Result<_, String>>()?;
-    drop(rows);
 
     let mut slim_rows = Vec::new();
     let mut lookup = Lookup::default();
