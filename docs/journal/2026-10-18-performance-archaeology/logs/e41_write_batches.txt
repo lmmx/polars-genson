@@ -1,0 +1,8 @@
+bench_write.rs on rel7k's typed claims: ArrowWriter (old) and write_batches (new), seconds per write
+old: 0.193s, 0.108s, 0.131s, 0.127s, 0.124s, 0.127s, 0.127s, 0.107s, 
+new: 0.040s, 0.042s, 0.041s, 0.040s, 0.042s, 0.043s, 0.051s, 0.044s, 
+old: 0.141s, 0.119s, 0.125s, 0.123s, 0.121s, 0.125s, 0.107s, 0.125s, 
+new: 0.043s, 0.041s, 0.042s, 0.041s, 0.038s, 0.037s, 0.042s, 0.049s, 
+old: 0.156s, 0.153s, 0.125s, 0.127s, 0.119s, 0.115s, 0.110s, 0.142s, 
+new: 0.056s, 0.045s, 0.059s, 0.060s, 0.049s, 0.051s, 0.059s, 0.044s, 
+files equal: 3038418 bytes
