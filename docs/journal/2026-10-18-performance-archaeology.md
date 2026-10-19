@@ -1010,6 +1010,32 @@ changed by this work.
   rel7k 0.076 and 0.066 s, CPU 0.165 and 0.154 s; the rest within the spread
 - What is left is not in writing the DAG: halving it gained 6.5% of rel7k's inference
 
+### Siblings given the same states
+
+- The merge builds a subtree for each property and the DAG then finds most of them the
+  same. Counted in the merge (logs/e56_sibling_groups.txt): of rel7k's 15,232 property
+  children, 13,385 are given the same states (once each, in the same order) as one before
+  them, 38,819 of the 65,123 states absorbed; its claims object's 2,269 properties have
+  797 distinct groups. rowsw 2,040 and 1,625; rows200 40,655 and 38,909
+- A node absorbs each distinct state it is given once, in the order given (it skips a state
+  whose identity it has absorbed), so an empty node's subtree is a function of that
+  ordered list of identities. `absorb_deferred` now leaves a property empty when an earlier
+  sibling's list is the same (`ObjectStrategy::same_as`), and writing the schema (`to_dag`,
+  `to_schema`) takes the earlier one's. Identities are the structural hashes the merge
+  already trusts for skipping repeated rows and states. Siblings only, the earlier in
+  property order, so the choice does not depend on threads
+- Against #253 (the same release profile; e56): rel7k's merge 157.1M and 103.6M
+  instructions, writing the DAG 67.8M and 39.2M, inference 981.5M and 899.5M (-8.4%);
+  rowsw 390.8M and 379.3M; the rest within 0.2%; builder nodes written rel7k 82,617 and
+  40,991, rows200 213,684 and 175,917 (its repeats mostly leaves). The same schemas
+- Four threads (logs/e57_infer_sibling_groups.txt): rel7k 0.084 and 0.062 s, CPU 0.169 and
+  0.128 s. The event logs read 0.065 and 0.053 s here and in the comparison before it with
+  the same instructions: the second build of each round runs faster, an order bias of about
+  10 ms that these short runs show
+- Inference is now mostly the row phase: rel7k 589M of 899M, the event logs 2.02G of
+  2.09G, narrow200k 1.14G of 1.20G (34 and 45 instructions per byte); rows200 is mostly
+  the Avro conversion (11.2G of 16.7G, avrotize's regexes)
+
 ## Measured and not kept
 
 - `proto_norm_typecheck.py` compares the schema's `type` with `as_str` instead of building

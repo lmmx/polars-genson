@@ -1,0 +1,32 @@
+# callgrind, one thread, #253 (8f76f70) and this, the same release profile with line tables; millions of instructions (inclusive)
+| corpus | rows | merge | to_dag | rewrite | avro | inference | output |
+|---|---|---|---|---|---|---|---|
+| rel7k | 589.0 → 589.0 (+0%) | 157.1 → 103.6 (-34%) | 67.8 → 39.2 (-42%) | 95.1 → 95.1 (+0%) | 53.8 → 53.8 (+0%) | 981.5 → 899.5 (-8%) | same |
+| rowsw | 279.8 → 279.8 (-0%) | 27.4 → 20.4 (-26%) | 11.7 → 7.5 (-36%) | 20.6 → 20.5 (-0%) | 44.8 → 44.6 (-0%) | 390.8 → 379.3 (-3%) | same |
+| events | 2,018.8 → 2,018.8 (+0%) | – | – | – | 39.4 → 39.4 (+0%) | 2,090.5 → 2,090.7 (+0%) | same |
+| narrow200k | 1,138.5 → 1,138.5 (+0%) | – | – | – | – | 1,200.8 → 1,200.8 (+0%) | same |
+| labels | 280.6 → 280.6 (+0%) | – | – | – | 1,063.3 → 1,063.1 (-0%) | 1,394.1 → 1,388.0 (-0%) | same |
+| rows200 | 4,899.1 → 4,899.0 (-0%) | 338.4 → 322.7 (-5%) | 233.7 → 229.4 (-2%) | – | 11,220.0 → 11,213.7 (-0%) | 16,762.9 → 16,736.4 (-0%) | same |
+
+# instrument.py counters (debug builds, one thread): writing the DAG, #253 | this
+## rel7k
+to_dag	31116	2152764	5589	92.996388ms	to_dag	24737	1948636	5589	53.828085ms
+count	sym lookups	170429	1025	count	sym lookups	95862	1025
+count	interns	82922	31716	count	interns	47255	31716
+count	builder nodes visited	82617	0	count	builder nodes visited	40991	0
+	inference	963095	136593623
+## rowsw
+to_dag	8214	522739	1458	16.19212ms	to_dag	6769	476499	1458	12.304822ms
+count	sym lookups	27165	344	count	sym lookups	16782	344
+count	interns	19695	7416	count	interns	11724	7416
+count	builder nodes visited	12496	0	count	builder nodes visited	7199	0
+	inference	281190	70215126
+## rows200
+to_dag	29255	5531845	9859	160.523841ms	to_dag	29255	5531845	9859	194.354649ms
+count	sym lookups	419269	242	count	sym lookups	419269	242
+count	interns	30855	7985	count	interns	30855	7985
+count	builder nodes visited	213684	0	count	builder nodes visited	175917	0
+	inference	10482138	12957138893
+# allocations in inference: rel7k 1,156,988 and 963,095; rowsw 308,942 and 281,190; rows200 10,530,612 and 10,482,138
+
+# repeated groups (GROUP_STATS, #253): rel7k 15,232 property groups, 13,385 the same as one before them anywhere (38,819 of 65,123 states); its claims object 2,269 properties, 797 distinct groups; rowsw 2,040 and 1,625 (11,325 of 21,150 states); rows200 40,655 and 38,909 (81,748 of 96,303 states)
