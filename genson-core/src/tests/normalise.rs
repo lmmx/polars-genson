@@ -809,10 +809,10 @@ fn test_typed_decode_depth_limit() {
     assert!(arrow::array::Array::is_null(w, 1));
 }
 
-/// A record pruned by a field after one that could panic: where that earlier field holds a
-/// value (inference only saw it null), the `Value` path panics before it reaches the
-/// pruning, so the typed decoder declines; where it is null, both prune the record. A field
-/// of an empty union panics even on null.
+/// A record pruned by a field after one that could panic: a field of an empty union panics
+/// on any value, null included, before the `Value` path reaches the pruning, so the typed
+/// decoder declines. A field of `null` alone no longer panics (#238): whatever it holds is
+/// null, and both prune the record.
 #[cfg(feature = "parquet")]
 #[test]
 fn test_typed_decode_declines_a_prune_after_a_panic() {
@@ -840,7 +840,7 @@ fn test_typed_decode_declines_a_prune_after_a_panic() {
         row(r#"{"a": 1, "b": {"x": 1}}"#),
         row(r#"{"a": null, "b": {"x": 1}}"#),
     );
-    for (a_type, null_prunes) in [(json!(["null"]), true), (json!([]), false)] {
+    for (a_type, panics) in [(json!(["null"]), false), (json!([]), true)] {
         let schema = schema(a_type);
         let plan = NormalisePlan::new(&schema, &cfg, &prune);
         let mut out_schema = schema.clone();
@@ -851,15 +851,69 @@ fn test_typed_decode_declines_a_prune_after_a_panic() {
             plan.to_arrow(&fields)
                 .and_then(|p| p.normalise(&borrowed, 0))
         };
-        assert!(typed_by_value(&held, &plan, &fields).is_err());
-        assert!(decode(&held).is_none());
-        if null_prunes {
-            let typed = decode(&null).unwrap();
-            assert_eq!(typed.1.len(), 1);
-            assert_eq!(typed, typed_by_value(&null, &plan, &fields).unwrap());
-        } else {
-            assert!(typed_by_value(&null, &plan, &fields).is_err());
-            assert!(decode(&null).is_none());
+        for rows in [&held, &null] {
+            if panics {
+                assert!(typed_by_value(rows, &plan, &fields).is_err());
+                assert!(decode(rows).is_none());
+            } else {
+                let typed = decode(rows).unwrap();
+                assert_eq!(typed.1.len(), 1);
+                assert_eq!(typed, typed_by_value(rows, &plan, &fields).unwrap());
+            }
         }
     }
+}
+
+/// A union of `null` alone holds no other value: a value there is null, on the plan and on
+/// the reference path, where both panicked (#238).
+#[test]
+fn test_null_only_union_normalises_a_value_to_null() {
+    let schema = json!({
+        "type": "record",
+        "name": "r",
+        "fields": [
+            {"name": "d", "type": ["null"]},
+            {"name": "e", "type": ["null", "int"]},
+        ]
+    });
+    let cfg = NormaliseConfig::default();
+    let prune = std::collections::HashSet::new();
+    let plan = NormalisePlan::new(&schema, &cfg, &prune);
+    for (input, expected) in [
+        (json!({"d": 9, "e": 1}), json!({"d": null, "e": 1})),
+        (json!({"d": null, "e": null}), json!({"d": null, "e": null})),
+        (json!({"d": {"x": [1]}}), json!({"d": null, "e": null})),
+    ] {
+        assert_eq!(plan.normalise(input.clone()).0, expected);
+        assert_eq!(normalise_value(input, &schema, &cfg, None), expected);
+    }
+}
+
+/// #238's rows: their Avro schema names two differently shaped records alike, so the second
+/// takes the first's fields and its `d` becomes `["null"]`. Normalising them no longer panics.
+#[cfg(feature = "avro")]
+#[test]
+fn test_rows_with_one_record_name_for_two_shapes_normalise() {
+    use crate::SchemaInferenceConfig;
+    let rows = [
+        r#"{"r":[[true,true,{"d":null}],1,{"d":9}]}"#,
+        r#"{"r":true}"#,
+        r#"{"r":true}"#,
+    ];
+    let config = SchemaInferenceConfig {
+        delimiter: Some(b'\n'),
+        avro: true,
+        ..Default::default()
+    };
+    let schema = crate::infer_json_schema_from_strings(&rows, config)
+        .unwrap()
+        .schema;
+    let values: Vec<Value> = rows.iter().map(|r| serde_json::from_str(r).unwrap()).collect();
+    let cfg = NormaliseConfig::default();
+    let normalised = normalise_values(values.clone(), &schema, &cfg);
+    assert_eq!(normalised.len(), 3);
+    let prune = std::collections::HashSet::new();
+    let plan = NormalisePlan::new(&schema, &cfg, &prune);
+    let planned: Vec<Value> = values.into_iter().map(|v| plan.normalise(v).0).collect();
+    assert_eq!(planned, normalised);
 }

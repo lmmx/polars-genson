@@ -12,9 +12,8 @@
 //! - a plan for the `entries` map encoding, for no fields at all, or for fields that are not the ones
 //!   `avro_record_fields` gives for the pruned schema (a type other than the one the plan's
 //!   node decodes to, a field that is not nullable, or a name given twice);
-//! - a value that panics there: one not null in a union of only `null` (a field inference
-//!   only saw null), or any in an empty union; and a record pruned by a field after one
-//!   that could panic on its value (the `Value` path reaches that field first);
+//! - a value that panics there: any in an empty union; and a record pruned by a field after
+//!   one that could panic on its value (the `Value` path reaches that field first);
 //! - a value in a column of nulls;
 //! - more than `arrow-json` decodes in one batch: over `i32::MAX` bytes in a string column
 //!   or items in a list column, or (roughly) `u32::MAX` strings and keys in all.
@@ -73,7 +72,7 @@ enum Node<'p> {
     Map(Box<Node<'p>>),
     /// A union holding `null` and another branch
     Nullable(Box<Node<'p>>),
-    /// `["null"]`: a value other than null panics on the `Value` path
+    /// `["null"]`: any value is null there, as on the `Value` path
     NullOnly,
     /// `[]`: any value panics on the `Value` path
     Never,
@@ -174,7 +173,7 @@ impl<'p> Node<'p> {
         match self {
             Node::Record(record) => record.fields.iter().any(|f| f.node.can_panic()),
             Node::Array(inner) | Node::Map(inner) | Node::Nullable(inner) => inner.can_panic(),
-            Node::NullOnly | Node::Never => true,
+            Node::Never => true,
             _ => false,
         }
     }
@@ -890,7 +889,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
                 }
                 col.append_null();
             }
-            (Node::NullOnly, col) if null => col.append_null(),
+            (Node::NullOnly, col) => col.append_null(),
             (Node::Passthrough, Column::Null(n)) if null => *n += 1,
             _ => return Err(Unsupported),
         }

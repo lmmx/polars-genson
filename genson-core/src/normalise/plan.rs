@@ -320,15 +320,12 @@ impl<'s> NormalisePlan<'s> {
                 }
             }
 
-            Plan::Nullable(branch) => {
-                if value.is_null() {
-                    Kept(Value::Null)
-                } else {
-                    // normalise against the first non-null branch
-                    let branch = branch.as_ref().unwrap();
-                    self.run(value, branch, field_name, pruned)
-                }
-            }
+            Plan::Nullable(branch) => match branch {
+                // normalise against the first non-null branch
+                Some(branch) if !value.is_null() => self.run(value, branch, field_name, pruned),
+                // A union of `null` alone (see `normalise_inner`) holds nothing else
+                _ => Kept(Value::Null),
+            },
 
             // pick first type
             Plan::Union(first) => self.run(value, &first[0], field_name, pruned),
