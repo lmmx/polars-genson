@@ -11,21 +11,33 @@
 //! - a key with an escape, or a key twice in one object, in an object that is kept;
 //! - a field to extract whose determinant is missing or null: the field stays, and its
 //!   value, only validated here, would have to be looked into.
+//!
+//! A field's value is validated once for each text: where its determinant comes before it
+//! and the same field and key already hold a validated text (from an earlier row, as
+//! [`Known`] gives it, or earlier in this row) that the row has at this point, the pass
+//! steps over it. Validating those same bytes would end at the same place with the same
+//! result: the text opens with `{`, `[` or `"`, so its end does not depend on what follows
+//! it, and its nesting is checked against the depth limit at this depth.
 
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::ops::Range;
 
 /// The pass gave up on a row (see the module docs); the row takes the `Value` path.
 #[derive(Debug)]
 pub(crate) struct Fallback;
 
-/// A field removed from a row: its index in the spec, its determinant's value, and the
-/// byte range of its value in the row.
+/// A field removed from a row: its index in the spec, its determinant's value, the byte
+/// range of its value in the row, and how deeply its value nests (1 for `{}`).
 pub(crate) struct Removed<'a> {
     pub field: usize,
     pub key: std::borrow::Cow<'a, str>,
     pub value: Range<usize>,
+    pub nesting: usize,
 }
+
+/// The validated text of a removed field's value, by the field's index in the spec and its
+/// determinant's value, and how deeply it nests: what an earlier row's scan removed.
+pub(crate) type Known<'k> = dyn Fn(usize, &str) -> Option<(&'k str, usize)> + 'k;
 
 /// A row's slim text and its removed fields, in the order `strip` records them.
 pub(crate) struct Scanned<'a> {
@@ -37,9 +49,19 @@ pub(crate) struct Scanned<'a> {
 const MAX_DEPTH: usize = 127;
 
 /// Scan `row` for the `spec` fields (`(field, determinant)` pairs).
+#[cfg(test)]
 pub(crate) fn scan<'a>(row: &'a str, spec: &[(String, String)]) -> Result<Scanned<'a>, Fallback> {
+    scan_known(row, spec, &|_, _| None)
+}
+
+/// [`scan`], with the values `known` holds stepped over where the row has them.
+pub(crate) fn scan_known<'a, 'k>(
+    row: &'a str,
+    spec: &[(String, String)],
+    known: &Known<'k>,
+) -> Result<Scanned<'a>, Fallback> {
     let bytes = row.as_bytes();
-    if bytes.contains(&b'\n') || bytes.contains(&b'\r') {
+    if memchr::memchr2(b'\n', b'\r', bytes).is_some() {
         return Err(Fallback);
     }
     let mut s = Scanner {
@@ -50,6 +72,9 @@ pub(crate) fn scan<'a>(row: &'a str, spec: &[(String, String)]) -> Result<Scanne
         cuts: Vec::new(),
         removed: Vec::new(),
         members: Vec::new(),
+        known,
+        seen: FxHashMap::default(),
+        deepest: 0,
     };
     s.ws();
     s.value(0)?;
@@ -74,14 +99,16 @@ pub(crate) fn scan<'a>(row: &'a str, spec: &[(String, String)]) -> Result<Scanne
 }
 
 /// One member of an object being scanned: its key, the start of its key's opening quote,
-/// the range of its value, and whether its value was scanned (not only validated).
+/// the range of its value, and how deeply it nests (for a field to extract).
 struct Member {
     key: Range<usize>,
     start: usize,
     value: Range<usize>,
+    /// How deeply a field to extract's value nests.
+    nesting: usize,
 }
 
-struct Scanner<'a, 's> {
+struct Scanner<'a, 's, 'k> {
     b: &'a [u8],
     row: &'a str,
     i: usize,
@@ -90,9 +117,16 @@ struct Scanner<'a, 's> {
     removed: Vec<Removed<'a>>,
     /// The members of the objects being scanned, innermost last.
     members: Vec<Member>,
+    /// Values earlier rows removed, validated.
+    known: &'s Known<'k>,
+    /// Values this row removed (with a determinant that is not escaped), validated: their
+    /// range and nesting, by field index and key.
+    seen: FxHashMap<(usize, &'a str), (Range<usize>, usize)>,
+    /// The deepest level `skip` has reached in the value it is validating.
+    deepest: usize,
 }
 
-impl<'a> Scanner<'a, '_> {
+impl<'a> Scanner<'a, '_, '_> {
     fn peek(&self) -> Option<u8> {
         self.b.get(self.i).copied()
     }
@@ -151,6 +185,7 @@ impl<'a> Scanner<'a, '_> {
                 if depth + 1 > MAX_DEPTH {
                     return Err(Fallback);
                 }
+                self.deepest = self.deepest.max(depth + 1);
                 self.i += 1;
                 self.ws();
                 let close = if open == b'{' { b'}' } else { b']' };
@@ -354,8 +389,16 @@ impl<'a> Scanner<'a, '_> {
             self.ws();
             let value_start = self.i;
             let name = &self.row[key.clone()];
-            if self.spec.iter().any(|(field, _)| field == name) {
-                self.skip(depth)?;
+            let mut nesting = 0;
+            if let Some(field) = self.spec.iter().position(|(field, _)| field == name) {
+                nesting = match self.step_over_known(field, first, depth) {
+                    Some(nesting) => nesting,
+                    None => {
+                        self.deepest = depth;
+                        self.skip(depth)?;
+                        self.deepest - depth
+                    }
+                };
             } else {
                 self.value(depth)?;
             }
@@ -363,6 +406,7 @@ impl<'a> Scanner<'a, '_> {
                 key,
                 start,
                 value: value_start..self.i,
+                nesting,
             });
             self.ws();
             match self.peek() {
@@ -377,6 +421,34 @@ impl<'a> Scanner<'a, '_> {
         let result = self.close_object(first, removed_before);
         self.members.truncate(first);
         result
+    }
+
+    /// Step over the value of the field to extract at `field` in the spec where the row has
+    /// here a validated text of it: one this row removed earlier or `known` holds, for the
+    /// determinant among the object's members so far. Its nesting, as `skip` would find it,
+    /// if so: the text opens with `{`, `[` or `"` (validating it ends where it ends), and
+    /// fits within the depth limit here.
+    fn step_over_known(&mut self, field: usize, first: usize, depth: usize) -> Option<usize> {
+        let row = self.row;
+        let key_field = &self.spec[field].1;
+        let key = self.members[first..]
+            .iter()
+            .find(|m| row[m.key.clone()] == **key_field)?;
+        let key = determinant(&row[key.value.clone()]).ok()??;
+        let (text, nesting): (&str, usize) = match &key {
+            std::borrow::Cow::Borrowed(k) => self
+                .seen
+                .get(&(field, *k))
+                .map(|(range, nesting)| (&row[range.clone()], *nesting)),
+            std::borrow::Cow::Owned(_) => None,
+        }
+        .or_else(|| (self.known)(field, &key))?;
+        let opens = matches!(text.as_bytes().first(), Some(b'{' | b'[' | b'"'));
+        if !opens || depth + nesting > MAX_DEPTH || !self.b[self.i..].starts_with(text.as_bytes()) {
+            return None;
+        }
+        self.i += text.len();
+        Some(nesting)
     }
 
     fn close_object(&mut self, first: usize, removed_before: usize) -> Result<(), Fallback> {
@@ -422,6 +494,7 @@ impl<'a> Scanner<'a, '_> {
                 field: field_index,
                 key,
                 value: members[f].value.clone(),
+                nesting: members[f].nesting,
             });
         }
         if own.is_empty() {
@@ -456,6 +529,12 @@ impl<'a> Scanner<'a, '_> {
             cuts.push(cut);
         }
         self.cuts.extend(cuts);
+        for removed in &own {
+            if let std::borrow::Cow::Borrowed(key) = removed.key {
+                let held = (removed.value.clone(), removed.nesting);
+                self.seen.entry((removed.field, key)).or_insert(held);
+            }
+        }
         // This object's fields go before those found in its members
         self.removed.splice(removed_before..removed_before, own);
         Ok(())
