@@ -1,0 +1,354 @@
+{
+ "chunk": "chunk_0.parquet",
+ "polars": "2.0.0",
+ "polars_genson": "1.1.0",
+ "runs": [
+  {
+   "run": 0,
+   "wall": 6.543495293999513,
+   "cpu": 18.75938,
+   "steps": {
+    "polars.read_parquet[process]": {
+     "calls": 1,
+     "wall": 0.5179172430007384,
+     "cpu": 0.5418570000000003,
+     "peak_over_base_mb": 387.453125
+    },
+    "polars.collect[n_ids]": {
+     "calls": 7,
+     "wall": 0.28799105000143754,
+     "cpu": 0.07744799999999774,
+     "peak_over_base_mb": 2.1484375
+    },
+    "genson.normalise_from_parquet[labels]": {
+     "calls": 1,
+     "wall": 0.20895444500001759,
+     "cpu": 0.4045329999999998,
+     "peak_over_base_mb": 77.40625
+    },
+    "process.normalise_map_direct[labels]": {
+     "calls": 1,
+     "wall": 0.21021269900029438,
+     "cpu": 0.4058069999999998,
+     "peak_over_base_mb": 77.41015625
+    },
+    "genson.normalise_from_parquet[descriptions]": {
+     "calls": 1,
+     "wall": 0.1214326830004211,
+     "cpu": 0.22334499999999968,
+     "peak_over_base_mb": 17.67578125
+    },
+    "process.normalise_map_direct[descriptions]": {
+     "calls": 1,
+     "wall": 0.12235637600042537,
+     "cpu": 0.22426099999999982,
+     "peak_over_base_mb": 17.67578125
+    },
+    "genson.normalise_from_parquet[aliases]": {
+     "calls": 1,
+     "wall": 0.06354431999989174,
+     "cpu": 0.11827100000000002,
+     "peak_over_base_mb": 4.640625
+    },
+    "process.normalise_map_direct[aliases]": {
+     "calls": 1,
+     "wall": 0.06433455299975321,
+     "cpu": 0.11905300000000008,
+     "peak_over_base_mb": 4.640625
+    },
+    "polars.sink_parquet[entities]": {
+     "calls": 1,
+     "wall": 0.005391663999944285,
+     "cpu": 0.01035499999999967,
+     "peak_over_base_mb": 4.74609375
+    },
+    "process.normalise_sitelinks (genson.normalise_json)": {
+     "calls": 1,
+     "wall": 0.727958492999278,
+     "cpu": 2.369999,
+     "peak_over_base_mb": 1.16796875
+    },
+    "polars.sink_parquet[links]": {
+     "calls": 1,
+     "wall": 0.3075224550002531,
+     "cpu": 0.30005799999999994,
+     "peak_over_base_mb": 31.3515625
+    },
+    "genson.normalise_from_parquet[claims]": {
+     "calls": 1,
+     "wall": 4.242897660999915,
+     "cpu": 14.654041,
+     "peak_over_base_mb": 1758.73046875
+    },
+    "polars.read_parquet[normalise_claims_direct]": {
+     "calls": 2,
+     "wall": 0.0027257140000074287,
+     "cpu": 0.0030110000000043158,
+     "peak_over_base_mb": 0.00390625
+    },
+    "process.lookup_to_long": {
+     "calls": 1,
+     "wall": 0.00013722599942411762,
+     "cpu": 0.00013599999999769352,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[claims_labels]": {
+     "calls": 1,
+     "wall": 0.001152158999502717,
+     "cpu": 0.0014319999999976574,
+     "peak_over_base_mb": 0.03125
+    },
+    "process.normalise_claims_direct (all)": {
+     "calls": 1,
+     "wall": 4.2515362120002465,
+     "cpu": 14.662826,
+     "peak_over_base_mb": 1743.296875
+    }
+   },
+   "output_mb": {
+    "claims_labels": 0.0,
+    "labels": 4.2,
+    "descriptions": 4.5,
+    "claims": 54.3,
+    "entities": 0.2,
+    "links": 4.3,
+    "aliases": 1.8
+   }
+  },
+  {
+   "run": 1,
+   "wall": 5.381600836999496,
+   "cpu": 15.14265,
+   "steps": {
+    "polars.read_parquet[process]": {
+     "calls": 1,
+     "wall": 0.4767819889993916,
+     "cpu": 0.4777850000000008,
+     "peak_over_base_mb": 459.13671875
+    },
+    "polars.collect[n_ids]": {
+     "calls": 7,
+     "wall": 0.02810289700028079,
+     "cpu": 0.0429460000000077,
+     "peak_over_base_mb": 1.92578125
+    },
+    "genson.normalise_from_parquet[labels]": {
+     "calls": 1,
+     "wall": 0.1643307089998416,
+     "cpu": 0.3912319999999987,
+     "peak_over_base_mb": 0.0
+    },
+    "process.normalise_map_direct[labels]": {
+     "calls": 1,
+     "wall": 0.16507689399986702,
+     "cpu": 0.3919690000000031,
+     "peak_over_base_mb": 0.0
+    },
+    "genson.normalise_from_parquet[descriptions]": {
+     "calls": 1,
+     "wall": 0.19858323800053768,
+     "cpu": 0.3865300000000005,
+     "peak_over_base_mb": 0.0
+    },
+    "process.normalise_map_direct[descriptions]": {
+     "calls": 1,
+     "wall": 0.19942197899945313,
+     "cpu": 0.387359,
+     "peak_over_base_mb": 0.0
+    },
+    "genson.normalise_from_parquet[aliases]": {
+     "calls": 1,
+     "wall": 0.058881435000330384,
+     "cpu": 0.11774099999999876,
+     "peak_over_base_mb": 5.046875
+    },
+    "process.normalise_map_direct[aliases]": {
+     "calls": 1,
+     "wall": 0.059833379999872705,
+     "cpu": 0.11868400000000179,
+     "peak_over_base_mb": 5.046875
+    },
+    "polars.sink_parquet[entities]": {
+     "calls": 1,
+     "wall": 0.003905970000232628,
+     "cpu": 0.007150999999996799,
+     "peak_over_base_mb": 1.06640625
+    },
+    "process.normalise_sitelinks (genson.normalise_json)": {
+     "calls": 1,
+     "wall": 0.6819310529999711,
+     "cpu": 2.1915049999999994,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[links]": {
+     "calls": 1,
+     "wall": 0.2853656769993904,
+     "cpu": 0.28443599999999947,
+     "peak_over_base_mb": 32.5703125
+    },
+    "genson.normalise_from_parquet[claims]": {
+     "calls": 1,
+     "wall": 3.4310783049995734,
+     "cpu": 11.186861,
+     "peak_over_base_mb": 854.0390625
+    },
+    "polars.read_parquet[normalise_claims_direct]": {
+     "calls": 2,
+     "wall": 0.002935319000243908,
+     "cpu": 0.0031250000000042633,
+     "peak_over_base_mb": 0.0078125
+    },
+    "process.lookup_to_long": {
+     "calls": 1,
+     "wall": 0.00012891700043837773,
+     "cpu": 0.00012899999999405054,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[claims_labels]": {
+     "calls": 1,
+     "wall": 0.0011375650001355098,
+     "cpu": 0.0012990000000030477,
+     "peak_over_base_mb": 0.00390625
+    },
+    "process.normalise_claims_direct (all)": {
+     "calls": 1,
+     "wall": 3.4403850250000687,
+     "cpu": 11.196150000000003,
+     "peak_over_base_mb": 851.984375
+    }
+   },
+   "output_mb": {
+    "claims_labels": 0.0,
+    "labels": 4.2,
+    "descriptions": 4.5,
+    "claims": 54.3,
+    "entities": 0.2,
+    "links": 4.3,
+    "aliases": 1.8
+   }
+  },
+  {
+   "run": 2,
+   "wall": 5.282429074999527,
+   "cpu": 14.996974999999999,
+   "steps": {
+    "polars.read_parquet[process]": {
+     "calls": 1,
+     "wall": 0.4983014879999246,
+     "cpu": 0.49646200000000107,
+     "peak_over_base_mb": 459.59765625
+    },
+    "polars.collect[n_ids]": {
+     "calls": 7,
+     "wall": 0.026711709000664996,
+     "cpu": 0.040599999999990644,
+     "peak_over_base_mb": 1.953125
+    },
+    "genson.normalise_from_parquet[labels]": {
+     "calls": 1,
+     "wall": 0.16263575699940702,
+     "cpu": 0.3675139999999999,
+     "peak_over_base_mb": 0.0
+    },
+    "process.normalise_map_direct[labels]": {
+     "calls": 1,
+     "wall": 0.16356104900023638,
+     "cpu": 0.3684290000000061,
+     "peak_over_base_mb": 0.0
+    },
+    "genson.normalise_from_parquet[descriptions]": {
+     "calls": 1,
+     "wall": 0.13827922200016474,
+     "cpu": 0.2679940000000016,
+     "peak_over_base_mb": 9.32421875
+    },
+    "process.normalise_map_direct[descriptions]": {
+     "calls": 1,
+     "wall": 0.13914928599933774,
+     "cpu": 0.26885199999999543,
+     "peak_over_base_mb": 9.32421875
+    },
+    "genson.normalise_from_parquet[aliases]": {
+     "calls": 1,
+     "wall": 0.06045327999981964,
+     "cpu": 0.11660400000000237,
+     "peak_over_base_mb": 0.0
+    },
+    "process.normalise_map_direct[aliases]": {
+     "calls": 1,
+     "wall": 0.0612824260006164,
+     "cpu": 0.11742100000000022,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[entities]": {
+     "calls": 1,
+     "wall": 0.004448429999683867,
+     "cpu": 0.007202999999996962,
+     "peak_over_base_mb": 0.66015625
+    },
+    "process.normalise_sitelinks (genson.normalise_json)": {
+     "calls": 1,
+     "wall": 0.7614326499997333,
+     "cpu": 2.555030000000002,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[links]": {
+     "calls": 1,
+     "wall": 0.27937058200041065,
+     "cpu": 0.2806420000000003,
+     "peak_over_base_mb": 33.51953125
+    },
+    "genson.normalise_from_parquet[claims]": {
+     "calls": 1,
+     "wall": 3.3081031920000896,
+     "cpu": 10.822526000000003,
+     "peak_over_base_mb": 951.15234375
+    },
+    "polars.read_parquet[normalise_claims_direct]": {
+     "calls": 2,
+     "wall": 0.0025604230004319106,
+     "cpu": 0.0024069999999980496,
+     "peak_over_base_mb": 0.0
+    },
+    "process.lookup_to_long": {
+     "calls": 1,
+     "wall": 0.00011791900033131242,
+     "cpu": 0.00011599999999845068,
+     "peak_over_base_mb": 0.00390625
+    },
+    "polars.sink_parquet[claims_labels]": {
+     "calls": 1,
+     "wall": 0.000974749000306474,
+     "cpu": 0.0011099999999970578,
+     "peak_over_base_mb": 0.015625
+    },
+    "process.normalise_claims_direct (all)": {
+     "calls": 1,
+     "wall": 3.3160788830000456,
+     "cpu": 10.830107999999996,
+     "peak_over_base_mb": 941.91796875
+    }
+   },
+   "output_mb": {
+    "claims_labels": 0.0,
+    "labels": 4.2,
+    "descriptions": 4.5,
+    "claims": 54.3,
+    "entities": 0.2,
+    "links": 4.3,
+    "aliases": 1.8
+   }
+  }
+ ],
+ "input": {
+  "rows": 10000,
+  "file_mb": 48.8,
+  "labels_json_mb": 13.2,
+  "descriptions_json_mb": 12.6,
+  "aliases_json_mb": 4.3,
+  "sitelinks_json_mb": 28.7,
+  "claims_json_mb": 374.8,
+  "entity_json_mb": 1.1
+ },
+ "maxrss_mb": 3366.77734375
+}

@@ -1,6 +1,8 @@
 #[cfg(not(panic = "unwind"))]
 compile_error!("genson-core requires panic=unwind to catch genson-rs panics. Set [profile.*].panic = \"unwind\" in Cargo.toml.");
 
+#[cfg(feature = "parquet")]
+pub mod conform;
 mod dag;
 pub mod extract;
 pub mod genson_rs;

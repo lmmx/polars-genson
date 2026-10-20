@@ -17,10 +17,12 @@ from ._polars_genson import json_to_schema as _rust_json_to_schema
 from ._polars_genson import normalise_from_parquet as _rust_normalise_from_parquet
 from ._polars_genson import normalise_json_typed as _rust_normalise_json_typed
 from ._polars_genson import read_parquet_metadata as _rust_read_parquet_metadata
+from ._polars_genson import schema_incompatibilities as _rust_schema_incompatibilities
 from ._polars_genson import schema_to_json as _rust_schema_to_json
 from .dtypes import (
     _parse_polars_dtype,
     contains_map,
+    dtype_spec,
     project_dtype,
     typed_route_makes,
 )
@@ -39,6 +41,7 @@ __all__ = [
     "normalise_from_parquet",
     "read_parquet_metadata",
     "schema_to_dict",
+    "check_schema_compatibility",
 ]
 
 
@@ -699,6 +702,9 @@ def normalise_from_parquet(
     lookup_output_path: str | Path | None = None,
     prune: set[str] | None = None,
     prune_output_path: str | Path | None = None,
+    schema: pl.Schema | pl.Struct | None = None,
+    schema_check: Literal["compatible", "strict", "none"] = "compatible",
+    unnest: bool = False,
 ) -> None:
     """Normalise JSON data from a Parquet column and write back to Parquet.
 
@@ -801,6 +807,24 @@ def normalise_from_parquet(
         Parquet file for the pruned values, one row each: the ``keep_columns`` of its
         row, ``path`` (the keys and indices from the row's root, as a JSON array) and
         ``value`` (the value as it was in the input, as JSON).
+    schema : pl.Schema | pl.Struct, optional
+        A target schema for the output column (the fields of its struct), for output
+        that has the same schema whatever the rows held, such as chunks of one dataset
+        normalised one at a time. The rows are normalised against the inferred schema,
+        which is checked against the target (see `schema_check`), and written in the
+        target's shape: its fields in its order, those no row had as nulls, at any
+        depth. The inferred schema is still written to the file's metadata
+        (``genson_avro_schema``). Requires ``typed=True``.
+    schema_check : {"compatible", "strict", "none"}, default "compatible"
+        How the inferred schema is checked against `schema` before anything is written
+        (see `check_schema_compatibility`). A schema that fails raises a ``ValueError``
+        naming each offending field, and no output, lookup or pruned file is written.
+        "none" writes the target's fields whatever the rows held: fields it lacks are
+        dropped, and other types cast.
+    unnest : bool, default False
+        Write the output struct's fields as top-level columns (after `keep_columns`) in
+        place of the one struct column, as ``DataFrame.unnest`` would. Requires
+        ``typed=True``.
 
     Examples
     --------
@@ -852,6 +876,34 @@ def normalise_from_parquet(
         lookup_output_path=str(lookup_output_path) if lookup_output_path else None,
         prune=list(prune) if prune else None,
         prune_output_path=str(prune_output_path) if prune_output_path else None,
+        schema=None if schema is None else orjson.dumps(dtype_spec(schema)).decode(),
+        schema_check=schema_check,
+        unnest=unnest,
+    )
+
+
+def check_schema_compatibility(
+    inferred: pl.Schema | pl.Struct,
+    target: pl.Schema | pl.Struct,
+    schema_check: Literal["compatible", "strict"] = "compatible",
+) -> list[str]:
+    """Report where an inferred schema does not fit a target schema.
+
+    One line per offending field: its path (``a.b[].c``, ``[]`` for list items, ``{}``
+    for map values) and why. An empty list means it fits.
+
+    Under "compatible", `inferred` fits `target` when, recursively, it is ``Null`` (no
+    value was seen), which fits any dtype; it is the same dtype, with no widening (an
+    ``Int64`` does not fit a ``Float64``); or both are structs, lists, arrays of one size
+    or maps whose parts fit, a struct having only fields the target has (the target may
+    have more, written as nulls by ``normalise_from_parquet(schema=...)``). A target
+    field typed ``Null`` takes only ``Null``. Under "strict", `inferred` must be `target`,
+    field for field.
+    """
+    return _rust_schema_incompatibilities(
+        orjson.dumps(dtype_spec(inferred)).decode(),
+        orjson.dumps(dtype_spec(target)).decode(),
+        schema_check,
     )
 
 

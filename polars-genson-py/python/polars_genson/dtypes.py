@@ -219,3 +219,24 @@ def typed_route_makes(dtype: pl.DataType) -> bool:
     if isinstance(dtype, pl.Map):
         return dtype.key == pl.String and typed_route_makes(dtype.value)
     return False
+
+
+def dtype_spec(dtype: pl.DataType | pl.Schema) -> object:
+    """Describe a dtype (or a schema, as a struct of its columns) for a target schema.
+
+    The JSON-ready description the Rust side reads (genson_core::conform::
+    data_type_from_spec): a dtype name such as ``"String"``, or ``{"Struct": [[name,
+    dtype], ...]}``, ``{"List": dtype}``, ``{"Array": [dtype, size]}`` or ``{"Map":
+    [key, value]}``.
+    """
+    if isinstance(dtype, pl.Schema):
+        dtype = pl.Struct(dtype)
+    if isinstance(dtype, pl.Struct):
+        return {"Struct": [[f.name, dtype_spec(f.dtype)] for f in dtype.fields]}
+    if isinstance(dtype, pl.List):
+        return {"List": dtype_spec(dtype.inner)}
+    if isinstance(dtype, pl.Array):
+        return {"Array": [dtype_spec(dtype.inner), dtype.size]}
+    if isinstance(dtype, pl.Map):
+        return {"Map": [dtype_spec(dtype.key), dtype_spec(dtype.value)]}
+    return str(dtype.base_type() if not isinstance(dtype, type) else dtype)

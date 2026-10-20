@@ -55,6 +55,62 @@ print(pl.read_parquet("typed.parquet").unnest("data"))
 `typed=True` takes `map_encoding="mapping"` (the default) or `"kv"`, which stores maps
 as lists of `{key, value}` structs.
 
+## Write in a stored schema: `schema=`
+
+When many files are normalised separately, as chunks of one dataset, each infers its
+own schema: a field no row of a chunk has is missing from that chunk's output. Pass the
+dataset's stored schema as `schema` and each file is written in it, fields the chunk
+lacks as nulls, with `unnest=True` to write the struct's fields as columns of their own:
+
+```python exec="on" source="above" result="text" session="parquet"
+stored = pl.Schema({
+    "name": pl.String,
+    "nickname": pl.String,  # in no row of this file
+    "tags": pl.List(pl.String),
+    "labels": pl.List(pl.Struct({"key": pl.String, "value": pl.String})),
+})
+normalise_from_parquet(
+    "input.parquet",
+    column="data",
+    output_path="stored.parquet",
+    map_threshold=2,
+    map_encoding="kv",
+    typed=True,
+    keep_columns=["id"],
+    schema=stored,
+    unnest=True,
+)
+print(pl.read_parquet("stored.parquet"))
+```
+
+The file is laid out as Polars would write the same frame, and its
+`genson_avro_schema` metadata still holds the inferred schema, so drift can be checked
+from it later.
+
+Before anything is written, the inferred schema is checked against the stored one.
+With `schema_check="compatible"` (the default) it must fit: each of its fields must be
+one of the stored schema's, of the same dtype (no widening, so `Int64` does not fit
+`Float64`), or `Null` (never seen with a value). A field the stored schema lacks raises
+`ValueError`, naming it:
+
+```python exec="on" source="above" result="text" session="parquet"
+try:
+    normalise_from_parquet(
+        "input.parquet",
+        column="data",
+        output_path="narrow.parquet",
+        typed=True,
+        schema=pl.Schema({"name": pl.String, "tags": pl.List(pl.String)}),
+    )
+except ValueError as e:
+    print(e)
+```
+
+`schema_check="strict"` also requires every stored field to be inferred, and
+`schema_check="none"` checks nothing (fields the stored schema lacks are dropped).
+`check_schema_compatibility(inferred, stored)` gives the same verdict for two schemas,
+as a list of problems.
+
 ## Write JSON strings instead
 
 Without `typed=True`, the output column holds each normalised row as a JSON string. The

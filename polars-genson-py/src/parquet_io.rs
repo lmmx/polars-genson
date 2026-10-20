@@ -1,14 +1,20 @@
+use arrow::datatypes::DataType;
+use genson_core::conform::{conform, data_type_from_spec, incompatibilities, SchemaCheck};
 use genson_core::normalise::{
     prune_schema, MapEncoding, NormaliseConfig, NormalisePlan, PrunedValue,
 };
 use genson_core::parquet::{
     avro_record_fields, read_columns, read_string_column_arrays, values_to_struct_array,
-    write_string_column_with, write_struct_column_with,
+    write_string_column_with, write_struct_columns, StructLayout,
 };
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
+
+fn value_err(e: impl std::fmt::Display) -> PyErr {
+    pyo3::exceptions::PyValueError::new_err(e.to_string())
+}
 
 #[pyfunction]
 #[pyo3(signature = (
@@ -162,6 +168,9 @@ pub fn infer_from_parquet(
     lookup_output_path=None,
     prune=None,
     prune_output_path=None,
+    schema=None,
+    schema_check="compatible".to_string(),
+    unnest=false,
 ))]
 #[allow(clippy::too_many_arguments)]
 pub fn normalise_from_parquet(
@@ -193,7 +202,32 @@ pub fn normalise_from_parquet(
     lookup_output_path: Option<String>,
     prune: Option<Vec<String>>,
     prune_output_path: Option<String>,
+    schema: Option<String>,
+    schema_check: String,
+    unnest: bool,
 ) -> PyResult<()> {
+    if (schema.is_some() || unnest) && !typed {
+        return Err(value_err(
+            "schema and unnest need typed output (typed=True)",
+        ));
+    }
+    let check: SchemaCheck = schema_check.parse().map_err(value_err)?;
+    // The output column's target type, a struct (see genson_core::conform)
+    let target = match &schema {
+        Some(spec) => {
+            let spec: serde_json::Value = serde_json::from_str(spec)
+                .map_err(|e| value_err(format!("Invalid target schema: {e}")))?;
+            match data_type_from_spec(&spec).map_err(value_err)? {
+                t @ DataType::Struct(_) => Some(t),
+                other => {
+                    return Err(value_err(format!(
+                        "The target schema must be a struct, not {other}"
+                    )))
+                }
+            }
+        }
+        None => None,
+    };
     if typed && !matches!(map_encoding.as_str(), "kv" | "mapping") {
         return Err(pyo3::exceptions::PyValueError::new_err(
             "typed output requires map_encoding=\"kv\" or \"mapping\"",
@@ -241,14 +275,30 @@ pub fn normalise_from_parquet(
             let extracted =
                 genson_core::extract::extract_invariants_from(&column_data.rows(), spec)
                     .map_err(pyo3::exceptions::PyValueError::new_err)?;
-            genson_core::parquet::write_lookup_table(path, &extracted.lookup).map_err(|e| {
-                pyo3::exceptions::PyIOError::new_err(format!("Failed to write lookup table: {}", e))
-            })?;
             tick("extract_invariants", &mut t0);
-            Some(extracted.rows)
+            Some((extracted.rows, extracted.lookup, path.clone()))
         }
         _ => None,
     };
+    // Written once the inferred schema has passed its check, so that nothing is written
+    // for a chunk whose schema is rejected
+    let (slim_rows, lookup) = match slim_rows {
+        Some((rows, lookup, path)) => (Some(rows), Some((lookup, path))),
+        None => (None, None),
+    };
+    let write_lookup =
+        |lookup: Option<(Vec<genson_core::extract::LookupEntry>, String)>| -> PyResult<()> {
+            match lookup {
+                Some((table, path)) => genson_core::parquet::write_lookup_table(&path, &table)
+                    .map_err(|e| {
+                        pyo3::exceptions::PyIOError::new_err(format!(
+                            "Failed to write lookup table: {}",
+                            e
+                        ))
+                    }),
+                None => Ok(()),
+            }
+        };
     // The slim rows replace the read ones, which are then no longer needed
     let column_data = slim_rows.is_none().then_some(column_data);
     let json_strings: Vec<Option<&str>> = match (&slim_rows, &column_data) {
@@ -367,6 +417,18 @@ pub fn normalise_from_parquet(
     if typed {
         let fields = avro_record_fields(&out_schema, map_encoding == "mapping")
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
+        if let Some(target) = &target {
+            let problems = incompatibilities(&DataType::Struct(fields.clone()), target, check);
+            if !problems.is_empty() {
+                return Err(value_err(format!(
+                    "The inferred schema of '{}' does not fit the target schema (schema_check=\"{}\"):\n  {}",
+                    column,
+                    schema_check,
+                    problems.join("\n  ")
+                )));
+            }
+        }
+        write_lookup(lookup)?;
         // Rows go straight from their text into Arrow where the plan can do that exactly,
         // else (a batch at a time) by way of `Value`s
         let arrow_plan = plan.to_arrow(&fields);
@@ -397,14 +459,43 @@ pub fn normalise_from_parquet(
         let (arrays, pruned): (Vec<_>, Vec<_>) = batches.into_iter().unzip();
         drop(json_strings);
         tick("parse+normalise+decode", &mut t0);
+        // In the target's shape: its fields in its order, those the rows lacked as nulls
+        let (arrays, fields) = match &target {
+            Some(target) => {
+                let arrays = arrays
+                    .into_par_iter()
+                    .map(|a| {
+                        let a: arrow::array::ArrayRef = std::sync::Arc::new(a);
+                        conform(&a, target).map(|c| {
+                            c.as_any()
+                                .downcast_ref::<arrow::array::StructArray>()
+                                .expect("a struct conforms to a struct")
+                                .clone()
+                        })
+                    })
+                    .collect::<Result<Vec<_>, String>>()
+                    .map_err(value_err)?;
+                let DataType::Struct(fields) = target else {
+                    unreachable!("checked above")
+                };
+                tick("conform", &mut t0);
+                (arrays, fields.clone())
+            }
+            None => (arrays, fields),
+        };
         write_pruned(pruned.into_iter().flatten().flatten().collect())?;
-        write_struct_column_with(
+        write_struct_columns(
             &output_path,
             &col_name,
             arrays,
             &fields,
             &keep,
             Some(metadata),
+            // Laid out as Polars writes the target schema (see `data_type_from_spec`)
+            StructLayout {
+                unnest,
+                spec_names: target.is_some(),
+            },
         )
         .map_err(|e| {
             pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e))
@@ -427,6 +518,7 @@ pub fn normalise_from_parquet(
         .unzip();
     drop(json_strings);
     tick("parse+normalise+serialise", &mut t0);
+    write_lookup(lookup)?;
     write_pruned(pruned.into_iter().flatten().collect())?;
 
     write_string_column_with(
@@ -455,4 +547,27 @@ pub fn read_parquet_metadata(path: String) -> PyResult<HashMap<String, String>> 
     genson_core::parquet::read_parquet_metadata(&path).map_err(|e| {
         pyo3::exceptions::PyIOError::new_err(format!("Failed to read metadata: {}", e))
     })
+}
+
+/// Where `inferred` does not pass `schema_check` against `target`, both dtypes described as
+/// JSON by the Python package (see `genson_core::conform::data_type_from_spec`): one line
+/// per offending field, its path and why; empty when it passes.
+#[pyfunction]
+#[pyo3(signature = (inferred, target, schema_check="compatible".to_string()))]
+pub fn schema_incompatibilities(
+    inferred: String,
+    target: String,
+    schema_check: String,
+) -> PyResult<Vec<String>> {
+    let check: SchemaCheck = schema_check.parse().map_err(value_err)?;
+    let parse = |s: &str| -> PyResult<DataType> {
+        let spec: serde_json::Value =
+            serde_json::from_str(s).map_err(|e| value_err(format!("Invalid schema: {e}")))?;
+        data_type_from_spec(&spec).map_err(value_err)
+    };
+    Ok(incompatibilities(
+        &parse(&inferred)?,
+        &parse(&target)?,
+        check,
+    ))
 }

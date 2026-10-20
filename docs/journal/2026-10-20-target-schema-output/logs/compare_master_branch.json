@@ -1,0 +1,129 @@
+{
+ "aliases/chunk_0.parquet": {
+  "rows": [
+   10000,
+   10000
+  ],
+  "polars_schema_equal": true,
+  "arrow_schema_equal": true,
+  "parquet_columns_equal": true,
+  "rows_equal": true,
+  "mb": [
+   1.6,
+   1.8
+  ],
+  "created_by": [
+   "Polars",
+   "parquet-rs version 60.0.0"
+  ]
+ },
+ "claims/chunk_0.parquet": {
+  "rows": [
+   10000,
+   10000
+  ],
+  "polars_schema_equal": true,
+  "arrow_schema_equal": true,
+  "parquet_columns_equal": true,
+  "rows_equal": false,
+  "mb": [
+   57.5,
+   54.3
+  ],
+  "created_by": [
+   "Polars",
+   "parquet-rs version 60.0.0"
+  ],
+  "polars_frames_equal": null
+ },
+ "claims_labels/chunk_0.parquet": {
+  "rows": [
+   0,
+   0
+  ],
+  "polars_schema_equal": true,
+  "arrow_schema_equal": true,
+  "parquet_columns_equal": true,
+  "rows_equal": true,
+  "mb": [
+   0.0,
+   0.0
+  ],
+  "created_by": [
+   "Polars",
+   "Polars (python) version 2.0.0"
+  ]
+ },
+ "descriptions/chunk_0.parquet": {
+  "rows": [
+   10000,
+   10000
+  ],
+  "polars_schema_equal": true,
+  "arrow_schema_equal": true,
+  "parquet_columns_equal": true,
+  "rows_equal": true,
+  "mb": [
+   3.7,
+   4.5
+  ],
+  "created_by": [
+   "Polars",
+   "parquet-rs version 60.0.0"
+  ]
+ },
+ "entities/chunk_0.parquet": {
+  "rows": [
+   10000,
+   10000
+  ],
+  "polars_schema_equal": true,
+  "arrow_schema_equal": true,
+  "parquet_columns_equal": true,
+  "rows_equal": true,
+  "mb": [
+   0.2,
+   0.2
+  ],
+  "created_by": [
+   "Polars",
+   "Polars (python) version 2.0.0"
+  ]
+ },
+ "labels/chunk_0.parquet": {
+  "rows": [
+   10000,
+   10000
+  ],
+  "polars_schema_equal": true,
+  "arrow_schema_equal": true,
+  "parquet_columns_equal": true,
+  "rows_equal": true,
+  "mb": [
+   3.8,
+   4.2
+  ],
+  "created_by": [
+   "Polars",
+   "parquet-rs version 60.0.0"
+  ]
+ },
+ "links/chunk_0.parquet": {
+  "rows": [
+   10000,
+   10000
+  ],
+  "polars_schema_equal": true,
+  "arrow_schema_equal": true,
+  "parquet_columns_equal": true,
+  "rows_equal": true,
+  "mb": [
+   4.3,
+   4.3
+  ],
+  "created_by": [
+   "Polars",
+   "Polars (python) version 2.0.0"
+  ]
+ }
+}

@@ -456,10 +456,21 @@ fn compression() -> Compression {
 }
 
 fn open_writer(path: &str, schema: SchemaRef) -> Result<ArrowWriter<File>, String> {
+    open_writer_with(path, schema, false)
+}
+
+/// With `spec_names`, the Parquet schema's list and map groups take the specification's
+/// names (arrow-rs's `coerce_types`, which changes nothing else for genson's types)
+fn open_writer_with(
+    path: &str,
+    schema: SchemaRef,
+    spec_names: bool,
+) -> Result<ArrowWriter<File>, String> {
     let file = File::create(path)
         .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
     let props = WriterProperties::builder()
         .set_compression(compression())
+        .set_coerce_types(spec_names)
         .build();
     ArrowWriter::try_new(file, schema, Some(props))
         .map_err(|e| format!("Failed to create Parquet writer: {}", e))
@@ -705,22 +716,97 @@ pub fn write_struct_column_with(
     keep: &[(FieldRef, ArrayRef)],
     metadata: Option<HashMap<String, String>>,
 ) -> Result<(), String> {
+    write_struct_columns(
+        path,
+        column_name,
+        arrays,
+        fields,
+        keep,
+        metadata,
+        StructLayout::default(),
+    )
+}
+
+/// How [`write_struct_columns`] lays out its output.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct StructLayout {
+    /// The struct's fields as columns of their own after the `keep` columns (a null row's
+    /// fields as nulls, as Polars' `unnest` makes them), in place of the one struct column
+    pub unnest: bool,
+    /// The Parquet specification's names for the groups of lists (`list`, `element`) and
+    /// maps (`key_value`), which Polars and pyarrow write, in place of the Arrow fields'
+    pub spec_names: bool,
+}
+
+/// As [`write_struct_column_with`], laid out as `layout` says.
+pub fn write_struct_columns(
+    path: &str,
+    column_name: &str,
+    arrays: Vec<arrow::array::StructArray>,
+    fields: &arrow::datatypes::Fields,
+    keep: &[(FieldRef, ArrayRef)],
+    metadata: Option<HashMap<String, String>>,
+    layout: StructLayout,
+) -> Result<(), String> {
     check_keep_len(keep, arrays.iter().map(|a| a.len()).sum())?;
     let field = Arc::new(Field::new(
         column_name,
         DataType::Struct(fields.clone()),
         true,
     ));
-    let schema = output_schema(field, keep, metadata)?;
-    let writer = open_writer(path, schema.clone())?;
+    let schema = if layout.unnest {
+        let columns: Vec<FieldRef> = fields
+            .iter()
+            .map(|f| Arc::new(f.as_ref().clone().with_nullable(true)))
+            .collect();
+        unnested_schema(&columns, keep, metadata)?
+    } else {
+        output_schema(field, keep, metadata)?
+    };
+    let writer = open_writer_with(path, schema.clone(), layout.spec_names)?;
     let mut offset = 0;
     let mut batches = Vec::with_capacity(arrays.len());
     for array in arrays {
         let len = array.len();
-        batches.push(batch_of(&schema, keep, offset, Arc::new(array))?);
+        let batch = if layout.unnest {
+            let mut columns: Vec<ArrayRef> =
+                keep.iter().map(|(_, a)| a.slice(offset, len)).collect();
+            columns.extend(crate::conform::unnest(&array)?.into_iter().map(|(_, c)| c));
+            RecordBatch::try_new(schema.clone(), columns)
+                .map_err(|e| format!("Failed to create RecordBatch: {}", e))?
+        } else {
+            batch_of(&schema, keep, offset, Arc::new(array))?
+        };
+        batches.push(batch);
         offset += len;
     }
     write_batches(writer, &schema, batches)
+}
+
+/// The `keep` columns' fields, then `columns`, which must not repeat their names.
+fn unnested_schema(
+    columns: &[FieldRef],
+    keep: &[(FieldRef, ArrayRef)],
+    metadata: Option<HashMap<String, String>>,
+) -> Result<SchemaRef, String> {
+    if let Some(f) = columns
+        .iter()
+        .find(|f| keep.iter().any(|(k, _)| k.name() == f.name()))
+    {
+        return Err(format!(
+            "Kept column '{}' has the same name as a field of the unnested output",
+            f.name()
+        ));
+    }
+    let fields: Vec<FieldRef> = keep
+        .iter()
+        .map(|(f, _)| f.clone())
+        .chain(columns.iter().cloned())
+        .collect();
+    Ok(Arc::new(Schema::new_with_metadata(
+        fields,
+        metadata.unwrap_or_default(),
+    )))
 }
 
 #[cfg(test)]

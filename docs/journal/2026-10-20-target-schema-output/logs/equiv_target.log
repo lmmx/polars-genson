@@ -1,0 +1,140 @@
+[profile] read_parquet: 0.828s
+[profile] extract_invariants: 0.900s
+Processing 10000 strings (22:13:33.6)
+Starting preparation loop (22:13:33.6)
+Interned row states took 413.044044ms
+Interned merge took 194.061011ms
+Applying force field types (22:13:34.2)
+Rewriting objects (22:13:34.2)
+  Merge loop took 78.870916ms
+Unification of 6447 child schemas took 80.493709ms
+Homogeneity check on 6447 schemas took 80.545539ms
+  Merge loop took 3.951248ms
+Unification of 669 child schemas took 4.250927ms
+Homogeneity check on 669 schemas took 4.260872ms
+  Merge loop took 6.16205ms
+Unification of 1062 child schemas took 6.549124ms
+Homogeneity check on 1062 schemas took 6.559029ms
+Reordering unions (22:13:34.3)
+[profile] infer: 0.786s
+[profile] parse+normalise+decode: 0.975s
+[profile] write_parquet: 1.902s
+0 today {'labels': 0.73, 'descriptions': 0.38, 'aliases': 0.18, 'claims': 33.64}
+[profile] read_parquet: 0.144s
+[profile] extract_invariants: 0.338s
+Processing 10000 strings (22:14:06.4)
+Starting preparation loop (22:14:06.4)
+Interned row states took 402.389018ms
+Interned merge took 93.651121ms
+Applying force field types (22:14:06.9)
+Rewriting objects (22:14:06.9)
+  Merge loop took 63.202824ms
+Unification of 6447 child schemas took 64.588344ms
+Homogeneity check on 6447 schemas took 64.643257ms
+  Merge loop took 3.332897ms
+Unification of 669 child schemas took 3.503633ms
+Homogeneity check on 669 schemas took 3.512587ms
+  Merge loop took 3.891914ms
+Unification of 1062 child schemas took 4.188975ms
+Homogeneity check on 1062 schemas took 4.197707ms
+Reordering unions (22:14:07.0)
+[profile] infer: 0.670s
+[profile] parse+normalise+decode: 0.787s
+[profile] conform: 0.090s
+[profile] write_parquet: 1.652s
+0 direct {'labels': 0.2, 'descriptions': 0.13, 'aliases': 0.07, 'claims': 3.7}
+[profile] read_parquet: 0.137s
+[profile] extract_invariants: 0.295s
+Processing 10000 strings (22:14:11.0)
+Starting preparation loop (22:14:11.0)
+Interned row states took 345.855194ms
+Interned merge took 126.25567ms
+Applying force field types (22:14:11.5)
+Rewriting objects (22:14:11.5)
+  Merge loop took 50.791858ms
+Unification of 6447 child schemas took 52.554071ms
+Homogeneity check on 6447 schemas took 52.635951ms
+  Merge loop took 2.370219ms
+Unification of 669 child schemas took 2.541061ms
+Homogeneity check on 669 schemas took 2.549549ms
+  Merge loop took 3.571296ms
+Unification of 1062 child schemas took 3.802362ms
+Homogeneity check on 1062 schemas took 3.810579ms
+Reordering unions (22:14:11.6)
+[profile] infer: 0.626s
+[profile] parse+normalise+decode: 0.766s
+[profile] write_parquet: 1.083s
+1 today {'labels': 0.4, 'descriptions': 0.33, 'aliases': 0.22, 'claims': 30.8}
+[profile] read_parquet: 0.145s
+[profile] extract_invariants: 0.356s
+Processing 10000 strings (22:14:42.3)
+Starting preparation loop (22:14:42.3)
+Interned row states took 441.510603ms
+Interned merge took 90.130836ms
+Applying force field types (22:14:42.9)
+Rewriting objects (22:14:42.9)
+  Merge loop took 53.084624ms
+Unification of 6447 child schemas took 54.5396ms
+Homogeneity check on 6447 schemas took 54.58233ms
+  Merge loop took 2.339202ms
+Unification of 669 child schemas took 2.493188ms
+Homogeneity check on 669 schemas took 2.501394ms
+  Merge loop took 3.556205ms
+Unification of 1062 child schemas took 3.788282ms
+Homogeneity check on 1062 schemas took 3.796259ms
+Reordering unions (22:14:43.0)
+[profile] infer: 0.688s
+[profile] parse+normalise+decode: 0.533s
+[profile] conform: 0.100s
+[profile] write_parquet: 1.109s
+1 direct {'labels': 0.16, 'descriptions': 0.17, 'aliases': 0.08, 'claims': 2.95}
+[profile] read_parquet: 0.162s
+[profile] extract_invariants: 0.341s
+Processing 10000 strings (22:14:46.2)
+Starting preparation loop (22:14:46.2)
+Interned row states took 330.046154ms
+Interned merge took 251.051065ms
+Applying force field types (22:14:46.8)
+Rewriting objects (22:14:46.8)
+  Merge loop took 64.626418ms
+Unification of 6447 child schemas took 66.127153ms
+Homogeneity check on 6447 schemas took 66.181027ms
+  Merge loop took 2.311943ms
+Unification of 669 child schemas took 2.481138ms
+Homogeneity check on 669 schemas took 2.489523ms
+  Merge loop took 3.596827ms
+Unification of 1062 child schemas took 3.820188ms
+Homogeneity check on 1062 schemas took 3.826204ms
+Reordering unions (22:14:46.9)
+[profile] infer: 0.747s
+[profile] parse+normalise+decode: 0.656s
+[profile] write_parquet: 0.963s
+2 today {'labels': 0.42, 'descriptions': 0.3, 'aliases': 0.21, 'claims': 30.06}
+[profile] read_parquet: 0.166s
+[profile] extract_invariants: 0.341s
+Processing 10000 strings (22:15:16.7)
+Starting preparation loop (22:15:16.7)
+Interned row states took 353.75995ms
+Interned merge took 97.619294ms
+Applying force field types (22:15:17.3)
+Rewriting objects (22:15:17.3)
+  Merge loop took 50.255373ms
+Unification of 6447 child schemas took 51.626078ms
+Homogeneity check on 6447 schemas took 51.684179ms
+  Merge loop took 2.434295ms
+Unification of 669 child schemas took 2.586331ms
+Homogeneity check on 669 schemas took 2.594712ms
+  Merge loop took 3.682448ms
+Unification of 1062 child schemas took 3.916094ms
+Homogeneity check on 1062 schemas took 3.924264ms
+Reordering unions (22:15:17.3)
+[profile] infer: 0.596s
+[profile] parse+normalise+decode: 0.549s
+[profile] conform: 0.118s
+[profile] write_parquet: 1.207s
+2 direct {'labels': 0.22, 'descriptions': 0.18, 'aliases': 0.07, 'claims': 2.99}
+labels {'rows': 10000, 'polars_schema_equal': True, 'tables_equal': True, 'arrow_schema_equal': True, 'columns': ['id', 'labels'], 'mb_today': 3.8, 'mb_direct': 4.2, 'direct_metadata_keys': ['genson_avro_schema', 'genson_normalise_config']}
+descriptions {'rows': 10000, 'polars_schema_equal': True, 'tables_equal': True, 'arrow_schema_equal': True, 'columns': ['id', 'descriptions'], 'mb_today': 3.7, 'mb_direct': 4.5, 'direct_metadata_keys': ['genson_avro_schema', 'genson_normalise_config']}
+aliases {'rows': 10000, 'polars_schema_equal': True, 'tables_equal': True, 'arrow_schema_equal': True, 'columns': ['id', 'aliases'], 'mb_today': 1.6, 'mb_direct': 1.8, 'direct_metadata_keys': ['genson_avro_schema', 'genson_normalise_config']}
+claims {'rows': 10000, 'polars_schema_equal': True, 'tables_equal': True, 'arrow_schema_equal': True, 'columns': ['id', 'claims'], 'mb_today': 57.6, 'mb_direct': 54.3, 'direct_metadata_keys': ['genson_avro_schema', 'genson_normalise_config']}
+lookup {'rows': 0, 'polars_schema_equal': True, 'tables_equal': True, 'arrow_schema_equal': True, 'columns': ['field', 'ref', 'language', 'label'], 'mb_today': 0.0, 'mb_direct': 0.0, 'direct_metadata_keys': []}
