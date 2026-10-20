@@ -640,9 +640,11 @@ ship-rust version="auto":
         release-plz update
     fi
 
-    git add .
-    # Run a pre-precommit lint pass to avoid the linter halting our release!
+    # Run pre-precommit fixers to avoid the linter halting our release!
     just precommit || true
+    # Let cargo synchronise Cargo.lock
+    cargo check --workspace --quiet
+    git add .
     git commit -m "chore(release): 🦀 Upgrades"
 
     # 🦀 Run prepush only for the Rust crates we are releasing
