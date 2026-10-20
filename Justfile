@@ -132,15 +132,18 @@ bench *args:
     $(uv python find) -m pytest -q {{args}}
 
 [working-directory: 'bench']
-bench-update:
+bench-update *versions:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Compare PyPI releases with the versions already recorded in README.md.
+    # Compare PyPI releases (or just the versions given) with those already recorded in
+    # README.md. Recorded versions are never re-run.
     mapfile -t missing < <(
-        uv run --no-project --with packaging python - <<'PY'
+        BENCH_VERSIONS="{{versions}}" uv run --no-project --with packaging python - <<'PY'
     import json
+    import os
     import re
+    import sys
     import urllib.request
     from pathlib import Path
     from packaging.version import Version
@@ -168,6 +171,15 @@ bench-update:
         reverse=True, # Newest first
     )
 
+    requested = os.environ["BENCH_VERSIONS"].split()
+    if requested:
+        for version in requested:
+            if version not in available:
+                print(f"Not a release on PyPI: {version}", file=sys.stderr)
+            elif version in recorded:
+                print(f"Already recorded, not re-run: {version}", file=sys.stderr)
+        available = [v for v in available if v in requested]
+
     for version in available:
         if version not in recorded:
             print(version)
@@ -175,7 +187,7 @@ bench-update:
     )
 
     if ((${#missing[@]} == 0)); then
-        echo "README.md already contains every available release."
+        echo "Nothing to benchmark: README.md already records every release asked for."
         exit 0
     fi
 
@@ -226,6 +238,26 @@ bench-update:
 
         echo "Recorded $version in README.md"
     done
+
+    # Keep every recorded section in descending version order, whatever order they were
+    # recorded in: the sections move, their contents and the spacing between them do not.
+    uv run --no-project --with packaging python - <<'PY'
+    import re
+    from pathlib import Path
+    from packaging.version import Version
+
+    readme = Path("README.md")
+    text = readme.read_text()
+    head, *sections = re.split(r"(?m)^(?=## polars-genson )", text)
+    if sections:
+        end = text[len(text.rstrip("\n")):]
+        bodies = [s.rstrip("\n") for s in sections]
+        bodies.sort(
+            key=lambda s: Version(re.match(r"## polars-genson (\S+)", s).group(1)),
+            reverse=True,
+        )
+        readme.write_text(head + "\n\n".join(bodies) + end)
+    PY
 
     echo
     echo "Done. Review: git diff -- README.md"
