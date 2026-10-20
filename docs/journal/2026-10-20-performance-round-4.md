@@ -109,3 +109,77 @@ instructions decide where they disagree.
 - **Tests.** The interned-row equivalence tests (interned states against each row's
   builder, 1,200 sets) and the forced-map ones (442 sets against the builders) pass
   unchanged. So do the typed decoder's tests on the tape path.
+
+## Polymorphic and successor caches for keys (measured, not kept)
+
+- **The idea.** A row's keys and objects are found by comparing them with the previous
+  row's at the same position in the row (`last_keys`, `last_objects`), and on a miss by
+  hash. Round 3's ledger (L5) proposed keeping 2–4 recent entries per position
+  (polymorphic inline caches, Hölzle, Chambers & Ungar 1991), to be rejected if four
+  entries added under 10 points of hit rate.
+- **Hit rates, measured first** (logs/b1_key_successors.txt; an instrumented build,
+  simulated): four entries add 15–40 points on narrow's objects, events, claims and
+  entities. Even so, claims' keys hit only 23.8% at four entries (7.3% at one), and its
+  objects 14.8%.
+  - The positions are the problem. They count keys from the start of the row, so one
+    member more early in a row moves every key after it.
+  - Mison (Li et al. 2017) predicts a field's logical position instead. V8's JSON parser
+    predicts a key from the object's shape so far (its transition tree), and from the
+    previous array element's map (Verwaest, "[json] More feedback-guided json parsing",
+    V8 commit fdde8945, 2019).
+  - The analogue here predicts a key from the key before it in its object (and an
+    object's first key from its parent's key). Simulated, that hits 81.5% of claims'
+    keys (7.3% by position), 79.6% of entities' and 78.0% of events'. Labels' map keys
+    (languages) are unpredictable either way (66%). Narrow's already hit 100%.
+- **Built three ways**, each checked by one comparison of the key's text, on the fused
+  row phase. The best, the previous key alone, tried after the position cache misses,
+  with no parent context (scripts/key_successors_rejected.diff), measured:
+
+  | corpus | row phase | whole run |
+  |---|---|---|
+  | claims | −4.4% | −1.9% |
+  | events | −3.8% | −2.3% |
+  | entities | −4.1% | −0.75% |
+  | narrow | +0.7% | +0.35% |
+  | labels | +2.4% | +1.0% |
+
+  The variant with a parent context saved more on claims (−6.6%) but cost narrow and
+  labels 4.3% each. Moving the miss path out of line lost most of the gain.
+- **Why it was not kept.** The hash lookup a prediction saves costs about 132
+  instructions on claims (102.4M over some 770,000 lookups that miss the position
+  cache). A prediction saves about 53 of them: it still compares the key's text, and
+  keeps its table. A gain of about 2% of three corpora's runs, against a loss on two,
+  does not pay for the state it adds.
+- **Objects.** Predicting an object's state from its parent key would hit claims'
+  objects 27.9% of the time (4.1% by position). That was not built: an object found by
+  its state still compares its members, which is most of what the hash lookup costs.
+
+## The distinct rows' hashes in an FxHashSet (perf/row-hash-set)
+
+- Each row's schema hash (xxh64) is checked against the hashes of the rows seen before,
+  so that a repeated row is merged once. The check used std's `HashSet`, which hashes
+  each `u64` again with SipHash-1-3 from a random seed. A hash needs no strong hash of
+  its own: `FxHashSet` (one multiply), as the builder's absorbed states already use.
+- **Instructions**, whole run (the set is outside the rows stage), one thread, three
+  runs each (logs/b2_row_hash_set.txt):
+  - narrow 814.5M → 799.8M (−1.80%), events 446.2M → 443.2M (−0.67%), labels 353.6M →
+    353.2M (−0.11%), the same on every run;
+  - claims (2,438.7–2,465.5M before) and entities vary from run to run with their other
+    std maps' random seeds, and the change is within that spread. Claims' spread
+    narrows (2,435.7–2,437.9M), one random seed fewer.
+- The same schema hashes on every corpus. Allocation is unchanged: the set's table
+  grows as std's does.
+- **Hash flooding.** Fx is not keyed, so rows chosen to collide could make the set's
+  probes long, where std's random seed made that impractical. The values are xxh64
+  hashes of row schemas with a fixed seed. xxh64 is not collision resistant either, so
+  an attacker could search offline for rows of distinct shapes that land in one bucket,
+  at about 2^(table bits) trials per row. This adds no exposure the row phase did not
+  have:
+  - the builder's absorbed states (`Absorbed`) already keep the same hashes in an
+    `FxHashSet<u64>`;
+  - key interning (`key_ids`) hashes the rows' key strings with Fx directly, which is
+    easier to collide than a hash of a hash.
+
+  Every row of such an input is also a distinct shape, and each distinct shape is
+  merged in full, which costs more than its probe. Inference with keyed hashes
+  throughout would be a change of its own, for all of these maps at once.

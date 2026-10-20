@@ -1,11 +1,11 @@
 use crate::genson_rs::{build_json_schema_into, get_builder, BuildConfig};
 use crate::{debug, profile, profile_verbose};
 use rayon::prelude::*;
+use rustc_hash::FxHashSet;
 use serde::de::Error as DeError;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::borrow::Cow;
-use std::collections::HashSet;
 use std::panic::{self, AssertUnwindSafe};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -398,7 +398,7 @@ fn process_json_strings_parallel<S: AsRef<str> + Sync>(
     }
 
     let mut processed_count = 0;
-    let mut seen_hashes = HashSet::new();
+    let mut seen_hashes = FxHashSet::default();
     // A field forced to be a map is rewritten in each string's schema before the merge
     let forces_maps = config.force_field_types.values().any(|t| t == "map");
 
@@ -559,7 +559,7 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
     let rows = blocks
         .iter()
         .flat_map(|(states, rows)| rows.iter().map(move |row| (states, *row)));
-    let mut seen_hashes = HashSet::new();
+    let mut seen_hashes = FxHashSet::default();
     let mut processed_count = 0;
     let mut chunks = Vec::new();
     let mut rows = rows.peekable();
@@ -623,7 +623,7 @@ fn merge_forced_rows(
         (Some(row), hash)
     };
     let chunk_size = config.max_builders.unwrap_or(rows_len).max(1);
-    let (mut seen_hashes, mut processed_count, mut next) = (HashSet::new(), 0, 0);
+    let (mut seen_hashes, mut processed_count, mut next) = (FxHashSet::default(), 0, 0);
     for chunk in row_index.chunks(chunk_size) {
         let end = chunk.iter().flatten().map(|&i| i + 1).max().unwrap_or(0);
         let new = next..end.max(next);
