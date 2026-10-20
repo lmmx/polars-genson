@@ -1,0 +1,122 @@
+## rowsw.parquet labels (n=5 processes)
+  rep0 total wall 0.234 [0.215-0.249] cpu 0.317
+    labels.normalise_from_parquet            wall   0.074 [0.066-0.110] cpu   0.171  hwm     165 MB (base 47, +118)
+    labels.read_back+cast                    wall   0.041 [0.034-0.046] cpu   0.043  hwm     186 MB (base 149, +37)
+    labels.sink                              wall   0.113 [0.103-0.128] cpu   0.112  hwm     215 MB (base 186, +29)
+  rep1 total wall 0.211 [0.167-0.243] cpu 0.294
+    labels.normalise_from_parquet            wall   0.067 [0.055-0.115] cpu   0.154  hwm     241 MB (base 213, +28)
+    labels.read_back+cast                    wall   0.027 [0.024-0.028] cpu   0.027  hwm     234 MB (base 228, +4)
+    labels.sink                              wall   0.099 [0.088-0.115] cpu   0.098  hwm     258 MB (base 230, +27)
+    info: {'labels': {'schema_ok': True, 'rows': 2185}}  maxrss 255 MB
+## rowsw.parquet descriptions (n=5 processes)
+  rep0 total wall 0.157 [0.136-0.183] cpu 0.211
+    descriptions.normalise_from_parquet      wall   0.049 [0.040-0.058] cpu   0.104  hwm     157 MB (base 47, +110)
+    descriptions.read_back+cast              wall   0.020 [0.017-0.027] cpu   0.022  hwm     161 MB (base 131, +26)
+    descriptions.sink                        wall   0.086 [0.079-0.103] cpu   0.084  hwm     195 MB (base 157, +34)
+  rep1 total wall 0.133 [0.113-0.181] cpu 0.174
+    descriptions.normalise_from_parquet      wall   0.041 [0.037-0.092] cpu   0.086  hwm     222 MB (base 191, +30)
+    descriptions.read_back+cast              wall   0.017 [0.015-0.018] cpu   0.016  hwm     208 MB (base 198, +10)
+    descriptions.sink                        wall   0.074 [0.054-0.083] cpu   0.072  hwm     228 MB (base 208, +20)
+    info: {'descriptions': {'schema_ok': True, 'rows': 2185}}  maxrss 219 MB
+## rowsw.parquet aliases (n=5 processes)
+  rep0 total wall 0.133 [0.130-0.139] cpu 0.185
+    aliases.normalise_from_parquet           wall   0.047 [0.044-0.053] cpu   0.094  hwm     141 MB (base 47, +94)
+    aliases.read_back+cast                   wall   0.024 [0.022-0.025] cpu   0.027  hwm     160 MB (base 129, +28)
+    aliases.sink                             wall   0.061 [0.057-0.064] cpu   0.062  hwm     184 MB (base 158, +25)
+  rep1 total wall 0.121 [0.107-0.123] cpu 0.166
+    aliases.normalise_from_parquet           wall   0.042 [0.040-0.043] cpu   0.087  hwm     194 MB (base 180, +11)
+    aliases.read_back+cast                   wall   0.019 [0.014-0.021] cpu   0.019  hwm     191 MB (base 179, +11)
+    aliases.sink                             wall   0.058 [0.048-0.064] cpu   0.058  hwm     210 MB (base 190, +19)
+    info: {'aliases': {'schema_ok': True, 'rows': 2185}}  maxrss 196 MB
+## rowsw.parquet sitelinks (n=5 processes)
+  rep0 total wall 2.542 [2.409-2.690] cpu 4.914
+    sitelinks.normalise_json(decode=dtype)   wall   2.333 [2.223-2.476] cpu   4.706  hwm    1578 MB (base 409, +1168)
+    sitelinks.sink                           wall   0.199 [0.185-0.214] cpu   0.210  hwm    1550 MB (base 1521, +33)
+  rep1 total wall 2.042 [2.005-3.090] cpu 4.351
+    sitelinks.normalise_json(decode=dtype)   wall   1.860 [1.816-2.877] cpu   4.144  hwm    1587 MB (base 1429, +194)
+    sitelinks.sink                           wall   0.188 [0.182-0.212] cpu   0.212  hwm    1592 MB (base 1541, +30)
+    info: {'sitelinks': {'rows': 2185}}  maxrss 1570 MB
+## rowsw.parquet claims (n=5 processes)
+  rep0 total wall 1.539 [1.353-2.469] cpu 2.769
+    claims.normalise_from_parquet            wall   0.770 [0.652-1.630] cpu   1.932  hwm     562 MB (base 47, +515)
+    claims.scan_conform                      wall   0.083 [0.081-0.088] cpu   0.086  hwm     552 MB (base 491, +40)
+    claims.lookup_to_long                    wall   0.152 [0.147-0.200] cpu   0.207  hwm     562 MB (base 530, +11)
+    claims.schema_check+sink                 wall   0.503 [0.470-0.554] cpu   0.502  hwm     314 MB (base 284, +32)
+  rep1 total wall 1.473 [1.302-1.807] cpu 2.256
+    claims.normalise_from_parquet            wall   0.711 [0.554-1.007] cpu   1.465  hwm     685 MB (base 298, +386)
+    claims.scan_conform                      wall   0.089 [0.079-0.097] cpu   0.081  hwm     601 MB (base 566, +19)
+    claims.lookup_to_long                    wall   0.155 [0.140-0.184] cpu   0.206  hwm     605 MB (base 585, +8)
+    claims.schema_check+sink                 wall   0.521 [0.494-0.526] cpu   0.520  hwm     324 MB (base 294, +29)
+    [profile] last rep: read_parquet 0.251, extract_invariants 0.388, infer 0.034, parse+normalise+decode 0.012, write_parquet 0.022
+    info: {'claims': {'rows': 2185, 'lookup_rows': 1932, 'schema_equal': False}}  maxrss 323 MB
+## chunk_0.parquet labels (n=5 processes)
+  rep0 total wall 0.025 [0.024-0.034] cpu 0.037
+    labels.normalise_from_parquet            wall   0.010 [0.009-0.020] cpu   0.018  hwm      85 MB (base 47, +38)
+    labels.read_back+cast                    wall   0.007 [0.007-0.008] cpu   0.010  hwm     103 MB (base 85, +18)
+    labels.sink                              wall   0.007 [0.007-0.008] cpu   0.008  hwm     107 MB (base 103, +4)
+  rep1 total wall 0.018 [0.016-0.021] cpu 0.022
+    labels.normalise_from_parquet            wall   0.008 [0.006-0.009] cpu   0.012  hwm     109 MB (base 107, +3)
+    labels.read_back+cast                    wall   0.003 [0.003-0.004] cpu   0.004  hwm     110 MB (base 108, +1)
+    labels.sink                              wall   0.006 [0.006-0.008] cpu   0.006  hwm     112 MB (base 108, +2)
+    info: {'labels': {'schema_ok': True, 'rows': 60}}  maxrss 109 MB
+## chunk_0.parquet descriptions (n=5 processes)
+  rep0 total wall 0.024 [0.023-0.035] cpu 0.033
+    descriptions.normalise_from_parquet      wall   0.010 [0.008-0.018] cpu   0.016  hwm      81 MB (base 47, +34)
+    descriptions.read_back+cast              wall   0.008 [0.006-0.012] cpu   0.009  hwm      99 MB (base 81, +17)
+    descriptions.sink                        wall   0.006 [0.006-0.008] cpu   0.007  hwm     103 MB (base 99, +5)
+  rep1 total wall 0.016 [0.014-0.017] cpu 0.018
+    descriptions.normalise_from_parquet      wall   0.007 [0.006-0.007] cpu   0.010  hwm     108 MB (base 103, +7)
+    descriptions.read_back+cast              wall   0.003 [0.003-0.004] cpu   0.003  hwm     109 MB (base 107, +1)
+    descriptions.sink                        wall   0.005 [0.004-0.007] cpu   0.005  hwm     111 MB (base 107, +2)
+    info: {'descriptions': {'schema_ok': True, 'rows': 60}}  maxrss 108 MB
+## chunk_0.parquet aliases (n=5 processes)
+  rep0 total wall 0.022 [0.020-0.032] cpu 0.030
+    aliases.normalise_from_parquet           wall   0.009 [0.008-0.018] cpu   0.014  hwm      83 MB (base 47, +36)
+    aliases.read_back+cast                   wall   0.006 [0.006-0.008] cpu   0.009  hwm     100 MB (base 83, +17)
+    aliases.sink                             wall   0.005 [0.005-0.006] cpu   0.006  hwm     104 MB (base 100, +4)
+  rep1 total wall 0.014 [0.013-0.015] cpu 0.017
+    aliases.normalise_from_parquet           wall   0.006 [0.005-0.007] cpu   0.009  hwm     108 MB (base 104, +4)
+    aliases.read_back+cast                   wall   0.003 [0.003-0.003] cpu   0.003  hwm     108 MB (base 106, +1)
+    aliases.sink                             wall   0.004 [0.004-0.005] cpu   0.004  hwm     110 MB (base 107, +2)
+    info: {'aliases': {'schema_ok': True, 'rows': 60}}  maxrss 108 MB
+## chunk_0.parquet sitelinks (n=5 processes)
+  rep0 total wall 0.092 [0.078-0.177] cpu 0.152
+    sitelinks.normalise_json(decode=dtype)   wall   0.080 [0.061-0.160] cpu   0.139  hwm     189 MB (base 115, +73)
+    sitelinks.sink                           wall   0.012 [0.012-0.017] cpu   0.013  hwm     195 MB (base 187, +6)
+  rep1 total wall 0.059 [0.051-0.103] cpu 0.117
+    sitelinks.normalise_json(decode=dtype)   wall   0.047 [0.040-0.071] cpu   0.106  hwm     198 MB (base 192, +7)
+    sitelinks.sink                           wall   0.010 [0.010-0.032] cpu   0.010  hwm     201 MB (base 198, +3)
+    info: {'sitelinks': {'rows': 60}}  maxrss 198 MB
+## chunk_0.parquet claims (n=5 processes)
+  rep0 total wall 1.459 [1.300-1.581] cpu 1.794
+    claims.normalise_from_parquet            wall   0.378 [0.236-0.529] cpu   0.752  hwm     258 MB (base 47, +211)
+    claims.scan_conform                      wall   0.169 [0.164-0.185] cpu   0.169  hwm     302 MB (base 228, +65)
+    claims.lookup_to_long                    wall   0.001 [0.001-0.002] cpu   0.001  hwm     303 MB (base 291, +1)
+    claims.schema_check+sink                 wall   0.888 [0.878-0.907] cpu   0.894  hwm     378 MB (base 291, +76)
+  rep1 total wall 1.470 [1.200-1.777] cpu 1.731
+    claims.normalise_from_parquet            wall   0.350 [0.197-0.685] cpu   0.661  hwm     421 MB (base 340, +78)
+    claims.scan_conform                      wall   0.173 [0.153-0.200] cpu   0.164  hwm     420 MB (base 357, +41)
+    claims.lookup_to_long                    wall   0.001 [0.001-0.001] cpu   0.001  hwm     420 MB (base 392, +0)
+    claims.schema_check+sink                 wall   0.884 [0.826-0.917] cpu   0.876  hwm     489 MB (base 392, +73)
+    [profile] last rep: read_parquet 0.177, extract_invariants 0.021, infer 0.063, parse+normalise+decode 0.034, write_parquet 0.050
+    info: {'claims': {'rows': 60, 'lookup_rows': 0, 'schema_equal': False}}  maxrss 462 MB
+## rowsw.parquet sitelinks_parts (n=3 processes)
+  rep0 total wall 5.942 [5.575-8.538] cpu 12.747
+    sl.infer_forced                          wall   1.245 [0.802-1.784] cpu   2.946  hwm     462 MB (base 409, +52)
+    sl.infer_unforced_thr0_unify             wall   0.064 [0.045-0.069] cpu   0.142  hwm     435 MB (base 423, +2)
+    sl.normalise_json_text                   wall   1.703 [1.414-2.331] cpu   3.735  hwm     648 MB (base 425, +223)
+    sl.json_decode_text                      wall   1.003 [0.919-1.039] cpu   0.969  hwm    1554 MB (base 640, +906)
+    sl.typed_route                           wall   1.430 [1.117-2.330] cpu   3.748  hwm    1556 MB (base 1517, +2)
+    sl.typed_route_unforced                  wall   0.662 [0.609-0.807] cpu   0.935  hwm     929 MB (base 801, +126)
+    sl.typed_select_to_dtype                 wall   0.005 [0.005-0.005] cpu   0.010  hwm     930 MB (base 927, +1)
+    info: {'sitelinks_parts': {'text_bytes': 93952414, 'typed_equals_decoded': True, 'typed_unforced_equals': True}}  maxrss 1086 MB
+## chunk_0.parquet sitelinks_parts (n=3 processes)
+  rep0 total wall 0.144 [0.127-0.180] cpu 0.331
+    sl.infer_forced                          wall   0.040 [0.037-0.056] cpu   0.102  hwm     161 MB (base 115, +46)
+    sl.infer_unforced_thr0_unify             wall   0.006 [0.004-0.006] cpu   0.009  hwm     163 MB (base 161, +2)
+    sl.normalise_json_text                   wall   0.028 [0.021-0.043] cpu   0.084  hwm     170 MB (base 163, +8)
+    sl.json_decode_text                      wall   0.023 [0.022-0.023] cpu   0.023  hwm     189 MB (base 166, +20)
+    sl.typed_route                           wall   0.027 [0.022-0.032] cpu   0.081  hwm     201 MB (base 186, +15)
+    sl.typed_route_unforced                  wall   0.007 [0.007-0.008] cpu   0.015  hwm     206 MB (base 201, +6)
+    sl.typed_select_to_dtype                 wall   0.001 [0.001-0.001] cpu   0.002  hwm     207 MB (base 205, +1)
+    info: {'sitelinks_parts': {'text_bytes': 2572050, 'typed_equals_decoded': True, 'typed_unforced_equals': True}}  maxrss 207 MB

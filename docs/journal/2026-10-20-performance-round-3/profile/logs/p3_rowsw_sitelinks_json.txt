@@ -1,0 +1,92 @@
+== inclusive (total 27,035.9M Ir)
+    27,035.9M 100.0%  prof3::measured
+    23,584.1M  87.2%  prof3::step_infer
+    23,583.1M  87.2%  genson_core::phase::rows::<..>
+    23,575.5M  87.2%  rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<&str>>, rayon::iter::map::MapConsumer<rayon
+    23,575.4M  87.2%  rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<&str>>, rayo
+    16,730.7M  61.9%  genson_core::schema::apply_force_field_types_to_node
+    16,730.6M  61.9%  <genson_core::genson_rs::node::SchemaNode>::visit_properties_mut::<..>
+    16,730.6M  61.9%  <genson_core::genson_rs::strategy::object::ObjectStrategy>::visit_properties_mut::<..>
+     8,161.7M  30.2%  genson_core::schema::apply_force_field_types
+     7,711.7M  28.5%  <genson_core::genson_rs::node::SchemaNode>::to_schema
+     7,711.2M  28.5%  <genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_schema
+     7,353.8M  27.2%  <genson_core::genson_rs::strategy::object::ObjectStrategy>::properties_to_schema
+     7,076.8M  26.2%  genson_core::schema::map_inference::forced_map_value_schema
+     7,059.7M  26.1%  genson_core::schema::map_inference::map_value_schema
+     7,046.6M  26.1%  rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::iter::enumerate::EnumerateProducer<..>, rayon::iter::map::MapConsumer<..>>
+     6,728.0M  24.9%  genson_core::schema::map_inference::unification::check_unifiable_schemas
+     5,565.7M  20.6%  genson_core::genson_rs::build_json_schema_into
+     5,565.7M  20.6%  genson_core::genson_rs::build_multi_json_objects_schema
+     5,565.0M  20.6%  rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema::{closure#0}, &mu
+     5,064.9M  18.7%  <rayon::split_producer::SplitProducer<genson_core::genson_rs::build_multi_json_objects_schema::{closure#0}, &mut
+     5,064.8M  18.7%  <rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt_reduce<..>::{closure#0}, co
+     5,064.7M  18.7%  <rayon::iter::fold::FoldFolder<rayon::iter::fold::FoldFolder<rayon::iter::reduce::ReduceFolder<rayon::iter::ParallelIterator::reduce_with::opt_reduce<..>::{closure#0}, co
+     5,064.6M  18.7%  genson_core::genson_rs::build_single_json_object_schema
+     3,969.5M  14.7%  <genson_core::genson_rs::node::SchemaNode>::add_object
+     3,643.6M  13.5%  genson_core::schema::map_inference::unification::unify_field_schemas
+     3,451.1M  12.8%  prof3::step_json
+     3,451.1M  12.8%  genson_core::normalise::json::normalise_to_json
+     3,318.9M  12.3%  genson_core::schema::map_inference::unification::unify_field_schemas_parallel
+     2,952.0M  10.9%  <str as serde_json::value::index::Index>::index_or_insert
+     2,923.3M  10.8%  <alloc::vec::Vec<serde_json::value::Value>>::extend_desugared::<core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<..>, core::option::Option<core::convert:
+     2,246.9M   8.3%  <genson_core::normalise::typed::ArrowPlan>::normalise
+     1,533.1M   5.7%  genson_core::schema::map_inference::unification::unify_field_schemas_sequential
+     1,492.5M   5.5%  core::ptr::drop_glue::<serde_json::value::Value>
+     1,445.9M   5.3%  genson_core::schema::map_inference::unification::unify_pair
+     1,424.8M   5.3%  <serde_json::map::Entry>::or_insert
+     1,282.4M   4.7%  <genson_core::normalise::typed::Decoder>::put
+     1,253.1M   4.6%  genson_core::schema::prepare_json_bytes
+     1,092.1M   4.0%  <simd_json::Deserializer>::from_slice
+     1,086.5M   4.0%  <simd_json::Deserializer>::from_slice_with_buffers
+     1,042.5M   3.9%  <genson_core::genson_rs::node::SchemaNode>::create_strategy_for_kind
+       966.8M   3.6%  genson_core::schema::validate_ndjson
+       959.2M   3.5%  <genson_core::tape::Lexer>::value
+       943.4M   3.5%  <serde_json::value::Value as core::cmp::PartialEq>::eq
+       877.9M   3.2%  genson_core::schema::validate_json
+       780.4M   2.9%  core::ptr::drop_glue::<genson_core::genson_rs::node::SchemaNode>
+== exclusive (total 27,035.9M Ir)
+    11,779.4M  43.6%  events annotated
+     1,326.6M   4.9%  <..>::write
+     1,316.4M   4.9%  __memcpy_avx_unaligned_erms
+       872.9M   3.2%  mi_heap_malloc_zero_aligned_at
+       773.6M   2.9%  __memcmp_avx2_movbe
+       713.4M   2.6%  mi_free
+       507.7M   1.9%  arrow_json::writer::encoder::encode_string
+       501.2M   1.9%  _mi_page_malloc
+       364.7M   1.3%  <std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&alloc::string::String>
+       343.1M   1.3%  mi_slice_t* start = (mi_slice_t*)((uint8_t*)slice - slice->slice_offset);
+       334.2M   1.2%  <alloc::raw_vec::RawVecInner>::finish_grow
+       318.1M   1.2%  <serde_json::read::SliceRead>::skip_to_escape
+       308.2M   1.1%  <..>::get_index_of::<str>
+       276.8M   1.0%  mi_malloc_aligned
+       254.4M   0.9%  <std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&&str>
+       247.9M   0.9%  core::ptr::drop_glue::<serde_json::value::Value>
+       245.2M   0.9%  <hashbrown::raw::RawTable<usize>>::reserve_rehash::<..>
+       235.8M   0.9%  <genson_core::tape::Lexer>::string
+       227.8M   0.8%  void* p = (zero ? _mi_page_malloc_zeroed(heap,page,padsize) : _mi_page_malloc(heap,page,padsize)); // call specific page malloc for better codegen
+       226.8M   0.8%  #[derive(Clone, Eq, PartialEq, Hash)]
+       223.9M   0.8%  pos: h1(hash) & self.bucket_mask,
+       220.5M   0.8%  core::str::converts::from_utf8
+       220.3M   0.8%  if escape == 0 {
+       218.0M   0.8%  <simd_json::Deserializer>::from_slice_with_buffers
+       212.5M   0.8%  <genson_core::genson_rs::node::SchemaNode>::create_strategy_for_kind
+       208.2M   0.8%  rayon::iter::plumbing::bridge_unindexed_producer_consumer::<rayon::split_producer::SplitProducer<..>, rayon::iter::fold::FoldConsumer<rayon::iter::fold::FoldConsumer<rayo
+       205.2M   0.8%  }
+       184.5M   0.7%  if mi_unlikely(alignment == 0 || !_mi_is_power_of_two(alignment)) { // require power-of-two (see <https://en.cppreference.com/w/c/memory/aligned_alloc>)
+       184.5M   0.7%  return mi_heap_malloc_aligned(mi_prim_get_default_heap(), size, alignment);
+       184.4M   0.7%  if mi_likely(size <= MI_SMALL_SIZE_MAX && alignment <= size) {
+       177.1M   0.7%  <core::str::iter::SplitInternal<char>>::next_inclusive
+       173.2M   0.6%  <serde_json::read::SliceRead as serde_json::read::Read>::ignore_str
+       172.5M   0.6%  while i < bytes.len() {
+       172.3M   0.6%  self.entries.push(Bucket { hash, key, value });
+       166.6M   0.6%  pub fn get_index_of<Q>(&self, key: &Q) -> Option<usize>
+       156.1M   0.6%  mi_malloc_aligned(layout.size(), layout.align()) as *mut u8
+       154.4M   0.6%  <serde_json::map::Entry>::or_insert
+       153.3M   0.6%  simd_json::impls::avx2::deser::parse_str
+       150.3M   0.6%  genson_core::schema::validate_json
+       149.4M   0.6%  <str as serde_json::value::index::Index>::index_or_insert
+       138.4M   0.5%  mi_heap_malloc_aligned_at
+       138.4M   0.5%  mi_heap_malloc_aligned
+       138.3M   0.5%  if mi_likely(page->free != NULL) {
+       136.7M   0.5%  extern void* _mi_page_malloc(mi_heap_t* heap, mi_page_t* page, size_t size) mi_attr_noexcept {
+       133.4M   0.5%  <hashbrown::raw::RawTable<(alloc::string::String, ())>>::reserve_rehash::<..>

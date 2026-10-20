@@ -1,0 +1,92 @@
+== inclusive (total 5,849.6M Ir)
+     5,849.6M 100.0%  prof3::measured
+     5,154.0M  88.1%  prof3::step_extract
+     4,933.9M  84.3%  rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<core::option::Option<&str>>, rayon::iter::map::MapConsumer<rayon::iter::col
+     4,933.9M  84.3%  rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<core::option::Option<&str>>, rayon::iter::ma
+     4,857.8M  83.0%  genson_core::extract::scan::scan
+     4,126.0M  70.5%  <genson_core::extract::scan::Scanner>::value
+     3,807.9M  65.1%  <genson_core::extract::scan::Scanner>::skip
+     3,063.8M  52.4%  <genson_core::extract::scan::Scanner>::string
+     2,675.5M  45.7%  <genson_core::extract::scan::Scanner>::scalar
+       344.5M   5.9%  prof3::step_typed
+       344.3M   5.9%  <genson_core::normalise::typed::ArrowPlan>::normalise
+       338.8M   5.8%  prof3::step_infer
+       279.1M   4.8%  genson_core::phase::rows::<core::option::Option<alloc::vec::Vec<..>>, genson_core::schema::process_json_strings_interned<&str>::{closure#1}>
+       279.1M   4.8%  rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&str>, rayon::iter::map::MapConsumer<rayon::iter::inspect::InspectConsumer<
+       279.1M   4.8%  rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<&str>, rayon::iter::map::MapConsumer<rayon::
+       278.9M   4.8%  <genson_core::genson_rs::interned::RowStates>::row
+       228.8M   3.9%  <genson_core::normalise::typed::Decoder>::put
+       226.9M   3.9%  <genson_core::tape::Lexer>::value
+       213.1M   3.6%  <genson_core::extract::Lookup>::into_entries
+       212.7M   3.6%  <genson_core::extract::Held>::value
+       212.7M   3.6%  serde_json::de::from_trait::<serde_json::read::StrRead, serde_json::value::Value>
+       212.6M   3.6%  <serde_json::value::Value as serde_core::de::Deserialize>::deserialize::<..>
+       177.9M   3.0%  <genson_core::extract::scan::Scanner>::close_object
+       133.9M   2.3%  <genson_core::genson_rs::interned::RowStates>::value
+       113.4M   1.9%  <serde_json::read::StrRead as serde_json::read::Read>::parse_str
+       107.8M   1.8%  <genson_core::tape::Lexer>::string
+        72.2M   1.2%  <genson_core::extract::Lookup>::insert_text
+        47.3M   0.8%  <genson_core::normalise::typed::Decoder>::slots_of
+        43.3M   0.7%  serde_json::read::parse_unicode_escape::<serde_json::read::SliceRead>
+        39.0M   0.7%  <genson_core::normalise::typed::Decoder>::field_input
+        38.4M   0.7%  <genson_core::genson_rs::interned::RowStates>::key_id
+        31.7M   0.5%  <serde_json::read::SliceRead>::skip_to_escape
+        28.5M   0.5%  genson_core::schema::rewrite_merged
+        22.7M   0.4%  genson_core::phase::merge::<..>
+        20.4M   0.3%  genson_core::phase::rewrite::<u32, genson_core::schema::rewrite_merged::{closure#6}>
+        20.4M   0.3%  <genson_core::schema::map_inference::on_dag::OnDag>::rewrite_objects
+        20.4M   0.3%  <genson_core::schema::map_inference::on_dag::OnDag>::rewrite_fields
+        20.4M   0.3%  <genson_core::genson_rs::node::SchemaNode>::absorb_deferred
+        20.4M   0.3%  <genson_core::genson_rs::interned::RowStates>::hash
+        20.2M   0.3%  <genson_core::schema::map_inference::on_dag::OnDag>::unified_values
+        19.8M   0.3%  <genson_core::schema::map_inference::on_dag::OnDag>::check_unifiable_schemas
+        19.8M   0.3%  <genson_core::schema::map_inference::on_dag::OnDag>::check_unifiable_item_schemas
+        15.3M   0.3%  <genson_core::extract::Lookup>::position
+        15.0M   0.3%  <genson_core::schema::map_inference::on_dag::OnDag>::unify_field_schemas_halves
+        13.5M   0.2%  <genson_core::schema::map_inference::on_dag::OnDag>::unify_field_pair
+== exclusive (total 5,849.6M Ir)
+     2,657.2M  45.4%  events annotated
+     1,868.3M  31.9%  <genson_core::extract::scan::Scanner>::string
+       725.9M  12.4%  genson_core::extract::scan::scan
+       328.6M   5.6%  while let Some(&[b'\\', b'u', d0, d1, d2, d3]) = self.b.get(self.i..self.i + 6)
+       242.2M   4.1%  <genson_core::extract::scan::Scanner>::skip
+       184.8M   3.2%  if (a | b | c | e) & 0xF0 != 0 || (0xD800..=0xDFFF).contains(&code) {
+       183.6M   3.1%  <..>
+       167.3M   2.9%  while let Some(b' ' | b'\t') = self.peek() {
+       137.5M   2.4%  let found = zero(w ^ (ONES * u64::from(b'"')))
+       128.0M   2.2%  <genson_core::extract::scan::Scanner>::scalar
+       123.2M   2.1%  let [a, b, c, e] = [d0, d1, d2, d3].map(|x| HEX[x as usize]);
+       108.5M   1.9%  }
+       101.9M   1.7%  self.b.get(self.i).copied()
+        95.2M   1.6%  self.i += 1;
+        94.9M   1.6%  fn string(&mut self) -> Result<bool, Fallback> {
+        87.4M   1.5%  while let Some(chunk) = s.get(i..i + 8) {
+        82.5M   1.4%  if found != 0 {
+        69.5M   1.2%  __memcmp_avx2_movbe
+        61.6M   1.1%  self.i += plain_prefix(&self.b[self.i..]);
+        61.6M   1.1%  let code = u16::from(a) << 12
+        61.6M   1.1%  | u16::from(c) << 4
+        55.0M   0.9%  | zero(w ^ (ONES * u64::from(b'\\')))
+        51.4M   0.9%  <genson_core::tape::Lexer>::string
+        47.7M   0.8%  match self.peek() {
+        40.6M   0.7%  __memcpy_avx_unaligned_erms
+        32.7M   0.6%  <genson_core::normalise::typed::Decoder>::field_input
+        31.6M   0.5%  serde_json::read::parse_unicode_escape::<serde_json::read::SliceRead>
+        27.8M   0.5%  <serde_json::read::SliceRead>::skip_to_escape
+        27.6M   0.5%  if self.peek() == Some(c) {
+        27.1M   0.5%  <genson_core::extract::scan::Scanner>::close_object
+        26.8M   0.5%  fn scalar(&mut self) -> Result<(), Fallback> {
+        26.2M   0.4%  <serde_json::read::StrRead as serde_json::read::Read>::parse_str
+        21.6M   0.4%  return i + (found.trailing_zeros() / 8) as usize;
+        14.8M   0.3%  mi_heap_malloc_zero_aligned_at
+        14.4M   0.2%  <genson_core::normalise::typed::Decoder>::slots_of
+        13.0M   0.2%  if open == b'{' {
+        12.2M   0.2%  mi_free
+        11.6M   0.2%  match (input, slots) {
+        11.6M   0.2%  let field_input = self.field_input(record, input, slots, k, field.promoted);
+         8.4M   0.1%  fn put(
+         8.1M   0.1%  <..>::write
+         7.8M   0.1%  <genson_core::genson_rs::interned::RowStates>::row
+         7.3M   0.1%  fn string(&mut self) -> Result<(u32, u32, bool), Invalid> {
+         7.3M   0.1%  return Ok((start as u32, self.i as u32 - 1, escaped));
+         7.1M   0.1%  <..>::get::<str>

@@ -1,0 +1,134 @@
+{
+ "claims": {
+  "rows": 2000,
+  "bytes": 14991978,
+  "processed": 1976,
+  "schema_hash": "278f6067df630c42",
+  "instructions": {
+   "total": 2062191531,
+   "stages": {
+    "rows": 844812365,
+    "merge": 458825141,
+    "write_schema": 180514730,
+    "rewrite": 546134099,
+    "materialise": 202346,
+    "reorder": 31343,
+    "avro": 8118375
+   },
+   "unattributed": 23553132
+  },
+  "attribution": "markers"
+ },
+ "events": {
+  "rows": 20000,
+  "bytes": 7643128,
+  "processed": 147,
+  "schema_hash": "d239344d2a99fa5b",
+  "instructions": {
+   "total": 331136902,
+   "stages": {
+    "rows": 321777440,
+    "merge": 962410,
+    "write_schema": 107658,
+    "rewrite": 41788,
+    "materialise": 123805,
+    "reorder": 19187,
+    "avro": 3490853
+   },
+   "unattributed": 4613761
+  },
+  "attribution": "markers"
+ },
+ "narrow": {
+  "rows": 100000,
+  "bytes": 10379611,
+  "processed": 8,
+  "schema_hash": "5d7b7947d642a8b8",
+  "instructions": {
+   "total": 574100633,
+   "stages": {
+    "rows": 551498608,
+    "merge": 63340,
+    "write_schema": 29458,
+    "rewrite": 12719,
+    "materialise": 22349,
+    "reorder": 2789,
+    "avro": 909022
+   },
+   "unattributed": 21562348
+  },
+  "attribution": "markers"
+ },
+ "labels": {
+  "rows": 1000,
+  "bytes": 2890106,
+  "processed": 1000,
+  "schema_hash": "fa84bed3bcc28998",
+  "instructions": {
+   "total": 241581536,
+   "stages": {
+    "rows": 176784224,
+    "merge": 22616418,
+    "write_schema": 210227,
+    "rewrite": 458877,
+    "materialise": 1755098,
+    "reorder": 293972,
+    "avro": 38418758
+   },
+   "unattributed": 1043962
+  },
+  "attribution": "markers"
+ },
+ "entities": {
+  "rows": 150,
+  "bytes": 3359950,
+  "processed": 150,
+  "schema_hash": "e4a6ff05fc3c3874",
+  "instructions": {
+   "total": 640700315,
+   "stages": {
+    "rows": 199143638,
+    "merge": 146824541,
+    "write_schema": 67204136,
+    "rewrite": 7009345,
+    "materialise": 185611694,
+    "reorder": 30166743
+   },
+   "unattributed": 4740218
+  },
+  "attribution": "markers"
+ },
+ "usual": {
+  "rows": 20000,
+  "bytes": 7643128,
+  "processed": 8,
+  "schema_hash": "1eddbfc061c226c0",
+  "instructions": {
+   "total": 2487050693,
+   "stages": {
+    "rows": 2485564214,
+    "write_schema": 45519,
+    "rewrite": 61067,
+    "materialise": 37656,
+    "reorder": 6089,
+    "avro": 1302167
+   },
+   "unattributed": 33981
+  },
+  "attribution": "markers"
+ },
+ "normalise": {
+  "rows": 2000,
+  "bytes": 14991978,
+  "processed": 2000,
+  "schema_hash": "e1aa14540eac449a",
+  "instructions": {
+   "total": 1908815021,
+   "stages": {
+    "normalise": 1908814815
+   },
+   "unattributed": 206
+  },
+  "attribution": "markers"
+ }
+}

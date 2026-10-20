@@ -1,0 +1,92 @@
+== inclusive (total 4,093.4M Ir)
+     4,093.4M 100.0%  prof3::measured
+     2,248.7M  54.9%  prof3::step_typed
+     2,248.6M  54.9%  <genson_core::normalise::typed::ArrowPlan>::normalise
+     1,918.4M  46.9%  <genson_core::tape::Lexer>::value
+     1,844.4M  45.1%  prof3::step_infer
+     1,833.3M  44.8%  genson_core::phase::rows::<core::option::Option<alloc::vec::Vec<..>>, genson_core::schema::process_json_strings_interned<&str>::{closure#1}>
+     1,833.3M  44.8%  rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&str>, rayon::iter::map::MapConsumer<rayon::iter::inspect::InspectConsumer<
+     1,833.3M  44.8%  rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<&str>, rayon::iter::map::MapConsumer<rayon::
+     1,833.1M  44.8%  <genson_core::genson_rs::interned::RowStates>::row
+     1,284.1M  31.4%  <genson_core::normalise::typed::Decoder>::put
+     1,063.4M  26.0%  <genson_core::tape::Lexer>::string
+       738.4M  18.0%  <genson_core::genson_rs::interned::RowStates>::value
+       334.3M   8.2%  <genson_core::normalise::typed::Decoder>::slots_of
+        89.7M   2.2%  <genson_core::normalise::typed::Decoder>::str_of
+        81.4M   2.0%  <genson_core::normalise::typed::Decoder>::field_input
+        80.8M   2.0%  genson_core::normalise::typed::has_repeat
+        78.3M   1.9%  <genson_core::genson_rs::interned::RowStates>::key_id
+        43.7M   1.1%  <genson_core::normalise::typed::Decoder>::text
+        39.8M   1.0%  <genson_core::genson_rs::interned::RowStates>::hash
+        21.2M   0.5%  <arrow_buffer::builder::boolean::BooleanBufferBuilder>::append
+         7.4M   0.2%  genson_core::phase::merge::<..>
+         7.3M   0.2%  <genson_core::genson_rs::node::SchemaNode>::absorb_deferred
+         6.2M   0.2%  <genson_core::genson_rs::node::SchemaNode>::absorb_interned_deferred
+         6.2M   0.2%  <genson_core::genson_rs::node::SchemaNode>::absorb_interned_strategy_deferred
+         4.9M   0.1%  <genson_core::normalise::typed::Column>::finish
+         4.9M   0.1%  <genson_core::normalise::typed::Column>::finish_struct
+         3.7M   0.1%  <genson_core::genson_rs::interned::RowStates>::object
+         2.8M   0.1%  <genson_core::genson_rs::strategy::object::ObjectStrategy>::absorb_interned_keywords
+         2.5M   0.1%  <rustc_hash::FxBuildHasher as core::hash::BuildHasher>::hash_one::<&genson_core::genson_rs::interned::Obj>
+         2.3M   0.1%  <arrow_buffer::builder::null::NullBufferBuilder>::materialize_if_needed
+         2.0M   0.0%  genson_core::schema::rewrite_merged
+         1.6M   0.0%  genson_core::phase::rewrite::<u32, genson_core::schema::rewrite_merged::{closure#6}>
+         1.6M   0.0%  <genson_core::schema::map_inference::on_dag::OnDag>::rewrite_objects
+         1.6M   0.0%  <genson_core::schema::map_inference::on_dag::OnDag>::rewrite_fields
+         1.5M   0.0%  <genson_core::schema::map_inference::on_dag::OnDag>::unified_values
+         1.5M   0.0%  <genson_core::schema::map_inference::on_dag::OnDag>::check_unifiable_schemas
+         1.2M   0.0%  genson_core::normalise::typed::push_offset
+         1.0M   0.0%  <..>::get::<genson_core::genson_rs::interned::Obj>
+         0.9M   0.0%  genson_core::phase::avro::<..>
+         0.9M   0.0%  <genson_core::schema::core::SchemaInferenceResult>::to_avro_schema
+         0.8M   0.0%  avrotize::converter::jsons_to_avro
+         0.8M   0.0%  <alloc::raw_vec::RawVec<genson_core::tape::Tok>>::grow_one
+         0.7M   0.0%  avrotize::converter::definitions::innermod::process_definition
+         0.7M   0.0%  <genson_core::genson_rs::interned::RowStates>::join
+         0.7M   0.0%  avrotize::converter::conversion::innermod::json_schema_object_to_avro_record
+== exclusive (total 4,093.4M Ir)
+     1,878.7M  45.9%  events annotated
+       471.5M  11.5%  <genson_core::tape::Lexer>::string
+       125.9M   3.1%  __memcmp_avx2_movbe
+       109.4M   2.7%  <..>
+       102.9M   2.5%  let found = zero(w ^ (ONES * u64::from(b'"')))
+        98.7M   2.4%  <genson_core::normalise::typed::Decoder>::slots_of
+        93.8M   2.3%  <genson_core::genson_rs::interned::RowStates>::row
+        86.6M   2.1%  }
+        86.6M   2.1%  self.i += 1;
+        85.9M   2.1%  __memcpy_avx_unaligned_erms
+        71.8M   1.8%  <genson_core::normalise::typed::Decoder>::field_input
+        67.4M   1.6%  fn string(&mut self) -> Result<(u32, u32, bool), Invalid> {
+        67.4M   1.6%  return Ok((start as u32, self.i as u32 - 1, escaped));
+        62.7M   1.5%  self.b.get(self.i).copied()
+        61.7M   1.5%  if found != 0 {
+        60.5M   1.5%  fn put(
+        48.1M   1.2%  while let Some(chunk) = s.get(i..i + 8) {
+        42.3M   1.0%  fn value(&mut self, depth: usize) -> Result<(), Invalid> {
+        41.8M   1.0%  <genson_core::normalise::typed::Decoder>::str_of
+        41.2M   1.0%  | zero(w ^ (ONES * u64::from(b'\\')))
+        41.2M   1.0%  <..>::append_value::<&str>
+        38.6M   0.9%  match self.peek() {
+        36.2M   0.9%  Ok(match toks[i] {
+        34.7M   0.8%  <genson_core::tape::Lexer>::value
+        33.2M   0.8%  fn value(&mut self, text: &str, toks: &[Tok], i: usize) -> Result<StateId, Unsupported> {
+        32.2M   0.8%  <genson_core::genson_rs::interned::RowStates>::value
+        31.4M   0.8%  match (node, col) {
+        30.2M   0.7%  match toks[i] {
+        28.9M   0.7%  while let Some(b' ' | b'\n' | b'\t' | b'\r') = self.peek() {
+        26.9M   0.7%  let Tok::Str(s, e, escaped) = toks[j] else {
+        26.3M   0.6%  match self {
+        26.3M   0.6%  match (input, slots) {
+        26.3M   0.6%  let field_input = self.field_input(record, input, slots, k, field.promoted);
+        23.9M   0.6%  let value = self.value(text, toks, j + 1)?;
+        21.8M   0.5%  pub fn append_value(&mut self, value: impl AsRef<T::Native>) {
+        19.2M   0.5%  &self.row[start as usize..end as usize]
+        19.2M   0.5%  if self.peek() == Some(c) {
+        14.9M   0.4%  <arrow_buffer::builder::boolean::BooleanBufferBuilder>::append
+        14.6M   0.4%  <genson_core::normalise::typed::Decoder>::text
+        14.4M   0.4%  let put = self.put(&field.node, child, field_input, Some(field.name));
+        14.3M   0.4%  let Tok::Str(s, e, escaped) = self.toks[j] else {
+        14.3M   0.4%  Some(b',') => self.i += 1,
+        13.9M   0.3%  <..>::get::<str>
+        13.3M   0.3%  <genson_core::genson_rs::interned::RowStates>::key_id
+        13.2M   0.3%  let mut j = obj + 1;

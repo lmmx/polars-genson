@@ -1,0 +1,367 @@
+{
+ "claims": {
+  "corpus": "claims",
+  "rows": 2000,
+  "bytes": 14991978,
+  "threads": 1,
+  "processed": 1976,
+  "schema_hash": "278f6067df630c42",
+  "peak_rss_kb": 211768,
+  "runs": [
+   {
+    "wall": 3.642689,
+    "cpu": 3.589116
+   }
+  ],
+  "stages": [
+   {
+    "stage": "rows",
+    "allocations": 1055269,
+    "bytes": 69975197,
+    "peak_live": 47659933
+   },
+   {
+    "stage": "merge",
+    "allocations": 1358341,
+    "bytes": 163505825,
+    "peak_live": 177085344
+   },
+   {
+    "stage": "write_schema",
+    "allocations": 92356,
+    "bytes": 6696468,
+    "peak_live": 154711146
+   },
+   {
+    "stage": "rewrite",
+    "allocations": 722507,
+    "bytes": 79075288,
+    "peak_live": 170386676
+   },
+   {
+    "stage": "materialise",
+    "allocations": 838,
+    "bytes": 51088,
+    "peak_live": 170142858
+   },
+   {
+    "stage": "reorder",
+    "allocations": 0,
+    "bytes": 0,
+    "peak_live": 151346574
+   },
+   {
+    "stage": "avro",
+    "allocations": 28248,
+    "bytes": 2763756,
+    "peak_live": 151938173
+   }
+  ]
+ },
+ "events": {
+  "corpus": "events",
+  "rows": 20000,
+  "bytes": 7643128,
+  "threads": 1,
+  "processed": 147,
+  "schema_hash": "d239344d2a99fa5b",
+  "peak_rss_kb": 29496,
+  "runs": [
+   {
+    "wall": 0.371514,
+    "cpu": 0.369956
+   }
+  ],
+  "stages": [
+   {
+    "stage": "rows",
+    "allocations": 16289,
+    "bytes": 2778908,
+    "peak_live": 11584061
+   },
+   {
+    "stage": "merge",
+    "allocations": 1045,
+    "bytes": 184435,
+    "peak_live": 11938692
+   },
+   {
+    "stage": "write_schema",
+    "allocations": 286,
+    "bytes": 19484,
+    "peak_live": 10506051
+   },
+   {
+    "stage": "rewrite",
+    "allocations": 64,
+    "bytes": 3268,
+    "peak_live": 10508043
+   },
+   {
+    "stage": "materialise",
+    "allocations": 501,
+    "bytes": 29427,
+    "peak_live": 10536638
+   },
+   {
+    "stage": "reorder",
+    "allocations": 0,
+    "bytes": 0,
+    "peak_live": 10523018
+   },
+   {
+    "stage": "avro",
+    "allocations": 10573,
+    "bytes": 1476731,
+    "peak_live": 10904752
+   }
+  ]
+ },
+ "narrow": {
+  "corpus": "narrow",
+  "rows": 100000,
+  "bytes": 10379611,
+  "threads": 1,
+  "processed": 8,
+  "schema_hash": "5d7b7947d642a8b8",
+  "peak_rss_kb": 32932,
+  "runs": [
+   {
+    "wall": 0.556618,
+    "cpu": 0.555367
+   }
+  ],
+  "stages": [
+   {
+    "stage": "rows",
+    "allocations": 1301,
+    "bytes": 6376120,
+    "peak_live": 18393973
+   },
+   {
+    "stage": "merge",
+    "allocations": 129,
+    "bytes": 13378,
+    "peak_live": 19993895
+   },
+   {
+    "stage": "write_schema",
+    "allocations": 107,
+    "bytes": 6150,
+    "peak_live": 15229503
+   },
+   {
+    "stage": "rewrite",
+    "allocations": 20,
+    "bytes": 780,
+    "peak_live": 15229423
+   },
+   {
+    "stage": "materialise",
+    "allocations": 74,
+    "bytes": 4285,
+    "peak_live": 15233428
+   },
+   {
+    "stage": "reorder",
+    "allocations": 0,
+    "bytes": 0,
+    "peak_live": 15228018
+   },
+   {
+    "stage": "avro",
+    "allocations": 1368,
+    "bytes": 801193,
+    "peak_live": 15573524
+   }
+  ]
+ },
+ "labels": {
+  "corpus": "labels",
+  "rows": 1000,
+  "bytes": 2890106,
+  "threads": 1,
+  "processed": 1000,
+  "schema_hash": "fa84bed3bcc28998",
+  "peak_rss_kb": 29632,
+  "runs": [
+   {
+    "wall": 0.256074,
+    "cpu": 0.249168
+   }
+  ],
+  "stages": [
+   {
+    "stage": "rows",
+    "allocations": 27329,
+    "bytes": 14267100,
+    "peak_live": 6802241
+   },
+   {
+    "stage": "merge",
+    "allocations": 4550,
+    "bytes": 4457267,
+    "peak_live": 8498245
+   },
+   {
+    "stage": "write_schema",
+    "allocations": 715,
+    "bytes": 70122,
+    "peak_live": 4136160
+   },
+   {
+    "stage": "rewrite",
+    "allocations": 654,
+    "bytes": 32868,
+    "peak_live": 4151880
+   },
+   {
+    "stage": "materialise",
+    "allocations": 7027,
+    "bytes": 407499,
+    "peak_live": 4552435
+   },
+   {
+    "stage": "reorder",
+    "allocations": 0,
+    "bytes": 0,
+    "peak_live": 4500797
+   },
+   {
+    "stage": "avro",
+    "allocations": 125903,
+    "bytes": 10047345,
+    "peak_live": 9666879
+   }
+  ]
+ },
+ "entities": {
+  "corpus": "entities",
+  "rows": 150,
+  "bytes": 3359950,
+  "threads": 1,
+  "processed": 150,
+  "schema_hash": "e4a6ff05fc3c3874",
+  "peak_rss_kb": 130764,
+  "runs": [
+   {
+    "wall": 1.385561,
+    "cpu": 1.356751
+   }
+  ],
+  "stages": [
+   {
+    "stage": "rows",
+    "allocations": 236303,
+    "bytes": 17591911,
+    "peak_live": 10835223
+   },
+   {
+    "stage": "merge",
+    "allocations": 467977,
+    "bytes": 56093446,
+    "peak_live": 58250495
+   },
+   {
+    "stage": "write_schema",
+    "allocations": 38636,
+    "bytes": 2935310,
+    "peak_live": 53632626
+   },
+   {
+    "stage": "rewrite",
+    "allocations": 9220,
+    "bytes": 562392,
+    "peak_live": 53860170
+   },
+   {
+    "stage": "materialise",
+    "allocations": 734240,
+    "bytes": 43106418,
+    "peak_live": 96888308
+   },
+   {
+    "stage": "reorder",
+    "allocations": 0,
+    "bytes": 0,
+    "peak_live": 95241498
+   }
+  ]
+ },
+ "usual": {
+  "corpus": "usual",
+  "rows": 20000,
+  "bytes": 7643128,
+  "threads": 1,
+  "processed": 8,
+  "schema_hash": "1eddbfc061c226c0",
+  "peak_rss_kb": 217148,
+  "runs": [
+   {
+    "wall": 4.265708,
+    "cpu": 4.205766
+   }
+  ],
+  "stages": [
+   {
+    "stage": "rows",
+    "allocations": 4886584,
+    "bytes": 742707117,
+    "peak_live": 178099372
+   },
+   {
+    "stage": "write_schema",
+    "allocations": 141,
+    "bytes": 9950,
+    "peak_live": 10467672
+   },
+   {
+    "stage": "rewrite",
+    "allocations": 134,
+    "bytes": 4886,
+    "peak_live": 10469830
+   },
+   {
+    "stage": "materialise",
+    "allocations": 156,
+    "bytes": 9274,
+    "peak_live": 10478852
+   },
+   {
+    "stage": "reorder",
+    "allocations": 0,
+    "bytes": 0,
+    "peak_live": 10469640
+   },
+   {
+    "stage": "avro",
+    "allocations": 2780,
+    "bytes": 902240,
+    "peak_live": 10821709
+   }
+  ]
+ },
+ "normalise": {
+  "corpus": "normalise",
+  "rows": 2000,
+  "bytes": 14991978,
+  "threads": 1,
+  "processed": 2000,
+  "schema_hash": "e1aa14540eac449a",
+  "peak_rss_kb": 904824,
+  "runs": [
+   {
+    "wall": 3.634554,
+    "cpu": 3.616985
+   }
+  ],
+  "stages": [
+   {
+    "stage": "normalise",
+    "allocations": 2933097,
+    "bytes": 298098204,
+    "peak_live": 484349901
+   }
+  ]
+ }
+}
