@@ -207,6 +207,17 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   logs/e12_production_unchanged.txt): on chunk_0 and rowsw, each of claims, sitelinks,
   labels, descriptions and aliases has the same Avro schema and the same normalised text
   on 1.0.4 and here
+- A forced map's values unified as records could make a field typed `["boolean",
+  "integer"]` nullable as `["null", ["boolean", "integer"]]` (`try_make_nullable_union`,
+  `schemas_compatible_*`, the DAG's `null_and`: a list of types made the second of two),
+  which no schema reader takes: the usual path panicked reading it back, on 10 random rows
+  that 1.0.4 inferred (found by the interned forced-map comparison below). `null` is now
+  put first in a list of types instead (`["null", "boolean", "integer"]`, which promotes)
+- fuzz_lossless.py now also forces fields to maps; seed 4 (logs/e15, e16): 125 of 1,500
+  sets lose a value (947 on 1.0.4), 110 of them under forced maps (339 on 1.0.4), mostly a
+  field forced to a map that holds a list (`{"a": [-7]}`): 1.0.4 wrote it as text
+  (`{"a__unknown": "[-7]"}`), now as the list, though not every value lands; a forced map
+  over a list is left as it is here
 - genson-core 154 tests (default features) and 238 (avro, parquet), genson-cli 181,
   polars-genson-py 317 (3 skipped); forced_map.rs's string fallback for an integer and a
   string is now the two promoted fields, and a test of null values is added

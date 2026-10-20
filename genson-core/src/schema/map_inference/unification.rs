@@ -148,8 +148,18 @@ fn try_make_nullable_union(a: &Value, b: &Value) -> Option<Value> {
     let mut result = b.clone();
     result
         .as_object_mut()?
-        .insert("type".to_string(), json!(["null", other_type]));
+        .insert("type".to_string(), null_and(other_type.clone()));
     Some(result)
+}
+
+/// A `type` with `null` among its types: `["null", T]` for a type `T`, and a list of types
+/// with `null` put first in it (rather than the list itself made the second of two types).
+fn null_and(t: Value) -> Value {
+    match t {
+        Value::Array(types) if types.iter().any(|t| t == "null") => Value::Array(types),
+        Value::Array(types) => Value::Array(std::iter::once("null".into()).chain(types).collect()),
+        t => json!(["null", t]),
+    }
 }
 
 /// Two unequal schemas as one when they differ only in nullability: one of them the null
@@ -176,7 +186,7 @@ fn schemas_compatible_unequal(existing: &Value, new: &Value) -> Option<Value> {
     }
     let mut nullable = existing_view.to_value();
     if let Some(inner_type) = nullable.get("type").cloned() {
-        nullable["type"] = json!(["null", inner_type]);
+        nullable["type"] = null_and(inner_type);
     }
     Some(nullable)
 }
@@ -192,7 +202,7 @@ fn schemas_compatible_owned(existing: Value, new: &Value) -> Result<Value, Value
     // `new` the null schema: `existing` made nullable
     if new.get("type").is_some_and(|t| t == "null") {
         if let Some(other_type) = existing.get("type").filter(|t| *t != "null").cloned() {
-            existing["type"] = json!(["null", other_type]);
+            existing["type"] = null_and(other_type);
             return Ok(existing);
         }
     }
@@ -211,7 +221,7 @@ fn schemas_compatible_owned(existing: Value, new: &Value) -> Result<Value, Value
         return Err(existing);
     }
     if let Some(inner_type) = existing_type.or_else(|| existing.get("type")).cloned() {
-        existing["type"] = json!(["null", inner_type]);
+        existing["type"] = null_and(inner_type);
     }
     Ok(existing)
 }

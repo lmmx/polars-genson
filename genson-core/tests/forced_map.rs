@@ -163,3 +163,26 @@ fn test_forced_map_beside_a_scalar_takes_the_scalar_with_its_values() {
     let fields: Vec<&String> = values["properties"].as_object().unwrap().keys().collect();
     assert_eq!(fields, ["m__integer", "m__string"], "{values}");
 }
+
+/// A forced map whose values' records hold a field of two kinds in some and null in others:
+/// the field's types made nullable stay one list (`["null", "boolean", "integer"]`, then
+/// promoted), where they were nested in another (`["null", ["boolean", "integer"]]`), which
+/// no schema reader takes, so inference failed. Ten rows or more take the parallel path.
+#[test]
+fn test_forced_map_values_nullable_beside_two_kinds_infer() {
+    let mut rows = vec![
+        r#"{"m": {"a": [{"x": true}, {"x": 1}]}}"#.to_string(),
+        r#"{"m": {"b": [{"x": null}]}}"#.to_string(),
+    ];
+    rows.extend((0..10).map(|i| format!(r#"{{"m": {{"k{i}": [{{"x": {i}}}]}}}}"#)));
+    for n in [2, rows.len()] {
+        let config = SchemaInferenceConfig {
+            force_field_types: [("m".to_string(), "map".to_string())].into(),
+            ..SchemaInferenceConfig::default()
+        };
+        let schema = infer_json_schema_from_strings(&rows[..n], config)
+            .unwrap()
+            .schema;
+        assert!(!schema.to_string().contains(r#"["null",["#), "{schema}");
+    }
+}
