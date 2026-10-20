@@ -271,7 +271,10 @@ info:
               },
               {
                 "name": "rank",
-                "type": "string"
+                "type": [
+                  "null",
+                  "string"
+                ]
               },
               {
                 "name": "references",
@@ -291,7 +294,10 @@ info:
                           "fields": [
                             {
                               "name": "property",
-                              "type": "string"
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             },
                             {
                               "name": "datavalue",
@@ -399,7 +405,10 @@ info:
                             },
                             {
                               "name": "datatype",
-                              "type": "string"
+                              "type": [
+                                "null",
+                                "string"
+                              ]
                             },
                             {
                               "name": "property-labels",
@@ -432,7 +441,10 @@ info:
                         "fields": [
                           {
                             "name": "property",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "datavalue",
@@ -642,7 +654,10 @@ info:
                           },
                           {
                             "name": "datatype",
-                            "type": "string"
+                            "type": [
+                              "null",
+                              "string"
+                            ]
                           },
                           {
                             "name": "property-labels",

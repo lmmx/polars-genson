@@ -236,7 +236,10 @@ info:
               },
               {
                 "name": "rank",
-                "type": "string"
+                "type": [
+                  "null",
+                  "string"
+                ]
               },
               {
                 "name": "qualifiers",

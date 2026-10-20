@@ -49,7 +49,10 @@ info:
                         "fields": [
                           {
                             "name": "precision",
-                            "type": "int"
+                            "type": [
+                              "null",
+                              "int"
+                            ]
                           },
                           {
                             "name": "latitude",

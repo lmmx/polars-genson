@@ -67,7 +67,10 @@ info:
                             "type": {
                               "name": "labels",
                               "type": "map",
-                              "values": "string"
+                              "values": [
+                                "null",
+                                "string"
+                              ]
                             }
                           }
                         ]
@@ -128,7 +131,10 @@ info:
                                     "type": {
                                       "name": "labels",
                                       "type": "map",
-                                      "values": "string"
+                                      "values": [
+                                        "null",
+                                        "string"
+                                      ]
                                     }
                                   }
                                 ]
