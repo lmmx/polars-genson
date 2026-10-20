@@ -1,0 +1,100 @@
+# wikidata-pq's per-column calls (profile/e2e_one.py), the published 1.0.4 against the round-3 stack tip
+# (perf/extract-validate-once), sides alternated per round; 3 measured processes each after a warm-up,
+# each running the step twice: the warm (second) run's median [min-max]; peak RSS is VmHWM over the sub-step
+## rowsw.parquet labels
+  1.0.4  total 0.318 [0.253-0.331]
+     labels.normalise_from_parquet          0.094 s  +22 MB
+     labels.read_back+cast                  0.029 s  +0 MB
+     labels.sink                            0.150 s  +2 MB
+  tip    total 0.250 [0.237-0.274]
+     labels.normalise_from_parquet          0.081 s  +20 MB
+     labels.read_back+cast                  0.036 s  +4 MB
+     labels.sink                            0.130 s  +25 MB
+## rowsw.parquet descriptions
+  1.0.4  total 0.299 [0.296-0.324]
+     descriptions.normalise_from_parquet    0.189 s  +19 MB
+     descriptions.read_back+cast            0.020 s  +10 MB
+     descriptions.sink                      0.100 s  +18 MB
+  tip    total 0.190 [0.179-0.236]
+     descriptions.normalise_from_parquet    0.057 s  +26 MB
+     descriptions.read_back+cast            0.016 s  +0 MB
+     descriptions.sink                      0.109 s  +20 MB
+## rowsw.parquet aliases
+  1.0.4  total 0.155 [0.151-0.157]
+     aliases.normalise_from_parquet         0.053 s  +10 MB
+     aliases.read_back+cast                 0.019 s  +0 MB
+     aliases.sink                           0.078 s  +19 MB
+  tip    total 0.158 [0.141-0.228]
+     aliases.normalise_from_parquet         0.064 s  +11 MB
+     aliases.read_back+cast                 0.020 s  +0 MB
+     aliases.sink                           0.073 s  +12 MB
+## rowsw.parquet sitelinks
+  1.0.4  total 2.636 [2.508-2.646]
+     sitelinks.normalise_json(decode=dtype) 2.360 s  +205 MB
+     sitelinks.sink                         0.248 s  +25 MB
+  tip    total 0.553 [0.505-0.657]
+     sitelinks.normalise_json(decode=dtype) 0.241 s  +21 MB
+     sitelinks.sink                         0.295 s  +31 MB
+## rowsw.parquet claims
+  1.0.4  total 1.534 [1.474-1.866]
+     claims.normalise_from_parquet          0.505 s  +351 MB
+     claims.scan_conform                    0.103 s  +12 MB
+     claims.lookup_to_long                  0.186 s  +7 MB
+     claims.schema_check+sink               0.773 s  +26 MB
+  tip    total 1.444 [1.355-1.523]
+     claims.normalise_from_parquet          0.571 s  +71 MB
+     claims.scan_conform                    0.112 s  +19 MB
+     claims.lookup_to_long                  0.092 s  +12 MB
+     claims.schema_check+sink               0.658 s  +26 MB
+## chunk_0.parquet labels
+  1.0.4  total 0.025 [0.022-0.026]
+     labels.normalise_from_parquet          0.009 s  +2 MB
+     labels.read_back+cast                  0.005 s  +0 MB
+     labels.sink                            0.010 s  +1 MB
+  tip    total 0.026 [0.023-0.028]
+     labels.normalise_from_parquet          0.010 s  +2 MB
+     labels.read_back+cast                  0.005 s  +0 MB
+     labels.sink                            0.011 s  +2 MB
+## chunk_0.parquet descriptions
+  1.0.4  total 0.020 [0.019-0.032]
+     descriptions.normalise_from_parquet    0.008 s  +4 MB
+     descriptions.read_back+cast            0.005 s  +1 MB
+     descriptions.sink                      0.006 s  +2 MB
+  tip    total 0.022 [0.022-0.026]
+     descriptions.normalise_from_parquet    0.009 s  +4 MB
+     descriptions.read_back+cast            0.005 s  +1 MB
+     descriptions.sink                      0.008 s  +2 MB
+## chunk_0.parquet aliases
+  1.0.4  total 0.021 [0.017-0.023]
+     aliases.normalise_from_parquet         0.007 s  +1 MB
+     aliases.read_back+cast                 0.006 s  +0 MB
+     aliases.sink                           0.006 s  +1 MB
+  tip    total 0.020 [0.019-0.026]
+     aliases.normalise_from_parquet         0.007 s  +4 MB
+     aliases.read_back+cast                 0.005 s  +1 MB
+     aliases.sink                           0.007 s  +1 MB
+## chunk_0.parquet sitelinks
+  1.0.4  total 0.090 [0.083-0.096]
+     sitelinks.normalise_json(decode=dtype) 0.071 s  +5 MB
+     sitelinks.sink                         0.018 s  +1 MB
+  tip    total 0.069 [0.052-0.072]
+     sitelinks.normalise_json(decode=dtype) 0.051 s  +-0 MB
+     sitelinks.sink                         0.014 s  +1 MB
+## chunk_0.parquet claims
+  1.0.4  total 2.003 [1.874-2.322]
+     claims.normalise_from_parquet          0.649 s  +49 MB
+     claims.scan_conform                    0.229 s  +33 MB
+     claims.lookup_to_long                  0.001 s  +0 MB
+     claims.schema_check+sink               1.186 s  +69 MB
+  tip    total 2.053 [2.014-2.092]
+     claims.normalise_from_parquet          0.634 s  +58 MB
+     claims.scan_conform                    0.197 s  +32 MB
+     claims.lookup_to_long                  0.002 s  +0 MB
+     claims.schema_check+sink               1.191 s  +67 MB
+# rowsw.parquet five columns: 1.0.4 4.943 s, tip 2.596 s
+# chunk_0.parquet five columns: 1.0.4 2.159 s, tip 2.190 s
+
+# claims on rowsw, this PR's parent (perf/decode-dtype-typed, env-p1s) against the tip (env-ex), 8 rounds;
+# genson's own [profile] stages (both runs of each process) and the warm normalise_from_parquet call
+parent read_parquet 0.195 [0.119-0.542]; extract_invariants 0.328 [0.219-0.625]; infer 0.037 [0.031-0.044]; parse+normalise+decode 0.016 [0.012-0.019]; write_parquet 0.029 [0.023-0.043]; normalise_from_parquet (warm) 0.628 [0.504-0.801]
+tip read_parquet 0.180 [0.118-0.596]; extract_invariants 0.218 [0.127-0.388]; infer 0.037 [0.029-0.053]; parse+normalise+decode 0.015 [0.013-0.023]; write_parquet 0.028 [0.023-0.042]; normalise_from_parquet (warm) 0.593 [0.367-0.736]

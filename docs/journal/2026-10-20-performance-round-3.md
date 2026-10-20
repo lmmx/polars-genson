@@ -474,6 +474,33 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   known values, numbers stepped over, nesting not recorded. test_scan_matches_the_value_path
   (3,000 random sets against the `Value` path) and the rest pass unchanged
 
+### The round-3 stack end to end (logs/e23, tip/)
+
+- wikidata-pq's per-column calls (`profile/e2e_one.py`) on the published 1.0.4 and on
+  the stack's tip (this branch), sides alternated in each round, 3 measured processes
+  each after a warm-up; the warm run's medians:
+
+  | | 1.0.4 | tip |
+  |---|---|---|
+  | rowsw, the five columns | 4.943 s | 2.596 s (−47%) |
+  | rowsw sitelinks (`normalise_json` + Polars' sink) | 2.636 s | 0.553 s |
+  | rowsw sitelinks `normalise_json`, peak over base | +205 MB | +21 MB |
+  | rowsw claims | 1.534 s | 1.444 s |
+  | rowsw claims `normalise_from_parquet`, peak over base | +351 MB | +71 MB |
+  | chunk_0, the five columns | 2.159 s | 2.190 s |
+
+- Polars' sinks are now the largest part of every column: on rowsw 0.66 s of claims'
+  1.44 s and 0.30 s of sitelinks' 0.55 s; on chunk_0 1.19 s of claims' 2.05 s (the
+  conformed claims table; pyarrow writes it in 0.27-0.41 s, the 2026-10-18 journal). That
+  write is wikidata-pq's, not polars-genson's
+- In Python the extraction's gain is smaller than prof3 shows and the call's is lost in
+  the noise: claims on rowsw, perf/decode-dtype-typed against this, 8 rounds,
+  `extract_invariants` 0.328 → 0.218 s at the median, `normalise_from_parquet` 0.628 →
+  0.593 s; its `read_parquet` stage varies from 0.12 to 0.60 s on both (page faults:
+  see the first-touch note above), more than the saving
+- chunk_0 is unchanged within its spread: its claims have nothing to extract, its
+  sitelinks are 60 rows (0.090 → 0.069 s), and the rest is Polars
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in
@@ -494,6 +521,20 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
 
 - Widening scalars of different kinds to a string: it keeps the values but not their types
   (`1`, `"1"` and `true` become `"1"`, `"1"` and `"true"`), so it was not taken
+- `MIMALLOC_ALLOW_LARGE_OS_PAGES=0` (logs/read_firsttouch.log): a claims read takes a
+  steady 0.06-0.07 s against 0.03-0.05 s warm with large pages, but large pages make the
+  first read 0.33 s (system time): a trade between the first read and the others, not a
+  saving, so the allocator's options are left as they are
+- Skipping extraction where a chunk has nothing to extract (release-format claims): not
+  exact, as the extraction section says (a repeated key's row is re-serialised), and
+  0.025 s on chunk_0
+- Restoring JSON Schema keyword order exactly on the interned forced-map path: the usual
+  path's order depends on whether a row's list held ten or more items, which interned
+  states do not keep; the schemas are compared up to keyword order instead
+- Measurement hygiene: two worktrees built into one target directory share genson-core's
+  build unit (cargo's metadata hash leaves the checkout's path out), so the second build
+  can reuse the first's binary when its sources are older; every comparison here builds
+  each side into a directory of its own and checks the binaries differ
 
 ## Missing
 
