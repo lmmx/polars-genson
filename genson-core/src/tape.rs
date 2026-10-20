@@ -69,6 +69,8 @@ pub(crate) trait Sink {
 }
 
 /// Read `row` into `toks`, or reject it as `serde_json::from_str::<Value>` would.
+// The token tape is read by the typed decoder alone
+#[cfg_attr(not(feature = "parquet"), allow(dead_code))]
 pub(crate) fn lex(row: &str, toks: &mut Vec<Tok>) -> Result<(), Invalid> {
     toks.clear();
     read(row, &mut Tape(toks))
@@ -94,6 +96,7 @@ pub(crate) fn read<S: Sink>(row: &str, sink: &mut S) -> Result<S::Value, Invalid
 }
 
 /// A row's token tape.
+#[cfg_attr(not(feature = "parquet"), allow(dead_code))]
 struct Tape<'t>(&'t mut Vec<Tok>);
 
 impl Sink for Tape<'_> {
