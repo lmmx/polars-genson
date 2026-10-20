@@ -15,7 +15,7 @@
 //! absorbed (known by their schema hash, which covers all `absorb` reads): a subtree the
 //! rows repeat at a node is merged there once.
 
-use crate::tape::{read, unescape, Invalid, Sink};
+use crate::tape::{read, unescape, Invalid, Number, Sink};
 use rustc_hash::FxHashMap;
 
 /// A state: a node's strategies.
@@ -586,11 +586,14 @@ impl Sink for States<'_, '_> {
     }
 
     #[inline]
-    fn number(&mut self, start: u32, end: u32, short_integer: bool) -> Result<StateId, Invalid> {
-        if short_integer {
-            return Ok(INTEGER);
+    fn number(&mut self, start: u32, end: u32, kind: Number) -> Result<StateId, Invalid> {
+        match kind {
+            Number::ShortInteger => Ok(INTEGER),
+            Number::Fraction => Ok(FLOAT),
+            Number::Other => {
+                number_kind(&self.text[start as usize..end as usize]).map_err(|_| Invalid)
+            }
         }
-        number_kind(&self.text[start as usize..end as usize]).map_err(|_| Invalid)
     }
 
     #[inline]

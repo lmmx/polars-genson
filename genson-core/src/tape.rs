@@ -53,10 +53,8 @@ pub(crate) trait Sink {
     fn boolean(&mut self, value: bool) -> Self::Value;
     /// A string's text inside its quotes, and whether it holds an escape
     fn string(&mut self, start: u32, end: u32, escaped: bool) -> Self::Value;
-    /// A number's text, and whether it is an integer of 18 digits or fewer (which an
-    /// `i64` holds)
-    fn number(&mut self, start: u32, end: u32, short_integer: bool)
-        -> Result<Self::Value, Invalid>;
+    /// A number's text, and what its text says of its kind
+    fn number(&mut self, start: u32, end: u32, kind: Number) -> Result<Self::Value, Invalid>;
     fn open_list(&mut self) -> Self::List;
     fn item(&mut self, list: &mut Self::List, item: Self::Value);
     fn close_list(&mut self, list: Self::List, len: u32) -> Result<Self::Value, Invalid>;
@@ -66,6 +64,18 @@ pub(crate) trait Sink {
     fn member(&mut self, object: &mut Self::Object, value: Self::Value);
     /// An object read whole, with whether a key in it has an escape
     fn close_object(&mut self, object: Self::Object, len: u32, escaped: bool) -> Self::Value;
+}
+
+/// What the lexer knows of a number's kind from its text.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Number {
+    /// An integer of 18 digits or fewer, which an `i64` holds
+    ShortInteger,
+    /// A number with a fraction and no exponent, of 300 characters or fewer: a finite
+    /// `f64`, its magnitude below 10^300
+    Fraction,
+    /// Any other: a longer integer, or one with an exponent
+    Other,
 }
 
 /// Read `row` into `toks`, or reject it as `serde_json::from_str::<Value>` would.
@@ -117,7 +127,7 @@ impl Sink for Tape<'_> {
         self.0.push(Tok::Str(start, end, escaped));
     }
 
-    fn number(&mut self, start: u32, end: u32, _: bool) -> Result<(), Invalid> {
+    fn number(&mut self, start: u32, end: u32, _: Number) -> Result<(), Invalid> {
         self.0.push(Tok::Num(start, end));
         Ok(())
     }
@@ -204,8 +214,8 @@ impl<S: Sink> Lexer<'_, S> {
             }
             Some(b'-' | b'0'..=b'9') => {
                 let start = self.i;
-                let short_integer = self.number()?;
-                self.sink.number(start as u32, self.i as u32, short_integer)
+                let kind = self.number()?;
+                self.sink.number(start as u32, self.i as u32, kind)
             }
             _ => Err(Invalid),
         }
@@ -289,8 +299,8 @@ impl<S: Sink> Lexer<'_, S> {
     }
 
     /// A number in JSON's grammar; one that might be out of `f64`'s range is checked with
-    /// `serde_json` itself. Whether it is an integer of 18 digits or fewer.
-    fn number(&mut self) -> Result<bool, Invalid> {
+    /// `serde_json` itself. What its text says of its kind.
+    fn number(&mut self) -> Result<Number, Invalid> {
         let start = self.i;
         let digits = |s: &mut Self| {
             let from = s.i;
@@ -337,7 +347,13 @@ impl<S: Sink> Lexer<'_, S> {
                 return Err(Invalid);
             }
         }
-        Ok(integer && whole <= 18)
+        Ok(if integer && whole <= 18 {
+            Number::ShortInteger
+        } else if plain && !integer && self.i - start <= 300 {
+            Number::Fraction
+        } else {
+            Number::Other
+        })
     }
 
     /// A string: the range of its text inside the quotes, and whether it holds an escape.

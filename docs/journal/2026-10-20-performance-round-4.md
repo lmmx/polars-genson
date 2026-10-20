@@ -183,3 +183,25 @@ instructions decide where they disagree.
   Every row of such an input is also a distinct shape, and each distinct shape is
   merged in full, which costs more than its probe. Inference with keyed hashes
   throughout would be a change of its own, for all of these maps at once.
+
+## A fraction's kind from the lexer (perf/number-class)
+
+- **The work.** A number the lexer did not know to be an integer of 18 digits or fewer was
+  classed by `number_kind`, which searched its text for `.`, `e` or `E` and then parsed it
+  as an `f64` to check its magnitude (below 1e308; above, the interned path declines).
+  The lexer has already read every digit, and knows whether it saw a point or an
+  exponent.
+- **The change.** The lexer reports a number as a short integer, a fraction, or other. A
+  fraction is a number with a point, no exponent, and 300 characters or fewer: its
+  magnitude is below 10^300, so it is a `FLOAT` without being parsed. Other numbers (a
+  longer integer, or one with an exponent) are classed by `number_kind` as before.
+- **Instructions**, one thread (logs/b3_number_class.txt), row phase: narrow −2.00%,
+  claims −0.85%, entities −0.78%, events −0.24%, labels −0.14%. Whole run: narrow −1.1%,
+  events −0.1%; claims and entities within their seeds' spread.
+- The same schema hashes on every corpus.
+- **Test.** `test_interned_numbers_match_the_builders`: numbers either side of each bound
+  (18 and 19 digits, `i64`'s limits, 300- and 301-character fractions, fractions past
+  `f64`'s range, exponents), each alone, all together, and in a list, give the interned
+  path the builders' schema or a decline. Classing long integers as fractions is caught.
+  A looser bound survives: it turns a decline above 1e308 into `FLOAT`, which is what
+  the builders infer anyway.

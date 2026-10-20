@@ -1700,3 +1700,54 @@ fn keywords_sorted(schema: &Value) -> Value {
         value => value.clone(),
     }
 }
+
+/// A number's kind on the interned path, read from what the lexer knows of its text (an
+/// integer of 18 digits or fewer, a fraction without an exponent of 300 characters or
+/// fewer) or parsed, is the kind each row's builder gives it: numbers either side of each
+/// bound, alone and together, give the same schema (or the same decline) on both paths.
+#[test]
+fn test_interned_numbers_match_the_builders() {
+    let fraction = |len: usize| format!("1.{}", "5".repeat(len - 2));
+    let numbers: Vec<String> = [
+        "0", "-0", "7", "-7", "123456789012345678", "-123456789012345678",
+        "1234567890123456789", "-1234567890123456789", "9223372036854775807",
+        "9223372036854775808", "-9223372036854775808", "-9223372036854775809",
+        "18446744073709551616", "2.5", "-0.0", "0.1", "1e3", "1E-2", "-2.5e+3", "1.5e300",
+        "1e400", "-1e400",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .chain([fraction(300), fraction(301), format!("-{}", fraction(300))])
+    // Past `f64`'s range without an exponent: 309 digits before the point
+    .chain([format!("{}.5", "1".repeat(309)), format!("-{}.5", "9".repeat(309))])
+    .collect();
+    let config = SchemaInferenceConfig::default();
+    let sets: Vec<Vec<String>> = numbers
+        .iter()
+        .map(|n| vec![format!(r#"{{"n": {n}}}"#); 10])
+        .chain(std::iter::once(
+            numbers.iter().map(|n| format!(r#"{{"n": {n}}}"#)).collect(),
+        ))
+        .chain(numbers.iter().map(|n| {
+            let mut rows = vec![r#"{"n": 1}"#.to_string(); 9];
+            rows.push(format!(r#"{{"n": [{n}, 3]}}"#));
+            rows
+        }))
+        .collect();
+    for rows in sets {
+        let mut interned = get_builder(None);
+        let by_interned = process_json_strings_interned(&rows, &config, &mut interned);
+        let mut usual = get_builder(None);
+        let by_builders = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            process_json_strings_parallel(&rows, &config, &mut usual)
+        }));
+        match (by_interned, by_builders) {
+            (Some(count), Ok(Ok(expected))) => {
+                assert_eq!(count, expected, "{rows:?}");
+                assert_eq!(interned.to_schema(), usual.to_schema(), "{rows:?}");
+            }
+            (Some(_), _) => panic!("interned where the builders fail: {rows:?}"),
+            (None, _) => {}
+        }
+    }
+}

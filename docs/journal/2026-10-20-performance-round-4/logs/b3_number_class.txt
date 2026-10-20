@@ -1,0 +1,25 @@
+# callgrind, one thread; rh = perf/row-hash-set, num = perf/number-class.
+# corpus revision whole-run row-phase (genson_core::phase::rows, inclusive) schema hash
+narrow rh 805932455 438842118 "schema_hash":"5d7b7947d642a8b8"
+narrow num 797153007 430080529 "schema_hash":"5d7b7947d642a8b8"
+events rh 444720452 263823157 "schema_hash":"d239344d2a99fa5b"
+events num 444055728 263182752 "schema_hash":"d239344d2a99fa5b"
+claims rh 2438581224 756451405 "schema_hash":"278f6067df630c42"
+claims num 2432040991 749987041 "schema_hash":"278f6067df630c42"
+entities rh 981807863 178805087 "schema_hash":"e4a6ff05fc3c3874"
+entities num 979649852 177406018 "schema_hash":"e4a6ff05fc3c3874"
+labels rh 353257840 156808717 "schema_hash":"fa84bed3bcc28998"
+labels num 353035164 156596921 "schema_hash":"fa84bed3bcc28998"
+# row phase: narrow -2.00%, claims -0.85%, entities -0.78%, events -0.24%, labels -0.14%
+# whole run, a second set of runs (millions; claims and entities vary with std maps' seeds):
+narrow rh 799.8 num 791.0
+events rh 443.2 num 442.6
+claims rh 2434.4 num 2442.8
+entities rh 981.5 num 974.0
+labels rh 353.2 num 353.0
+# mutants, against test_interned_numbers_match_the_builders:
+#   Fraction without `!integer` (long integers classed as fractions): caught
+#   bound 300 -> 400 characters: survives. A fraction of 309 digits before its point
+#     (1.1e308) is then FLOAT where number_kind declines it (its |f| >= 1e308 check),
+#     but the builders accept it and give the same schema: the bound keeps the decline,
+#     not the output
