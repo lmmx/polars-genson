@@ -1,0 +1,173 @@
+diff --git a/genson-core/src/genson_rs/interned.rs b/genson-core/src/genson_rs/interned.rs
+index 3cf5bc6..0ead05e 100644
+--- a/genson-core/src/genson_rs/interned.rs
++++ b/genson-core/src/genson_rs/interned.rs
+@@ -15,7 +15,7 @@
+ //! absorbed (known by their schema hash, which covers all `absorb` reads): a subtree the
+ //! rows repeat at a node is merged there once.
+ 
+-use crate::tape::{read, unescape, Invalid, Sink};
++use crate::tape::{read, unescape, Invalid, Number, Sink};
+ use rustc_hash::FxHashMap;
+ 
+ /// A state: a node's strategies.
+@@ -586,11 +586,14 @@ impl Sink for States<'_, '_> {
+     }
+ 
+     #[inline]
+-    fn number(&mut self, start: u32, end: u32, short_integer: bool) -> Result<StateId, Invalid> {
+-        if short_integer {
+-            return Ok(INTEGER);
++    fn number(&mut self, start: u32, end: u32, kind: Number) -> Result<StateId, Invalid> {
++        match kind {
++            Number::ShortInteger => Ok(INTEGER),
++            Number::Fraction => Ok(FLOAT),
++            Number::Other => {
++                number_kind(&self.text[start as usize..end as usize]).map_err(|_| Invalid)
++            }
+         }
+-        number_kind(&self.text[start as usize..end as usize]).map_err(|_| Invalid)
+     }
+ 
+     #[inline]
+diff --git a/genson-core/src/tape.rs b/genson-core/src/tape.rs
+index 696d388..0f5658b 100644
+--- a/genson-core/src/tape.rs
++++ b/genson-core/src/tape.rs
+@@ -53,10 +53,8 @@ pub(crate) trait Sink {
+     fn boolean(&mut self, value: bool) -> Self::Value;
+     /// A string's text inside its quotes, and whether it holds an escape
+     fn string(&mut self, start: u32, end: u32, escaped: bool) -> Self::Value;
+-    /// A number's text, and whether it is an integer of 18 digits or fewer (which an
+-    /// `i64` holds)
+-    fn number(&mut self, start: u32, end: u32, short_integer: bool)
+-        -> Result<Self::Value, Invalid>;
++    /// A number's text, and what its text says of its kind
++    fn number(&mut self, start: u32, end: u32, kind: Number) -> Result<Self::Value, Invalid>;
+     fn open_list(&mut self) -> Self::List;
+     fn item(&mut self, list: &mut Self::List, item: Self::Value);
+     fn close_list(&mut self, list: Self::List, len: u32) -> Result<Self::Value, Invalid>;
+@@ -68,6 +66,18 @@ pub(crate) trait Sink {
+     fn close_object(&mut self, object: Self::Object, len: u32, escaped: bool) -> Self::Value;
+ }
+ 
++/// What the lexer knows of a number's kind from its text.
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub(crate) enum Number {
++    /// An integer of 18 digits or fewer, which an `i64` holds
++    ShortInteger,
++    /// A number with a fraction and no exponent, of 300 characters or fewer: a finite
++    /// `f64`, its magnitude below 10^300
++    Fraction,
++    /// Any other: a longer integer, or one with an exponent
++    Other,
++}
++
+ /// Read `row` into `toks`, or reject it as `serde_json::from_str::<Value>` would.
+ // The token tape is read by the typed decoder alone
+ #[cfg_attr(not(feature = "parquet"), allow(dead_code))]
+@@ -117,7 +127,7 @@ impl Sink for Tape<'_> {
+         self.0.push(Tok::Str(start, end, escaped));
+     }
+ 
+-    fn number(&mut self, start: u32, end: u32, _: bool) -> Result<(), Invalid> {
++    fn number(&mut self, start: u32, end: u32, _: Number) -> Result<(), Invalid> {
+         self.0.push(Tok::Num(start, end));
+         Ok(())
+     }
+@@ -204,8 +214,8 @@ impl<S: Sink> Lexer<'_, S> {
+             }
+             Some(b'-' | b'0'..=b'9') => {
+                 let start = self.i;
+-                let short_integer = self.number()?;
+-                self.sink.number(start as u32, self.i as u32, short_integer)
++                let kind = self.number()?;
++                self.sink.number(start as u32, self.i as u32, kind)
+             }
+             _ => Err(Invalid),
+         }
+@@ -289,8 +299,8 @@ impl<S: Sink> Lexer<'_, S> {
+     }
+ 
+     /// A number in JSON's grammar; one that might be out of `f64`'s range is checked with
+-    /// `serde_json` itself. Whether it is an integer of 18 digits or fewer.
+-    fn number(&mut self) -> Result<bool, Invalid> {
++    /// `serde_json` itself. What its text says of its kind.
++    fn number(&mut self) -> Result<Number, Invalid> {
+         let start = self.i;
+         let digits = |s: &mut Self| {
+             let from = s.i;
+@@ -337,7 +347,13 @@ impl<S: Sink> Lexer<'_, S> {
+                 return Err(Invalid);
+             }
+         }
+-        Ok(integer && whole <= 18)
++        Ok(if integer && whole <= 18 {
++            Number::ShortInteger
++        } else if plain && !integer && self.i - start <= 300 {
++            Number::Fraction
++        } else {
++            Number::Other
++        })
+     }
+ 
+     /// A string: the range of its text inside the quotes, and whether it holds an escape.
+diff --git a/genson-core/src/tests/schema.rs b/genson-core/src/tests/schema.rs
+index 73b944e..8581ded 100644
+--- a/genson-core/src/tests/schema.rs
++++ b/genson-core/src/tests/schema.rs
+@@ -1700,3 +1700,54 @@ fn keywords_sorted(schema: &Value) -> Value {
+         value => value.clone(),
+     }
+ }
++
++/// A number's kind on the interned path, read from what the lexer knows of its text (an
++/// integer of 18 digits or fewer, a fraction without an exponent of 300 characters or
++/// fewer) or parsed, is the kind each row's builder gives it: numbers either side of each
++/// bound, alone and together, give the same schema (or the same decline) on both paths.
++#[test]
++fn test_interned_numbers_match_the_builders() {
++    let fraction = |len: usize| format!("1.{}", "5".repeat(len - 2));
++    let numbers: Vec<String> = [
++        "0", "-0", "7", "-7", "123456789012345678", "-123456789012345678",
++        "1234567890123456789", "-1234567890123456789", "9223372036854775807",
++        "9223372036854775808", "-9223372036854775808", "-9223372036854775809",
++        "18446744073709551616", "2.5", "-0.0", "0.1", "1e3", "1E-2", "-2.5e+3", "1.5e300",
++        "1e400", "-1e400",
++    ]
++    .iter()
++    .map(|s| s.to_string())
++    .chain([fraction(300), fraction(301), format!("-{}", fraction(300))])
++    // Past `f64`'s range without an exponent: 309 digits before the point
++    .chain([format!("{}.5", "1".repeat(309)), format!("-{}.5", "9".repeat(309))])
++    .collect();
++    let config = SchemaInferenceConfig::default();
++    let sets: Vec<Vec<String>> = numbers
++        .iter()
++        .map(|n| vec![format!(r#"{{"n": {n}}}"#); 10])
++        .chain(std::iter::once(
++            numbers.iter().map(|n| format!(r#"{{"n": {n}}}"#)).collect(),
++        ))
++        .chain(numbers.iter().map(|n| {
++            let mut rows = vec![r#"{"n": 1}"#.to_string(); 9];
++            rows.push(format!(r#"{{"n": [{n}, 3]}}"#));
++            rows
++        }))
++        .collect();
++    for rows in sets {
++        let mut interned = get_builder(None);
++        let by_interned = process_json_strings_interned(&rows, &config, &mut interned);
++        let mut usual = get_builder(None);
++        let by_builders = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
++            process_json_strings_parallel(&rows, &config, &mut usual)
++        }));
++        match (by_interned, by_builders) {
++            (Some(count), Ok(Ok(expected))) => {
++                assert_eq!(count, expected, "{rows:?}");
++                assert_eq!(interned.to_schema(), usual.to_schema(), "{rows:?}");
++            }
++            (Some(_), _) => panic!("interned where the builders fail: {rows:?}"),
++            (None, _) => {}
++        }
++    }
++}

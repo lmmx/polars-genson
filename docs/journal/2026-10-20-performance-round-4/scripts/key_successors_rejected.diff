@@ -1,0 +1,131 @@
+diff --git a/genson-core/src/genson_rs/interned.rs b/genson-core/src/genson_rs/interned.rs
+index 3cf5bc6..1d04e5b 100644
+--- a/genson-core/src/genson_rs/interned.rs
++++ b/genson-core/src/genson_rs/interned.rs
+@@ -97,8 +97,16 @@ pub(crate) struct RowStates {
+     object_at: usize,
+     /// Key positions of wide objects read before, cleared, for the next to reuse
+     position_maps: Vec<FxHashMap<KeyId, usize>>,
++    /// The key read last after each key in an object (at `2 * key + 1`), and first in an
++    /// object under each key (at `2 * (key + 1)`, the row's root at 0), or `NO_KEY`: an
++    /// object's keys follow one another in the same order from row to row, wherever the
++    /// object is in its row (V8 predicts a JSON object's keys from the shape before them)
++    next_keys: Vec<KeyId>,
+ }
+ 
++/// No key: before an object's first key, and above a row's root.
++const NO_KEY: KeyId = KeyId::MAX;
++
+ impl RowStates {
+     pub(crate) fn new() -> Self {
+         let mut states = RowStates {
+@@ -120,6 +128,7 @@ impl RowStates {
+             key_at: 0,
+             object_at: 0,
+             position_maps: Vec::new(),
++            next_keys: Vec::new(),
+         };
+         for strats in [
+             &[][..],
+@@ -216,23 +225,33 @@ impl RowStates {
+         state
+     }
+ 
+-    /// The id of a row's next key: the previous row's key at its position, if it is the
+-    /// same text.
++    /// The id of a row's key at position `at` that is not the previous row's key there:
++    /// the key read last after its predecessor (`previous`, or `parent` for an object's
++    /// first key), if it has this text, else the key by its text.
+     #[inline]
+-    fn row_key(&mut self, key: &str) -> KeyId {
+-        let at = self.key_at;
+-        self.key_at += 1;
+-        if let Some(&last) = self.last_keys.get(at) {
+-            if *self.keys[last as usize] == *key {
+-                return last;
++    fn moved_key(&mut self, text: &str, at: usize, previous: KeyId) -> KeyId {
++        let slot = previous as usize;
++        let predicted = match previous {
++            NO_KEY => NO_KEY,
++            _ => self.next_keys.get(slot).copied().unwrap_or(NO_KEY),
++        };
++        let key = if predicted != NO_KEY && *self.keys[predicted as usize] == *text {
++            predicted
++        } else {
++            let key = self.key_id(text);
++            if previous != NO_KEY {
++                if self.next_keys.len() <= slot {
++                    self.next_keys.resize(slot + 1, NO_KEY);
++                }
++                self.next_keys[slot] = key;
+             }
+-        }
+-        let id = self.key_id(key);
++            key
++        };
+         match self.last_keys.get_mut(at) {
+-            Some(last) => *last = id,
+-            None => self.last_keys.push(id),
++            Some(last) => *last = key,
++            None => self.last_keys.push(key),
+         }
+-        id
++        key
+     }
+ 
+     fn key_id(&mut self, key: &str) -> KeyId {
+@@ -368,7 +387,8 @@ impl RowStates {
+             return Err(Unsupported);
+         }
+         (self.key_at, self.object_at) = (0, 0);
+-        let mut state = read(text, &mut States { states: self, text }).map_err(|_| Unsupported)?;
++        let mut sink = States { states: self, text };
++        let mut state = read(text, &mut sink).map_err(|_| Unsupported)?;
+         if let Some(field) = wrap_root {
+             let key = self.key_id(field);
+             state = self.object(Obj {
+@@ -554,7 +574,8 @@ struct States<'r, 't> {
+ 
+ /// An object while its members are read: where its members start among the scratch ones,
+ /// the positions of its keys once it has many (a wide object's keys are found again by
+-/// hash, a narrow one's in turn), and the key of the member being read.
++/// hash, a narrow one's in turn), the key of the member being read (`NO_KEY` before the
++/// first), and the key whose value the object is.
+ struct OpenObject {
+     first: usize,
+     positions: Option<FxHashMap<KeyId, usize>>,
+@@ -627,18 +648,30 @@ impl Sink for States<'_, '_> {
+         OpenObject {
+             first: self.states.members.len(),
+             positions: None,
+-            key: 0,
++            key: NO_KEY,
+         }
+     }
+ 
+     #[inline]
+     fn key(&mut self, object: &mut OpenObject, start: u32, end: u32, escaped: bool) {
+         let text = &self.text[start as usize..end as usize];
+-        object.key = if escaped {
+-            self.states.row_key(&unescape(text))
++        let unescaped;
++        let text = if escaped {
++            unescaped = unescape(text);
++            unescaped.as_str()
+         } else {
+-            self.states.row_key(text)
++            text
++        };
++        let states = &mut *self.states;
++        // The previous row's key at this position, then the key that followed this one's
++        // predecessor last (a row whose keys moved), then the key by its text
++        let at = states.key_at;
++        states.key_at += 1;
++        let key = match states.last_keys.get(at) {
++            Some(&last) if *states.keys[last as usize] == *text => last,
++            _ => states.moved_key(text, at, object.key),
+         };
++        object.key = key;
+     }
+ 
+     #[inline]

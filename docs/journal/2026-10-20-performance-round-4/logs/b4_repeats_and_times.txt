@@ -1,0 +1,31 @@
+# Repeated whole runs, one thread, on the corpora whose std maps are seeded at random (four runs each,
+# the first from logs/b3's set); cf = perf/lex-into-states 5f0a0d9, rh = fd1403c, num = 4176b15,
+# each built from its commit in a build directory of its own. Millions of instructions: whole run, row phase
+claims cf whole 2441.1 2439.0 2441.0 2438.8  rows 757.96 757.96 757.96 757.96
+claims rh whole 2438.0 2451.7 2437.3 2450.6  rows 757.94 757.95 757.95 757.95
+claims num whole 2430.6 2433.9 2445.4 2431.7  rows 751.50 751.50 751.50 751.50
+entities cf whole 976.2 960.2 976.0 982.2  rows 179.18 179.17 179.18 179.17
+entities rh whole 960.2 982.1 982.1 976.1  rows 179.18 179.18 179.16 179.17
+entities num whole 980.7 980.1 980.7 980.7  rows 177.79 177.77 177.78 177.77
+# The whole runs fall into a few modes (the seeds change the order std maps are iterated in, so the merge
+# order); within a mode each revision differs from its parent by its row phase's difference:
+#   entities: cf 960.2 / 976.0 / 982.2, rh 960.2 / 976.1 / 982.1, num 980.7 (rh's 982.1 less 1.4M)
+#   claims: cf 2438.8-2441.1, rh 2437.3 / 2450.6, num 2430.6 / 2445.4 (rh's less 5-7M)
+
+# Interleaved ABBA, release build, 4 threads, 8 rounds of 15 measured runs, nothing else running:
+# cf = perf/lex-into-states 5f0a0d9, rhc = perf/row-hash-set fd1403c
+narrow | cf wall 18.6 ms [12.1-33.5] cpu 51.9 ms | rhc wall 18.9 ms [12.3-39.8] cpu 56.8 ms | wall +2.0%
+events | cf wall 14.9 ms [9.2-27.2] cpu 41.4 ms | rhc wall 14.7 ms [8.7-28.2] cpu 40.8 ms | wall -1.4%
+usual | cf wall 22.3 ms [15.3-64.1] cpu 56.4 ms | rhc wall 21.8 ms [15.2-50.6] cpu 54.0 ms | wall -2.1%
+labels | cf wall 22.5 ms [15.6-50.2] cpu 40.7 ms | rhc wall 21.8 ms [16.2-54.8] cpu 38.5 ms | wall -3.1%
+claims | cf wall 326.3 ms [239.9-478.8] cpu 621.2 ms | rhc wall 326.5 ms [250.9-552.2] cpu 622.6 ms | wall +0.1%
+entities | cf wall 109.5 ms [80.5-223.2] cpu 186.5 ms | rhc wall 114.6 ms [80.9-277.7] cpu 190.4 ms | wall +4.6%
+# rhc = perf/row-hash-set fd1403c, numc = perf/number-class 4176b15
+narrow | rhc wall 18.7 ms [11.5-36.5] cpu 55.8 ms | numc wall 17.4 ms [12.2-30.3] cpu 51.9 ms | wall -6.8%
+events | rhc wall 15.7 ms [10.1-34.5] cpu 42.3 ms | numc wall 14.6 ms [10.3-36.5] cpu 40.4 ms | wall -6.8%
+usual | rhc wall 22.4 ms [15.9-60.4] cpu 57.4 ms | numc wall 22.8 ms [16.0-48.4] cpu 57.5 ms | wall +2.0%
+labels | rhc wall 21.7 ms [16.9-45.1] cpu 38.4 ms | numc wall 22.3 ms [15.9-51.9] cpu 41.1 ms | wall +3.1%
+claims | rhc wall 356.0 ms [262.8-554.2] cpu 663.5 ms | numc wall 343.3 ms [251.7-516.0] cpu 646.2 ms | wall -3.5%
+entities | rhc wall 107.0 ms [81.8-244.6] cpu 183.7 ms | numc wall 99.8 ms [81.1-194.0] cpu 176.6 ms | wall -6.7%
+# The same binary (rh, claims) gave 326.5 ms in the first set and 356.0 ms in the second: this machine's
+# drift between sets is larger than either change's effect

@@ -1,0 +1,13 @@
+# callgrind totals (whole run; the row-hash set is outside the rows stage), one thread, three runs each;
+# final = perf/lex-into-states, rh = perf/row-hash-set. claims and entities vary from run to run on both:
+# their std HashMaps (RandomState, SipHash) are seeded at random
+narrow final 814.5 814.5 814.5 min 814.5
+narrow rh 799.8 799.8 799.8 min 799.8
+events final 446.2 446.2 446.2 min 446.2
+events rh 443.2 443.2 443.3 min 443.2
+claims final 2450.0 2465.5 2438.7 min 2438.7
+claims rh 2437.9 2435.7 2435.8 min 2435.7
+entities final 981.6 975.4 975.5 min 975.4
+entities rh 981.0 960.7 981.5 min 960.7
+labels final 353.6 353.6 353.6 min 353.6
+labels rh 353.2 353.2 353.2 min 353.2

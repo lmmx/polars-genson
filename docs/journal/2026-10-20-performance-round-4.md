@@ -109,3 +109,95 @@ instructions decide where they disagree.
 - **Tests.** The interned-row equivalence tests (interned states against each row's
   builder, 1,200 sets) and the forced-map ones (442 sets against the builders) pass
   unchanged. So do the typed decoder's tests on the tape path.
+
+## Polymorphic and successor caches for keys (measured, not kept)
+
+- **The idea.** A row's keys and objects are found by comparing them with the previous
+  row's at the same position in the row (`last_keys`, `last_objects`), and on a miss by
+  hash. Round 3's ledger (L5) proposed keeping 2–4 recent entries per position
+  (polymorphic inline caches, Hölzle, Chambers & Ungar 1991), to be rejected if four
+  entries added under 10 points of hit rate.
+- **Hit rates, measured first** (logs/b1_key_successors.txt; an instrumented build,
+  simulated): four entries add 15–40 points on narrow's objects, events, claims and
+  entities. Even so, claims' keys hit only 23.8% at four entries (7.3% at one), and its
+  objects 14.8%.
+  - The positions are the problem. They count keys from the start of the row, so one
+    member more early in a row moves every key after it.
+  - Mison (Li et al. 2017) predicts a field's logical position instead. V8's JSON parser
+    predicts a key from the object's shape so far (its transition tree), and from the
+    previous array element's map (Verwaest, "[json] More feedback-guided json parsing",
+    V8 commit fdde8945, 2019).
+  - The analogue here predicts a key from the key before it in its object (and an
+    object's first key from its parent's key). Simulated, that hits 81.5% of claims'
+    keys (7.3% by position), 79.6% of entities' and 78.0% of events'. Labels' map keys
+    (languages) are unpredictable either way (66%). Narrow's already hit 100%.
+- **Built three ways**, each checked by one comparison of the key's text, on the fused
+  row phase. The best, the previous key alone, tried after the position cache misses,
+  with no parent context (scripts/key_successors_rejected.diff), measured:
+
+  | corpus | row phase | whole run |
+  |---|---|---|
+  | claims | −4.4% | −1.9% |
+  | events | −3.8% | −2.3% |
+  | entities | −4.1% | −0.75% |
+  | narrow | +0.7% | +0.35% |
+  | labels | +2.4% | +1.0% |
+
+  The variant with a parent context saved more on claims (−6.6%) but cost narrow and
+  labels 4.3% each. Moving the miss path out of line lost most of the gain.
+- **Why it was not kept.** The hash lookup a prediction saves costs about 132
+  instructions on claims (102.4M over some 770,000 lookups that miss the position
+  cache). A prediction saves about 53 of them: it still compares the key's text, and
+  keeps its table. A gain of about 2% of three corpora's runs, against a loss on two,
+  does not pay for the state it adds.
+- **Objects.** Predicting an object's state from its parent key would hit claims'
+  objects 27.9% of the time (4.1% by position). That was not built: an object found by
+  its state still compares its members, which is most of what the hash lookup costs.
+
+## The distinct rows' hashes in an FxHashSet (measured, not kept)
+
+- **The change** (scripts/row_hash_set_not_kept.diff). Each row's schema hash (xxh64)
+  was checked against the rows seen before in std's `HashSet`, which hashes each `u64`
+  again with SipHash-1-3. `FxHashSet` hashes it with one multiply.
+- **Instructions**, whole run, one thread (logs/b2_row_hash_set.txt and
+  logs/b4_repeats_and_times.txt): narrow −1.79%, events −0.66%, usual −0.59%, labels
+  −0.08%, claims −0.06% and entities 0.00%, each within the same mode of std's random
+  seeds. No regression, and the row phase is unchanged.
+- **Memory**: unchanged, since the table grows as std's does.
+- **Times**: within this machine's noise (ABBA: −3.1% to +4.6%, with the same binary
+  drifting 9% between sets).
+- **Hash flooding.** Fx is not keyed. This would have added no exposure the row phase
+  lacks, since the builder's `Absorbed` already keeps the same hashes in an
+  `FxHashSet<u64>`, and key interning hashes the key strings with Fx.
+- **Why it was not kept.** The gain is real, but at most 0.1% of the whole run on the
+  Wikidata-shaped corpora (labels, claims, entities). It saves no memory and is too
+  small to show in time. That is not worth a PR of its own to review and release.
+
+## A fraction's kind from the lexer (measured, not kept)
+
+- **The change** (scripts/number_class_not_kept.diff). The lexer reported a number with a
+  point, no exponent and 300 characters or fewer as a fraction, which inference took as
+  `FLOAT` without parsing it. Its magnitude is below 10^300, so it is finite and below
+  `number_kind`'s 1e308 decline. Numbers with an exponent, and longer ones, were still
+  classed by `number_kind` behind the lexer's `serde_json` range check.
+- **Test.** The equivalence test it came with (numbers either side of each bound, `i64`'s
+  limits, 300- and 301-character fractions, values past `f64`'s range, exponents)
+  matched the builders, and caught classing long integers as fractions.
+- **Instructions**, one thread (logs/b3_number_class.txt and
+  logs/b4_repeats_and_times.txt): row phase −0.14% to −2.00%. Whole run: narrow −1.09%,
+  events −0.15%, usual −0.12%, labels −0.10%, claims −0.27% and entities −0.14% (within
+  a mode). The schema hashes, fuzz, soundness cases and wikidata-pq's schemas and
+  normalised text are all the same.
+- **Times**: within noise.
+- **Why it was not kept.** It costs a new `Sink` argument and a numeric bound whose
+  soundness has to be argued, for at most 0.3% of the whole run on the Wikidata-shaped
+  corpora.
+
+## Round 4 closed
+
+Round 4 keeps one change: lexing straight into interned states (#282), at 10–20% of the
+row phase and 1–12% of the whole run.
+- Every candidate measured after it was below the bar where its review costs less than
+  it gains: polymorphic and successor caches, the row-hash set, and the fraction class.
+- The ledger's remaining ideas (SIMD-assisted lexing, property tests of the merge
+  algebra) wait for a later round.
