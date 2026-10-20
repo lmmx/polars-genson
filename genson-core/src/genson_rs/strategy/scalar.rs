@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 use simd_json;
-use simd_json::prelude::TypedScalarValue;
+use simd_json::prelude::{TypedScalarValue, ValueAsScalar};
 
 use crate::genson_rs::strategy::base::{ScalarSchemaStrategy, SchemaStrategy};
 
@@ -171,7 +171,8 @@ impl SchemaStrategy for NumberStrategy {
     }
 
     fn add_object(&mut self, object: crate::genson_rs::JsonValue) {
-        if object.is_f64() {
+        // An integer above `i64::MAX` is a number: no Avro `long` or Arrow `Int64` holds it
+        if object.is_f64() || object.as_i64().is_none() {
             self.number_type = "number";
         }
     }

@@ -222,6 +222,22 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   polars-genson-py 317 (3 skipped); forced_map.rs's string fallback for an integer and a
   string is now the two promoted fields, and a test of null values is added
 
+### An integer above `i64::MAX` is a number (fix/integers-above-i64-are-numbers)
+
+- #235 made an integer beyond 64 bits a `number`; one between `i64::MAX` and `u64::MAX`
+  still inferred as `integer`, whose Avro `long` and Arrow `Int64` cannot hold it, so it
+  normalised to null (`18446744073709551615` → `null`)
+- Both inference paths now take an integer that does not fit an `i64` as a number: the
+  interned rows' `number_kind`, and `NumberStrategy::add_object` on the usual path. The
+  value is kept as a float (`1.8446744073709552e+19`), as #235 keeps larger ones
+- soundness_cases.py (logs/e14): every case keeps every value on every route
+- wikidata-pq's columns still unchanged on chunk_0 and rowsw (prod_schemas.py)
+- A JSON `number` is an Avro `float` (32-bit) in the Avro schema, while polars-genson
+  decodes it as `Float64`: no value is narrowed on the Polars routes; not changed here
+- genson-core 155 tests (default features) and 240 (avro, parquet), genson-cli 181,
+  polars-genson-py 317 (3 skipped); big_integers.rs's `u64::MAX`-is-an-integer test is
+  now at the signed limits, with the value checked through normalisation
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in

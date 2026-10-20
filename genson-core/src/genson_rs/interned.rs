@@ -580,9 +580,9 @@ fn after(toks: &[Tok], i: usize) -> usize {
     }
 }
 
-/// A number's state as simd-json reads it (with `big-int-as-float`): an integer that fits
-/// an `i64` or a `u64` is one, any other number a float. simd-json rejects a negative
-/// integer below `i64::MIN`, and floats near the end of `f64`'s range.
+/// A number's state: an integer that fits an `i64` is one, any other number a float (an
+/// integer above `i64::MAX` too, as no Avro `long` or Arrow `Int64` holds it). simd-json
+/// rejects a negative integer below `i64::MIN`, and floats near the end of `f64`'s range.
 /// Whether the usual path, without a delimiter, reads `text` (one object, inside the
 /// wrapping object's braces when `wrapped`) as one document. It splits the text after each
 /// `}` that brings its count of braces, those inside strings too, back to zero, and reads
@@ -613,7 +613,7 @@ fn number_kind(text: &str) -> Result<StateId, Unsupported> {
                 .map(|_| INTEGER)
                 .map_err(|_| Unsupported);
         }
-        return Ok(if text.parse::<u64>().is_ok() {
+        return Ok(if text.parse::<i64>().is_ok() {
             INTEGER
         } else {
             FLOAT
