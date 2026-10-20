@@ -612,11 +612,19 @@ impl OnDag<'_> {
         if arrays.is_empty() || others.is_empty() {
             return None;
         }
-        let mut items: Vec<Id> = arrays
+        let mut null_items = false;
+        let mut items: Vec<Id> = Vec::new();
+        for items_of in arrays
             .iter()
             .filter_map(|&schema| self.dag.get(schema, kw::ITEMS))
             .filter(|&items| self.dag.as_object(items).is_none_or(|o| !o.is_empty()))
-            .collect();
+        {
+            if self.is_null_schema(items_of) {
+                null_items = true;
+            } else {
+                items.push(items_of);
+            }
+        }
         items.extend(others);
         let items = match items.as_slice() {
             [only] => *only,
@@ -624,6 +632,11 @@ impl OnDag<'_> {
                 Some(unified) => unified,
                 None => self.unify_anyof_schemas(&items, kw::EMPTY)?,
             },
+        };
+        let items = if null_items {
+            self.make_nullable(items)
+        } else {
+            items
         };
         let array = self.dag.string(kw::ARRAY);
         let array = self.dag.object(&[(kw::TYPE, array), (kw::ITEMS, items)]);
@@ -635,20 +648,119 @@ impl OnDag<'_> {
         Some(self.dag.object(&[(kw::ANY_OF, branches)]))
     }
 
+    /// `type_union_clashes`
+    pub(super) fn type_union_clashes(&self, schema: Id) -> bool {
+        let Some(types) = self
+            .dag
+            .get(schema, kw::TYPE)
+            .and_then(|t| self.dag.as_array(t))
+        else {
+            return false;
+        };
+        let kinds: Vec<Sym> = types.iter().filter_map(|&t| self.dag.as_sym(t)).collect();
+        self.kinds_clash(kinds)
+    }
+
+    /// `kinds_clash`
+    fn kinds_clash(&self, kinds: impl IntoIterator<Item = Sym>) -> bool {
+        let kinds: std::collections::BTreeSet<Sym> = kinds.into_iter().collect();
+        let coerced = self.config.coerce_strings
+            && kinds
+                .iter()
+                .any(|&t| t == kw::INTEGER || t == kw::NUMBER || t == kw::BOOLEAN);
+        let kinds: Vec<Sym> = kinds
+            .into_iter()
+            .filter(|&t| t != kw::NULL && !(coerced && t == kw::STRING))
+            .collect();
+        kinds.len() >= 2 && !kinds.iter().all(|&t| t == kw::INTEGER || t == kw::NUMBER)
+    }
+
+    /// `type_union_branches`
+    pub(super) fn type_union_branches(&mut self, schema: Id) -> Option<Vec<Id>> {
+        let types = self.dag.as_array(self.dag.get(schema, kw::TYPE)?)?;
+        let mut types: Vec<Sym> = types
+            .iter()
+            .map(|&t| self.dag.as_sym(t))
+            .collect::<Option<_>>()?;
+        if types.iter().filter(|&&t| t != kw::NULL).count() < 2 {
+            return None;
+        }
+        types.sort_by_key(|&t| crate::schema::type_string_rank(self.dag.name(t)));
+        let branches = types
+            .into_iter()
+            .map(|t| {
+                let keys: &[Sym] = if t == kw::OBJECT {
+                    &[kw::PROPERTIES, kw::REQUIRED, kw::ADDITIONAL_PROPERTIES]
+                } else if t == kw::ARRAY {
+                    &[kw::ITEMS]
+                } else {
+                    &[]
+                };
+                let mut fields = vec![(kw::TYPE, self.dag.string(t))];
+                fields.extend(
+                    keys.iter()
+                        .filter_map(|&key| Some((key, self.dag.get(schema, key)?))),
+                );
+                self.dag.object(&fields)
+            })
+            .collect();
+        Some(branches)
+    }
+
+    /// `is_null_schema`
+    fn is_null_schema(&self, schema: Id) -> bool {
+        self.dag
+            .get(schema, kw::TYPE)
+            .is_some_and(|t| self.is_null(t))
+    }
+
+    /// `scalar_kinds_clash`
+    fn scalar_kinds_clash(&self, schemas: &[Id]) -> bool {
+        let kinds: Vec<Sym> = schemas
+            .iter()
+            .filter_map(|&s| self.scalar_type_name(self.normalise_nullable(s)))
+            .collect();
+        self.kinds_clash(kinds)
+    }
+
     /// `unify_anyof_schemas`
     pub(super) fn unify_anyof_schemas(&mut self, schemas: &[Id], field: Sym) -> Option<Id> {
         if !self.config.wrap_scalars {
             return None;
         }
+        let split: Option<Vec<Id>> = if schemas.iter().any(|&s| self.type_union_clashes(s)) {
+            let mut split = Vec::new();
+            for &s in schemas {
+                match self
+                    .type_union_clashes(s)
+                    .then(|| self.type_union_branches(s))
+                    .flatten()
+                {
+                    Some(branches) => split.extend(branches),
+                    None => split.push(s),
+                }
+            }
+            Some(split)
+        } else {
+            None
+        };
+        let schemas = split.as_deref().unwrap_or(schemas);
         if let Some(array) = self.unify_into_array(schemas) {
             return Some(array);
         }
         let has_scalars = schemas.iter().any(|&s| self.is_scalar(s));
-        let has_objects = schemas.iter().any(|&s| self.is_record(s));
-        if !has_scalars || !has_objects {
+        let has_objects = schemas
+            .iter()
+            .any(|&s| self.is_record(s) || self.is_empty_record(s));
+        if !has_scalars || !(has_objects || self.scalar_kinds_clash(schemas)) {
             return None;
         }
-        let promoted: Vec<Id> = schemas
+        let branches: Vec<Id> = schemas
+            .iter()
+            .copied()
+            .filter(|&schema| !self.is_null_schema(schema))
+            .collect();
+        let promoted: Vec<Id> = branches
             .iter()
             .map(|&schema| {
                 if !self.is_scalar(schema) {

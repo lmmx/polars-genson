@@ -283,6 +283,17 @@ impl<'c> OnDag<'c> {
             }
         }
 
+        // --- A schema of several types that clash: rewritten as an `anyOf` of its types ---
+        if self.type_union_clashes(schema) {
+            if let Some(branches) = self.type_union_branches(schema) {
+                if let Some(unified) =
+                    self.unify_anyof_schemas(&branches, field.unwrap_or(kw::EMPTY))
+                {
+                    return self.rewrite_objects(unified, field, is_root);
+                }
+            }
+        }
+
         // --- anyOf unions: scalars among records are promoted (when `wrap_scalars` is set) ---
         if let Some(any_of) = obj
             .get(kw::ANY_OF)

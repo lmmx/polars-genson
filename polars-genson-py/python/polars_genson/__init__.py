@@ -169,8 +169,9 @@ def infer_json_schema(
         Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
-        in contexts where other rows provide objects. This avoids unification
-        failures between scalars and objects. The promoted field name defaults
+        in contexts where other rows provide objects, or scalars of another kind
+        (an integer and a string, not an integer and a number). This keeps every
+        value with its type, where the union would keep one kind. The promoted field name defaults
         to the parent key with a ``__{type}`` suffix, e.g. a string under
         ``"value"`` becomes ``{"value__string": "..."}``.
     avro : bool, default False
@@ -237,6 +238,7 @@ def infer_polars_schema(
     force_parent_field_types: dict[str, str] | None = None,
     force_scalar_promotion: set[str] | None = None,
     wrap_scalars: bool = True,
+    coerce_strings: bool = False,
     avro: bool = True,
     wrap_root: str | None = None,
     no_root_map: bool = True,
@@ -286,10 +288,15 @@ def infer_polars_schema(
         Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
-        in contexts where other rows provide objects. This avoids unification
-        failures between scalars and objects. The promoted field name defaults
+        in contexts where other rows provide objects, or scalars of another kind
+        (an integer and a string, not an integer and a number). This keeps every
+        value with its type, where the union would keep one kind. The promoted field name defaults
         to the parent key with a ``__{type}`` suffix, e.g. a string under
         ``"value"`` becomes ``{"value__string": "..."}``.
+    coerce_strings : bool, default False
+        Infer the dtypes for rows that ``normalise_json(coerce_strings=True)`` normalises:
+        strings beside numbers or booleans are to be coerced to them, so they are not given
+        fields of their own.
     avro : bool, default True
         Whether to infer and convert through an Avro schema (the default) or through
         JSON Schema. The Avro route reports the dtypes that ``normalise_json`` produces
@@ -320,6 +327,7 @@ def infer_polars_schema(
         "map_threshold": map_threshold,
         "map_max_required_keys": map_max_required_keys,
         "unify_maps": unify_maps,
+        "coerce_string": coerce_strings,
         "no_unify": list(no_unify) if no_unify else [],
         "force_scalar_promotion": (
             list(force_scalar_promotion) if force_scalar_promotion else []
@@ -416,8 +424,9 @@ def normalise_json(
         Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
-        in contexts where other rows provide objects. This avoids unification
-        failures between scalars and objects. The promoted field name defaults
+        in contexts where other rows provide objects, or scalars of another kind
+        (an integer and a string, not an integer and a number). This keeps every
+        value with its type, where the union would keep one kind. The promoted field name defaults
         to the parent key with a ``__{type}`` suffix, e.g. a string under
         ``"value"`` becomes ``{"value__string": "..."}``.
     wrap_root : str | None, default None
@@ -596,7 +605,8 @@ def infer_from_parquet(
         Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
-        in contexts where other rows provide objects.
+        in contexts where other rows provide objects, or scalars of another kind
+        (an integer and a string, not an integer and a number).
     avro : bool, default False
         Whether to output an Avro schema instead of a JSON Schema.
     wrap_root : str | None, default None
@@ -742,7 +752,8 @@ def normalise_from_parquet(
         Example: ``{"precision", "datavalue"}``.
     wrap_scalars : bool, default True
         Whether to promote scalar values into singleton objects when they appear
-        in contexts where other rows provide objects.
+        in contexts where other rows provide objects, or scalars of another kind
+        (an integer and a string, not an integer and a number).
     wrap_root : str | None, default None
         If a string, wrap each JSON row under that key before normalisation.
         If ``None``, leave rows unchanged.
@@ -874,6 +885,7 @@ class GensonNamespace:
         force_parent_field_types: dict[str, str] | None = None,
         force_scalar_promotion: set[str] | None = None,
         wrap_scalars: bool = True,
+        coerce_strings: bool = False,
         avro: bool = True,
         map_encoding: Literal["entries", "mapping", "kv"] = "mapping",
         wrap_root: bool | str | None = None,
@@ -925,10 +937,15 @@ class GensonNamespace:
             Example: ``{"precision", "datavalue"}``.
         wrap_scalars : bool, default True
             Whether to promote scalar values into singleton objects when they appear
-            in contexts where other rows provide objects. This avoids unification
-            failures between scalars and objects. The promoted field name defaults
+            in contexts where other rows provide objects, or scalars of another kind
+            (an integer and a string, not an integer and a number). This keeps every
+            value with its type, where the union would keep one kind. The promoted field name defaults
             to the parent key with a ``__{type}`` suffix, e.g. a string under
             ``"value"`` becomes ``{"value__string": "..."}``.
+        coerce_strings : bool, default False
+            Infer the dtypes for rows that ``normalise_json(coerce_strings=True)``
+            normalises: strings beside numbers or booleans are to be coerced to them, so
+            they are not given fields of their own.
         avro : bool, default True
             Whether to infer and convert through an Avro schema (the default) or through
             JSON Schema. The Avro route reports the dtypes that ``normalise_json`` produces
@@ -986,6 +1003,7 @@ class GensonNamespace:
                     list(force_scalar_promotion) if force_scalar_promotion else []
                 ),
                 wrap_scalars=wrap_scalars,
+                coerce_strings=coerce_strings,
                 avro=avro,
                 wrap_root=wrap_root_field,
                 no_root_map=no_root_map,
@@ -1072,8 +1090,9 @@ class GensonNamespace:
             Example: ``{"precision", "datavalue"}``.
         wrap_scalars : bool, default True
             Whether to promote scalar values into singleton objects when they appear
-            in contexts where other rows provide objects. This avoids unification
-            failures between scalars and objects. The promoted field name defaults
+            in contexts where other rows provide objects, or scalars of another kind
+            (an integer and a string, not an integer and a number). This keeps every
+            value with its type, where the union would keep one kind. The promoted field name defaults
             to the parent key with a ``__{type}`` suffix, e.g. a string under
             ``"value"`` becomes ``{"value__string": "..."}``.
         avro : bool, default False
@@ -1224,8 +1243,9 @@ class GensonNamespace:
             Example: ``{"precision", "datavalue"}``.
         wrap_scalars : bool, default True
             Whether to promote scalar values into singleton objects when they appear
-            in contexts where other rows provide objects. This avoids unification
-            failures between scalars and objects. The promoted field name defaults
+            in contexts where other rows provide objects, or scalars of another kind
+            (an integer and a string, not an integer and a number). This keeps every
+            value with its type, where the union would keep one kind. The promoted field name defaults
             to the parent key with a ``__{type}`` suffix, e.g. a string under
             ``"value"`` becomes ``{"value__string": "..."}``.
         wrap_root : str | bool | None, default None
@@ -1333,6 +1353,7 @@ class GensonNamespace:
                         list(force_scalar_promotion) if force_scalar_promotion else []
                     ),
                     wrap_scalars=wrap_scalars,
+                    coerce_strings=coerce_strings,
                     avro=True,
                     map_encoding=map_encoding,
                     wrap_root=wrap_root_field,

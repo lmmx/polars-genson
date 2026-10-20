@@ -33,9 +33,7 @@ WIKIDATA = {
 
 def via_text(df: pl.DataFrame, map_encoding: str, unnest: bool, **kw) -> pl.DataFrame:
     """The JSON text route: the schema inferred, then normalised text decoded against it."""
-    inference = {
-        k: v for k, v in kw.items() if k not in ("coerce_strings", "empty_as_null")
-    }
+    inference = {k: v for k, v in kw.items() if k != "empty_as_null"}
     schema = df.genson.infer_polars_schema(
         "j", avro=True, map_encoding=map_encoding, **inference
     )

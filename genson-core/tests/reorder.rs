@@ -17,27 +17,40 @@ fn test_union_reordering_gives_stable_schema() {
         json!({"field": null}).to_string(),
     ];
 
-    let config = SchemaInferenceConfig::default();
+    // By default a string and an integer each keep a field of their own; without
+    // `wrap_scalars` the field stays their union
+    for wrap_scalars in [true, false] {
+        let config = SchemaInferenceConfig {
+            wrap_scalars,
+            ..SchemaInferenceConfig::default()
+        };
 
-    let schema_a = infer_json_schema_from_strings(&jsons_a, config.clone())
-        .expect("Schema A should succeed")
-        .schema;
+        let schema_a = infer_json_schema_from_strings(&jsons_a, config.clone())
+            .expect("Schema A should succeed")
+            .schema;
 
-    let schema_b = infer_json_schema_from_strings(&jsons_b, config)
-        .expect("Schema B should succeed")
-        .schema;
+        let schema_b = infer_json_schema_from_strings(&jsons_b, config)
+            .expect("Schema B should succeed")
+            .schema;
 
-    // They should be equal once unions are normalised
-    assert_eq!(
-        schema_a, schema_b,
-        "Schemas should be stable regardless of input order"
-    );
+        // They should be equal once unions are normalised
+        assert_eq!(
+            schema_a, schema_b,
+            "Schemas should be stable regardless of input order"
+        );
 
-    // And the union type should be in canonical order
-    let union = &schema_a["properties"]["field"]["type"];
-    assert_eq!(
-        union,
-        &json!(["null", "integer", "string"]),
-        "Union should be rewritten into stable precedence order"
-    );
+        let field = &schema_a["properties"]["field"];
+        if wrap_scalars {
+            // The promoted fields in canonical order
+            let promoted: Vec<&String> = field["properties"].as_object().unwrap().keys().collect();
+            assert_eq!(promoted, ["field__integer", "field__string"]);
+        } else {
+            // And the union type should be in canonical order
+            assert_eq!(
+                field["type"],
+                json!(["null", "integer", "string"]),
+                "Union should be rewritten into stable precedence order"
+            );
+        }
+    }
 }

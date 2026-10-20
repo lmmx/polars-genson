@@ -56,6 +56,7 @@ pub fn normalise_json_typed(
         force_parent_field_types: kwargs.force_parent_field_types.clone(),
         force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
         wrap_scalars: kwargs.wrap_scalars,
+        coerce_strings: kwargs.coerce_string,
         avro: true,
         wrap_root: kwargs.wrap_root.clone(),
         no_root_map: kwargs.no_root_map,

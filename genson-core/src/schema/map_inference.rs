@@ -275,6 +275,20 @@ pub(crate) fn rewrite_objects(
         }
     }
 
+    // --- A schema of several types that clash: rewritten as an `anyOf` of its types ---
+    if type_union_clashes(obj, config) {
+        let unified = type_union_branches(obj).and_then(|branches| {
+            let branches: Vec<&Value> = branches.iter().collect();
+            unify_anyof_schemas(&branches, field_name.unwrap_or(""), config)
+        });
+        if let Some(unified) = unified {
+            debug!(config, "Type union of clashing types unified");
+            *schema = unified;
+            rewrite_objects(schema, field_name, config, is_root);
+            return;
+        }
+    }
+
     // --- anyOf unions: scalars among records are promoted (when `wrap_scalars` is set) ---
     if let Some(Value::Array(any_of)) = obj.get("anyOf") {
         debug!(

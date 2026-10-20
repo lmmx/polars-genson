@@ -30,9 +30,15 @@ pub struct SchemaInferenceConfig {
     /// schema stability for fields known to have heterogeneous types across schematised files.
     pub force_scalar_promotion: std::collections::HashSet<String>,
     /// Whether to promote scalar values to wrapped objects when they collide with record values
-    /// during unification. If `true`, scalars are promoted under a synthetic property name derived from
-    /// the parent field and the scalar type (e.g. "foo__string"). If `false`, don't unify on conflicts.
+    /// during unification, or with scalars of another kind (an integer and a string, not an
+    /// integer and a number). If `true`, scalars are promoted under a synthetic property name
+    /// derived from the parent field and the scalar type (e.g. "foo__string"), so every value
+    /// keeps its type. If `false`, don't unify on conflicts.
     pub wrap_scalars: bool,
+    /// Whether the rows' strings are to be coerced to the numbers or booleans beside them
+    /// when normalised (`NormaliseConfig::coerce_string`): a string then does not clash with
+    /// them, and is not given a field of its own (`wrap_scalars`).
+    pub coerce_strings: bool,
     /// Wrap the inferred top-level schema under a single required field with this name.
     /// Example: wrap_root = Some("labels") turns `{...}` into
     /// `{"type":"object","properties":{"labels":{...}},"required":["labels"]}`.
@@ -139,6 +145,7 @@ impl Default for SchemaInferenceConfig {
             force_parent_field_types: std::collections::HashMap::new(),
             force_scalar_promotion: std::collections::HashSet::new(),
             wrap_scalars: true,
+            coerce_strings: false,
             wrap_root: None,
             no_root_map: true,
             max_builders: None,

@@ -132,7 +132,7 @@ pub fn type_rank(val: &Value) -> usize {
 }
 
 /// Internal helper: rank by type string
-fn type_string_rank(s: &str) -> usize {
+pub(crate) fn type_string_rank(s: &str) -> usize {
     match s {
         // Null always first
         "null" => 0,
