@@ -418,6 +418,62 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   comparison script compares `to_dicts()` and NDJSON instead. The tests' small frames
   are unaffected.
 
+### Extraction validates each removed text once (perf/extract-validate-once)
+
+- With sitelinks fixed, rowsw's claims spend most of genson's time in
+  `extract_invariants` (the label maps moved out of each row into a lookup, before
+  inference): 0.79 s of 0.93 s on one thread, 0.42 s of 0.49 s on four, at 16.0
+  instructions per byte over 322.5 MB. Inference takes 0.10 s and the typed decode 0.04 s,
+  since they read the slim rows
+- The removed fields are 188.2 MB of the 322.5 MB (58%), and 184.8 MB of that (98%) is
+  text identical to what an earlier occurrence of the same field and key held
+  (`extract/repeats.py`): the same `property-labels` for P31 in every row. The scan
+  validated every occurrence in full, as `serde_json` would, so that a row it accepts is
+  one the `Value` path accepts too
+- Now a removed value is validated once for each text. Where the object has its
+  determinant before the field (all 9,213 such objects in rowsw's first 300 rows do) and
+  that field and key already hold a validated text, from an earlier row of the chunk (the
+  lookup's held text) or earlier in this row, and the row has those bytes there, the scan
+  steps over them with one comparison. Validating the same bytes would end at the same
+  place with the same result: the text opens with `{`, `[` or `"` (so its end does not
+  depend on what follows; a number such as `12` beside `123` does), and its nesting,
+  recorded when it was validated, is checked against the 127-level limit at this depth
+  (a text validated shallow can be too deep elsewhere: the row is then validated, and the
+  `Value` path keeps it whole). Anything else is validated as before
+- The line-break check before the scan (any `\n` or `\r` sends a row to the `Value` path)
+  took two passes of `slice::contains` (core's generic search, 2.25 instructions per
+  byte); it is one `memchr::memchr2` pass now (memchr is already a dependency)
+- Not taken: skipping the scan where a chunk has no field to extract (release-format
+  claims, chunk_0). A row the scan gives up on is re-serialised by `serde_json` (a
+  repeated key, an escaped key), so the slim rows would differ, and no byte search finds
+  a repeated key. On chunk_0 extraction is 0.025 s
+- prof3 claims (logs/e22, `extract/`), release builds, 6 runs each interleaved ABBA:
+
+  | | parent | this | change |
+  |---|---|---|---|
+  | rowsw extraction, wall | 0.420 s | 0.222 s | −47% |
+  | rowsw extraction, CPU | 0.961 s | 0.407 s | −58% |
+  | rowsw claims (extract, infer, typed), wall | 0.486 s | 0.277 s | −43% |
+  | rowsw extraction instructions (one thread) | 5,154M | 1,031M | −80.0% |
+  | rowsw extraction allocations (one thread) | 589,822 | 597,207 | +1.3% |
+  | rowsw extraction bytes allocated | 106.0 MB | 117.0 MB | +10% |
+  | rowsw peak RSS (whole process) | 581 MB | 576 MB | within noise |
+  | chunk_0 extraction, wall | 0.025 s | 0.024 s | unchanged |
+
+  The line-break check accounts for 650M of the 4,122M instructions saved, the rest is
+  validation not repeated. The added allocations are each row's map of the values it has
+  removed (for repeats within the row)
+- The output is the parent's exactly: the slim rows' text and the lookup hash the same on
+  rowsw and chunk_0 (`extract/ex_check.rs`), and both equal the `Value` path's (2,185 of
+  2,185 rows, the lookup equal)
+- Tests: the stepping over a known value (a contrived "validated" text that is not valid
+  JSON, so that stepping shows as the row accepted; not when the determinant comes after,
+  for another key or field, or other text; an escaped determinant read as the same key),
+  the depth limit for a value known from a shallower place (in another row and in the
+  same row), and a known number never stepped over. Mutants caught: no depth check, no
+  known values, numbers stepped over, nesting not recorded. test_scan_matches_the_value_path
+  (3,000 random sets against the `Value` path) and the rest pass unchanged
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in

@@ -351,3 +351,72 @@ fn test_scan_cuts_removed_fields_wherever_they_are() {
     let scanned = scan::scan(r#"{"z":1,"id":"Q1","labels":{}}"#, &spec_one).unwrap();
     assert_eq!(scanned.slim, r#"{"z":1}"#);
 }
+
+/// A value a `known` text gives (as validated) is stepped over where the object has its
+/// determinant before it and the row has that text there, and validated otherwise: here a
+/// text that is not valid at all, so that stepping over it shows as the row accepted.
+#[test]
+fn test_scan_steps_over_known_values_after_their_determinant() {
+    let spec = spec();
+    let invalid = r#"{"en":"\ud800"}"#;
+    let known = |field: usize, key: &str| (field == 0 && key == "Q1").then_some((invalid, 1));
+    let row = format!(r#"{{"id":"Q1","labels":{invalid}}}"#);
+    assert!(scan::scan(&row, &spec).is_err());
+    let scanned = scan::scan_known(&row, &spec, &known).unwrap();
+    assert_eq!(scanned.slim, r#"{"id":"Q1"}"#);
+    assert_eq!(scanned.removed[0].nesting, 1);
+    for row in [
+        // The determinant after the value, another key, another field, other text
+        format!(r#"{{"labels":{invalid},"id":"Q1"}}"#),
+        format!(r#"{{"id":"Q2","labels":{invalid}}}"#),
+        format!(r#"{{"property":"Q1","property-labels":{invalid}}}"#),
+        r#"{"id":"Q1","labels":{"en":"\ud800" }}"#.to_string(),
+        // An escaped determinant is read as the same key
+        format!(r#"{{"id":"\u0051\u0031","labels":{invalid}}}"#),
+    ] {
+        let stepped = scan::scan_known(&row, &spec, &known).is_ok();
+        assert_eq!(stepped, row.contains(r#""\u0051\u0031""#), "{row}");
+    }
+}
+
+/// A value seen earlier (in this row or another) is stepped over only where its nesting
+/// fits under the depth limit at this depth: deeper, it is validated, and the row then
+/// read as a `Value` (which `serde_json` rejects, so it is kept as it is).
+#[test]
+fn test_known_values_too_deep_here_are_validated() {
+    let spec = spec();
+    let labels = "[".repeat(20) + &"]".repeat(20);
+    let wrap = |depth: usize, inner: &str| "[".repeat(depth) + inner + &"]".repeat(depth);
+    let object = format!(r#"{{"id":"Q1","labels":{labels}}}"#);
+    for (depth, fits) in [(100, true), (106, true), (107, false), (120, false)] {
+        // The object at `depth` lists: 1 + depth + 20 levels for the labels' innermost
+        let deep = wrap(depth, &object);
+        let in_one_row = format!(r#"[{object},{deep}]"#);
+        let rows = vec![Some(object.clone()), Some(deep.clone()), Some(in_one_row)];
+        let fast = extract_invariants_from(&rows, &spec).unwrap();
+        let slow = extract_invariants_by_value(&rows, &spec).unwrap();
+        assert_eq!(fast.lookup, slow.lookup);
+        for (f, s) in fast.rows.iter().zip(&slow.rows) {
+            let parsed = |t: &Option<String>| serde_json::from_str::<Value>(t.as_deref().unwrap()).ok();
+            assert_eq!(parsed(f), parsed(s), "depth {depth}");
+        }
+        assert_eq!(fast.rows[1].as_deref() == Some(deep.as_str()), !fits, "depth {depth}");
+    }
+}
+
+/// A number is never stepped over (its end depends on what follows it): a longer one with
+/// the same start is a different value.
+#[test]
+fn test_known_numbers_are_validated() {
+    let spec = spec();
+    let rows = vec![
+        Some(r#"{"id":"Q1","labels":12}"#.to_string()),
+        Some(r#"{"id":"Q1","labels":123}"#.to_string()),
+    ];
+    let fast = extract_invariants_from(&rows, &spec);
+    let slow = extract_invariants_by_value(&rows, &spec);
+    assert!(fast.is_err());
+    assert_eq!(fast.err(), slow.err());
+    let known = |_: usize, _: &str| Some(("12", 0));
+    assert!(scan::scan_known(r#"{"id":"Q1","labels":123}"#, &spec, &known).is_ok());
+}

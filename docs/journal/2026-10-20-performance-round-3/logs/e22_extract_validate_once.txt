@@ -1,0 +1,34 @@
+# prof3 claims (full: extract, infer, typed), wikidata-pq's claims options, parent B (the Rust of
+# perf/decode-dtype-typed, as perf/forced-maps-interned's) against X (this), release builds, all
+# threads (4), 6 runs each interleaved ABBA, one process per run; median [min-max]
+prod/rowsw total wall: 0.486 [0.437-0.542] -> 0.277 [0.157-0.338]
+prod/rowsw total CPU: 1.090 [0.898-1.272] -> 0.522 [0.350-0.699]
+prod/rowsw extract wall: 0.420 [0.375-0.476] -> 0.222 [0.114-0.281]
+prod/rowsw extract CPU: 0.961 [0.776-1.145] -> 0.407 [0.254-0.575]
+prod/rowsw maxrss MB: 580.732 [474.781-640.410] -> 575.656 [509.242-632.090]
+prod/rowsw inferred schema hash ['a5d5f1080fb0acb2'] -> ['a5d5f1080fb0acb2']; typed rows 2185 -> 2185
+release/chunk_0 total wall: 0.180 [0.145-0.212] -> 0.152 [0.146-0.192]
+release/chunk_0 total CPU: 0.399 [0.331-0.467] -> 0.348 [0.329-0.436]
+release/chunk_0 extract wall: 0.025 [0.022-0.039] -> 0.024 [0.021-0.029]
+release/chunk_0 extract CPU: 0.063 [0.059-0.098] -> 0.064 [0.060-0.070]
+release/chunk_0 maxrss MB: 166.297 [162.594-171.832] -> 168.297 [164.602-176.844]
+release/chunk_0 inferred schema hash ['ba96f0e6f3806ed4'] -> ['ba96f0e6f3806ed4']; typed rows 60 -> 60
+
+# callgrind, one thread, the extract step (prof3::step_extract), rowsw claims (322.5 MB)
+5,153,865,909 -> 1,031,423,357 instructions (-80.0%; 16.0 -> 3.2 per byte)
+  the line-break check (two slice::contains passes -> one memchr2): 725.9M -> 75.7M
+
+# alloc-stats build, one thread, the extract step, rowsw claims
+allocations 589,822 -> 597,207 (+1.3%), bytes 106.0 MB -> 117.0 MB, peak live 468.78 -> 468.80 MB
+
+# ex_check.rs: exact output (slim rows' text and lookup) hashed, and against the Value path
+parent rowsw: rows 2185 lookup 1932 hash 9afb978892c8280f | reference: lookup equal true rows equal 2185/2185
+child  rowsw: rows 2185 lookup 1932 hash 9afb978892c8280f | reference: lookup equal true rows equal 2185/2185
+parent chunk_0: rows 60 lookup 0 hash a62ef67ba7999033 | reference: lookup equal true rows equal 60/60
+child  chunk_0: rows 60 lookup 0 hash a62ef67ba7999033 | reference: lookup equal true rows equal 60/60
+
+# repeats.py: how much of the claims text the removed fields are, and how much of that repeats
+rowsw: rows 2185, text 322.5 MB, removed 188.2 MB (58%), repeats 184.8 MB (98% of removed), distinct entries 1932
+chunk_0: rows 60, text 23.8 MB, removed 0.0 MB (0%), distinct entries 0
+# member order (300 rows of rowsw): the determinant before the field in every object holding both
+property-labels 6610, labels 2496, unit-labels 107 (key first in all)

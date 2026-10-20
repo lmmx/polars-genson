@@ -36,11 +36,13 @@ type Chunk = (Vec<Option<String>>, Lookup);
 struct Held {
     text: Option<String>,
     value: Option<Value>,
+    /// How deeply the text nests, where it was scanned.
+    nesting: usize,
 }
 
 impl Held {
     fn value(&mut self) -> &Value {
-        let Held { text, value } = self;
+        let Held { text, value, .. } = self;
         value.get_or_insert_with(|| {
             let text = text
                 .as_deref()
@@ -108,6 +110,7 @@ impl Lookup {
         let held = Held {
             text: None,
             value: Some(entry.value),
+            nesting: 0,
         };
         self.insert_held(&entry.field, &entry.key, held, determinant)
     }
@@ -119,6 +122,7 @@ impl Lookup {
         field: &str,
         key: &str,
         text: &str,
+        nesting: usize,
         determinant: &str,
     ) -> Result<(), String> {
         if let Some(i) = self.position(field, key) {
@@ -129,6 +133,7 @@ impl Lookup {
         let held = Held {
             text: Some(text.to_string()),
             value: None,
+            nesting,
         };
         self.insert_held(field, key, held, determinant)
     }
@@ -231,11 +236,18 @@ fn extract<S: AsRef<str> + Sync>(
                     let s = s.as_ref();
                     // One pass over the row's text when it can be read exactly so, else
                     // the row as a `Value`
-                    if let Some(Ok(scanned)) = scan_rows.then(|| scan::scan(s, spec)) {
+                    // A value this chunk's lookup holds as scanned text is validated
+                    let known = |field: usize, key: &str| {
+                        let held = &lookup.held[lookup.position(&spec[field].0, key)?];
+                        Some((held.text.as_deref()?, held.nesting))
+                    };
+                    if let Some(Ok(scanned)) = scan_rows.then(|| scan::scan_known(s, spec, &known))
+                    {
                         for removed in &scanned.removed {
                             let (field, key_field) = &spec[removed.field];
                             let text = &s[removed.value.clone()];
-                            lookup.insert_text(field, &removed.key, text, key_field)?;
+                            let nesting = removed.nesting;
+                            lookup.insert_text(field, &removed.key, text, nesting, key_field)?;
                         }
                         return Ok(Some(scanned.slim));
                     }
