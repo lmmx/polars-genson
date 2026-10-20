@@ -186,3 +186,100 @@ fn test_forced_map_values_nullable_beside_two_kinds_infer() {
         assert!(!schema.to_string().contains(r#"["null",["#), "{schema}");
     }
 }
+
+/// A field forced to be a map that holds a list in its rows: the list is a value of the
+/// map (normalisation wraps it under a promoted key), its items kept, and the map itself
+/// holds no `items`. Its values were `{"type": "array"}`, so every item was written null.
+#[test]
+fn test_forced_map_over_a_list_keeps_its_items() {
+    let values = forced_map_values(&[r#"{"m": [-7]}"#]);
+    assert_eq!(
+        values,
+        json!({"type": "array", "items": {"type": "integer"}})
+    );
+    let values = forced_map_values(&[r#"{"m": [[""]]}"#]);
+    let strings = json!({"type": "array", "items": {"type": "string"}});
+    assert_eq!(values, json!({"type": "array", "items": strings}));
+    let config = SchemaInferenceConfig {
+        force_field_types: [("m".to_string(), "map".to_string())].into(),
+        ..SchemaInferenceConfig::default()
+    };
+    let schema = infer_json_schema_from_strings(&[r#"{"m": [{"d": 1}]}"#], config)
+        .unwrap()
+        .schema;
+    let m = &schema["properties"]["m"];
+    assert!(m.get("items").is_none(), "{m}");
+    assert_eq!(
+        m["additionalProperties"]["items"]["properties"]["d"]["type"],
+        "integer"
+    );
+}
+
+/// The schema of a field with a forced map in a record in one row and in a list's
+/// records in another: one list, its records' maps unified as one forced map's values
+/// are. The two maps were left apart where their values differed, so the field stayed a
+/// union, and normalisation wrote the list's maps as the record's (here null).
+#[test]
+fn test_forced_maps_in_a_record_and_a_list_unify() {
+    let config = SchemaInferenceConfig {
+        force_field_types: [("m".to_string(), "map".to_string())].into(),
+        ..SchemaInferenceConfig::default()
+    };
+    let rows = [r#"{"d": {"m": 1}}"#, r#"{"d": [{"m": "s"}]}"#];
+    let schema = infer_json_schema_from_strings(&rows, config)
+        .unwrap()
+        .schema;
+    let d = &schema["properties"]["d"];
+    assert!(d.get("anyOf").is_none(), "{d}");
+    assert_eq!(d["type"], "array", "{d}");
+    let values = &d["items"]["properties"]["m"]["additionalProperties"];
+    let mut fields: Vec<&String> = values["properties"].as_object().unwrap().keys().collect();
+    fields.sort();
+    assert_eq!(fields, ["m__integer", "m__string"], "{values}");
+}
+
+/// A forced map's values that are lists of kinds that clash within them unify once
+/// rewritten (each kind a field), rather than falling back to text.
+#[test]
+fn test_forced_map_values_lists_of_clashing_kinds_unify() {
+    let values = forced_map_values(&[r#"{"m": {"a": ["s"], "b": [-7, "s"]}}"#]);
+    assert_eq!(values["type"], "array", "{values}");
+    assert_eq!(values["items"]["type"], "object", "{values}");
+}
+
+/// The schema with `a` and `c` forced to be maps.
+fn forced_a_and_c(rows: &[&str]) -> Value {
+    let config = SchemaInferenceConfig {
+        force_field_types: [("a", "map"), ("c", "map")]
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .into(),
+        ..SchemaInferenceConfig::default()
+    };
+    infer_json_schema_from_strings(rows, config).unwrap().schema
+}
+
+/// A field forced within a forced map's values is forced before the values are unified:
+/// `[]` and `{"b": 1}` are the values of two maps (a list's, and an integer), not a list of
+/// records whose `b` is lost.
+#[test]
+fn test_fields_forced_within_a_forced_maps_values_first() {
+    let schema = forced_a_and_c(&[r#"{"a": {"b": {"c": []}, "d": {"c": {"b": 1}}}}"#]);
+    let c = &schema["properties"]["a"]["additionalProperties"]["properties"]["c"];
+    let values = &c["additionalProperties"];
+    assert_eq!(
+        values,
+        &json!({"type": "array", "items": {"type": "integer"}}),
+        "{c}"
+    );
+}
+
+/// A forced map's keys are not fields, though they share a forced field's name: `a` in
+/// `{"a": {"a": 0}}` is a key, its value an integer beside the other row's.
+#[test]
+fn test_a_forced_maps_keys_are_not_forced() {
+    let schema = forced_a_and_c(&[r#"{"a": -7}"#, r#"{"a": {"a": 0}}"#]);
+    assert_eq!(
+        schema["properties"]["a"]["additionalProperties"],
+        json!({"type": "integer"})
+    );
+}

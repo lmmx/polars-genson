@@ -37,7 +37,9 @@ pub struct SchemaInferenceConfig {
     pub wrap_scalars: bool,
     /// Whether the rows' strings are to be coerced to the numbers or booleans beside them
     /// when normalised (`NormaliseConfig::coerce_string`): a string then does not clash with
-    /// them, and is not given a field of its own (`wrap_scalars`).
+    /// them, and is not given a field of its own (`wrap_scalars`). A configuration
+    /// serialised before this field was added reads it as `false`.
+    #[serde(default)]
     pub coerce_strings: bool,
     /// Wrap the inferred top-level schema under a single required field with this name.
     /// Example: wrap_root = Some("labels") turns `{...}` into

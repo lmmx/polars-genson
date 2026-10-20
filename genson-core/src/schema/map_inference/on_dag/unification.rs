@@ -363,6 +363,28 @@ impl OnDag<'_> {
         })
     }
 
+    /// `unify_forced_maps`
+    fn unify_forced_maps(&mut self, a: Id, b: Id, field: Sym) -> Option<Id> {
+        let config = self.config;
+        let forced = config.force_field_types.get(self.dag.name(field));
+        if !forced.is_some_and(|t| t == "map") || !(self.is_map(a) && self.is_map(b)) {
+            return None;
+        }
+        let values = [
+            self.extract(a, kw::ADDITIONAL_PROPERTIES)?,
+            self.extract(b, kw::ADDITIONAL_PROPERTIES)?,
+        ];
+        let values = self.map_value_schema(&values, false, Some(field));
+        let object = self.dag.string(kw::OBJECT);
+        let map = self
+            .dag
+            .object(&[(kw::TYPE, object), (kw::ADDITIONAL_PROPERTIES, values)]);
+        Some(match self.nullable_type(a).or(self.nullable_type(b)) {
+            Some(_) => self.make_nullable(map),
+            None => map,
+        })
+    }
+
     /// `unify_field_pair`
     fn unify_field_pair(
         &mut self,
@@ -376,6 +398,9 @@ impl OnDag<'_> {
             return Some(compatible);
         }
         if let Some(map) = self.unify_maps_beside_null_values(unified, new, field_path) {
+            return Some(map);
+        }
+        if let Some(map) = self.unify_forced_maps(unified, new, field) {
             return Some(map);
         }
         let record_like = |on: &Self, s: Id| on.is_record(s) || on.is_empty_record(s);

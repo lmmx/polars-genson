@@ -1,0 +1,29 @@
+# fuzz_lossless.py <sets> <seed> [palette], every option set (default, maps, forced), decode False and True;
+# the round-3 tip (perf/extract-validate-once) against fix/forced-map-over-list
+seed 1: tip 600 sets: 59 failing {'LOST': 59} | fix 600 sets: 0 failing {}
+seed 2 (ints): tip 800 sets: 86 failing {'LOST': 86} | fix 800 sets: 1 failing {'LOST': 1}
+seed 3: tip 2000 sets: 179 failing {'LOST': 179} | fix 2000 sets: 0 failing {}
+seed 4: tip 1500 sets: 125 failing {'LOST': 125} | fix 1500 sets: 1 failing {'LOST': 1}
+seed 5: tip 1500 sets: 140 failing {'LOST': 140} | fix 1500 sets: 0 failing {}
+
+# the fix's remaining failures (both written as JSON text, no value made null)
+   1  LOST       forced  decode=False [{"c": {"c": {"c": [null]}}}, {"c": [{"c": [0]}]}]
+   1  LOST       maps    decode=False [{"b": {"b": ["s"]}}, {"b": [{"b": ["", 2.5], "d": {}}]}]
+1500 sets: 1 failing {'LOST': 1}
+800 sets: 1 failing {'LOST': 1}
+
+# soundness_cases.py on the fix: 0 cases lose a value
+
+# the tip's seed-4 failures, before (logs/e15 has the same 125)
+1500 sets: 125 failing {'LOST': 125}
+   3  LOST       forced  decode=False [{"c": [-7]}]
+   3  LOST       forced  decode=False [{"a": [[""]]}]
+   3  LOST       forced  decode=False [{"a": [-7]}]
+   3  LOST       forced  decode=False [{"a": ["42"]}]
+   2  LOST       forced  decode=True  [{"c": ["s"]}]
+   2  LOST       forced  decode=True  [{"c": [-7]}]
+   2  LOST       forced  decode=False [{"c": [2.5]}]
+   2  LOST       forced  decode=True  [{"d": {"a": [2.5]}}]
+   2  LOST       forced  decode=True  [{"b": {"a": [-7]}}]
+   2  LOST       forced  decode=True  [{"b": [{"c": ["s"]}]}]
+   1  LOST       forced  decode=False [{"b": [{"c": ["42"]}]}]

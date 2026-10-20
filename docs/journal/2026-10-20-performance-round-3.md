@@ -474,6 +474,89 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   known values, numbers stepped over, nesting not recorded. test_scan_matches_the_value_path
   (3,000 random sets against the `Value` path) and the rest pass unchanged
 
+### A forced map over a list, and forced maps that meet (fix/forced-map-over-list)
+
+- Of fuzz_lossless.py's 125 failing sets at seed 4 after fix/forced-map-values-keep-kinds,
+  110 were under forced maps, nearly all one shape: a field forced to a map holding a list
+  (`{"a": [-7]}` with `a` forced), at the top or at any depth. Its values were written as
+  `{"type": "array"}` and its `items` left on the map: `forced_map_value_schema` (on both
+  rewrites) took the field's `array` type for a scalar, `{"type": "array"}`, without its
+  items, and `convert_to_map` and the final rewrite removed `properties` and `required`
+  but not `items`. Avro then made the values an "anything" union, and every item was
+  written null (`{"a": {"a__unknown": [null]}}`). A list's values now keep its items
+  (`{"type": "array", "items": {"type": "integer"}}`), and the map holds no `items`; the
+  list is wrapped under `a__unknown` as a list beside a map already was
+- With that fixed, three more causes, each a few of the remaining sets:
+  - A forced map in a record in one row and in a list's records in another
+    (`{"d": {"a": 1}}`, `{"d": [{"a": "s"}]}`): fix/record-field-list-beside-others makes
+    the field one list where its record unifies with the list's, but a record field's two
+    maps unify only where alike (`unify_maps_beside_null_values`), and `map<int>` beside
+    `map<string>` is not. The field stayed a union, and normalisation wrote the list's maps
+    as the record's: null. Two maps of a field forced to be a map are now unified as one
+    forced map's values are (`unify_forced_maps`: `map_value_schema` of both values,
+    nullable where either map is). A field with 50 schemas or more is unified by halves,
+    whose map unification keeps every value too (tested with 56 distinct maps, one of
+    strings beside records)
+  - A forced map's values that are lists of kinds that clash (`["s"]` beside
+    `[-7, "s"]`): `map_value_schema` unifies them before they are rewritten, while the
+    list's items are still the type list `["integer", "string"]`, which only the rewrite
+    makes a field each, so it fell back to text. Values that do not unify as they stand
+    are now unified once rewritten (the rewrite they get after anyway), before text
+  - A field forced within a forced map's values (`{"a": {"b": {"c": []}, "d": {"c": {"b":
+    1}}}}`, `a` and `c` forced): `a` was made a map, and its values unified, before the
+    `c` within them were forced, so `[]` and `{"b": 1}` unified as a list of records and
+    `1` was lost. The fields within a map's values are now forced first (in its
+    properties' schemas, a list's items and a union's branches, on both rewrites and in
+    each row's forcing), but not its properties themselves: they are the map's keys, not
+    fields. The final rewrite's forced-map arm, which a list's values now reach before
+    `convert_to_map` (in the values rewritten for unifying), types the map an object, as
+    `convert_to_map` does: it removed the list's `items` but left `"type": "array"`, which
+    the interned path's builders could not read back (an error where the tip wrote
+    text). Forcing every field bottom up instead (a first attempt) forced keys that share
+    the field's name (`{"a": {"a": 0}}`), and 792 sets of 6,400 lost a value
+- fuzz_lossless.py, every option set and both decodes (logs/e24), the tip against this:
+
+  | seed (sets) | tip | this |
+  |---|---|---|
+  | 1 (600) | 59 | 0 |
+  | 2, integers (800) | 86 | 1 |
+  | 3 (2,000) | 179 | 0 |
+  | 4 (1,500) | 125 | 1 |
+  | 5 (1,500) | 140 | 0 |
+
+  The two left are written as JSON text, no value made null: a forced map's values that
+  are a list of nulls in one row and a list of records in another
+  (`{"c": {"x": [null]}}`, `{"c": [{"x": [0]}]}`), and, without forcing, inferred maps
+  (`map_threshold: 0`, `unify_maps`) in a record beside a list of records whose maps
+  differ. The tip writes both as text too
+- soundness_cases.py: no case loses a value. wikidata-pq's five columns keep the same
+  Avro schemas and normalised text on chunk_0 and rowsw as on 1.0.4 (prod_schemas.py)
+- Tests: forced_map.rs (a list's items in the values and none on the map, nested lists, a
+  list of records; a record's and a list's forced maps unified into one list; lists of
+  clashing kinds unified); polars-genson-py's forced_map_soundness_test.py checks that
+  every scalar survives both decodes on 14 shapes from the fuzz (12 fail on the tip), and
+  holds the two left as strict xfails
+- test_interned_forced_maps_match_the_builders now also writes the Avro schema from each
+  path's schema and compares the text: of its 442 compared sets, 7 have keywords in
+  another order, and all 442 give the same Avro text. polars-jsonschema-bridge reads a
+  schema's keywords by name (`get("type")`, `get("properties")`) and iterates only
+  properties, whose order is the same, so the Polars types do not see keyword order
+  either
+- Mutants (each guard removed in turn, against genson-core's library, forced_map,
+  forced_map_soundness and integration tests): caught for the list's items kept, the
+  unification of forced maps, the rewritten values, and the map values forced first (each
+  rewrite and each row's forcing). The four removals of `items` (in `convert_to_map` and
+  in the final rewrite, on both rewrites) survive one at a time: each backs up the other,
+  as the removals of `properties` and `required` there already did. A guard that unified a
+  forced field's 50 or more schemas pairwise was taken out: the 56-map case reached the
+  halves and kept every value without it
+- Cost, scorecard workload, instructions on one thread against the parent: `usual` (a
+  forced map) 567.6M to 569.1M (+0.25%), `claims` 2,523.0M to 2,525.1M (+0.08%), `labels`
+  and `events` unchanged (±0.02%); the same schema hashes
+- `coerce_strings` (fix/mixed-scalar-kinds-promote) now reads as `false` from a
+  configuration serialised without it (`#[serde(default)]`): `SchemaInferenceConfig`
+  derives `Deserialize` with no defaults, so a 1.0.3 configuration failed to read
+
 ### The round-3 stack end to end (logs/e23, tip/)
 
 - wikidata-pq's per-column calls (`profile/e2e_one.py`) on the published 1.0.4 and on

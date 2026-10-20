@@ -54,7 +54,8 @@ fn contains_anyof(value: &Value) -> bool {
 /// which holds every value as text so none is lost. An object empty in every row has no
 /// values to type: null, as for an always-empty array's items. An object that is
 /// something else in some rows or all (a union, or scalar types) takes its records' values
-/// with its other branches or types, which normalisation wraps into the map as values.
+/// with its other branches or types, which normalisation wraps into the map as values: a
+/// list with its items.
 pub(crate) fn forced_map_value_schema(
     obj: &serde_json::Map<String, Value>,
     field_name: Option<&str>,
@@ -93,7 +94,10 @@ pub(crate) fn forced_map_value_schema(
     let scalars: Vec<Value> = types
         .into_iter()
         .filter(|t| *t != "null" && *t != "object")
-        .map(|t| serde_json::json!({ "type": t }))
+        .map(|t| match obj.get("items").filter(|_| t == "array") {
+            Some(items) => serde_json::json!({ "type": t, "items": items }),
+            None => serde_json::json!({ "type": t }),
+        })
         .collect();
     let values: Vec<&Value> = props
         .into_iter()
@@ -130,9 +134,24 @@ fn map_value_schema(
         return string();
     } else {
         let field = field_name.unwrap_or("");
-        match check_unifiable_schemas(&values, field, config)
-            .or_else(|| unify_anyof_schemas(&values, field, config))
-        {
+        let unify = |values: &[&Value]| {
+            check_unifiable_schemas(values, field, config)
+                .or_else(|| unify_anyof_schemas(values, field, config))
+        };
+        // Values whose types clash within them (a list of integers and strings) unify only
+        // once rewritten, as the map's values are rewritten after
+        let rewritten = || {
+            let rewritten: Vec<Value> = values
+                .iter()
+                .map(|&v| {
+                    let mut v = v.clone();
+                    rewrite_objects(&mut v, None, config, false);
+                    v
+                })
+                .collect();
+            unify(&rewritten.iter().collect::<Vec<_>>())
+        };
+        match unify(&values).or_else(rewritten) {
             Some(unified) => unified,
             None => return string(),
         }
@@ -284,6 +303,18 @@ pub(crate) fn rewrite_objects(
                 rewrite_objects(&mut values, None, config, false);
                 obj.shift_remove("properties");
                 obj.shift_remove("required");
+                obj.shift_remove("items");
+                // A schema not yet made a map (a list's, met before `convert_to_map`) is
+                // typed an object here, nullable where it was
+                let nullable = obj
+                    .get("type")
+                    .and_then(Value::as_array)
+                    .is_some_and(|types| types.iter().any(|t| t == "null"));
+                let object = match nullable {
+                    true => serde_json::json!(["null", "object"]),
+                    false => serde_json::json!("object"),
+                };
+                obj.insert("type".to_string(), object);
                 obj.insert("additionalProperties".to_string(), values);
                 return;
             }

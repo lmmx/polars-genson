@@ -1501,11 +1501,13 @@ fn test_interned_rows_match_the_builders() {
 /// count and the same schema, at the top, nested, under lists, beside other kinds, with
 /// rows repeating and differing only in their maps' keys. The same up to the order of an
 /// object's keywords (`type` ahead of `properties` or after them, which follows how a
-/// row's builder merged its lists' items), its properties in the same order.
+/// row's builder merged its lists' items), its properties in the same order; and that
+/// order is not seen by the schema's readers: the Avro schema written from each (what
+/// normalisation and the Polars types are made from) is the same text.
 #[test]
 fn test_interned_forced_maps_match_the_builders() {
     let mut rng = Rng(0x9e37_79b9_7f4a_7c15);
-    let (mut compared, mut declined) = (0, 0);
+    let (mut compared, mut declined, mut reordered) = (0, 0, 0);
     for case in 0..600 {
         let mut rows: Vec<String> = Vec::new();
         for _ in 0..5 + rng.below(30) {
@@ -1570,10 +1572,27 @@ fn test_interned_forced_maps_match_the_builders() {
                     "rows {rows:?}, config {config:?}"
                 );
                 // And so the same rewritten schema
-                let rewritten = |builder| {
-                    keywords_sorted(&rewrite_merged(builder, &config, Rewrite::Dag)).to_string()
-                };
-                assert_eq!(rewritten(interned), rewritten(usual), "rows {rows:?}");
+                let interned = rewrite_merged(interned, &config, Rewrite::Dag);
+                let usual = rewrite_merged(usual, &config, Rewrite::Dag);
+                assert_eq!(
+                    keywords_sorted(&interned).to_string(),
+                    keywords_sorted(&usual).to_string(),
+                    "rows {rows:?}"
+                );
+                // The text, as `Value`'s equality does not see the order of keys
+                let (interned_text, usual_text) = (interned.to_string(), usual.to_string());
+                reordered += usize::from(interned_text != usual_text);
+                #[cfg(feature = "avro")]
+                {
+                    let avro = |schema| {
+                        let result = SchemaInferenceResult {
+                            schema,
+                            processed_count: 0,
+                        };
+                        result.to_avro_schema("genson", None, None, false).to_string()
+                    };
+                    assert_eq!(avro(interned), avro(usual), "rows {rows:?}");
+                }
                 compared += 1;
             }
             (Some(_), Ok(Err(e))) => panic!("interned where the builders fail ({e}): {rows:?}"),
@@ -1581,8 +1600,9 @@ fn test_interned_forced_maps_match_the_builders() {
             (None, _) => declined += 1,
         }
     }
-    eprintln!("interned forced maps: compared {compared}, declined {declined}");
+    eprintln!("interned forced maps: compared {compared} ({reordered} reordered), declined {declined}");
     assert!(compared > 400, "compared {compared}, declined {declined}");
+    assert!(reordered > 0, "no case with keywords in another order");
 }
 
 /// Rows that differ only in what their objects all hold (`required`) are distinct rows, so

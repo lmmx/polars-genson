@@ -207,3 +207,12 @@ fn test_wrap_root_with_ndjson() {
     assert_eq!(result.schema["required"], serde_json::json!(["labels"]));
     assert!(result.schema["properties"]["labels"].is_object());
 }
+
+/// A configuration serialised before `coerce_strings` was added reads it as `false`.
+#[test]
+fn test_config_without_coerce_strings_deserialises() {
+    let mut config = serde_json::to_value(SchemaInferenceConfig::default()).unwrap();
+    config.as_object_mut().unwrap().remove("coerce_strings");
+    let config: SchemaInferenceConfig = serde_json::from_value(config).unwrap();
+    assert!(!config.coerce_strings);
+}

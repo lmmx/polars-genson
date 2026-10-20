@@ -137,7 +137,11 @@ impl<'c> OnDag<'c> {
         });
         for t in types.into_iter().flatten() {
             if !(self.dag.is_sym(t, kw::NULL) || self.dag.is_sym(t, kw::OBJECT)) {
-                values.push(self.dag.object(&[(kw::TYPE, t)]));
+                let items = obj.get(kw::ITEMS).filter(|_| self.dag.is_sym(t, kw::ARRAY));
+                values.push(match items {
+                    Some(items) => self.dag.object(&[(kw::TYPE, t), (kw::ITEMS, items)]),
+                    None => self.dag.object(&[(kw::TYPE, t)]),
+                });
             }
         }
         self.map_value_schema(&values, no_unify, field)
@@ -164,12 +168,21 @@ impl<'c> OnDag<'c> {
             return self.typed(kw::STRING);
         } else {
             let path = field.unwrap_or(kw::EMPTY);
-            match self.check_unifiable_schemas(&values, path) {
+            let unified = self
+                .check_unifiable_schemas(&values, path)
+                .or_else(|| self.unify_anyof_schemas(&values, path));
+            // Values whose types clash within them unify only once rewritten
+            let unified = unified.or_else(|| {
+                let rewritten: Vec<Id> = values
+                    .iter()
+                    .map(|&v| self.rewrite_objects(v, None, false))
+                    .collect();
+                self.check_unifiable_schemas(&rewritten, path)
+                    .or_else(|| self.unify_anyof_schemas(&rewritten, path))
+            });
+            match unified {
                 Some(unified) => unified,
-                None => match self.unify_anyof_schemas(&values, path) {
-                    Some(unified) => unified,
-                    None => return self.typed(kw::STRING),
-                },
+                None => return self.typed(kw::STRING),
             }
         };
         if nullable {
@@ -286,6 +299,21 @@ impl<'c> OnDag<'c> {
                     let values = self.rewrite_objects(values, None, false);
                     obj.shift_remove(kw::PROPERTIES);
                     obj.shift_remove(kw::REQUIRED);
+                    obj.shift_remove(kw::ITEMS);
+                    // Typed an object, nullable where it was, as `rewrite_objects`
+                    let nullable = obj
+                        .get(kw::TYPE)
+                        .and_then(|t| self.dag.as_array(t))
+                        .is_some_and(|ts| ts.iter().any(|&t| self.dag.is_sym(t, kw::NULL)));
+                    let object = self.dag.string(kw::OBJECT);
+                    let t = match nullable {
+                        true => {
+                            let null = self.dag.string(kw::NULL);
+                            self.dag.array(&[null, object])
+                        }
+                        false => object,
+                    };
+                    obj.insert(kw::TYPE, t);
                     obj.insert(kw::ADDITIONAL_PROPERTIES, values);
                     return obj.build(&mut self.dag);
                 }
@@ -555,6 +583,44 @@ impl<'c> OnDag<'c> {
         unified
     }
 
+    /// `preprocess_map_values`
+    fn preprocess_map_values(&mut self, obj: &mut ObjBuf) {
+        if let Some(entries) = obj
+            .get(kw::PROPERTIES)
+            .and_then(|p| self.dag.as_object(p))
+            .map(Obj::to_vec)
+        {
+            let entries: Vec<(Sym, Id)> = entries
+                .into_iter()
+                .map(|(key, value)| (key, self.preprocess_force_field_types(value)))
+                .collect();
+            let props = self.dag.object(&entries);
+            obj.insert(kw::PROPERTIES, props);
+        }
+        if let Some(items) = obj.get(kw::ITEMS) {
+            let items = self.preprocess_force_field_types(items);
+            obj.insert(kw::ITEMS, items);
+        }
+        if let Some(branches) = obj
+            .get(kw::ANY_OF)
+            .and_then(|a| self.dag.as_array(a))
+            .map(<[Id]>::to_vec)
+        {
+            let branches: Vec<Id> = branches
+                .into_iter()
+                .map(|branch| match self.dag.as_object(branch).map(ObjBuf::of) {
+                    Some(mut b) if b.contains(kw::PROPERTIES) => {
+                        self.preprocess_map_values(&mut b);
+                        b.build(&mut self.dag)
+                    }
+                    _ => self.preprocess_force_field_types(branch),
+                })
+                .collect();
+            let branches = self.dag.array(&branches);
+            obj.insert(kw::ANY_OF, branches);
+        }
+    }
+
     /// `preprocess_force_field_types`
     pub(crate) fn preprocess_force_field_types(&mut self, schema: Id) -> Id {
         let config = self.config;
@@ -643,6 +709,7 @@ impl<'c> OnDag<'c> {
         if obj.contains(kw::ADDITIONAL_PROPERTIES) {
             return schema;
         }
+        self.preprocess_map_values(&mut obj);
         let is_nullable = obj
             .get(kw::TYPE)
             .and_then(|t| self.dag.as_array(t))
@@ -651,6 +718,7 @@ impl<'c> OnDag<'c> {
         obj.shift_remove(kw::PROPERTIES);
         obj.shift_remove(kw::REQUIRED);
         obj.shift_remove(kw::ANY_OF);
+        obj.shift_remove(kw::ITEMS);
         let t = if is_nullable {
             null_object(self)
         } else {
