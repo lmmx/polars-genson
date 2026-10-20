@@ -713,7 +713,7 @@ fn unify_record_schemas(
 
 /// A field schema made nullable: a type `T` becomes `["null", T]` (a nullable or null type
 /// stays as it is), and a schema without a type becomes `anyOf` null and itself.
-fn make_nullable(mut schema: Value) -> Value {
+pub(crate) fn make_nullable(mut schema: Value) -> Value {
     match schema.get("type") {
         Some(Value::String(t)) if t != "null" => {
             let t = t.clone();
@@ -829,7 +829,7 @@ pub(crate) fn type_union_branches(schema: &Map<String, Value>) -> Option<Vec<Val
 }
 
 /// Whether a schema is `null` alone.
-fn is_null_schema(schema: &Value) -> bool {
+pub(crate) fn is_null_schema(schema: &Value) -> bool {
     schema.get("type").is_some_and(|t| t == "null")
 }
 

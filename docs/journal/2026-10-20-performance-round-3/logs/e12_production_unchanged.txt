@@ -1,0 +1,27 @@
+# prod_schemas.py: sha256 (16 hex) of each column's Avro schema, then of its normalised text
+# (decode=False, map_encoding="kv"), with wikidata-pq's options; 1.0.4 against
+# fix/forced-map-values-keep-kinds (the soundness stack so far)
+== chunk_0 1.0.4
+claims f3c01f0e0e241bac 9df4138af4fa8b16
+sitelinks 434d0f01c18bba31 b610a4cddebe555d
+labels a466ad529a2afea8 d66cf1564824e59e
+descriptions 114a725bb4c0f54a 4de174c96785f162
+aliases d4496e5763896b63 8df34a4891da3b31
+== chunk_0 stack
+claims f3c01f0e0e241bac 9df4138af4fa8b16
+sitelinks 434d0f01c18bba31 b610a4cddebe555d
+labels a466ad529a2afea8 d66cf1564824e59e
+descriptions 114a725bb4c0f54a 4de174c96785f162
+aliases d4496e5763896b63 8df34a4891da3b31
+== rowsw 1.0.4
+claims 523f3d152393dec6 6bd134b9743eaa84
+sitelinks 434d0f01c18bba31 8097c004151c98e7
+labels a466ad529a2afea8 c591365b90b148d9
+descriptions 114a725bb4c0f54a 380dfb5a2fa92ed3
+aliases d4496e5763896b63 dda070f55930af22
+== rowsw stack
+claims 523f3d152393dec6 6bd134b9743eaa84
+sitelinks 434d0f01c18bba31 8097c004151c98e7
+labels a466ad529a2afea8 c591365b90b148d9
+descriptions 114a725bb4c0f54a 380dfb5a2fa92ed3
+aliases d4496e5763896b63 dda070f55930af22

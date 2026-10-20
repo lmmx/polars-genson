@@ -523,7 +523,7 @@ impl OnDag<'_> {
     }
 
     /// `make_nullable`
-    fn make_nullable(&mut self, schema: Id) -> Id {
+    pub(super) fn make_nullable(&mut self, schema: Id) -> Id {
         match self.dag.get(schema, kw::TYPE) {
             Some(t) if self.dag.as_sym(t).is_some_and(|t| t != kw::NULL) => {
                 let types = self.null_and(t);
@@ -711,7 +711,7 @@ impl OnDag<'_> {
     }
 
     /// `is_null_schema`
-    fn is_null_schema(&self, schema: Id) -> bool {
+    pub(super) fn is_null_schema(&self, schema: Id) -> bool {
         self.dag
             .get(schema, kw::TYPE)
             .is_some_and(|t| self.is_null(t))

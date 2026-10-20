@@ -145,23 +145,37 @@ impl<'c> OnDag<'c> {
 
     /// `map_value_schema`
     fn map_value_schema(&mut self, values: &[Id], no_unify: bool, field: Option<Sym>) -> Id {
+        let nullable = values.iter().any(|&v| self.is_null_schema(v));
+        let values: Vec<Id> = values
+            .iter()
+            .copied()
+            .filter(|&v| !self.is_null_schema(v))
+            .collect();
         let Some(&first) = values.first() else {
             return self.typed(kw::NULL);
         };
         let first = self.non_null(first);
-        if values.iter().all(|&v| {
+        let unified = if values.iter().all(|&v| {
             let view = self.non_null(v);
             self.dag.same(view, first)
         }) {
-            return first;
-        }
-        if no_unify {
+            first
+        } else if no_unify {
             return self.typed(kw::STRING);
-        }
-        let path = field.unwrap_or(kw::EMPTY);
-        match self.check_unifiable_schemas(values, path) {
-            Some(unified) => unified,
-            None => self.typed(kw::STRING),
+        } else {
+            let path = field.unwrap_or(kw::EMPTY);
+            match self.check_unifiable_schemas(&values, path) {
+                Some(unified) => unified,
+                None => match self.unify_anyof_schemas(&values, path) {
+                    Some(unified) => unified,
+                    None => return self.typed(kw::STRING),
+                },
+            }
+        };
+        if nullable {
+            self.make_nullable(unified)
+        } else {
+            unified
         }
     }
 

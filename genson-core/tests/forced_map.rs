@@ -44,11 +44,20 @@ fn test_forced_map_unifies_differing_records() {
     );
 }
 
-/// Values with no common type fall back to strings, so no value is lost.
+/// Values of scalar kinds that clash keep a field each, so no value is lost and none is
+/// turned into text.
 #[test]
-fn test_forced_map_with_mixed_scalar_values_falls_back_to_string() {
+fn test_forced_map_with_mixed_scalar_values_keeps_each_kind() {
     let values = forced_map_values(&[r#"{"m": {"a": 1, "b": "x"}}"#]);
-    assert_eq!(values["type"], json!("string"));
+    let fields: Vec<&String> = values["properties"].as_object().unwrap().keys().collect();
+    assert_eq!(fields, ["m__integer", "m__string"], "{values}");
+}
+
+/// A value that is `null` in some rows makes the values nullable, not text.
+#[test]
+fn test_forced_map_with_null_values_keeps_their_type() {
+    let values = forced_map_values(&[r#"{"m": {"k": 1, "j": null}}"#, r#"{"m": {"q": 2}}"#]);
+    assert_eq!(values["type"], json!(["null", "integer"]), "{values}");
 }
 
 /// A field holding an empty array in some values and items in others unifies to an array
@@ -145,9 +154,12 @@ fn test_forced_map_beside_a_scalar_takes_the_scalar_with_its_values() {
         (&[r#"{"m": {"a": 1}}"#, r#"{"m": 5}"#][..], "integer"),
         (&[r#"{"m": {}}"#, r#"{"m": "s"}"#][..], "string"),
         (&[r#"{"m": "s"}"#][..], "string"),
-        (&[r#"{"m": {"a": 1}}"#, r#"{"m": "s"}"#][..], "string"),
     ] {
         let values = forced_map_values(rows);
         assert_eq!(values["type"], json!(t), "{rows:?}: {values}");
     }
+    // An integer value beside a string: each keeps a field of its own
+    let values = forced_map_values(&[r#"{"m": {"a": 1}}"#, r#"{"m": "s"}"#]);
+    let fields: Vec<&String> = values["properties"].as_object().unwrap().keys().collect();
+    assert_eq!(fields, ["m__integer", "m__string"], "{values}");
 }
