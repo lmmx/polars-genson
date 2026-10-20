@@ -171,6 +171,26 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
 - genson-core 153 tests (default features) and 233 (avro, parquet), genson-cli 181,
   polars-jsonschema-bridge 37, polars-genson-py 317 (3 skipped); clippy and precommit clean
 
+### A list beside a record or scalar under a record's field (fix/record-field-list-beside-others)
+
+- Unifying records gave up on a field that is a list in some records and a record or
+  scalar in others (`unify_field_pair` had no case for it), and so on the whole record;
+  a union nested in another (a list's nullable records, `anyOf[record, null]`) was not
+  looked into, and records beside `null` without scalars stayed a union
+- Now: such a field is one list holding them (`unify_anyof_schemas`, which absorbs into
+  the array), sequentially even past 50 schemas; array items likewise
+  (`check_unifiable_item_schemas`, the owned way taking the borrowed one for these
+  pairs); a branch that is a union stands for its branches; `null` beside two or more
+  schemas that unify makes their unification nullable; a promoted record beside `null`
+  is nullable; integers and numbers alone widen to a number
+- Fuzz on the same seeds (logs/e8, e9, e10): seed 1, every kind, 0 of 600 lose a value
+  (334 on 1.0.4, 63 after the scalar kinds); seed 2, integers and null, 0 of 800 (191,
+  62); seed 3, 2 of 2,000 (1,166 on 1.0.4, logs/e11), both under map options with scalars of two kinds in a list's
+  records inside a unified map
+- genson-core 153 tests (default features) and 237 (avro, parquet), genson-cli 181,
+  polars-genson-py 317 (3 skipped); test_owned_unification_matches_the_borrowed and the
+  Value/DAG comparisons pass; scalar_kinds.rs gains the fuzz's shrunk rows
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in

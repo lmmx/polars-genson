@@ -1,0 +1,3 @@
+2000 sets: 2 failing {'LOST': 2}
+   1  LOST       maps    decode=False [{"c": [{"a": [2.5, ""]}]}, {"c": {"a": [{"d": true}]}}]
+   1  LOST       maps    decode=True  [{"b": {"a": ["s"]}}, {"b": [{"a": ["s", true]}, 1]}]

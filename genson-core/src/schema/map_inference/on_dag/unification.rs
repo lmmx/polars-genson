@@ -387,7 +387,8 @@ impl OnDag<'_> {
         } else if self.is_scalar(unified) && self.is_scalar(new) {
             self.try_mixed_scalar_promotion(unified, new, field)
         } else {
-            None
+            // An array beside a record or scalar: one array holding them, as for a union
+            self.unify_anyof_schemas(&[unified, new], field)
         }
     }
 
@@ -417,8 +418,10 @@ impl OnDag<'_> {
     /// `unify_field_schemas`
     fn unify_field_schemas(&mut self, field: Sym, schemas: &[Id], path: Sym) -> Option<Id> {
         let needs_scalar_promo = self.config.wrap_scalars
-            && schemas.iter().any(|&s| self.is_scalar(s))
-            && schemas.iter().any(|&s| self.is_record(s));
+            && ((schemas.iter().any(|&s| self.is_scalar(s))
+                && schemas.iter().any(|&s| self.is_record(s)))
+                || (schemas.iter().any(|&s| self.is_array(s))
+                    && schemas.iter().any(|&s| !self.is_array(s))));
         if needs_scalar_promo || schemas.len() < 50 {
             self.unify_field_schemas_sequential(field, schemas, path)
         } else {
@@ -728,17 +731,12 @@ impl OnDag<'_> {
         if !self.config.wrap_scalars {
             return None;
         }
-        let split: Option<Vec<Id>> = if schemas.iter().any(|&s| self.type_union_clashes(s)) {
+        let is_union =
+            |on: &Self, s: Id| on.dag.get(s, kw::ANY_OF).is_some() || on.type_union_clashes(s);
+        let split: Option<Vec<Id>> = if schemas.iter().any(|&s| is_union(self, s)) {
             let mut split = Vec::new();
             for &s in schemas {
-                match self
-                    .type_union_clashes(s)
-                    .then(|| self.type_union_branches(s))
-                    .flatten()
-                {
-                    Some(branches) => split.extend(branches),
-                    None => split.push(s),
-                }
+                self.union_branches(s, &mut split);
             }
             Some(split)
         } else {
@@ -747,6 +745,34 @@ impl OnDag<'_> {
         let schemas = split.as_deref().unwrap_or(schemas);
         if let Some(array) = self.unify_into_array(schemas) {
             return Some(array);
+        }
+        let nullable = schemas.iter().any(|&s| self.is_null_schema(s));
+        let non_null: Vec<Id> = schemas
+            .iter()
+            .copied()
+            .filter(|&s| !self.is_null_schema(s))
+            .collect();
+        if nullable && non_null.len() >= 2 {
+            if let Some(unified) = self.check_unifiable_schemas(&non_null, field) {
+                return Some(self.make_nullable(unified));
+            }
+        }
+        let number = |on: &Self, s: Id| matches!(on.base_type(s), Some(kw::INTEGER | kw::NUMBER));
+        if non_null.len() >= 2 && non_null.iter().all(|&s| number(self, s)) {
+            let typed_null = |on: &Self, s: Id| {
+                on.dag
+                    .get(s, kw::TYPE)
+                    .and_then(|t| on.dag.as_array(t))
+                    .is_some_and(|t| t.iter().any(|&t| on.is_null(t)))
+            };
+            let widened = self.typed(kw::NUMBER);
+            return Some(
+                if nullable || non_null.iter().any(|&s| typed_null(self, s)) {
+                    self.make_nullable(widened)
+                } else {
+                    widened
+                },
+            );
         }
         let has_scalars = schemas.iter().any(|&s| self.is_scalar(s));
         let has_objects = schemas
@@ -771,7 +797,35 @@ impl OnDag<'_> {
                 Some(self.record_of(key, schema))
             })
             .collect::<Option<_>>()?;
-        self.check_unifiable_schemas(&promoted, field)
+        let unified = self.check_unifiable_schemas(&promoted, field)?;
+        Some(if nullable {
+            self.make_nullable(unified)
+        } else {
+            unified
+        })
+    }
+
+    /// `union_branches`
+    fn union_branches(&mut self, schema: Id, out: &mut Vec<Id>) {
+        if let Some(any_of) = self
+            .dag
+            .get(schema, kw::ANY_OF)
+            .and_then(|a| self.dag.as_array(a))
+            .map(<[Id]>::to_vec)
+        {
+            for branch in any_of {
+                self.union_branches(branch, out);
+            }
+            return;
+        }
+        let branches = self
+            .type_union_clashes(schema)
+            .then(|| self.type_union_branches(schema))
+            .flatten();
+        match branches {
+            Some(branches) => out.extend(branches),
+            None => out.push(schema),
+        }
     }
 
     /// `check_unifiable_schemas`
@@ -821,7 +875,9 @@ impl OnDag<'_> {
         let records_and_scalars = schemas
             .iter()
             .all(|&s| self.is_scalar(s) || self.is_record(s) || self.is_empty_record(s));
-        if !(self.config.wrap_scalars && records_and_scalars) {
+        let arrays_and_others =
+            schemas.iter().any(|&s| self.is_array(s)) && schemas.iter().any(|&s| !self.is_array(s));
+        if !(self.config.wrap_scalars && (records_and_scalars || arrays_and_others)) {
             return None;
         }
         let field = self.promotion_field_name(path);
