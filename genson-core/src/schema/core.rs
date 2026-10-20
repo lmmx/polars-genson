@@ -215,6 +215,7 @@ impl SchemaInferenceResult {
     ) -> Value {
         let mut schema = self.schema.clone();
         type_empty_array_items_as_null(&mut schema);
+        keep_empty_objects_as_records(&mut schema);
         avrotize::converter::jsons_to_avro(
             &schema,
             namespace,
@@ -248,6 +249,39 @@ fn type_empty_array_items_as_null(schema: &mut Value) {
         Value::Array(arr) => arr.iter_mut().for_each(type_empty_array_items_as_null),
         _ => {}
     }
+}
+
+/// Give objects that were empty in every row (`{"type": "object"}`, alone or in a type
+/// list, with no properties of any kind) an explicit `"properties": {}`. avrotize (from
+/// 0.2.0) reads an object without `properties`, `patternProperties` or
+/// `additionalProperties` as holding any properties: a map of its generic union. With
+/// its properties given as none, the object stays a record with no fields
+/// (`Struct({})`), as inferred, since no row had a key there.
+#[cfg(feature = "avro")]
+fn keep_empty_objects_as_records(schema: &mut Value) {
+    match schema {
+        Value::Object(obj) => {
+            if is_empty_object(obj) {
+                obj.insert("properties".to_string(), serde_json::json!({}));
+            }
+            obj.values_mut().for_each(keep_empty_objects_as_records);
+        }
+        Value::Array(arr) => arr.iter_mut().for_each(keep_empty_objects_as_records),
+        _ => {}
+    }
+}
+
+#[cfg(feature = "avro")]
+fn is_empty_object(obj: &serde_json::Map<String, Value>) -> bool {
+    let object = match obj.get("type") {
+        Some(Value::String(t)) => t == "object",
+        Some(Value::Array(types)) => types.iter().any(|t| t == "object"),
+        _ => false,
+    };
+    object
+        && !["properties", "patternProperties", "additionalProperties"]
+            .iter()
+            .any(|k| obj.contains_key(*k))
 }
 
 #[cfg(feature = "avro")]
