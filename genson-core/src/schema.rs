@@ -305,6 +305,15 @@ fn apply_force_field_types(schema: &mut Value, config: &SchemaInferenceConfig) {
                                         .and_then(|p| p.as_object())
                                         .is_some_and(|p| !p.is_empty());
                                     if has_keys {
+                                        // The fields forced within its values first (its
+                                        // keys are not fields), as `preprocess_map_values`
+                                        if let Some(Value::Object(props)) =
+                                            field_obj.get_mut("properties")
+                                        {
+                                            for value in props.values_mut() {
+                                                apply_force_field_types(value, config);
+                                            }
+                                        }
                                         let values = forced_map_value_schema(
                                             field_obj,
                                             Some(field_name.as_str()),
@@ -683,6 +692,29 @@ pub(crate) fn preprocess_force_field_types(schema: &mut Value, config: &SchemaIn
     }
 }
 
+/// The fields forced within the values of an object about to become a map, forced first,
+/// so that its values are unified with them as maps already: within its properties' schemas,
+/// a list's items and a union's branches, but not its properties themselves, which are the
+/// map's keys rather than fields (`a` in `{"a": {"a": 0}}` forced at `a`).
+fn preprocess_map_values(obj: &mut serde_json::Map<String, Value>, config: &SchemaInferenceConfig) {
+    if let Some(Value::Object(props)) = obj.get_mut("properties") {
+        for value in props.values_mut() {
+            preprocess_force_field_types(value, config);
+        }
+    }
+    if let Some(items) = obj.get_mut("items") {
+        preprocess_force_field_types(items, config);
+    }
+    if let Some(Value::Array(branches)) = obj.get_mut("anyOf") {
+        for branch in branches {
+            match branch.as_object_mut() {
+                Some(b) if b.contains_key("properties") => preprocess_map_values(b, config),
+                _ => preprocess_force_field_types(branch, config),
+            }
+        }
+    }
+}
+
 /// Convert any schema to a Map<string, string> schema
 fn convert_to_map(schema: &mut Value, field_name: &str, config: &SchemaInferenceConfig) {
     // Handle union types first: ["null", {...}] or [Record, "string"]
@@ -713,6 +745,7 @@ fn convert_to_map(schema: &mut Value, field_name: &str, config: &SchemaInference
         if obj.contains_key("additionalProperties") {
             return;
         }
+        preprocess_map_values(obj, config);
 
         // Check for nullable type: {"type": ["null", "object"]}
         let is_nullable = obj
@@ -724,10 +757,11 @@ fn convert_to_map(schema: &mut Value, field_name: &str, config: &SchemaInference
         // The values' common schema (string if they have none), before properties go
         let values = forced_map_value_schema(obj, Some(field_name), config);
 
-        // Convert to map
+        // Convert to map (a list's items are in the values now)
         obj.shift_remove("properties");
         obj.shift_remove("required");
         obj.shift_remove("anyOf");
+        obj.shift_remove("items");
 
         if is_nullable {
             obj.insert("type".to_string(), serde_json::json!(["null", "object"]));

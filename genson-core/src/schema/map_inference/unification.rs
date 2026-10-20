@@ -424,6 +424,31 @@ fn unify_scalar_schemas(
     None
 }
 
+/// Two maps of a field forced to be a map, unified as one forced map's values are
+/// (`map_value_schema`: nullable beside null, a field each for kinds that clash, text where
+/// nothing else holds them), nullable where either map is. Its maps differ where the field
+/// was forced in different places (in a record, and in a list's records beside it), and
+/// left apart they keep the place a union, which normalisation fills with one of them.
+fn unify_forced_maps(
+    a: &Value,
+    b: &Value,
+    field_name: &str,
+    config: &SchemaInferenceConfig,
+) -> Option<Value> {
+    let forced = config.force_field_types.get(field_name).map(String::as_str);
+    if forced != Some("map") || !(is_map_schema(a) && is_map_schema(b)) {
+        return None;
+    }
+    let values = |s| extract_field_from_nullable_schema(s, "additionalProperties");
+    let values = [values(a)?, values(b)?];
+    let values = super::map_value_schema(&values, false, Some(field_name), config);
+    let map = object([("type", "object".into()), ("additionalProperties", values)]);
+    Some(match nullable_type(a).or(nullable_type(b)) {
+        Some(_) => make_nullable(map),
+        None => map,
+    })
+}
+
 /// Unify map schemas by unifying their additionalProperties
 fn unify_map_schemas(
     schemas: &[&Value],
@@ -534,6 +559,9 @@ fn unify_field_pair(
         },
     };
     if let Some(map) = unify_maps_beside_null_values(&unified, new, field_path, config) {
+        return Some(map);
+    }
+    if let Some(map) = unify_forced_maps(&unified, new, field_name, config) {
         return Some(map);
     }
     let record_like = |s: &Value| is_object_schema(s) || is_empty_record_schema(s);
