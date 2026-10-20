@@ -50,7 +50,7 @@ fn list_to_dag(extra: &Value, items: Option<Id>, dag: &mut Dag) -> Id {
     schema.build(dag)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BasicSchemaStrategy {
     Object(ObjectStrategy),
     List(ListStrategy),
@@ -249,6 +249,20 @@ impl BasicSchemaStrategy {
             }
             (BasicSchemaStrategy::List(strategy), DeferredStrategy::List(states)) => {
                 strategy.items_node_mut().absorb_interned_all(&states)
+            }
+            _ => {}
+        }
+    }
+
+    /// `ObjectStrategy::unintern` of each object in this strategy's tree.
+    pub(crate) fn unintern(&mut self) {
+        match self {
+            BasicSchemaStrategy::Object(strategy) => strategy.unintern(),
+            BasicSchemaStrategy::List(strategy) => {
+                strategy.get_items_mut().for_each(SchemaNode::unintern)
+            }
+            BasicSchemaStrategy::Tuple(strategy) => {
+                strategy.get_items_mut().for_each(SchemaNode::unintern)
             }
             _ => {}
         }

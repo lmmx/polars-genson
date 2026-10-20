@@ -65,7 +65,7 @@ workload into each revision's worktree.
 | `narrow` | 100,000 small records | the row phase on many short rows |
 | `labels` | 1,000 maps of languages' labels | a map of records |
 | `entities` | 150 wide Wikidata-like entities | wide, varied records (Avro off: converting their schema is avrotize's cost) |
-| `usual` | the event logs, `payload` forced to be a map | the usual path (per-row builders), which the interned path leaves forced maps to |
+| `usual` | the event logs, `payload` forced to be a map | a field forced to be a map: once the usual path (per-row builders), now the interned path forcing each distinct row (the name kept, to compare with earlier scorecards) |
 | `normalise` | the claims, normalised to their inferred schema | normalisation (inference is done before the runs) |
 
 ## Times

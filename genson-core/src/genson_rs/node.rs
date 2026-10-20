@@ -46,7 +46,7 @@ pub(crate) fn hash_value<H: Hasher>(value: &Value, hasher: &mut H) {
 
 /// Basic schema generator class. SchemaNode objects can be loaded
 /// up with existing schemas and objects before being serialized.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SchemaNode {
     active_strategies: Vec<BasicSchemaStrategy>,
     /// The interned row states absorbed into this node (`absorb_interned`)
@@ -55,7 +55,7 @@ pub struct SchemaNode {
 
 /// The interned states a node has absorbed. Absorbing one of them again leaves the node as
 /// it is, so this is a record of work not to repeat, and takes no part in comparing nodes.
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct Absorbed(rustc_hash::FxHashSet<u64>);
 
 impl PartialEq for Absorbed {
@@ -107,6 +107,13 @@ impl SchemaNode {
             self.active_strategies.as_slice(),
             [BasicSchemaStrategy::Object(_)]
         )
+    }
+
+    /// `ObjectStrategy::unintern` of each object in this node's tree.
+    pub(crate) fn unintern(&mut self) {
+        self.active_strategies
+            .iter_mut()
+            .for_each(BasicSchemaStrategy::unintern);
     }
 
     /// Call `f(name, node)` on every property node below this one (through objects' values

@@ -509,10 +509,6 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
     builder: &mut SchemaBuilder,
 ) -> Option<usize> {
     use crate::genson_rs::interned::{RowState, RowStates};
-    // A field forced to be a map is rewritten in each row's schema before the merge
-    if config.force_field_types.values().any(|t| t == "map") {
-        return None;
-    }
     let ndjson = match config.delimiter {
         Some(b'\n') => true,
         None => false,
@@ -542,6 +538,15 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
     })?;
     profile!(config, "Interned row states took {:?}", t_rows.elapsed());
 
+    // A field forced to be a map is rewritten in each row's schema before the merge
+    if config.force_field_types.values().any(|t| t == "map") {
+        let t_merge = std::time::Instant::now();
+        let processed_count =
+            crate::phase::merge(|| merge_forced_rows(&blocks, json_strings.len(), config, builder));
+        profile!(config, "Forced rows' merge took {:?}", t_merge.elapsed());
+        return Some(processed_count);
+    }
+
     // The distinct rows of each chunk of `max_builders`, in order, as the usual path merges
     let t_merge = std::time::Instant::now();
     let chunk_size = config.max_builders.unwrap_or(json_strings.len()).max(1);
@@ -567,6 +572,70 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
     crate::phase::merge(|| builder.add_interned_row_chunks(chunks, config.schema_uri.as_deref()));
     profile!(config, "Interned merge took {:?}", t_merge.elapsed());
     Some(processed_count)
+}
+
+/// The interned rows of `process_json_strings_interned` merged as
+/// `process_json_strings_parallel` merges its rows where a field is forced to be a map:
+/// each row's schema forced before the merge. A row's schema is built from its states, and
+/// forced, once for each distinct row rather than once for each row; the forced schemas
+/// are merged in order by chunks of `max_builders` rows, each distinct one once, as there.
+/// Each chunk's new distinct rows are forced in parallel and dropped once merged, so only
+/// one chunk's are held. Returns the number merged.
+fn merge_forced_rows(
+    blocks: &[(
+        crate::genson_rs::interned::RowStates,
+        Vec<crate::genson_rs::interned::RowState>,
+    )],
+    rows_len: usize,
+    config: &SchemaInferenceConfig,
+    builder: &mut SchemaBuilder,
+) -> usize {
+    // Each row's distinct row (by its identity), numbered in the order they first appear:
+    // so those a chunk of rows is the first to hold are numbered in a run
+    let mut first_of: std::collections::HashMap<u64, usize> = std::collections::HashMap::new();
+    let mut distinct = Vec::new();
+    let mut row_index: Vec<Option<usize>> = Vec::with_capacity(rows_len);
+    for (states, rows) in blocks {
+        for row in rows {
+            row_index.push(row.map(|(state, hash)| {
+                *first_of.entry(hash).or_insert_with(|| {
+                    distinct.push((states, state));
+                    distinct.len() - 1
+                })
+            }));
+        }
+    }
+    let row_uri = config.schema_uri.as_deref();
+    let force = |&(states, state): &(&_, _)| {
+        let mut row = SchemaBuilder::new(None);
+        row.add_interned_row_chunks([vec![(states, state)]], row_uri);
+        // The tree the row's own builder gives, which the forcing reads and the merge
+        // absorbs
+        row.root_node_mut().unintern();
+        apply_force_field_types_to_node(row.root_node_mut(), config);
+        let hash = row.schema_hash();
+        (Some(row), hash)
+    };
+    let chunk_size = config.max_builders.unwrap_or(rows_len).max(1);
+    let (mut seen_hashes, mut processed_count, mut next) = (HashSet::new(), 0, 0);
+    for chunk in row_index.chunks(chunk_size) {
+        let end = chunk.iter().flatten().map(|&i| i + 1).max().unwrap_or(0);
+        let new = next..end.max(next);
+        let mut forced: Vec<(Option<SchemaBuilder>, u64)> =
+            distinct[new.clone()].par_iter().map(force).collect();
+        let mut builders = Vec::new();
+        for &i in chunk.iter().flatten().filter(|i| new.contains(i)) {
+            // A distinct row's forced schema is taken where its hash is first seen, once
+            let (row, hash) = &mut forced[i - new.start];
+            if seen_hashes.insert(*hash) {
+                processed_count += 1;
+                builders.extend(row.take());
+            }
+        }
+        builder.add_builders(builders);
+        next = new.end;
+    }
+    processed_count
 }
 
 /// Recursively convert fields matching force_field_types BEFORE unification runs.

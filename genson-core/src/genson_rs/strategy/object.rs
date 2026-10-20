@@ -16,7 +16,7 @@ use crate::genson_rs::node::{hash_value, DataType, DeferredStrategy, SchemaNode,
 use crate::genson_rs::strategy::base::SchemaStrategy;
 use crate::genson_rs::strategy::{is_empty_object, keywords};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ObjectStrategy {
     // TODO: this is redeclared everywhere, how to avoid this?
     extra_keywords: Value,
@@ -39,7 +39,7 @@ const NOT_SAME: u32 = u32::MAX;
 
 /// The compiled `patternProperties` patterns, in the order of `pattern_properties` (which
 /// only grows), compiled when first matched against.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 struct PatternRegexes(Vec<Regex>);
 
 impl PatternRegexes {
@@ -644,6 +644,38 @@ impl ObjectStrategy {
         match &mut self.required_properties {
             None => self.required_properties = Some(required),
             Some(own) => own.retain(|p| required.contains(p)),
+        }
+    }
+
+    /// Make a tree built from one row's interned states the one the row's own builder
+    /// builds, for a tree read other than by writing its schema (a forced map rewritten in
+    /// it, then it absorbed into another): each property `absorb_deferred` left empty, for
+    /// an earlier one given the same states, made a copy of that one, and without the
+    /// `properties` and `required` placeholders `absorb_interned_keywords` keeps (which
+    /// order the keywords a merge of rows writes, ahead of `type`), all the way down.
+    pub(crate) fn unintern(&mut self) {
+        if let Value::Object(keywords) = &mut self.extra_keywords {
+            keywords.retain(|key, value| match key.as_str() {
+                "properties" => !is_empty_object(value),
+                "required" => !value.is_null(),
+                _ => true,
+            });
+        }
+        let same_as = std::mem::take(&mut self.same_as);
+        for (i, &same) in same_as.iter().enumerate() {
+            if same != NOT_SAME {
+                let copy = self.properties[same as usize].clone();
+                self.properties[i] = copy;
+            }
+        }
+        for node in self.properties.values_mut() {
+            node.unintern();
+        }
+        for node in self.pattern_properties.values_mut() {
+            node.unintern();
+        }
+        if let Some(values) = &mut self.additional_properties {
+            values.unintern();
         }
     }
 
