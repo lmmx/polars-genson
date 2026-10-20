@@ -2,8 +2,7 @@
 """normalise_json with decode=True decodes the rows straight into Polars dtypes.
 
 It must give exactly what the JSON text route gives: rows normalised to JSON text and
-decoded with str.json_decode against the inferred schema, which `decode=<that schema>` still
-takes.
+decoded with str.json_decode against the inferred schema.
 """
 
 import json
@@ -37,9 +36,10 @@ def via_text(df: pl.DataFrame, map_encoding: str, unnest: bool, **kw) -> pl.Data
     schema = df.genson.infer_polars_schema(
         "j", avro=True, map_encoding=map_encoding, **inference
     )
-    return df.genson.normalise_json(
-        "j", decode=schema, map_encoding=map_encoding, unnest=unnest, **kw
-    )
+    # decode=False and str.json_decode, since decode=<schema> decodes typed too
+    text = df.genson.normalise_json("j", decode=False, map_encoding=map_encoding, **kw)
+    out = text.str.json_decode(pl.Struct(schema)).to_frame()
+    return out.unnest("j") if unnest else out
 
 
 def assert_routes_agree(rows, map_encoding="mapping", unnest=True, **kw):

@@ -1,0 +1,18 @@
+master {"wall": 3.5904, "cpu": 5.981, "maxrss_mb": 1197.7, "rows": 2185}
+child {"wall": 3.0044, "cpu": 5.8746, "maxrss_mb": 1103.1, "rows": 2185}
+child {"wall": 2.7359, "cpu": 5.4231, "maxrss_mb": 1210.7, "rows": 2185}
+master {"wall": 3.0182, "cpu": 5.876, "maxrss_mb": 1175.6, "rows": 2185}
+master {"wall": 3.2772, "cpu": 5.6993, "maxrss_mb": 1106.8, "rows": 2185}
+child {"wall": 3.3896, "cpu": 5.9747, "maxrss_mb": 1206.8, "rows": 2185}
+child {"wall": 3.2112, "cpu": 5.7223, "maxrss_mb": 1229.6, "rows": 2185}
+master {"wall": 2.6374, "cpu": 5.067, "maxrss_mb": 1222.7, "rows": 2185}
+master {"wall": 2.5946, "cpu": 5.0142, "maxrss_mb": 1229.4, "rows": 2185}
+child {"wall": 2.5844, "cpu": 5.0811, "maxrss_mb": 1229.0, "rows": 2185}
+child {"wall": 2.4509, "cpu": 4.7311, "maxrss_mb": 1225.9, "rows": 2185}
+master {"wall": 2.7755, "cpu": 5.2746, "maxrss_mb": 1212.2, "rows": 2185}
+master {"wall": 2.8557, "cpu": 5.4168, "maxrss_mb": 1231.9, "rows": 2185}
+child {"wall": 2.1599, "cpu": 4.9271, "maxrss_mb": 1266.2, "rows": 2185}
+child {"wall": 2.1713, "cpu": 4.9676, "maxrss_mb": 1256.1, "rows": 2185}
+master {"wall": 2.1287, "cpu": 4.8678, "maxrss_mb": 1265.5, "rows": 2185}
+master {'wall': (2.8156, 2.1287, 3.5904), 'cpu': (5.345700000000001, 4.8678, 5.981), 'maxrss_mb': (1217.45, 1106.8, 1265.5)}
+child {'wall': (2.66015, 2.1599, 3.3896), 'cpu': (5.2521, 4.7311, 5.9747), 'maxrss_mb': (1227.45, 1103.1, 1266.2)}

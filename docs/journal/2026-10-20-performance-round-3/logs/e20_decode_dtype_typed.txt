@@ -1,0 +1,32 @@
+# decode=<dtype> through the typed decoder: wikidata-pq's normalise_sitelinks, parent perf/forced-maps-interned
+# (env-c3) against this (env-p1s, the same compiled extension; only Python differs), one process per
+# run, ABBA, a warm-up each then 8 runs; median [min-max]; peak RSS is VmHWM over the call
+abba_rowsw_prod.jsonl
+  parent n=8  wall 1.365 [1.330-1.499]  cpu 1.912 [1.856-2.204]  user 1.350 [1.190-1.592]  sys 0.575 [0.548-0.679]  hwm_mb 1232.950 [1137.500-1239.700]  peak_over_base_mb 1163.450 [1067.900-1169.900]
+  child  n=8  wall 0.310 [0.234-1.101]  cpu 0.723 [0.599-2.074]  user 0.608 [0.511-0.699]  sys 0.116 [0.051-1.466]  hwm_mb 372.750 [350.100-374.400]  peak_over_base_mb 298.600 [276.200-300.200]
+abba_rowsw_badges.jsonl
+  parent n=8  wall 1.355 [1.318-1.501]  cpu 1.918 [1.830-2.083]  user 1.324 [1.286-1.482]  sys 0.588 [0.516-0.622]  hwm_mb 1209.050 [1164.100-1238.700]  peak_over_base_mb 1139.500 [1094.600-1169.200]
+  child  n=8  wall 0.343 [0.249-1.122]  cpu 0.819 [0.621-2.009]  user 0.608 [0.542-0.761]  sys 0.153 [0.066-1.423]  hwm_mb 369.500 [349.500-377.300]  peak_over_base_mb 295.300 [275.300-303.100]
+abba_chunk0_release.jsonl
+  parent n=8  wall 0.091 [0.076-0.143]  cpu 0.192 [0.155-0.269]  user 0.152 [0.111-0.229]  sys 0.045 [0.027-0.053]  hwm_mb 149.700 [146.300-153.800]  peak_over_base_mb 80.100 [76.700-84.100]
+  child  n=8  wall 0.062 [0.054-0.091]  cpu 0.153 [0.137-0.180]  user 0.131 [0.115-0.137]  sys 0.025 [0.011-0.043]  hwm_mb 134.800 [133.400-136.800]  peak_over_base_mb 60.700 [59.400-62.700]
+
+# callgrind, whole process (threads serialised), minus the import-and-read driver (noop_one.py)
+rowsw {site,title}: 9,935.3M - 620.1M = 9,315.2M -> 5,935.9M - 620.1M = 5,315.8M (-42.9%)
+chunk_0 {site,title,badges}: 1,604.4M - 619.8M = 984.6M -> 1,492.7M - 619.8M = 872.9M (-11.3%)
+
+# output equality (compare_outputs.py): schema, NDJSON bytes, to_dicts
+{"parent": "out_parent_rowsw_prod.parquet", "child": "out_child_rowsw_prod.parquet", "schema_equal": true, "ndjson_equal": true, "dicts_equal": true, "rows": 2185}
+{"parent": "out_parent_rowsw_badges.parquet", "child": "out_child_rowsw_badges.parquet", "schema_equal": true, "ndjson_equal": true, "dicts_equal": true, "rows": 2185}
+{"parent": "out_parent_chunk0_release.parquet", "child": "out_child_chunk0_release.parquet", "schema_equal": true, "ndjson_equal": true, "dicts_equal": true, "rows": 60}
+
+# against master d38635e, before forced maps (the prototype's measurement, 10 runs)
+abba_chunk0_release.jsonl
+  parent n=10  wall 0.072 [0.058-0.104]  cpu 0.131 [0.114-0.226]  user 0.096 [0.081-0.114]  sys 0.035 [0.011-0.128]  hwm_mb 144.500 [141.700-147.400]  peak_over_base_mb 77.800 [74.800-80.600]
+  child  n=10  wall 0.039 [0.034-0.058]  cpu 0.101 [0.089-0.144]  user 0.087 [0.073-0.120]  sys 0.011 [0.000-0.035]  hwm_mb 122.000 [119.800-125.700]  peak_over_base_mb 55.100 [53.100-59.000]
+abba_rowsw_badges.jsonl
+  parent n=10  wall 1.737 [1.631-2.214]  cpu 3.764 [3.559-4.350]  user 3.116 [3.025-3.331]  sys 0.587 [0.477-1.142]  hwm_mb 1213.750 [1173.700-1276.200]  peak_over_base_mb 1146.850 [1106.600-1209.300]
+  child  n=10  wall 1.237 [0.898-1.607]  cpu 3.300 [3.143-3.371]  user 2.710 [2.601-2.970]  sys 0.621 [0.276-0.759]  hwm_mb 350.900 [345.900-363.400]  peak_over_base_mb 284.000 [279.000-296.500]
+abba_rowsw_prod.jsonl
+  parent n=10  wall 1.986 [1.656-2.344]  cpu 4.059 [3.617-4.708]  user 3.249 [3.113-3.614]  sys 0.781 [0.483-1.093]  hwm_mb 1226.050 [1176.000-1268.000]  peak_over_base_mb 1159.250 [1109.300-1201.500]
+  child  n=10  wall 1.242 [0.744-1.507]  cpu 3.147 [2.640-3.922]  user 2.709 [2.576-2.945]  sys 0.438 [0.064-0.977]  hwm_mb 356.100 [346.500-362.300]  peak_over_base_mb 289.200 [279.500-295.400]

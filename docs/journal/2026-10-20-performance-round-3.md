@@ -301,6 +301,123 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   directory and the child's copied binary was the parent's. Each side is now built into a
   directory of its own, and each binary is checked for a string only the change has
 
+### decode=<dtype> through the typed decoder (perf/decode-dtype-typed)
+
+- `normalise_json(column, decode=<pl.Schema | pl.Struct>)` took the JSON text route: rows
+  normalised to JSON text by the plugin expression, then parsed again by Polars
+  `str.json_decode(dtype)`. Only `decode=True` used the typed decoder
+  (`_rust_normalise_json_typed`, `ArrowPlan`). Now both call the typed decoder. With a
+  dtype, the typed Series (cast to the inferred dtype as before) is projected onto the
+  caller's dtype by `dtypes.project_dtype` (Python only, no Rust change):
+  - a struct is built field by field in the dtype's order, by name, with `struct.field`
+    and `pl.struct`. A field the data lacks is `pl.lit(None, dtype)`, and a field the
+    dtype lacks is dropped. It is wrapped in `when(is_not_null)`, so a null struct stays
+    null rather than becoming a struct of nulls. `json_decode` gives a missing struct
+    field as a null struct, which I checked on Polars 2.0.0;
+  - a list is projected with `list.eval(pl.element() ...)`. A null list stays null, and
+    an empty list stays empty;
+  - a dtype equal to the inferred one passes through unchanged. This covers maps and
+    `pl.Map`, which both routes decode the same way, as the decode=True tests show;
+  - an inferred `pl.Null` (only nulls seen) is cast to a scalar dtype;
+  - no `cast` is used to drop a struct field. That cast once took 16 minutes on a large
+    List(Struct).
+- Checked upfront (`dtypes.typed_route_makes`, before the typed call): a dtype holding
+  any dtype the typed route never makes goes straight to the text route.
+  `avro_to_polars_schema` only gives String, Int64, Float64, Boolean and Null leaves, in
+  lists, structs and String-keyed maps (`pl.Map` or kv lists). So Categorical, Enum,
+  Int8-32, UInt*, Float32, Date, Datetime, Time, Duration, Decimal, Binary, Array and
+  Object never run the typed decode.
+- After the typed decode, the text route is still the fallback whenever the result could
+  differ:
+  - a leaf that is not the inferred one (String asked as Int64, Int64 as String), since a
+    cast and `json_decode`'s parse can disagree;
+  - a nested dtype (struct, list, array or map) where the data holds only nulls;
+  - a projection whose output dtype is not exactly the dtype asked for;
+  - the typed decoder returning `None`, as before: the root is not a record, inference
+    fails, or a batch is declined.
+
+  The typed run uses the same `map_encoding` as the text route ("kv" unless the dtype
+  holds a `pl.Map`, or what the caller passes).
+- What a fallback costs: only the post-hoc fallbacks pay for both routes. The typed decode
+  has already run when the dtypes are compared, so they pay for it and then for the whole
+  text route.
+  - Before the upfront check (5750d0f), rowsw sitelinks with title as Categorical took
+    1.98-3.40 s on master and 3.52-5.71 s on the child, 3 runs under load
+    (the prototype's log, not kept).
+  - With the check, 8 interleaved runs, median wall [range]: master 2.82 s [2.13-3.59],
+    child 2.66 s [2.16-3.39]. CPU was 5.35 against 5.25 s, maxrss 1217 against 1227 MB
+    (logs/e21). That is master's cost. Both of wikidata-pq's `decode=` calls take the typed
+  route: sitelinks, and the labels `KV_SCHEMA`, which equals the inferred dtype.
+- Tests:
+  - `tests/decode_dtype_test.py` (223 tests) compares `normalise_json(decode=dtype)`
+    with the text route called explicitly (`decode=False` with that `map_encoding`, then
+    `str.json_decode(dtype)`). It checks the schema, `equals`, `to_dicts()` (a null
+    struct is not a struct of nulls) and the top-level null mask. If the text route
+    raises, the new path must raise the same exception type. The cases:
+    - the 8 case sets (decode_typed's 7, plus a field that is only null), under both
+      map encodings, onto the inferred dtype, onto dtypes reshaped at every depth
+      (fields dropped, absent fields added, from String up to List(Struct), fields
+      reordered), and onto a dtype with one leaf changed;
+    - the claims fixture onto reshaped dtypes;
+    - 60 random seeds (decode_typed's generator; all 60 reach the comparisons), each
+      onto the inferred, a reshaped and a leaf-changed dtype;
+    - sitelinks-shaped rows (forced map, `wrap_root`, values `{site,title,badges,url}`,
+      null rows), decoded to List(Struct{key, value}) with values `{site,title,badges}`,
+      `{site,title}`, and `{title,site,extra: Struct}`, with `url` dropped;
+    - a sitelink title asked for as Int64 (a post-hoc fallback);
+    - 11 dtypes the typed route never makes (Int32, Categorical, Datetime, Date, Float32,
+      UInt8, Decimal, Enum, Binary, Array, and Int16 nested in List(Struct)). For these,
+      `_rust_normalise_json_typed` is patched to raise, and the output must still equal
+      the text route's, with `unnest` on and off;
+    - `typed_route_makes` itself, at depth.
+  - A spy on `ExprStringNameSpace.json_decode` checks which route each call took: the
+    typed route where expected, the text route for every leaf change.
+  - `decode_typed_test.via_text` now calls the text route explicitly, since `decode=schema`
+    no longer takes it.
+  - Mutants all caught: no `when` wrapper (98 tests fail), an absent struct as a struct
+    of nulls (47), leaf cast allowed (29), list declined (57), all declined (154), fields
+    in name order (102), Null-to-nested cast (1), Null-to-scalar declined (1); the upfront check always true (11) or always false (194).
+  - polars-genson-py: 540 passed, 3 skipped (master 317 passed, 3 skipped).
+  - Restacked on the soundness stack, 10 of the coerced-strings cases took the text route
+    where the test expected the typed one: the test inferred their dtype without
+    `coerce_strings`, which `infer_polars_schema` did not take on master and takes since
+    fix/mixed-scalar-kinds-promote, so the dtype had the promoted fields that coercion does
+    not write. The test now passes it, as decode_typed_test's `via_text` does: 540 passed,
+    3 skipped
+- Measurements (logs/e20, decode_dtype/): the parent is perf/forced-maps-interned and the
+  child this, both on the same compiled extension (only Python differs). wikidata-pq's
+  `normalise_sitelinks` call as written (`decode=raw`), one fresh process per run, ABBA, a
+  warm-up of each, then 8 runs each; medians [range]. Peak RSS is VmHWM, reset by
+  `/proc/self/clear_refs` just before the call; "over base" subtracts the RSS at the reset
+
+  | chunk, dtype | wall s | CPU s | user s | peak RSS MB (over base) |
+  |---|---|---|---|---|
+  | rowsw `{site,title}` parent | 1.365 [1.330-1.499] | 1.91 | 1.35 | 1233 (1163) |
+  | rowsw `{site,title}` child | 0.310 [0.234-1.101] | 0.72 | 0.61 | 373 (299) |
+  | rowsw `{site,title,badges}` parent | 1.355 [1.318-1.501] | 1.92 | 1.32 | 1209 (1140) |
+  | rowsw `{site,title,badges}` child | 0.343 [0.249-1.122] | 0.82 | 0.61 | 370 (295) |
+  | release chunk_0 `{site,title,badges}` parent | 0.091 [0.076-0.143] | 0.192 | 0.152 | 149.7 (80.1) |
+  | release chunk_0 child | 0.062 [0.054-0.091] | 0.153 | 0.131 | 134.8 (60.7) |
+
+  - On rowsw the call is 77% faster at the median, and peak memory over base falls by
+    865 MB (-74%): the 597,759 links' JSON text and its `json_decode` are gone. With
+    forced maps now on the interned path, that round trip was most of what was left. One
+    child run in 8 took 1.1 s, all of it system time (page faulting, transparent huge
+    pages); user time is steady at 0.51-0.76 s
+  - Instructions (callgrind, the whole process, minus a run of the same driver that only
+    imports and reads, 620M): rowsw 9,315M to 5,316M (-42.9%), chunk_0 984.6M to 872.9M
+    (-11.3%). Callgrind runs threads one at a time, so these are total work
+  - Outputs equal to the parent's on all three (schema, `to_dicts`, NDJSON bytes)
+  - Measured first against master d38635e, before forced maps took the interned path
+    (logs/e20's last part, 10 runs): rowsw 1.986 to 1.242 s, 1226 to 356 MB; chunk_0
+    0.072 to 0.039 s, 144.5 to 122.0 MB; instructions rowsw 30.65G to 26.64G, chunk_0
+    914.5M to 803.1M. The time saved is about the same; the forced inference then
+    dominated what was left
+- Found on the way: Polars 2.0.0's `DataFrame.equals` on
+  List(Struct{.., List(String)}) took 27 s for 50 rows of rowsw sitelinks. The
+  comparison script compares `to_dicts()` and NDJSON instead. The tests' small frames
+  are unaffected.
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in
@@ -324,6 +441,5 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
 
 ## Missing
 
-- `decode=<dtype>` through the typed decoder is not yet measured as an implementation
 - Whether a 16-minute cast of the typed sitelinks struct to a narrower struct is a Polars
   issue or our dtype
