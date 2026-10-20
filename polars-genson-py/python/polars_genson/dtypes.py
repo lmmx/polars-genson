@@ -156,3 +156,66 @@ def contains_map(dtype: pl.DataType) -> bool:
     if isinstance(dtype, (pl.List, pl.Array)):
         return contains_map(dtype.inner)
     return False
+
+
+def project_dtype(
+    expr: pl.Expr, have: pl.DataType, want: pl.DataType
+) -> pl.Expr | None:
+    """`expr`, of dtype `have`, as `str.json_decode` decodes the same values to `want`.
+
+    `want`'s struct fields are taken by name (a field `have` lacks is null, one `want`
+    lacks is dropped) and lists are projected element by element. ``None`` where the
+    result could differ from `json_decode`'s: a leaf, map or array dtype other than
+    `have`'s (where a cast and `json_decode`'s parse can disagree), or a nested `want`
+    where `have` holds only nulls. Structs are built field by field, never cast, so
+    no cast drops a struct field.
+    """
+    if have == want:
+        return expr
+    if isinstance(have, pl.Null):
+        # Only nulls were seen there, and json_decode makes a null of any leaf dtype
+        nested = (pl.Struct, pl.List, pl.Array, pl.Map)
+        return None if isinstance(want, nested) else expr.cast(want)
+    if isinstance(have, pl.Struct) and isinstance(want, pl.Struct):
+        fields = {field.name: field.dtype for field in have.fields}
+        parts = []
+        for field in want.fields:
+            if field.name in fields:
+                part = project_dtype(
+                    expr.struct.field(field.name), fields[field.name], field.dtype
+                )
+                if part is None:
+                    return None
+            else:
+                # json_decode gives a field the JSON lacks as null (a null struct, not
+                # a struct of nulls)
+                part = pl.lit(None, dtype=field.dtype)
+            parts.append(part.alias(field.name))
+        # A null struct stays null, not a struct of null fields
+        return pl.when(expr.is_not_null()).then(pl.struct(parts))
+    if isinstance(have, pl.List) and isinstance(want, pl.List):
+        inner = project_dtype(pl.element(), have.inner, want.inner)
+        return None if inner is None else expr.list.eval(inner)
+    return None
+
+
+def typed_route_makes(dtype: pl.DataType) -> bool:
+    """Whether `dtype` holds only dtypes the typed route can decode to.
+
+    Those are the ones ``avro_to_polars_schema`` gives an Avro schema: String, Int64,
+    Float64, Boolean and Null leaves, in lists, structs and maps keyed by String. A dtype
+    holding any other (Categorical, Int32, Datetime, Decimal, Array, ...) never projects,
+    so it is decoded from JSON text without running the typed route first.
+    """
+    # A field's dtype may be the class itself (pl.String) or an instance
+    if any(
+        dtype == leaf for leaf in (pl.String, pl.Int64, pl.Float64, pl.Boolean, pl.Null)
+    ):
+        return True
+    if isinstance(dtype, pl.List):
+        return typed_route_makes(dtype.inner)
+    if isinstance(dtype, pl.Struct):
+        return all(typed_route_makes(field.dtype) for field in dtype.fields)
+    if isinstance(dtype, pl.Map):
+        return dtype.key == pl.String and typed_route_makes(dtype.value)
+    return False

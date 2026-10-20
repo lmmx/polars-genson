@@ -18,7 +18,12 @@ from ._polars_genson import normalise_from_parquet as _rust_normalise_from_parqu
 from ._polars_genson import normalise_json_typed as _rust_normalise_json_typed
 from ._polars_genson import read_parquet_metadata as _rust_read_parquet_metadata
 from ._polars_genson import schema_to_json as _rust_schema_to_json
-from .dtypes import _parse_polars_dtype, contains_map
+from .dtypes import (
+    _parse_polars_dtype,
+    contains_map,
+    project_dtype,
+    typed_route_makes,
+)
 from .utils import parse_into_expr, parse_version  # noqa: F401
 
 if parse_version(pl.__version__) < (2,):
@@ -1191,8 +1196,11 @@ class GensonNamespace:
             - If False leave values as raw JSON strings.
             - If True (default), decode into native Polars datatypes,
               with the schema inferred from the data (may be slower).
-            - If a polars.Schema, decode using the
-              provided schema dtype directly (fast path, skips final schema inference).
+            - If a polars.Schema (or a ``pl.Struct``), decode to that dtype as
+              ``str.json_decode`` decodes the normalised JSON: only its fields, taken
+              by name, null where the data lacks them. The rows are decoded as for
+              ``True`` and projected onto it, unless one of its leaf dtypes differs
+              from the inferred one, when ``str.json_decode`` decodes the JSON text.
         unnest : bool, default True
             Only applies if `decode=True`. If True, expand the decoded struct
             into separate columns for each schema field. If False, keep a
@@ -1303,8 +1311,12 @@ class GensonNamespace:
                     "map_encoding entries cannot decode to Polars"
                 )
 
-            if decode is True:
-                # Inferred once, and the rows normalised straight into Polars dtypes
+            # Inferred once, and the rows normalised straight into Polars dtypes: for
+            # decode=True those of the inferred schema, for a dtype given those projected
+            # onto it where that is exactly what json_decode makes of the JSON text. A
+            # dtype holding one the typed route never makes goes to the text route
+            typed = None
+            if decode is True or typed_route_makes(dtype):
                 typed = _rust_normalise_json_typed(
                     self._df.get_column(column),
                     orjson.dumps(
@@ -1329,13 +1341,21 @@ class GensonNamespace:
                         )
                     ).decode(),
                 )
-                if typed is not None:
-                    series, avro_schema = typed
-                    dtype = pl.Struct(
-                        avro_to_polars_schema(avro_schema, map_encoding=map_encoding)
-                    )
-                    result = series.cast(dtype).to_frame()
+            if typed is not None:
+                series, avro_schema = typed
+                inferred = pl.Struct(
+                    avro_to_polars_schema(avro_schema, map_encoding=map_encoding)
+                )
+                result = series.cast(inferred).to_frame()
+                if decode is True:
                     return result.unnest(column) if unnest else result
+                projected = project_dtype(pl.col(column), inferred, dtype)
+                if projected is not None:
+                    result = result.select(projected.alias(column))
+                    if result.schema[column] == dtype:
+                        return result.unnest(column) if unnest else result
+                # Otherwise the JSON text route, decoded by json_decode itself
+            if decode is True:
                 # Infer Avro schema and convert it to Polars Schema
                 schema = self.infer_polars_schema(
                     column,
