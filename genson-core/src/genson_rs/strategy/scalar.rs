@@ -4,7 +4,7 @@ use simd_json::prelude::{TypedScalarValue, ValueAsScalar};
 
 use crate::genson_rs::strategy::base::{ScalarSchemaStrategy, SchemaStrategy};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NullStrategy {
     extra_keywords: Value,
 }
@@ -43,7 +43,7 @@ impl SchemaStrategy for NullStrategy {
     fn add_object(&mut self, _object: crate::genson_rs::JsonValue) {}
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BooleanStrategy {
     extra_keywords: Value,
 }
@@ -82,7 +82,7 @@ impl SchemaStrategy for BooleanStrategy {
     fn add_object(&mut self, _object: crate::genson_rs::JsonValue) {}
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StringStrategy {
     extra_keywords: Value,
 }
@@ -121,7 +121,7 @@ impl ScalarSchemaStrategy for StringStrategy {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NumberStrategy {
     number_type: &'static str,
     extra_keywords: Value,
@@ -197,7 +197,7 @@ impl SchemaStrategy for NumberStrategy {
 /// schema strategy for schemas with no type. This is only used when
 /// there is no other active strategy, and it will be merged into the
 /// first typed strategy that gets added.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TypelessStrategy {
     extra_keywords: Value,
 }

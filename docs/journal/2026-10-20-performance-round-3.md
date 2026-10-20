@@ -238,6 +238,69 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   polars-genson-py 317 (3 skipped); big_integers.rs's `u64::MAX`-is-an-integer test is
   now at the signed limits, with the value checked through normalisation
 
+### Forced maps on the interned path (perf/forced-maps-interned)
+
+- A field forced to a map sent every row to the usual path (above). The interned path now
+  takes it: rows are lexed and interned as for any other options, a schema is built from
+  each distinct row's states (by the row's identity hash) and forced, and the forced
+  schemas are merged in order by chunks of `max_builders` rows, each distinct schema once,
+  as the usual path merges them. Each chunk's new distinct rows are forced in parallel and
+  dropped once merged (distinct rows are numbered in the order they first appear, so a
+  chunk's new ones are a run)
+- What the per-row forcing reads must be the tree a row's builder gives. Two differences
+  had to go (`ObjectStrategy::unintern`): a property `absorb_deferred` leaves empty, as the
+  same states as an earlier sibling (#254), is given a copy of it, since the forcing
+  rewrites it; and the `properties`/`required` placeholders the interned absorb keeps are
+  dropped
+- The schema is the usual path's up to the order of an object's keywords: `type` comes
+  before `properties` from a row's builder but after it once a node has absorbed another,
+  which a row's builder does for a list of ten or more items (`ListStrategy::add_object`
+  folds them in parallel). Interned states keep no item count, so this order cannot be
+  reproduced from them. It shows only where a schema is copied whole into another's
+  keywords (a forced value beside `null`). The usual path's order did not change with the
+  thread count (1, 3, 4) on the test's 442 compared sets. Properties keep their order
+- `test_interned_forced_maps_match_the_builders`: 600 generated sets, forced at the top,
+  nested, under lists, beside other kinds, rows repeating and differing only in their
+  maps' keys, each delimiter, `wrap_root`, `$schema` and `max_builders`. The processed
+  count, the merged schema and the rewritten schema all match the usual path's, with
+  keywords sorted and properties kept in order. Before the placeholders were dropped, 23
+  of the 442 compared sets differed in keyword order and none otherwise
+- Sitelinks, wikidata-pq's options, prof3 (logs/e17, forced/), release builds, 6 runs each
+  interleaved ABBA:
+
+  | | parent 5d22498 | this | change |
+  |---|---|---|---|
+  | rowsw inference, wall | 0.920 s | 0.093 s | −90% |
+  | rowsw inference, CPU | 3.43 s | 0.33 s | −90% |
+  | rowsw inference + normalise to JSON, wall | 1.091 s | 0.209 s | −81% |
+  | rowsw instructions (one thread) | 24,263M | 2,485M | −89.8% |
+  | rowsw allocations (one thread) | 47.58M (7.26 GB) | 1.50M (0.23 GB) | −96.8% |
+  | rowsw peak RSS (whole process) | 197 MB | 202 MB | +2.5% |
+  | chunk_0 inference, wall | 0.036 s | 0.031 s | within noise |
+  | chunk_0 instructions (one thread) | 666M | 712M | +6.9% |
+  | chunk_0 allocations (one thread) | 1.30M | 1.49M | +14% |
+
+- rowsw's 2,185 rows are 60 shapes (`sitelinks_shapes.py`) and fewer distinct rows still,
+  so the forcing (about 70% of the usual path's instructions, `apply_force_field_types_to_node`)
+  runs once per distinct row. chunk_0's 60 rows are all distinct, so the forcing costs the
+  same on both paths (477M against 493M) and lexing, interning and building from states
+  add the rest. The small-chunk cost is about 46M instructions (a few milliseconds), and
+  no change in wall time could be measured. The extra 5 MB of RSS is the interned row
+  states, held through the merge
+- Schema text, JSON Schema and Avro, is byte-identical between the parent and this on both
+  chunks (hashes in logs/e17). wikidata-pq's five columns keep the same Avro schemas and
+  normalised text on chunk_0 and rowsw as on 1.0.4 (prod_schemas.py, logs/e19)
+- genson-core's tests pass with default features, `avro`, and `avro,parquet`, as do
+  genson-cli's, polars-jsonschema-bridge's and polars-genson-py's (317, 3 skipped)
+- Scorecard (logs/e18): `usual` (event logs with `payload` forced to a map)
+  4,908.5M → 393.9M instructions (−92.0%), 543.6 → 37.8 ms wall, allocations −98.5%, the
+  output identical. The other corpora are unchanged in instructions (±0.2%) and output;
+  their times were taken while builds ran and are not used. The `usual` corpus keeps its
+  name; scorecard.md and the workload say what it now measures
+- A first timing showed no change: the two sides' prof3 had been built into one target
+  directory and the child's copied binary was the parent's. Each side is now built into a
+  directory of its own, and each binary is checked for a string only the change has
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in
@@ -261,7 +324,6 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
 
 ## Missing
 
-- The interned path for forced maps, and `decode=<dtype>` through the typed decoder, are
-  not yet measured as implementations
+- `decode=<dtype>` through the typed decoder is not yet measured as an implementation
 - Whether a 16-minute cast of the typed sitelinks struct to a narrower struct is a Polars
   issue or our dtype

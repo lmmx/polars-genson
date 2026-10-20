@@ -1,0 +1,19 @@
+# prof3 sitelinks (wikidata-pq's normalise_sitelinks options), parent 5d22498 (A) against
+# 58ad87f (B), release builds, all threads (4), 6 runs each interleaved ABBA, one process per run;
+# median [min-max]; mode infer = inference only, json = inference then normalise_to_json
+chunk mode | wall s A -> B | CPU s A -> B | maxrss MB A -> B | schema text hash A, B | rows
+prod/rowsw infer | 0.920 [0.824-0.992] -> 0.093 [0.080-0.117] | 3.43 -> 0.33 | 197 -> 202 | ffb570fd94c37641, ffb570fd94c37641 | 2185
+prod/rowsw json | 1.091 [0.979-1.250] -> 0.209 [0.171-0.229] | 3.95 -> 0.71 | 285 -> 292 | ffb570fd94c37641, ffb570fd94c37641 | 2185
+release/chunk_0 infer | 0.036 [0.035-0.040] -> 0.031 [0.025-0.042] | 0.10 -> 0.11 | 60 -> 61 | ffb570fd94c37641, ffb570fd94c37641 | 60
+release/chunk_0 json | 0.037 [0.026-0.060] -> 0.039 [0.030-0.059] | 0.12 -> 0.12 | 66 -> 68 | ffb570fd94c37641, ffb570fd94c37641 | 60
+
+# callgrind, one thread, inference (prof3::measured), instructions
+rowsw: 24,263,146,601 -> 2,484,757,420 (-89.8%)
+chunk_0: 666,126,796 -> 712,398,692 (+6.9%)
+
+# alloc-stats build (counting allocator), one thread, inference: allocations, bytes allocated
+rowsw: 47,581,563 (7,259.7 MB) -> 1,501,362 (233.9 MB)
+chunk_0: 1,302,087 (199.3 MB) -> 1,486,822 (210.0 MB)
+
+# exact schema text (P3_JSON=1: JSON Schema; default: Avro), both chunks: A and B the same hash
+JSON Schema 5119a812354e8b3a (both sides, both chunks); Avro ffb570fd94c37641 (both sides, both chunks)

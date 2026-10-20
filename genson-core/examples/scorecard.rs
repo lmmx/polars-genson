@@ -368,8 +368,9 @@ fn entity(rng: &mut Rng, i: u64, out: &mut String) {
 
 /// A corpus: its rows, and the config inference runs with.
 fn corpus(name: &str) -> Option<(Vec<String>, SchemaInferenceConfig)> {
-    // The usual path's corpus is the event logs with a field forced to be a map, which the
-    // interned path leaves to it; normalising's is the claims
+    // The `usual` corpus is the event logs with a field forced to be a map, which the usual
+    // path (per-row builders) once took and the interned path now forces row by distinct
+    // row (the name kept, to compare with earlier scorecards); normalising's is the claims
     let name = match name {
         "usual" => {
             let (rows, config) = corpus("events")?;

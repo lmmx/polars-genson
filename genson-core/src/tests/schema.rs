@@ -1496,6 +1496,94 @@ fn test_interned_rows_match_the_builders() {
     );
 }
 
+/// Where a field is forced to be a map, the interned path forces each distinct row's schema
+/// once (built from its states) where the usual path forces every row's: the same processed
+/// count and the same schema, at the top, nested, under lists, beside other kinds, with
+/// rows repeating and differing only in their maps' keys. The same up to the order of an
+/// object's keywords (`type` ahead of `properties` or after them, which follows how a
+/// row's builder merged its lists' items), its properties in the same order.
+#[test]
+fn test_interned_forced_maps_match_the_builders() {
+    let mut rng = Rng(0x9e37_79b9_7f4a_7c15);
+    let (mut compared, mut declined) = (0, 0);
+    for case in 0..600 {
+        let mut rows: Vec<String> = Vec::new();
+        for _ in 0..5 + rng.below(30) {
+            let mut row = String::from("{");
+            for i in 0..1 + rng.below(4) {
+                if i > 0 {
+                    row.push(',');
+                }
+                row.push_str(&format!("\"f{}\":", rng.below(4)));
+                match rng.below(4) {
+                    // A map candidate: keys drawn from many, values random
+                    0 | 1 => {
+                        row.push('{');
+                        for k in 0..rng.below(4) {
+                            if k > 0 {
+                                row.push(',');
+                            }
+                            row.push_str(&format!("\"k{}\":", rng.below(12)));
+                            random_document(&mut rng, 2, &mut row);
+                        }
+                        row.push('}');
+                    }
+                    _ => random_document(&mut rng, 3, &mut row),
+                }
+            }
+            row.push('}');
+            rows.push(row);
+        }
+        for i in 0..rows.len() / 3 {
+            let j = rng.below(rows.len() as u64) as usize;
+            rows.push(rows[i.min(j)].clone());
+        }
+        let forced: &[(&str, &str)] = [
+            &[("f0", "map")][..],
+            &[("f0", "map"), ("f1", "map")],
+            &[("f1", "map"), ("f2", "record")],
+            &[("k3", "map")],
+        ][case % 4];
+        let config = SchemaInferenceConfig {
+            delimiter: [Some(b'\n'), None][(case / 4) % 2],
+            wrap_root: [None, Some("w".to_string())][(case / 8) % 2].clone(),
+            schema_uri: [Some("AUTO".to_string()), None][(case / 16) % 2].clone(),
+            max_builders: [None, Some(1), Some(3), Some(7)][(case / 32) % 4],
+            force_field_types: forced
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect(),
+            ..Default::default()
+        };
+        let mut interned = get_builder(config.schema_uri.as_deref());
+        let by_interned = process_json_strings_interned(&rows, &config, &mut interned);
+        let mut usual = get_builder(config.schema_uri.as_deref());
+        let by_builders = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            process_json_strings_parallel(&rows, &config, &mut usual)
+        }));
+        match (by_interned, by_builders) {
+            (Some(count), Ok(Ok(expected))) => {
+                assert_eq!(count, expected, "processed count, rows {rows:?}, {config:?}");
+                assert_eq!(
+                    keywords_sorted(&interned.to_schema()).to_string(),
+                    keywords_sorted(&usual.to_schema()).to_string(),
+                    "rows {rows:?}, config {config:?}"
+                );
+                // And so the same rewritten schema
+                let rewritten = |builder| {
+                    keywords_sorted(&rewrite_merged(builder, &config, Rewrite::Dag)).to_string()
+                };
+                assert_eq!(rewritten(interned), rewritten(usual), "rows {rows:?}");
+                compared += 1;
+            }
+            (Some(_), Ok(Err(e))) => panic!("interned where the builders fail ({e}): {rows:?}"),
+            (Some(_), Err(_)) => panic!("interned where the builders panic: {rows:?}"),
+            (None, _) => declined += 1,
+        }
+    }
+    eprintln!("interned forced maps: compared {compared}, declined {declined}");
+    assert!(compared > 400, "compared {compared}, declined {declined}");
+}
 
 /// Rows that differ only in what their objects all hold (`required`) are distinct rows, so
 /// each is counted and merged: the interned states give the builders' count and schema.
@@ -1563,5 +1651,32 @@ fn test_interned_merge_keeps_each_chunks_keywords_in_place() {
                 );
             }
         }
+    }
+}
+
+/// `schema` with each object's keywords sorted, and its properties (whose order is the
+/// order of the fields they give) left in their order: the schema up to the order of its
+/// keywords, which no reader of it depends on.
+fn keywords_sorted(schema: &Value) -> Value {
+    match schema {
+        Value::Object(map) => {
+            let mut keys: Vec<&String> = map.keys().collect();
+            keys.sort();
+            let sorted = keys.into_iter().map(|key| {
+                let value = match (key.as_str(), &map[key]) {
+                    ("properties" | "patternProperties", Value::Object(props)) => Value::Object(
+                        props
+                            .iter()
+                            .map(|(name, prop)| (name.clone(), keywords_sorted(prop)))
+                            .collect(),
+                    ),
+                    (_, value) => keywords_sorted(value),
+                };
+                (key.clone(), value)
+            });
+            Value::Object(sorted.collect())
+        }
+        Value::Array(items) => Value::Array(items.iter().map(keywords_sorted).collect()),
+        value => value.clone(),
     }
 }
