@@ -1,0 +1,9 @@
+2185 rows, 83.2 MB of sitelinks JSON, polars-genson ?
+infer, forced to a map (production)            0.717 s  [0.710-0.720]
+infer, not forced                              0.041 s  [0.040-0.042]
+  same schema: False
+expression to JSON text (kv), forced           0.793 s  [0.788-1.172]
+json_decode of that text alone                 1.206 s  [0.868-1.399]
+normalise_json(decode=RAW), forced (production)   1.864 s  [1.856-1.900]
+normalise_json(decode=True, kv), forced        0.885 s  [0.776-1.320]
+  typed dtype: Struct({'sitelinks': List(Struct({'key': String, 'value': Struct({'site': String, 'title': String, 'badges': List(String), 'url': String})}))})

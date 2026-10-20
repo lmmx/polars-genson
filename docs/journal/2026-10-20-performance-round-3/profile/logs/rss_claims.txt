@@ -1,0 +1,15 @@
+rowsw.parquet nfp 250 in 32.9MB base 445 peak+110MB ratio 3.51 wall 0.41 cpu 0.66
+rowsw.parquet nfp 500 in 69.4MB base 548 peak+145MB ratio 2.19 wall 0.61 cpu 1.17
+rowsw.parquet nfp 1000 in 141.4MB base 688 peak+233MB ratio 1.73 wall 0.48 cpu 0.88
+rowsw.parquet nfp 2185 in 322.5MB base 1008 peak+338MB ratio 1.10 wall 1.20 cpu 2.63
+chunk_0.parquet nfp 60 in 23.8MB base 178 peak+202MB ratio 8.90 wall 0.34 cpu 0.45
+rowsw.parquet json 250 in 32.9MB base 408 peak+185MB ratio 5.89 wall 0.57 cpu 0.64
+rowsw.parquet json 500 in 69.4MB base 408 peak+239MB ratio 3.61 wall 0.71 cpu 0.97
+rowsw.parquet json 1000 in 141.4MB base 408 peak+330MB ratio 2.44 wall 1.83 cpu 2.73
+rowsw.parquet json 2185 in 322.5MB base 408 peak+744MB ratio 2.42 wall 4.03 cpu 6.09
+chunk_0.parquet json 60 in 23.8MB base 111 peak+182MB ratio 8.01 wall 0.37 cpu 0.42
+rowsw.parquet typed 250 in 32.9MB base 408 peak+168MB ratio 5.36 wall 0.66 cpu 0.70
+rowsw.parquet typed 500 in 69.4MB base 408 peak+228MB ratio 3.45 wall 1.48 cpu 1.69
+rowsw.parquet typed 1000 in 141.4MB base 408 peak+339MB ratio 2.51 wall 2.46 cpu 2.61
+rowsw.parquet typed 2185 in 322.5MB base 408 peak+758MB ratio 2.47 wall 4.15 cpu 4.49
+chunk_0.parquet typed 60 in 23.8MB base 112 peak+150MB ratio 6.60 wall 0.41 cpu 0.29

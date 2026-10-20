@@ -1,0 +1,92 @@
+== inclusive (total 457.3M Ir)
+       457.3M 100.0%  prof3::measured
+       233.3M  51.0%  prof3::step_typed
+       233.2M  51.0%  <genson_core::normalise::typed::ArrowPlan>::normalise
+       223.7M  48.9%  prof3::step_infer
+       219.1M  47.9%  genson_core::phase::rows::<core::option::Option<alloc::vec::Vec<..>>, genson_core::schema::process_json_strings_interned<&str>::{closure#1}>
+       219.1M  47.9%  rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&str>, rayon::iter::map::MapConsumer<rayon::iter::inspect::InspectConsumer<
+       219.1M  47.9%  rayon_core::join::join_context::<rayon::iter::plumbing::bridge_producer_consumer::helper<rayon::slice::chunks::ChunksProducer<&str>, rayon::iter::map::MapConsumer<rayon::
+       218.9M  47.9%  <genson_core::genson_rs::interned::RowStates>::row
+       197.5M  43.2%  <genson_core::tape::Lexer>::value
+       134.3M  29.4%  <genson_core::normalise::typed::Decoder>::put
+       134.0M  29.3%  <genson_core::tape::Lexer>::string
+        88.3M  19.3%  <genson_core::genson_rs::interned::RowStates>::value
+        33.0M   7.2%  genson_core::normalise::typed::has_repeat
+        31.7M   6.9%  <genson_core::genson_rs::interned::RowStates>::key_id
+        14.3M   3.1%  <genson_core::genson_rs::interned::RowStates>::hash
+         7.0M   1.5%  <genson_core::normalise::typed::Decoder>::str_of
+         5.6M   1.2%  <genson_core::normalise::typed::Decoder>::text
+         3.1M   0.7%  genson_core::phase::merge::<..>
+         3.0M   0.7%  <genson_core::genson_rs::node::SchemaNode>::absorb_deferred
+         2.6M   0.6%  <genson_core::genson_rs::node::SchemaNode>::absorb_interned_deferred
+         2.6M   0.6%  <genson_core::genson_rs::node::SchemaNode>::absorb_interned_strategy_deferred
+         2.2M   0.5%  <genson_core::genson_rs::interned::RowStates>::object
+         1.1M   0.3%  <rustc_hash::FxBuildHasher as core::hash::BuildHasher>::hash_one::<&genson_core::genson_rs::interned::Obj>
+         1.1M   0.2%  <genson_core::genson_rs::strategy::object::ObjectStrategy>::absorb_interned_keywords
+         0.6M   0.1%  genson_core::tape::unescape_into::<..>
+         0.6M   0.1%  <..>::get::<genson_core::genson_rs::interned::Obj>
+         0.4M   0.1%  <genson_core::genson_rs::interned::RowStates>::state
+         0.4M   0.1%  genson_core::phase::avro::<..>
+         0.4M   0.1%  <genson_core::schema::core::SchemaInferenceResult>::to_avro_schema
+         0.4M   0.1%  avrotize::converter::jsons_to_avro
+         0.4M   0.1%  genson_core::schema::rewrite_merged
+         0.3M   0.1%  avrotize::converter::definitions::innermod::process_definition
+         0.3M   0.1%  avrotize::converter::conversion::innermod::json_schema_object_to_avro_record
+         0.3M   0.1%  avrotize::common::names::avro_name
+         0.3M   0.1%  <regex::regex::string::Regex>::new
+         0.3M   0.1%  <regex::builders::string::RegexBuilder>::build
+         0.3M   0.1%  <regex_automata::meta::regex::Builder>::build
+         0.3M   0.1%  genson_core::phase::write_schema::<u32, genson_core::schema::rewrite_merged::{closure#4}>
+         0.3M   0.1%  <genson_core::genson_rs::node::SchemaNode>::to_dag
+         0.3M   0.1%  <genson_core::genson_rs::strategy::BasicSchemaStrategy>::to_dag
+         0.3M   0.1%  <genson_core::genson_rs::strategy::object::ObjectStrategy>::properties_to_dag
+         0.3M   0.1%  regex_automata::meta::strategy::new
+         0.2M   0.1%  core::ptr::drop_glue::<genson_core::genson_rs::interned::RowStates>
+         0.2M   0.0%  <genson_core::dag::Dag>::sym
+         0.2M   0.0%  <regex_automata::nfa::thompson::compiler::Compiler>::build_many_from_hir::<&regex_syntax::hir::Hir>
+== exclusive (total 457.3M Ir)
+       190.3M  41.6%  events annotated
+        50.9M  11.1%  <genson_core::tape::Lexer>::string
+        18.5M   4.0%  let found = zero(w ^ (ONES * u64::from(b'"')))
+        17.0M   3.7%  __memcpy_avx_unaligned_erms
+        15.7M   3.4%  <genson_core::genson_rs::interned::RowStates>::row
+        13.6M   3.0%  <genson_core::tape::Lexer>::value
+        12.3M   2.7%  <genson_core::genson_rs::interned::RowStates>::value
+        11.7M   2.6%  __memcmp_avx2_movbe
+        11.1M   2.4%  if found != 0 {
+         8.9M   2.0%  <..>
+         8.4M   1.8%  }
+         8.4M   1.8%  self.i += 1;
+         7.9M   1.7%  <..>::append_value::<&str>
+         7.4M   1.6%  | zero(w ^ (ONES * u64::from(b'\\')))
+         6.5M   1.4%  fn string(&mut self) -> Result<(u32, u32, bool), Invalid> {
+         6.5M   1.4%  return Ok((start as u32, self.i as u32 - 1, escaped));
+         5.6M   1.2%  self.b.get(self.i).copied()
+         5.3M   1.2%  <..>::insert
+         5.3M   1.2%  <..>::get::<str>
+         5.1M   1.1%  <genson_core::genson_rs::interned::RowStates>::key_id
+         4.8M   1.0%  fn put(
+         4.7M   1.0%  while let Some(chunk) = s.get(i..i + 8) {
+         4.2M   0.9%  pub fn append_value(&mut self, value: impl AsRef<T::Native>) {
+         3.3M   0.7%  fn value(&mut self, depth: usize) -> Result<(), Invalid> {
+         3.3M   0.7%  <genson_core::normalise::typed::Decoder>::str_of
+         2.8M   0.6%  match self.peek() {
+         2.8M   0.6%  Ok(match toks[i] {
+         2.6M   0.6%  genson_core::normalise::typed::has_repeat
+         2.6M   0.6%  fn value(&mut self, text: &str, toks: &[Tok], i: usize) -> Result<StateId, Unsupported> {
+         2.4M   0.5%  match (node, col) {
+         2.3M   0.5%  match toks[i] {
+         2.3M   0.5%  fn key_id(&mut self, key: &str) -> KeyId {
+         2.1M   0.5%  let Tok::Str(s, e, escaped) = toks[j] else {
+         1.9M   0.4%  while let Some(b' ' | b'\n' | b'\t' | b'\r') = self.peek() {
+         1.9M   0.4%  <genson_core::normalise::typed::Decoder>::text
+         1.9M   0.4%  if self.peek() == Some(c) {
+         1.9M   0.4%  &self.row[start as usize..end as usize]
+         1.9M   0.4%  let value = self.value(text, toks, j + 1)?;
+         1.7M   0.4%  s1 ^= ((hi as u64) << 8) | mid as u64;
+         1.6M   0.4%  Ok(matches!(self.put(node, col, item, field_name)?, Put::Kept))
+         1.6M   0.4%  let put = self.put_or_prune(values, value_col, Input::Tok(value_tok), Some(&key));
+         1.4M   0.3%  let (start, end, escaped) = self.string()?;
+         1.4M   0.3%  let key = |&(key, _): &(usize, usize)| match toks[key] {
+         1.4M   0.3%  :Str(s, e, escaped) => self.str_of(s, e, escaped),
+         1.4M   0.3%  match tok {
