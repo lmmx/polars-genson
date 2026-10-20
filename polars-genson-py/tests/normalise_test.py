@@ -278,7 +278,8 @@ def test_normalise_record_expands_to_struct():
             "active": {"active__boolean": False, "active__string": None},
         },
         {
-            "id": {"id__integer": None, "id__string": None},
+            # A null id stays null (avrotize keeps a nullable type list's null)
+            "id": None,
             "tags": None,
             "labels": {"es": "Hola", "fr": "Bonjour", "en": None},
             "active": None,
@@ -315,7 +316,8 @@ def test_normalise_map_currently_expands_to_struct():
             "active": {"active__boolean": False, "active__string": None},
         },
         {
-            "id": {"id__integer": None, "id__string": None},
+            # A null id stays null (avrotize keeps a nullable type list's null)
+            "id": None,
             "tags": None,
             "labels": {"es": "Hola", "fr": "Bonjour"},
             "active": None,
