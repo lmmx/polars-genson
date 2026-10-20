@@ -246,6 +246,9 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         vec![input] // Don't clone, just move
     };
 
+    // Strings to be coerced to the numbers or booleans beside them need no fields of their own
+    config.coerce_strings = coerce_string;
+
     // Infer schema - genson-core should handle any panics and return proper errors
     let result = infer_json_schema(&json_strings, Some(config.clone()))
         .map_err(|e| format!("Schema inference failed: {}", e))?;

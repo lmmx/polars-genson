@@ -761,6 +761,83 @@ fn try_mixed_scalar_promotion(
     }))
 }
 
+/// Whether types (other than `null`) hold values no one of them can: scalars of two kinds
+/// other than an integer and a number (which widen to a number), or a record or an array
+/// beside another type. A string does not clash with numbers or booleans it is to be
+/// coerced to (`coerce_strings`).
+fn kinds_clash<'a>(
+    kinds: impl IntoIterator<Item = &'a str>,
+    config: &SchemaInferenceConfig,
+) -> bool {
+    let kinds: std::collections::BTreeSet<&str> = kinds.into_iter().collect();
+    let coerced = config.coerce_strings
+        && kinds
+            .iter()
+            .any(|&t| matches!(t, "integer" | "number" | "boolean"));
+    let kinds: Vec<&str> = kinds
+        .into_iter()
+        .filter(|&t| t != "null" && !(coerced && t == "string"))
+        .collect();
+    kinds.len() >= 2 && !kinds.iter().all(|&t| t == "integer" || t == "number")
+}
+
+/// Whether a schema of several types holds values no one of them can (`kinds_clash`). Its
+/// values are kept as an `anyOf` of its types would keep them.
+pub(crate) fn type_union_clashes(
+    schema: &Map<String, Value>,
+    config: &SchemaInferenceConfig,
+) -> bool {
+    let Some(Value::Array(types)) = schema.get("type") else {
+        return false;
+    };
+    kinds_clash(types.iter().filter_map(Value::as_str), config)
+}
+
+/// The branches of a schema of several types, one per type: `{"type": ["object",
+/// "integer"]}` is a record with no fields and an integer, the record taking the schema's
+/// `properties`, `required` and `additionalProperties`, and an array its `items`. In
+/// `type_rank`'s order, so what they are rewritten to does not depend on the order their
+/// types were seen. `None` for a schema of one type, nullable or not.
+pub(crate) fn type_union_branches(schema: &Map<String, Value>) -> Option<Vec<Value>> {
+    let Some(Value::Array(types)) = schema.get("type") else {
+        return None;
+    };
+    let mut types: Vec<&str> = types.iter().map(Value::as_str).collect::<Option<_>>()?;
+    if types.iter().filter(|&&t| t != "null").count() < 2 {
+        return None;
+    }
+    types.sort_by_key(|t| crate::schema::type_string_rank(t));
+    let branches = types.into_iter().map(|t| {
+        let keys: &[&str] = match t {
+            "object" => &["properties", "required", "additionalProperties"],
+            "array" => &["items"],
+            _ => &[],
+        };
+        let mut branch = Map::new();
+        branch.insert("type".to_string(), t.into());
+        for &key in keys {
+            if let Some(value) = schema.get(key) {
+                branch.insert(key.to_string(), value.clone());
+            }
+        }
+        Value::Object(branch)
+    });
+    Some(branches.collect())
+}
+
+/// Whether a schema is `null` alone.
+fn is_null_schema(schema: &Value) -> bool {
+    schema.get("type").is_some_and(|t| t == "null")
+}
+
+/// Whether the scalars of these schemas are of kinds that clash (`kinds_clash`).
+fn scalar_kinds_clash(schemas: &[&Value], config: &SchemaInferenceConfig) -> bool {
+    let kinds = schemas
+        .iter()
+        .filter_map(|&s| get_scalar_type_name(normalise_nullable(s)));
+    kinds_clash(kinds, config)
+}
+
 pub(crate) fn unify_anyof_schemas(
     schemas: &[&Value],
     field_name: &str,
@@ -769,15 +846,37 @@ pub(crate) fn unify_anyof_schemas(
     if !config.wrap_scalars {
         return None;
     }
+    // A branch of several types that clash is a union of its own, one branch per type
+    let clashing = |s: &&Value| s.as_object().is_some_and(|o| type_union_clashes(o, config));
+    let split: Option<Vec<Value>> = schemas.iter().any(clashing).then(|| {
+        schemas
+            .iter()
+            .flat_map(|s| match s.as_object().filter(|_| clashing(s)) {
+                Some(union) => type_union_branches(union).unwrap_or_else(|| vec![(*s).clone()]),
+                None => vec![(*s).clone()],
+            })
+            .collect()
+    });
+    let flat: Vec<&Value>;
+    let schemas = match &split {
+        Some(split) => {
+            flat = split.iter().collect();
+            flat.as_slice()
+        }
+        None => schemas,
+    };
     if let Some(array) = unify_into_array(schemas, config) {
         return Some(array);
     }
 
-    // Check if we have the specific case: some scalars, some objects
+    // Scalars among records (also records with no fields), or scalars of kinds that do not
+    // widen to one: each kind is kept in a field of its own
     let has_scalars = schemas.iter().any(|&s| is_scalar_schema(s));
-    let has_objects = schemas.iter().any(|&s| is_object_schema(s));
+    let has_objects = schemas
+        .iter()
+        .any(|&s| is_object_schema(s) || is_empty_record_schema(s));
 
-    if !has_scalars || !has_objects {
+    if !has_scalars || !(has_objects || scalar_kinds_clash(schemas, config)) {
         return None; // Not the mixed case we handle
     }
 
@@ -786,9 +885,11 @@ pub(crate) fn unify_anyof_schemas(
         "anyOf unification: promoting scalars for field '{}'", field_name
     );
 
-    // Each scalar wrapped as a record of one field, then all unified as records
+    // Each scalar wrapped as a record of one field, then all unified as records; `null` adds
+    // nothing, a promoted field holding a value in only some rows
     let promoted = schemas
         .iter()
+        .filter(|&&schema| !is_null_schema(schema))
         .map(|&schema| {
             if !is_scalar_schema(schema) {
                 return Some(Cow::Borrowed(schema));
@@ -862,16 +963,27 @@ fn unify_into_array(schemas: &[&Value], config: &SchemaInferenceConfig) -> Optio
         return None;
     }
     // An array seen only empty has no items, or empty ones, and constrains nothing
+    // Items seen only as `null` type nothing but the items' nullability
+    let mut null_items = false;
     let mut items: Vec<&Value> = arrays
         .iter()
         .filter_map(|a| a.get("items"))
         .filter(|items| items.as_object().is_none_or(|o| !o.is_empty()))
+        .filter(|&items| {
+            null_items |= is_null_schema(items);
+            !is_null_schema(items)
+        })
         .collect();
     items.extend(others.iter().map(Cow::as_ref));
     let items = match items.as_slice() {
         [only] => (*only).clone(),
         _ => check_unifiable_schemas(&items, "", config)
             .or_else(|| unify_anyof_schemas(&items, "", config))?,
+    };
+    let items = if null_items {
+        make_nullable(items)
+    } else {
+        items
     };
     debug!(
         config,

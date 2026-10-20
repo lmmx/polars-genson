@@ -1104,25 +1104,34 @@ fn test_union_of_an_array_and_other_branches_keeps_their_values() {
     );
 }
 
-/// A union of an array with what its items cannot unify with stays a union, as before:
-/// different scalars, a branch that is itself a union of types, or `wrap_scalars` off.
-#[cfg(feature = "avro")]
+/// A union of an array with scalars of other kinds than its items', or with a branch that
+/// is itself a union of types, is one array holding them all, each kind in a field of its
+/// own; with `wrap_scalars` off it stays a union, as before.
+#[cfg(all(feature = "avro", feature = "parquet"))]
 #[test]
-fn test_union_of_an_array_and_other_branches_it_cannot_hold_stays() {
+fn test_union_of_an_array_and_other_kinds_holds_every_value() {
     use crate::SchemaInferenceConfig;
-    for (rows, wrap_scalars) in [
-        (&[r#"{"x":[[1],"a"]}"#][..], true),
-        (&[r#"{"u":-4}"#, r#"{"u":[]}"#, r#"{"u":{}}"#][..], true),
-        (&[r#"{"r":[[{"d":null}],{"d":9}]}"#][..], false),
+    for rows in [
+        &[r#"{"x":[[1],"a"]}"#][..],
+        &[r#"{"u":-4}"#, r#"{"u":[]}"#, r#"{"u":{}}"#],
     ] {
-        let config = SchemaInferenceConfig {
-            delimiter: Some(b'\n'),
-            wrap_scalars,
-            ..Default::default()
-        };
-        let schema = crate::infer_json_schema_from_strings(rows, config).unwrap().schema;
-        assert!(schema.to_string().contains("anyOf"), "{rows:?}: {schema}");
+        let (schema, normalised) = normalised_against_inferred(rows, true);
+        assert!(!schema.to_string().contains("anyOf"), "{rows:?}: {schema}");
+        for (row, out) in rows.iter().zip(&normalised) {
+            let mut counts = std::collections::HashMap::new();
+            count_scalars(&serde_json::from_str(row).unwrap(), &mut counts, 1);
+            count_scalars(out, &mut counts, -1);
+            assert!(counts.values().all(|&c| c == 0), "{row} -> {out}");
+        }
     }
+    let config = SchemaInferenceConfig {
+        delimiter: Some(b'\n'),
+        wrap_scalars: false,
+        ..Default::default()
+    };
+    let rows = [r#"{"r":[[{"d":null}],{"d":9}]}"#];
+    let schema = crate::infer_json_schema_from_strings(&rows, config).unwrap().schema;
+    assert!(schema.to_string().contains("anyOf"), "{rows:?}: {schema}");
 }
 
 /// For random JSON text (valid, invalid and missing rows), schemas inferred from the valid

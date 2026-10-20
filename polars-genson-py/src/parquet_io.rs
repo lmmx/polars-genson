@@ -94,6 +94,7 @@ pub fn infer_from_parquet(
             .into_iter()
             .collect(),
         wrap_scalars,
+        coerce_strings: false,
         avro,
         wrap_root,
         no_root_map,
@@ -271,6 +272,7 @@ pub fn normalise_from_parquet(
             .into_iter()
             .collect(),
         wrap_scalars,
+        coerce_strings,
         avro: true,
         wrap_root: wrap_root.clone(),
         no_root_map,

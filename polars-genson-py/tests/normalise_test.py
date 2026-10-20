@@ -60,11 +60,10 @@ def test_string_coercion_disabled_by_default():
 
     out = df.genson.normalise_json("json_data", decode=False).to_list()
 
-    # String "42" is not coerced to int, "true" not coerced to bool
-    assert '"id":"42"' not in out[0]
-    assert '"id":null' in out[0]
-    assert '"active":"true"' not in out[0]
-    assert '"active":null' in out[0]
+    # String "42" is not coerced to int, "true" not coerced to bool: each keeps a field of
+    # its own beside the other rows' integer and boolean
+    assert '"id":{"id__integer":null,"id__string":"42"}' in out[0]
+    assert '"active":{"active__boolean":null,"active__string":"true"}' in out[0]
 
 
 def test_string_coercion_enabled():
@@ -267,19 +266,19 @@ def test_normalise_record_expands_to_struct():
     # Full output snapshot, not partial assertion
     assert out == [
         {
-            "id": None,
+            "id": {"id__integer": None, "id__string": "123"},
             "tags": None,
             "labels": {"es": None, "fr": None, "en": None},
-            "active": None,
+            "active": {"active__boolean": None, "active__string": "true"},
         },
         {
-            "id": 456,
+            "id": {"id__integer": 456, "id__string": None},
             "tags": ["x", "y"],
             "labels": {"es": None, "fr": None, "en": "Hello"},
-            "active": False,
+            "active": {"active__boolean": False, "active__string": None},
         },
         {
-            "id": None,
+            "id": {"id__integer": None, "id__string": None},
             "tags": None,
             "labels": {"es": "Hola", "fr": "Bonjour", "en": None},
             "active": None,
@@ -303,15 +302,20 @@ def test_normalise_map_currently_expands_to_struct():
 
     # Full output snapshot, not partial assertion
     assert out == [
-        {"id": None, "tags": None, "labels": None, "active": None},
         {
-            "id": 456,
-            "tags": ["x", "y"],
-            "labels": {"en": "Hello"},
-            "active": False,
+            "id": {"id__integer": None, "id__string": "123"},
+            "tags": None,
+            "labels": None,
+            "active": {"active__boolean": None, "active__string": "true"},
         },
         {
-            "id": None,
+            "id": {"id__integer": 456, "id__string": None},
+            "tags": ["x", "y"],
+            "labels": {"en": "Hello"},
+            "active": {"active__boolean": False, "active__string": None},
+        },
+        {
+            "id": {"id__integer": None, "id__string": None},
             "tags": None,
             "labels": {"es": "Hola", "fr": "Bonjour"},
             "active": None,

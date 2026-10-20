@@ -143,6 +143,34 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   (`a__integer`, `__string` among a list's items); integers and numbers alone still widen
   to a number; `coerce_strings` keeps coercing a string beside numbers or booleans
 
+### Scalars of kinds that clash keep a field each (fix/mixed-scalar-kinds-promote)
+
+- The promotion that keeps a scalar beside a record (`unify_anyof_schemas`) now also
+  takes: scalars of kinds that clash with no record among them; a record with no fields
+  as a record; a branch of several clashing types, split into one branch per type. A
+  schema of several clashing types (`{"type": ["integer", "string"]}`) is rewritten as an
+  `anyOf` of them in `type_rank`'s order; `null` among the branches adds nothing (a
+  promoted field holds a value in some rows only); a list's items seen only as `null`
+  make the absorbed items nullable. The Value rewrite and the DAG rewrite alike
+- Integers and numbers alone still widen to a number; `wrap_scalars=False` leaves every
+  union as before; with `coerce_strings` a string beside numbers or booleans does not
+  clash with them (`SchemaInferenceConfig::coerce_strings`, set by the CLI and
+  polars-genson's normalisation, and `infer_polars_schema(coerce_strings=)`), so the
+  `normalise_union_coercion` snapshot is unchanged
+- On the same seeds as 1.0.4 (logs/e5, e6): 63 of 600 sets lose a value with every scalar
+  kind (334 before), 62 of 800 with integers and null (191 before). What is left is a
+  list beside a record whose fields clash (`[{"a": -7}]` and `{"a": []}`): record
+  unification gives up on a field whose types differ
+- soundness_cases.py (logs/e7): every case keeps its values but the forced map's (its
+  values typed string), the integer above `i64::MAX`, and the list of records beside a
+  record of lists
+- Tests that held the dropped values are updated to the kept ones: genson-core's
+  reorder.rs and the array-union test, polars-genson-py's union_reorder_test.py and three
+  normalise_test.py snapshots (`"123"` and `"true"` were nulls); decode_typed_test.py's
+  text route now passes `coerce_strings` to `infer_polars_schema`
+- genson-core 153 tests (default features) and 233 (avro, parquet), genson-cli 181,
+  polars-jsonschema-bridge 37, polars-genson-py 317 (3 skipped); clippy and precommit clean
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in
