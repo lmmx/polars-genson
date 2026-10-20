@@ -184,7 +184,8 @@ bench-update:
     tmp=$(mktemp)
     trap 'rm -f "$tmp"' EXIT
 
-    for version in "${missing[@]}"; do
+    for ((i=${#missing[@]}-1; i>=0; i--)); do
+        version="${missing[i]}"
         echo
         echo "=== Benchmarking polars-genson $version ==="
 
@@ -202,11 +203,27 @@ bench-update:
             continue
         fi
 
+        # Build the new benchmark section.
+        section=$(mktemp)
+        
         {
-            printf '\n---\n\n## polars-genson %s\n\n```py\n' "$version"
+            printf '\n## polars-genson %s\n\n```py\n' "$version"
             grep -v '100%' "$tmp" || true
-            printf '```\n'
-        } >> README.md
+            printf '```\n\n---\n'
+        } > "$section"
+        
+        # Insert directly below the README heading.
+        awk -v section="$section" '
+            NR == 1 {
+                print
+                while ((getline line < section) > 0) print line
+                next
+            }
+            { print }
+        ' README.md > README.md.tmp
+        
+        mv README.md.tmp README.md
+        rm "$section"
 
         echo "Recorded $version in README.md"
     done
