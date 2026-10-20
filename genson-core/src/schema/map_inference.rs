@@ -103,7 +103,10 @@ pub(crate) fn forced_map_value_schema(
     map_value_schema(&values, no_unify, field_name, config)
 }
 
-/// The schema of a map's `values`: see `forced_map_value_schema`.
+/// The schema of a map's `values`: see `forced_map_value_schema`. `null` values type
+/// nothing but the values' nullability (`null ⊔ T` is nullable `T`), and values of kinds
+/// that clash keep a field each (as `unify_anyof_schemas` promotes them) rather than
+/// becoming text.
 fn map_value_schema(
     values: &[&Value],
     no_unify: bool,
@@ -111,17 +114,34 @@ fn map_value_schema(
     config: &SchemaInferenceConfig,
 ) -> Value {
     let string = || serde_json::json!({ "type": "string" });
+    let nullable = values.iter().any(|v| is_null_schema(v));
+    let values: Vec<&Value> = values
+        .iter()
+        .copied()
+        .filter(|v| !is_null_schema(v))
+        .collect();
     let Some(first) = values.first() else {
         return serde_json::json!({ "type": "null" });
     };
     let first = non_null_view(first);
-    if values.iter().all(|v| non_null_view(v).eq(&first)) {
-        return first.to_value();
-    }
-    if no_unify {
+    let unified = if values.iter().all(|v| non_null_view(v).eq(&first)) {
+        first.to_value()
+    } else if no_unify {
         return string();
+    } else {
+        let field = field_name.unwrap_or("");
+        match check_unifiable_schemas(&values, field, config)
+            .or_else(|| unify_anyof_schemas(&values, field, config))
+        {
+            Some(unified) => unified,
+            None => return string(),
+        }
+    };
+    if nullable {
+        make_nullable(unified)
+    } else {
+        unified
     }
-    check_unifiable_schemas(values, field_name.unwrap_or(""), config).unwrap_or_else(string)
 }
 
 /// Process anyOf unions in a schema recursively

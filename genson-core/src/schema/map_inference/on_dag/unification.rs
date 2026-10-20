@@ -105,10 +105,17 @@ impl OnDag<'_> {
         obj.build(&mut self.dag)
     }
 
-    /// `["null", t]`
+    /// `null_and`: `["null", t]`, or a list of types `t` with `null` put first in it.
     fn null_and(&mut self, t: Id) -> Id {
         let null = self.dag.string(kw::NULL);
-        self.dag.array(&[null, t])
+        match self.dag.as_array(t).map(<[Id]>::to_vec) {
+            Some(types) if types.iter().any(|&t| self.is_null(t)) => t,
+            Some(types) => {
+                let types: Vec<Id> = std::iter::once(null).chain(types).collect();
+                self.dag.array(&types)
+            }
+            None => self.dag.array(&[null, t]),
+        }
     }
 
     /// `NonNullView::to_value` of `non_null_view`: two schemas' views are equal when these
@@ -523,7 +530,7 @@ impl OnDag<'_> {
     }
 
     /// `make_nullable`
-    fn make_nullable(&mut self, schema: Id) -> Id {
+    pub(super) fn make_nullable(&mut self, schema: Id) -> Id {
         match self.dag.get(schema, kw::TYPE) {
             Some(t) if self.dag.as_sym(t).is_some_and(|t| t != kw::NULL) => {
                 let types = self.null_and(t);
@@ -711,7 +718,7 @@ impl OnDag<'_> {
     }
 
     /// `is_null_schema`
-    fn is_null_schema(&self, schema: Id) -> bool {
+    pub(super) fn is_null_schema(&self, schema: Id) -> bool {
         self.dag
             .get(schema, kw::TYPE)
             .is_some_and(|t| self.is_null(t))

@@ -1,0 +1,224 @@
+== mixed scalars: ['{"a": 1}', '{"a": "x"}']
+  json schema: {"a": {"type": "object", "properties": {"a__integer": {"type": ["null", "integer"]}, "a__string": {"type": ["null", "string"]}}}}
+  polars schema: Schema({'a': Struct({'a__integer': Int64, 'a__string': String})})
+  avro schema: [{"name": "a", "type": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "a__integer", "type": ["null", "int"]}, {"name": "a__string", "type": ["null", "string"]}]}}]
+  decode=False dtype=String ok
+    row0 -> {"a": {"a__integer": 1, "a__string": null}}
+  decode=True dtype=Struct({'a': Struct({'a__integer': Int64, 'a__string': String})}) ok
+    row0 -> {"a": {"a__integer": 1, "a__string": null}}
+== mixed scalars in a list: ['{"a": [1, "x"]}', '{"a": [2]}']
+  json schema: {"a": {"type": "array", "items": {"type": "object", "properties": {"__integer": {"type": ["null", "integer"]}, "__string": {"type": ["null", "string"]}}}}}
+  polars schema: Schema({'a': List(Struct({'__integer': Int64, '__string': String}))})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "__integer", "type": ["null", "int"]}, {"name": "__string", "type": ["null", "string"]}]}}}]
+  decode=False dtype=String ok
+    row0 -> {"a": [{"__integer": 1, "__string": null}, {"__integer": null, "__string": "x"}]}
+  decode=True dtype=Struct({'a': List(Struct({'__integer': Int64, '__string': String}))}) ok
+    row0 -> {"a": [{"__integer": 1, "__string": null}, {"__integer": null, "__string": "x"}]}
+== mixed scalars, float and int: ['{"a": 1}', '{"a": 1.5}']
+  json schema: {"a": {"type": "number"}}
+  polars schema: Schema({'a': Float64})
+  avro schema: [{"name": "a", "type": "float"}]
+  decode=False dtype=String ok
+    row0 -> {"a": 1.0}
+  decode=True dtype=Struct({'a': Float64}) ok
+    row0 -> {"a": 1.0}
+== mixed scalars, bool and int: ['{"a": true}', '{"a": 3}']
+  json schema: {"a": {"type": "object", "properties": {"a__boolean": {"type": ["null", "boolean"]}, "a__integer": {"type": ["null", "integer"]}}}}
+  polars schema: Schema({'a': Struct({'a__boolean': Boolean, 'a__integer': Int64})})
+  avro schema: [{"name": "a", "type": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "a__boolean", "type": ["null", "boolean"]}, {"name": "a__integer", "type": ["null", "int"]}]}}]
+  decode=False dtype=String ok
+    row0 -> {"a": {"a__boolean": true, "a__integer": null}}
+  decode=True dtype=Struct({'a': Struct({'a__boolean': Boolean, 'a__integer': Int64})}) ok
+    row0 -> {"a": {"a__boolean": true, "a__integer": null}}
+== nullable untyped list: ['{"a": []}', '{"a": null}']
+  json schema: {"a": {"anyOf": [{"type": "array", "items": {}}, {"type": "null"}]}}
+  polars schema: Schema({'a': List(Null)})
+  avro schema: [{"name": "a", "type": [{"type": "array", "items": "null"}, "null"]}]
+  decode=False dtype=String ok
+    row0 -> {"a": null}
+  decode=True dtype=Struct({'a': List(Null)}) ok
+    row0 -> {"a": null}
+== untyped list only: ['{"a": []}', '{"a": []}']
+  json schema: {"a": {"type": "array", "items": {}}}
+  polars schema: Schema({'a': List(Null)})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": "null"}}]
+  decode=False dtype=String ok
+    row0 -> {"a": null}
+  decode=True dtype=Struct({'a': List(Null)}) ok
+    row0 -> {"a": null}
+== untyped list and missing: ['{"a": []}', '{}']
+  json schema: {"a": {"type": "array", "items": {}}}
+  polars schema: Schema({'a': List(Null)})
+  avro schema: [{"name": "a", "type": ["null", {"type": "array", "items": "null"}]}]
+  decode=False dtype=String ok
+    row0 -> {"a": null}
+  decode=True dtype=Struct({'a': List(Null)}) ok
+    row0 -> {"a": null}
+== maps typed differently: ['{"m": {"k0": 0}}', '{"m": {"k1": 1}}', '{"m": {"k2": 2}}'] ...
+  json schema: {"m": {"properties": {"k0": {"type": "integer"}, "k1": {"type": "integer"}, "k2": {"type": "integer"}, "k3": {"type": "integer"}, "k4": {"type": "integer"}, "k5": {"type": "integer"}, "k6": {"type": "integer"}, "k7": {"type": "integer"}, "k8": {"type": "integer"}, "k9": {"type": "integer"}, "k10": {
+  polars schema: Schema({'m': Struct({'k0': Int64, 'k1': Int64, 'k2': Int64, 'k3': Int64, 'k4': Int64, 'k5': Int64, 'k6': Int64, 'k7': Int64, 'k8': Int64, 'k9': Int64, 'k10': Int64, 'k11': Int64, 'k12': Int64, 'k13': Int64, 'k14': Int64, 'k15': Int64, 'k16': Int64, 'k17': Int64, 'k18': Int64, 'k19': Int64, 'k20': In
+  avro schema: [{"name": "m", "type": {"type": "record", "name": "m", "namespace": "genson.document_types", "fields": [{"name": "k0", "type": ["null", "int"]}, {"name": "k1", "type": ["null", "int"]}, {"name": "k2", "type": ["null", "int"]}, {"name": "k3", "type": ["null", "int"]}, {"name": "k4", "type": ["null", 
+  decode=False dtype=String ok
+    row0 -> {"m": {"k0": 0, "k1": null, "k2": null, "k3": null, "k4": null, "k5": null, "k6": null, "k7": null, "k8": null, "k9": null, "k10": null, "k11": null, "k12": null, "k13": null, "k14": null, "k15": null, "k16": null, "k17": null, "k18": null,
+  decode=True dtype=Struct({'m': Struct({'k0': Int64, 'k1': Int64, 'k2': Int64, 'k3': Int64, 'k4': Int64, 'k5': Int64, 'k6': Int64, 'k7': Int64, 'k8': Int64, 'k9': Int64, 'k10': Int64, 'k11': Int64, 'k12': Int64, 'k13': Int64, 'k14': Int64, 'k15': Int64, 'k16': Int64, 'k17': Int64, 'k18': Int64, 'k19': Int64, 'k20': Int64, 'k21': Int64, 'k22': Int64, 'k23': Int64, 'k24': Int64, 's0': String, 's1': String, 's2': String, 's3': String, 's4': String, 's5': String, 's6': String, 's7': String, 's8': String, 's9': String, 's10': String, 's11': String, 's12': String, 's13': String, 's14': String, 's15': String, 's16': String, 's17': String, 's18': String, 's19': String, 's20': String, 's21': String, 's22': String, 's23': String, 's24': String})}) ok
+    row0 -> {"m": {"k0": 0, "k1": null, "k2": null, "k3": null, "k4": null, "k5": null, "k6": null, "k7": null, "k8": null, "k9": null, "k10": null, "k11": null, "k12": null, "k13": null, "k14": null, "k15": null, "k16": null, "k17": null, "k18": null,
+== maps typed differently, forced: ['{"m": {"k": 1}}', '{"m": {"s": "v"}}']
+  json schema: {"m": {"type": "object", "additionalProperties": {"type": "object", "properties": {"m__integer": {"type": ["null", "integer"]}, "m__string": {"type": ["null", "string"]}}}}}
+  polars schema: Schema({'m': Map(String, Struct({'m__integer': Int64, 'm__string': String}))})
+  avro schema: [{"name": "m", "type": {"name": "m", "type": "map", "values": {"type": "record", "name": "m_values", "namespace": "genson.document_types", "fields": [{"name": "m__integer", "type": ["null", "int"]}, {"name": "m__string", "type": ["null", "string"]}]}}}]
+  decode=False dtype=String ok
+    row0 -> {"m": {"k": {"m__integer": 1, "m__string": null}}}
+  decode=True dtype=Struct({'m': Map(String, Struct({'m__integer': Int64, 'm__string': String}))}) ok
+    row0 -> {"m": {"k": {"m__integer": 1, "m__string": null}}}
+== map with nullable values: ['{"m": {"k0": 0}}', '{"m": {"k1": null}}', '{"m": {"k2": 2}}'] ...
+  json schema: {"m": {"properties": {"k0": {"type": "integer"}, "k1": {"type": "null"}, "k2": {"type": "integer"}, "k3": {"type": "null"}, "k4": {"type": "integer"}, "k5": {"type": "null"}, "k6": {"type": "integer"}, "k7": {"type": "null"}, "k8": {"type": "integer"}, "k9": {"type": "null"}, "k10": {"type": "intege
+  polars schema: Schema({'m': Struct({'k0': Int64, 'k1': Null, 'k2': Int64, 'k3': Null, 'k4': Int64, 'k5': Null, 'k6': Int64, 'k7': Null, 'k8': Int64, 'k9': Null, 'k10': Int64, 'k11': Null, 'k12': Int64, 'k13': Null, 'k14': Int64, 'k15': Null, 'k16': Int64, 'k17': Null, 'k18': Int64, 'k19': Null, 'k20': Int64, 'k21'
+  avro schema: [{"name": "m", "type": {"type": "record", "name": "m", "namespace": "genson.document_types", "fields": [{"name": "k0", "type": ["null", "int"]}, {"name": "k1", "type": ["null"]}, {"name": "k2", "type": ["null", "int"]}, {"name": "k3", "type": ["null"]}, {"name": "k4", "type": ["null", "int"]}, {"nam
+  decode=False dtype=String ok
+    row0 -> {"m": {"k0": 0, "k1": null, "k2": null, "k3": null, "k4": null, "k5": null, "k6": null, "k7": null, "k8": null, "k9": null, "k10": null, "k11": null, "k12": null, "k13": null, "k14": null, "k15": null, "k16": null, "k17": null, "k18": null,
+  decode=True dtype=Struct({'m': Struct({'k0': Int64, 'k1': Null, 'k2': Int64, 'k3': Null, 'k4': Int64, 'k5': Null, 'k6': Int64, 'k7': Null, 'k8': Int64, 'k9': Null, 'k10': Int64, 'k11': Null, 'k12': Int64, 'k13': Null, 'k14': Int64, 'k15': Null, 'k16': Int64, 'k17': Null, 'k18': Int64, 'k19': Null, 'k20': Int64, 'k21': Null, 'k22': Int64, 'k23': Null, 'k24': Int64, 'k25': Null, 'k26': Int64, 'k27': Null, 'k28': Int64, 'k29': Null})}) ok
+    row0 -> {"m": {"k0": 0, "k1": null, "k2": null, "k3": null, "k4": null, "k5": null, "k6": null, "k7": null, "k8": null, "k9": null, "k10": null, "k11": null, "k12": null, "k13": null, "k14": null, "k15": null, "k16": null, "k17": null, "k18": null,
+== map with nullable values, forced: ['{"m": {"k": 1, "j": null}}', '{"m": {"q": 2}}']
+  json schema: {"m": {"type": "object", "additionalProperties": {"type": ["null", "integer"]}}}
+  polars schema: Schema({'m': Map(String, Int64)})
+  avro schema: [{"name": "m", "type": {"name": "m", "type": "map", "values": "int"}}]
+  decode=False dtype=String ok
+    row0 -> {"m": {"k": 1, "j": null}}
+  decode=True dtype=Struct({'m': Map(String, Int64)}) ok
+    row0 -> {"m": {"k": 1, "j": null}}
+== record or scalar: ['{"a": {"b": 1}}', '{"a": 5}']
+  json schema: {"a": {"type": "object", "properties": {"b": {"type": ["null", "integer"]}, "a__integer": {"type": ["null", "integer"]}}}}
+  polars schema: Schema({'a': Struct({'b': Int64, 'a__integer': Int64})})
+  avro schema: [{"name": "a", "type": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "b", "type": ["null", "int"]}, {"name": "a__integer", "type": ["null", "int"]}]}}]
+  decode=False dtype=String ok
+    row0 -> {"a": {"b": 1, "a__integer": null}}
+  decode=True dtype=Struct({'a': Struct({'b': Int64, 'a__integer': Int64})}) ok
+    row0 -> {"a": {"b": 1, "a__integer": null}}
+== list or scalar: ['{"a": [1, 2]}', '{"a": 5}']
+  json schema: {"a": {"type": "array", "items": {"type": ["null", "integer"]}}}
+  polars schema: Schema({'a': List(Int64)})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": "int"}}]
+  decode=False dtype=String ok
+    row0 -> {"a": [1, 2]}
+  decode=True dtype=Struct({'a': List(Int64)}) ok
+    row0 -> {"a": [1, 2]}
+== list of records or scalars: ['{"a": [{"b": 1}, 3]}']
+  json schema: {"a": {"type": "array", "items": {"type": "object", "properties": {"b": {"type": ["null", "integer"]}, "__integer": {"type": ["null", "integer"]}}}}}
+  polars schema: Schema({'a': List(Struct({'b': Int64, '__integer': Int64}))})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "b", "type": ["null", "int"]}, {"name": "__integer", "type": ["null", "int"]}]}}}]
+  decode=False dtype=String ok
+    row0 -> {"a": [{"b": 1, "__integer": null}, {"b": null, "__integer": 3}]}
+  decode=True dtype=Struct({'a': List(Struct({'b': Int64, '__integer': Int64}))}) ok
+    row0 -> {"a": [{"b": 1, "__integer": null}, {"b": null, "__integer": 3}]}
+== nested empty record: ['{"a": {}}', '{"a": {"b": 1}}']
+  json schema: {"a": {"properties": {"b": {"type": "integer"}}, "type": "object"}}
+  polars schema: Schema({'a': Struct({'b': Int64})})
+  avro schema: [{"name": "a", "type": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "b", "type": ["null", "int"]}]}}]
+  decode=False dtype=String ok
+    row0 -> {"a": {"b": null}}
+  decode=True dtype=Struct({'a': Struct({'b': Int64})}) ok
+    row0 -> {"a": {"b": null}}
+== empty record only: ['{"a": {}}']
+  json schema: {"a": {"type": "object"}}
+  polars schema: Schema({'a': Struct({})})
+  avro schema: [{"name": "a", "type": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": []}}]
+  decode=False dtype=String ok
+    row0 -> {"a": {}}
+  decode=True dtype=Struct({'a': Struct({})}) ok
+    row0 -> {"a": {}}
+== null only: ['{"a": null}']
+  json schema: {"a": {"type": "null"}}
+  polars schema: Schema({'a': Null})
+  avro schema: [{"name": "a", "type": "null"}]
+  decode=False dtype=String ok
+    row0 -> {"a": null}
+  decode=True dtype=Struct({'a': Null}) ok
+    row0 -> {"a": null}
+== deep mixed: ['{"a": [[1], ["x"], [{"b": null}]]}']
+  json schema: {"a": {"type": "array", "items": {"type": "array", "items": {"type": "object", "properties": {"b": {"type": "null"}, "__integer": {"type": ["null", "integer"]}, "__string": {"type": ["null", "string"]}}}}}}
+  polars schema: Schema({'a': List(List(Struct({'b': Null, '__integer': Int64, '__string': String})))})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": {"type": "array", "items": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "b", "type": ["null"]}, {"name": "__integer", "type": ["null", "int"]}, {"name": "__string", "type": ["null", "string"]}]}}}}]
+  decode=False dtype=String ok
+    row0 -> {"a": [[{"b": null, "__integer": 1, "__string": null}], [{"b": null, "__integer": null, "__string": "x"}], [{"b": null, "__integer": null, "__string": null}]]}
+  decode=True dtype=Struct({'a': List(List(Struct({'b': Null, '__integer': Int64, '__string': String})))}) ok
+    row0 -> {"a": [[{"b": null, "__integer": 1, "__string": null}], [{"b": null, "__integer": null, "__string": "x"}], [{"b": null, "__integer": null, "__string": null}]]}
+== keys needing escapes: ['{"a\\"b": 1, "c\\\\d": "e\\nf"}']
+  json schema: {"a\"b": {"type": "integer"}, "c\\d": {"type": "string"}}
+  polars schema: Schema({'a"b': Int64, 'c\\d': String})
+  avro schema: [{"name": "a\"b", "type": "int"}, {"name": "c\\d", "type": "string"}]
+  decode=False dtype=String ok
+    row0 -> {"a\"b": 1, "c\\d": "e\nf"}
+  decode=True dtype=Struct({'a"b': Int64, 'c\\d': String}) ok
+    row0 -> {"a\"b": 1, "c\\d": "e\nf"}
+== unicode keys: ['{"ü": 1, "😀": [true]}']
+  json schema: {"\u00fc": {"type": "integer"}, "\ud83d\ude00": {"type": "array", "items": {"type": "boolean"}}}
+  polars schema: Schema({'ü': Int64, '😀': List(Boolean)})
+  avro schema: [{"name": "\u00fc", "type": "int"}, {"name": "\ud83d\ude00", "type": {"type": "array", "items": "boolean"}}]
+  decode=False dtype=String ok
+    row0 -> {"\u00fc": 1, "\ud83d\ude00": [true]}
+  decode=True dtype=Struct({'ü': Int64, '😀': List(Boolean)}) ok
+    row0 -> {"\u00fc": 1, "\ud83d\ude00": [true]}
+== integer beyond i64: ['{"a": 18446744073709551615}', '{"a": 1}']
+  json schema: {"a": {"type": "integer"}}
+  polars schema: Schema({'a': Int64})
+  avro schema: [{"name": "a", "type": "int"}]
+  decode=False dtype=String LOST [(0, ['18446744073709551615'])]
+    row0 -> {"a": null}
+  decode=True dtype=Struct({'a': Int64}) LOST [(0, ['18446744073709551615'])]
+    row0 -> {"a": null}
+== float exponent: ['{"a": 1e300}', '{"a": -0.0}']
+  json schema: {"a": {"type": "number"}}
+  polars schema: Schema({'a': Float64})
+  avro schema: [{"name": "a", "type": "float"}]
+  decode=False dtype=String ok
+    row0 -> {"a": 1e+300}
+  decode=True dtype=Struct({'a': Float64}) ok
+    row0 -> {"a": 1e+300}
+== empty record or scalar: ['{"c": {}}', '{"c": 3}']
+  json schema: {"c": {"type": "object", "properties": {"c__integer": {"type": ["null", "integer"]}}}}
+  polars schema: Schema({'c': Struct({'c__integer': Int64})})
+  avro schema: [{"name": "c", "type": {"type": "record", "name": "c", "namespace": "genson.document_types", "fields": [{"name": "c__integer", "type": ["null", "int"]}]}}]
+  decode=False dtype=String ok
+    row0 -> {"c": {"c__integer": null}}
+  decode=True dtype=Struct({'c': Struct({'c__integer': Int64})}) ok
+    row0 -> {"c": {"c__integer": null}}
+== empty record or scalar in a list: ['{"a": [{}, 0]}']
+  json schema: {"a": {"type": "array", "items": {"type": "object", "properties": {"__integer": {"type": ["null", "integer"]}}}}}
+  polars schema: Schema({'a': List(Struct({'__integer': Int64}))})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "__integer", "type": ["null", "int"]}]}}}]
+  decode=False dtype=String ok
+    row0 -> {"a": [{"__integer": null}, {"__integer": 0}]}
+  decode=True dtype=Struct({'a': List(Struct({'__integer': Int64}))}) ok
+    row0 -> {"a": [{"__integer": null}, {"__integer": 0}]}
+== list of nulls or scalar: ['{"a": [null]}', '{"a": 3}']
+  json schema: {"a": {"type": "array", "items": {"type": ["null", "integer"]}}}
+  polars schema: Schema({'a': List(Int64)})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": "int"}}]
+  decode=False dtype=String ok
+    row0 -> {"a": [null]}
+  decode=True dtype=Struct({'a': List(Int64)}) ok
+    row0 -> {"a": [null]}
+== list of nulls or record: ['{"d": [null]}', '{"d": {"b": [0]}}']
+  json schema: {"d": {"type": "array", "items": {"properties": {"b": {"type": "array", "items": {"type": "integer"}}}, "required": ["b"], "type": ["null", "object"]}}}
+  polars schema: Schema({'d': List(Struct({'b': List(Int64)}))})
+  avro schema: [{"name": "d", "type": {"type": "array", "items": {"type": "record", "name": "d", "namespace": "genson.document_types", "fields": [{"name": "b", "type": {"type": "array", "items": "int"}}]}}}]
+  decode=False dtype=String ok
+    row0 -> {"d": [{"b": null}]}
+  decode=True dtype=Struct({'d': List(Struct({'b': List(Int64)}))}) ok
+    row0 -> {"d": [{"b": null}]}
+== list of records or record of lists: ['{"b": [[{"a": 3}]]}', '{"b": {"a": [{"c": 0}]}}']
+  json schema: {"b": {"type": "array", "items": {"type": "array", "items": {"type": "object", "properties": {"a": {"type": "array", "items": {"type": "object", "properties": {"c": {"type": ["null", "integer"]}, "__integer": {"type": ["null", "integer"]}}}}}, "required": ["a"]}}}}
+  polars schema: Schema({'b': List(List(Struct({'a': List(Struct({'c': Int64, '__integer': Int64}))})))})
+  avro schema: [{"name": "b", "type": {"type": "array", "items": {"type": "array", "items": {"type": "record", "name": "b", "namespace": "genson.document_types", "fields": [{"name": "a", "type": {"type": "array", "items": {"type": "record", "name": "a", "namespace": "genson.document_types.b_types", "fields": [{"na
+  decode=False dtype=String ok
+    row0 -> {"b": [[{"a": [{"c": null, "__integer": 3}]}]]}
+  decode=True dtype=Struct({'b': List(List(Struct({'a': List(Struct({'c': Int64, '__integer': Int64}))})))}) ok
+    row0 -> {"b": [[{"a": [{"c": null, "__integer": 3}]}]]}
+== scalar or list of empty records: ['{"a": -7}', '{"a": [{}]}']
+  json schema: {"a": {"type": "array", "items": {"type": "object", "properties": {"__integer": {"type": ["null", "integer"]}}}}}
+  polars schema: Schema({'a': List(Struct({'__integer': Int64}))})
+  avro schema: [{"name": "a", "type": {"type": "array", "items": {"type": "record", "name": "a", "namespace": "genson.document_types", "fields": [{"name": "__integer", "type": ["null", "int"]}]}}}]
+  decode=False dtype=String ok
+    row0 -> {"a": [{"__integer": -7}]}
+  decode=True dtype=Struct({'a': List(Struct({'__integer': Int64}))}) ok
+    row0 -> {"a": [{"__integer": -7}]}

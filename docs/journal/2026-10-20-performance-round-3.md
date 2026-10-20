@@ -191,6 +191,37 @@ Measurements are on the published polars-genson 1.0.4 wheel (Python 3.12, Polars
   polars-genson-py 317 (3 skipped); test_owned_unification_matches_the_borrowed and the
   Value/DAG comparisons pass; scalar_kinds.rs gains the fuzz's shrunk rows
 
+### A forced map's values keep their kinds (fix/forced-map-values-keep-kinds)
+
+- `map_value_schema` (the values of a field forced to a map, on both rewrites and in each
+  row's forcing on the usual path) unified `null` values with the rest as a clash, and
+  gave up on values of kinds that clash: both became `{"type": "string"}`, so integers and
+  nulls came out as text (`{"k": 1, "j": null}` → `"1"`)
+- Now `null` values make the values nullable (`null ⊔ T` is nullable `T`, as #263 has it
+  for maps that are not forced), and values of kinds that clash keep a field each through
+  `unify_anyof_schemas` (`m__integer`, `m__string`) before the string fallback; `no_unify`
+  keeps its string fallback
+- soundness_cases.py (logs/e13): every case keeps its values but the integer above
+  `i64::MAX`
+- wikidata-pq's columns are unchanged by the stack so far (prod_schemas.py,
+  logs/e12_production_unchanged.txt): on chunk_0 and rowsw, each of claims, sitelinks,
+  labels, descriptions and aliases has the same Avro schema and the same normalised text
+  on 1.0.4 and here
+- A forced map's values unified as records could make a field typed `["boolean",
+  "integer"]` nullable as `["null", ["boolean", "integer"]]` (`try_make_nullable_union`,
+  `schemas_compatible_*`, the DAG's `null_and`: a list of types made the second of two),
+  which no schema reader takes: the usual path panicked reading it back, on 10 random rows
+  that 1.0.4 inferred (found by the interned forced-map comparison below). `null` is now
+  put first in a list of types instead (`["null", "boolean", "integer"]`, which promotes)
+- fuzz_lossless.py now also forces fields to maps; seed 4 (logs/e15, e16): 125 of 1,500
+  sets lose a value (947 on 1.0.4), 110 of them under forced maps (339 on 1.0.4), mostly a
+  field forced to a map that holds a list (`{"a": [-7]}`): 1.0.4 wrote it as text
+  (`{"a__unknown": "[-7]"}`), now as the list, though not every value lands; a forced map
+  over a list is left as it is here
+- genson-core 154 tests (default features) and 238 (avro, parquet), genson-cli 181,
+  polars-genson-py 317 (3 skipped); forced_map.rs's string fallback for an integer and a
+  string is now the two promoted fields, and a test of null values is added
+
 ### Research ledger (literature.md)
 
 - Sixteen candidate techniques against the measured costs, each with its citation (read in

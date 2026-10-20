@@ -1,5 +1,5 @@
-"""Random row sets through normalise_json (decode False and True, default options and
-wikidata-pq's map options), each row's scalars checked to survive (soundness_cases.lost).
+"""Random row sets through normalise_json (decode False and True, default options,
+wikidata-pq's map options, and fields forced to maps), each row's scalars checked to survive (soundness_cases.lost).
 A failing set is shrunk (rows dropped, then values simplified) while it still fails, and
 the shrunk sets are grouped by their shape, with errors (panics, decode failures) too.
 
@@ -17,7 +17,11 @@ import polars_genson  # noqa: F401
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 from soundness_cases import lost  # noqa: E402
 
-OPTIONS = {"default": {}, "maps": {"map_threshold": 0, "unify_maps": True}}
+OPTIONS = {
+    "default": {},
+    "maps": {"map_threshold": 0, "unify_maps": True},
+    "forced": {"force_field_types": {"a": "map", "c": "map"}},
+}
 PALETTES = {"all": [0, 1, -7, 2.5, True, False, "s", "", "42", None], "ints": [0, 1, -7, 3, None]}
 SCALARS = PALETTES[sys.argv[3] if len(sys.argv) > 3 else "all"]
 
