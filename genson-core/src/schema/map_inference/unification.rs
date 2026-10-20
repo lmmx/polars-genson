@@ -545,7 +545,8 @@ fn unify_field_pair(
     } else if is_scalar_schema(&unified) && is_scalar_schema(new) {
         try_mixed_scalar_promotion(&unified, new, field_name, path, config)
     } else {
-        None
+        // An array beside a record or scalar: one array holding them, as for a union
+        unify_anyof_schemas(&[&unified, new], field_name, config)
     }
 }
 
@@ -576,8 +577,10 @@ fn unify_field_schemas(
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
     let needs_scalar_promo = config.wrap_scalars
-        && schemas.iter().any(|&s| is_scalar_schema(s))
-        && schemas.iter().any(|&s| is_object_schema(s));
+        && ((schemas.iter().any(|&s| is_scalar_schema(s))
+            && schemas.iter().any(|&s| is_object_schema(s)))
+            || (schemas.iter().any(|&s| is_array_schema(s))
+                && schemas.iter().any(|&s| !is_array_schema(s))));
     if needs_scalar_promo || schemas.len() < 50 {
         unify_field_schemas_sequential(field_name, schemas, path, config)
     } else {
@@ -846,16 +849,17 @@ pub(crate) fn unify_anyof_schemas(
     if !config.wrap_scalars {
         return None;
     }
-    // A branch of several types that clash is a union of its own, one branch per type
-    let clashing = |s: &&Value| s.as_object().is_some_and(|o| type_union_clashes(o, config));
-    let split: Option<Vec<Value>> = schemas.iter().any(clashing).then(|| {
-        schemas
-            .iter()
-            .flat_map(|s| match s.as_object().filter(|_| clashing(s)) {
-                Some(union) => type_union_branches(union).unwrap_or_else(|| vec![(*s).clone()]),
-                None => vec![(*s).clone()],
-            })
-            .collect()
+    // A branch that is a union of its own (an `anyOf`, or several types that clash) stands
+    // for its branches
+    let is_union = |s: &&Value| {
+        s.get("anyOf").is_some() || s.as_object().is_some_and(|o| type_union_clashes(o, config))
+    };
+    let split: Option<Vec<Value>> = schemas.iter().any(is_union).then(|| {
+        let mut split = Vec::new();
+        for &s in schemas {
+            union_branches(s, config, &mut split);
+        }
+        split
     });
     let flat: Vec<&Value>;
     let schemas = match &split {
@@ -868,6 +872,18 @@ pub(crate) fn unify_anyof_schemas(
     if let Some(array) = unify_into_array(schemas, config) {
         return Some(array);
     }
+    // `null` beside two or more schemas that unify: their unified schema, nullable
+    let nullable = schemas.iter().any(|&s| is_null_schema(s));
+    let non_null: Vec<&Value> = schemas
+        .iter()
+        .copied()
+        .filter(|&s| !is_null_schema(s))
+        .collect();
+    if nullable && non_null.len() >= 2 {
+        if let Some(unified) = check_unifiable_schemas(&non_null, field_name, config) {
+            return Some(make_nullable(unified));
+        }
+    }
 
     // Scalars among records (also records with no fields), or scalars of kinds that do not
     // widen to one: each kind is kept in a field of its own
@@ -875,6 +891,22 @@ pub(crate) fn unify_anyof_schemas(
     let has_objects = schemas
         .iter()
         .any(|&s| is_object_schema(s) || is_empty_record_schema(s));
+
+    // Integers and numbers alone (beside `null`) widen to a number
+    let number = |s: &Value| matches!(base_type(s), Some("integer" | "number"));
+    if non_null.len() >= 2 && non_null.iter().all(|&s| number(s)) {
+        let typed_null = |s: &Value| {
+            s.get("type")
+                .and_then(Value::as_array)
+                .is_some_and(|t| t.iter().any(|t| t == "null"))
+        };
+        let widened = json!({ "type": "number" });
+        return Some(if nullable || non_null.iter().any(|&s| typed_null(s)) {
+            make_nullable(widened)
+        } else {
+            widened
+        });
+    }
 
     if !has_scalars || !(has_objects || scalar_kinds_clash(schemas, config)) {
         return None; // Not the mixed case we handle
@@ -885,8 +917,8 @@ pub(crate) fn unify_anyof_schemas(
         "anyOf unification: promoting scalars for field '{}'", field_name
     );
 
-    // Each scalar wrapped as a record of one field, then all unified as records; `null` adds
-    // nothing, a promoted field holding a value in only some rows
+    // Each scalar wrapped as a record of one field, then all unified as records; `null`
+    // makes the record nullable (a promoted field holds a value in only some rows)
     let promoted = schemas
         .iter()
         .filter(|&&schema| !is_null_schema(schema))
@@ -902,7 +934,31 @@ pub(crate) fn unify_anyof_schemas(
         })
         .collect::<Option<Vec<Cow<Value>>>>()?;
     let promoted: Vec<&Value> = promoted.iter().map(Cow::as_ref).collect();
-    check_unifiable_schemas(&promoted, field_name, config)
+    let unified = check_unifiable_schemas(&promoted, field_name, config)?;
+    Some(if nullable {
+        make_nullable(unified)
+    } else {
+        unified
+    })
+}
+
+/// The branches a union stands for, all the way down: an `anyOf`'s branches, and a schema
+/// of several types that clash its types' (`type_union_branches`).
+fn union_branches(schema: &Value, config: &SchemaInferenceConfig, out: &mut Vec<Value>) {
+    if let Some(Value::Array(any_of)) = schema.get("anyOf") {
+        for branch in any_of {
+            union_branches(branch, config, out);
+        }
+        return;
+    }
+    let branches = schema
+        .as_object()
+        .filter(|o| type_union_clashes(o, config))
+        .and_then(type_union_branches);
+    match branches {
+        Some(branches) => out.extend(branches),
+        None => out.push(schema.clone()),
+    }
 }
 
 /// `unify_into_array` of a union's branches once each is rewritten: an array's items may
@@ -1149,7 +1205,10 @@ pub(crate) fn check_unifiable_item_schemas(
         let records_and_scalars = schemas
             .iter()
             .all(|&s| is_scalar_schema(s) || is_object_schema(s) || is_empty_record_schema(s));
-        if !(config.wrap_scalars && records_and_scalars) {
+        // An array among other items: one array holding them, as for a union
+        let arrays_and_others = schemas.iter().any(|&s| is_array_schema(s))
+            && schemas.iter().any(|&s| !is_array_schema(s));
+        if !(config.wrap_scalars && (records_and_scalars || arrays_and_others)) {
             return None;
         }
         debug!(config, "{}: Promoting scalar items among records", path);
@@ -1230,15 +1289,21 @@ fn unify_array_pair(
 }
 
 /// `check_unifiable_item_schemas` of `[a, b]` with `a` owned, as `unify_pair`. Its scalar
-/// promotion can only succeed for a scalar and a record, which go the borrowed way.
+/// promotion and absorption into an array can only succeed for a scalar beside a record
+/// (with fields or none) or another scalar, and for an array beside another kind, which go
+/// the borrowed way.
 fn unify_item_pair(
     a: Value,
     b: &Value,
     path: &str,
     config: &SchemaInferenceConfig,
 ) -> Option<Value> {
-    let promotes = |x: &Value, y: &Value| is_scalar_schema(x) && is_object_schema(y);
-    if config.wrap_scalars && (promotes(&a, b) || promotes(b, &a)) {
+    let promotes = |x: &Value, y: &Value| {
+        is_scalar_schema(x)
+            && (is_object_schema(y) || is_empty_record_schema(y) || is_scalar_schema(y))
+    };
+    let absorbs = is_array_schema(&a) != is_array_schema(b);
+    if config.wrap_scalars && (promotes(&a, b) || promotes(b, &a) || absorbs) {
         return check_unifiable_item_schemas(&[&a, b], path, config);
     }
     unify_pair(a, b, path, config)

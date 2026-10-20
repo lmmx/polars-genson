@@ -207,3 +207,57 @@ fn test_union_untouched_without_wrap_scalars() {
     let fields = &schema(&rows, off)["fields"];
     assert_eq!(fields[0]["type"], json!(["int", "string"]));
 }
+
+/// A list beside a record or a scalar under a record's field: the field is one list holding
+/// them all (a union of an array and other types), where record unification gave up on the
+/// field, and so on the whole record. Rows the round-3 fuzz shrank to.
+#[test]
+fn test_record_fields_holding_a_list_beside_other_types() {
+    for rows in [
+        &[r#"{"b": {"a": []}}"#, r#"{"b": [{"a": -7}]}"#][..],
+        &[r#"{"b": [[{"a": 3}]]}"#, r#"{"b": {"a": [{"c": 0}]}}"#],
+        &[r#"{"c": [null, {"b": 1}]}"#, r#"{"c": 1}"#],
+        &[r#"{"d": [{"a": []}]}"#, r#"{"d": {"a": -7}}"#],
+        &[r#"{"a": {"b": ""}}"#, r#"{"a": [{"b": "s"}, null]}"#],
+    ] {
+        assert_kept(rows, config());
+        assert_order_free(rows);
+    }
+}
+
+/// The same with more than 50 rows, where a field's schemas are unified by halves.
+#[test]
+fn test_record_fields_holding_a_list_beside_other_types_in_many_rows() {
+    let mut rows: Vec<String> = (0..60)
+        .map(|i| format!(r#"{{"b": {{"a": [{i}]}}}}"#))
+        .collect();
+    rows.push(r#"{"b": [{"a": -7}]}"#.to_string());
+    let rows: Vec<&str> = rows.iter().map(String::as_str).collect();
+    assert_kept(&rows, config());
+}
+
+/// Arrays' items where one array holds lists and another scalars: the items are one list
+/// holding both.
+#[test]
+fn test_array_items_holding_lists_beside_scalars() {
+    for rows in [
+        &[r#"{"a": {"d": [[]]}}"#, r#"{"a": [{"d": [0]}]}"#][..],
+        &[r#"{"d": [[1]]}"#, r#"{"d": [2]}"#],
+    ] {
+        assert_kept(rows, config());
+        assert_order_free(rows);
+    }
+}
+
+/// A list of integers beside a number: one list of numbers.
+#[test]
+fn test_a_list_of_integers_beside_a_number_widens() {
+    for rows in [
+        &[r#"{"c": [0]}"#, r#"{"c": 2.5}"#][..],
+        &[r#"{"a": [2.5, [0]]}"#],
+        &[r#"{"d": {"a": [[0], 2.5]}}"#],
+    ] {
+        assert_kept(rows, config());
+        assert_order_free(rows);
+    }
+}
