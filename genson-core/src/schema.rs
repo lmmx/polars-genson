@@ -533,12 +533,9 @@ fn process_json_strings_interned<S: AsRef<str> + Sync>(
             .par_chunks(block_len)
             .map(|rows| {
                 let mut states = RowStates::new();
-                let mut toks = Vec::new();
                 let rows = rows
                     .iter()
-                    .map(|row| {
-                        states.row(row.as_ref(), ndjson, config.wrap_root.as_deref(), &mut toks)
-                    })
+                    .map(|row| states.row(row.as_ref(), ndjson, config.wrap_root.as_deref()))
                     .collect::<Result<Vec<_>, _>>()
                     .ok()?;
                 Some((states, rows))

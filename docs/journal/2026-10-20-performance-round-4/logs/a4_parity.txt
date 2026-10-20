@@ -1,0 +1,24 @@
+# polars-genson-py built from perf/lex-into-states; round 3's fuzz_lossless.py, soundness_cases.py and prod_schemas.py
+s1: 600 sets: 0 failing {}
+s2: 800 sets: 1 failing {'LOST': 1}
+s3: 2000 sets: 0 failing {}
+s4: 1500 sets: 1 failing {'LOST': 1}
+s5: 1500 sets: 0 failing {}
+   1  LOST       forced  decode=False [{"c": {"c": {"c": [null]}}}, {"c": [{"c": [0]}]}]
+   1  LOST       maps    decode=False [{"b": {"b": ["s"]}}, {"b": [{"b": ["", 2.5], "d": {}}]}]
+the same two sets as #281 (both written as JSON text, the strict xfails)
+soundness_cases.py: 0 cases lose a value
+prod_schemas.py (Avro schema hash, normalised text hash):
+== chunk_0
+claims f3c01f0e0e241bac 9df4138af4fa8b16
+sitelinks 434d0f01c18bba31 b610a4cddebe555d
+labels a466ad529a2afea8 d66cf1564824e59e
+descriptions 114a725bb4c0f54a 4de174c96785f162
+aliases d4496e5763896b63 8df34a4891da3b31
+== rowsw
+claims 523f3d152393dec6 6bd134b9743eaa84
+sitelinks 434d0f01c18bba31 8097c004151c98e7
+labels a466ad529a2afea8 c591365b90b148d9
+descriptions 114a725bb4c0f54a 380dfb5a2fa92ed3
+aliases d4496e5763896b63 dda070f55930af22
+(identical to round 3's logs/e19 and to 1.0.4)

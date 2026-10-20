@@ -1,0 +1,17 @@
+# alloc-stats debug builds, one thread: the rows stage, and all stages (allocations and bytes summed, peak live the largest)
+narrow fl rows allocs 1301 bytes 6376120 peak_live 18393873 | all stages allocs 2999 bytes 7201906 peak_live 19993795 5d7b7947d642a8b8
+narrow final rows allocs 1285 bytes 6373528 peak_live 18394164 | all stages allocs 2983 bytes 7199314 peak_live 19993894 5d7b7947d642a8b8
+events fl rows allocs 16289 bytes 2778908 peak_live 11583961 | all stages allocs 28761 bytes 4492341 peak_live 11938592 d239344d2a99fa5b
+events final rows allocs 16265 bytes 2767100 peak_live 11583836 | all stages allocs 28737 bytes 4480533 peak_live 11938691 d239344d2a99fa5b
+labels fl rows allocs 27329 bytes 14267100 peak_live 6802141 | all stages allocs 166178 bytes 29282201 peak_live 9666779 fa84bed3bcc28998
+labels final rows allocs 26330 bytes 12310972 peak_live 6808032 | all stages allocs 165179 bytes 27326073 peak_live 9666782 fa84bed3bcc28998
+claims fl rows allocs 1055269 bytes 69975197 peak_live 47659833 | all stages allocs 3257658 bytes 322070526 peak_live 177085244 278f6067df630c42
+claims final rows allocs 1054977 bytes 69437229 peak_live 47614874 | all stages allocs 3257366 bytes 321532558 peak_live 177088095 278f6067df630c42
+entities fl rows allocs 236303 bytes 17591911 peak_live 10835123 | all stages allocs 1486376 bytes 120289477 peak_live 96888208 e4a6ff05fc3c3874
+entities final rows allocs 236000 bytes 16604039 peak_live 10740838 | all stages allocs 1486073 bytes 119301605 peak_live 96888211 e4a6ff05fc3c3874
+usual fl rows allocs 16289 bytes 2778908 peak_live 11584404 | all stages allocs 167380 bytes 22963797 peak_live 16277721 218e2ab26163404d
+usual final rows allocs 16265 bytes 2767100 peak_live 11584279 | all stages allocs 167356 bytes 22951989 peak_live 16277820 218e2ab26163404d
+
+# the first prototype, a new positions map per wide object (not kept):
+labels fl rows allocs 27329 bytes 14267100 peak_live 6802141
+labels fuse rows allocs 28029 bytes 15060956 peak_live 6789855

@@ -1,0 +1,9 @@
+# scripts/abba.py fl final 8 <corpora>: release builds, all threads (4), 8 rounds interleaved ABBA, each process a
+# warm-up and 15 measured runs; median [min-max] of the measured runs
+narrow | fl wall 22.2 ms [16.5-43.1] cpu 65.2 ms | final wall 17.9 ms [12.5-29.4] cpu 49.5 ms | wall -19.6%
+events | fl wall 16.1 ms [10.8-27.2] cpu 44.4 ms | final wall 13.4 ms [9.5-34.3] cpu 36.4 ms | wall -16.5%
+usual | fl wall 24.7 ms [17.7-46.4] cpu 64.0 ms | final wall 21.9 ms [14.3-51.6] cpu 54.0 ms | wall -11.4%
+labels | fl wall 19.6 ms [16.2-55.2] cpu 36.2 ms | final wall 19.1 ms [14.6-30.3] cpu 34.8 ms | wall -2.9%
+claims | fl wall 301.4 ms [244.8-471.9] cpu 584.1 ms | final wall 304.3 ms [244.8-471.8] cpu 571.5 ms | wall +1.0%
+entities | fl wall 93.8 ms [77.5-200.2] cpu 167.9 ms | final wall 95.5 ms [78.5-193.2] cpu 170.8 ms | wall +1.8%
+normalise | fl wall 334.4 ms [267.5-1393.0] cpu 329.5 ms | final wall 322.3 ms [262.1-1367.6] cpu 318.3 ms | wall -3.6%

@@ -1,0 +1,28 @@
+# callgrind, one thread (RAYON_NUM_THREADS=1), scripts/cg.sh: whole run and the rows stage (phase::rows,
+# inclusive); fl = #281 (ce0d39f), final = perf/lex-into-states (752428c); schema hashes compared
+# corpus revision total rows - schema_hash
+narrow fl 933421582 551656795 0 "schema_hash":"5d7b7947d642a8b8"
+narrow final 820632550 438842124 0 "schema_hash":"5d7b7947d642a8b8"
+events fl 505624272 321778064 0 "schema_hash":"d239344d2a99fa5b"
+events final 447675407 263824120 0 "schema_hash":"d239344d2a99fa5b"
+labels fl 373630573 176781399 0 "schema_hash":"fa84bed3bcc28998"
+labels final 353671504 156809491 0 "schema_hash":"fa84bed3bcc28998"
+claims fl 2527566982 844634578 0 "schema_hash":"278f6067df630c42"
+claims final 2450813235 756450099 0 "schema_hash":"278f6067df630c42"
+entities fl 986982025 199108830 0 "schema_hash":"e4a6ff05fc3c3874"
+entities final 975712305 178798023 0 "schema_hash":"e4a6ff05fc3c3874"
+usual fl 569057912 321737917 0 "schema_hash":"218e2ab26163404d"
+usual final 511067469 263783902 0 "schema_hash":"218e2ab26163404d"
+normalise fl 7348610838 normalise lex "schema_hash":"e1aa14540eac449a"
+normalise final 7260578269 normalise lex "schema_hash":"e1aa14540eac449a"
+
+# the normalise corpus's decode stage (phase::normalise, inclusive), same binaries: 1,908,742,656 -> 1,908,762,804
+
+# intermediate step, fused without #[inline] on the sink and lexer helpers (binary f3b8dace...):
+narrow fuse 862222036 480441517
+events fuse 467045874 283266389
+labels fuse 362391493 165509483
+claims fuse 2466404190 786809306
+entities fuse 988722869 185796825
+usual fuse 530494409 283226175
+normalise fuse 7290900947 normalise

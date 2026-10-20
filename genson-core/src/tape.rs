@@ -1,7 +1,9 @@
-//! JSON text read into a token tape, validated by `serde_json`'s rules for a `Value`:
-//! whitespace, the number grammar and range, escapes and surrogates, and the recursion
-//! limit. A container's token knows how many members or items follow and where its
-//! contents end, so a reader can skip a value without reading it.
+//! JSON text read by `serde_json`'s rules for a `Value`: whitespace, the number grammar and
+//! range, escapes and surrogates, and the recursion limit. The lexer hands what it reads
+//! to a [`Sink`] as it reads it: into a token tape (`lex`), where a container's token knows
+//! how many members or items follow and where its contents end, so a reader can skip a
+//! value without reading it; or, in inference, straight into the values' interned states,
+//! with no tape between. Every sink is given the same text checked by the same rules.
 
 use crate::extract::scan::{plain_prefix, HEX};
 use serde_json::Value;
@@ -37,43 +39,137 @@ pub(crate) enum Tok {
 /// Text `serde_json::from_str::<Value>` rejects.
 pub(crate) struct Invalid;
 
+/// What a reading of a row makes of the values the lexer finds in it, in the order of the
+/// text: a value's parts before the value (a container's contents, a member's key before
+/// its value). A sink may refuse a value (`Invalid`), which ends the reading.
+pub(crate) trait Sink {
+    /// What a value is read into
+    type Value;
+    /// A list's reading while its items are read
+    type List;
+    /// An object's reading while its members are read
+    type Object;
+    fn null(&mut self) -> Self::Value;
+    fn boolean(&mut self, value: bool) -> Self::Value;
+    /// A string's text inside its quotes, and whether it holds an escape
+    fn string(&mut self, start: u32, end: u32, escaped: bool) -> Self::Value;
+    /// A number's text, and whether it is an integer of 18 digits or fewer (which an
+    /// `i64` holds)
+    fn number(&mut self, start: u32, end: u32, short_integer: bool)
+        -> Result<Self::Value, Invalid>;
+    fn open_list(&mut self) -> Self::List;
+    fn item(&mut self, list: &mut Self::List, item: Self::Value);
+    fn close_list(&mut self, list: Self::List, len: u32) -> Result<Self::Value, Invalid>;
+    fn open_object(&mut self) -> Self::Object;
+    /// A member's key, before its value
+    fn key(&mut self, object: &mut Self::Object, start: u32, end: u32, escaped: bool);
+    fn member(&mut self, object: &mut Self::Object, value: Self::Value);
+    /// An object read whole, with whether a key in it has an escape
+    fn close_object(&mut self, object: Self::Object, len: u32, escaped: bool) -> Self::Value;
+}
+
 /// Read `row` into `toks`, or reject it as `serde_json::from_str::<Value>` would.
 pub(crate) fn lex(row: &str, toks: &mut Vec<Tok>) -> Result<(), Invalid> {
     toks.clear();
+    read(row, &mut Tape(toks))
+}
+
+/// Read `row` into `sink`, or reject it as `serde_json::from_str::<Value>` would (or as the
+/// sink refuses it).
+pub(crate) fn read<S: Sink>(row: &str, sink: &mut S) -> Result<S::Value, Invalid> {
     let mut lexer = Lexer {
         b: row.as_bytes(),
         row,
         i: 0,
-        toks,
+        sink,
     };
     lexer.ws();
-    lexer.value(0)?;
+    let value = lexer.value(0)?;
     lexer.ws();
     if lexer.i == lexer.b.len() {
-        Ok(())
+        Ok(value)
     } else {
         Err(Invalid)
     }
 }
 
-struct Lexer<'a> {
+/// A row's token tape.
+struct Tape<'t>(&'t mut Vec<Tok>);
+
+impl Sink for Tape<'_> {
+    type Value = ();
+    /// The index of the container's token, written once its contents are read
+    type List = usize;
+    type Object = usize;
+
+    fn null(&mut self) {
+        self.0.push(Tok::Null);
+    }
+
+    fn boolean(&mut self, value: bool) {
+        self.0.push(Tok::Bool(value));
+    }
+
+    fn string(&mut self, start: u32, end: u32, escaped: bool) {
+        self.0.push(Tok::Str(start, end, escaped));
+    }
+
+    fn number(&mut self, start: u32, end: u32, _: bool) -> Result<(), Invalid> {
+        self.0.push(Tok::Num(start, end));
+        Ok(())
+    }
+
+    fn open_list(&mut self) -> usize {
+        self.0.push(Tok::Null);
+        self.0.len() - 1
+    }
+
+    fn item(&mut self, _: &mut usize, _: ()) {}
+
+    fn close_list(&mut self, at: usize, len: u32) -> Result<(), Invalid> {
+        let next = self.0.len() as u32;
+        self.0[at] = Tok::Arr { len, next };
+        Ok(())
+    }
+
+    fn open_object(&mut self) -> usize {
+        self.0.push(Tok::Null);
+        self.0.len() - 1
+    }
+
+    fn key(&mut self, _: &mut usize, start: u32, end: u32, escaped: bool) {
+        self.0.push(Tok::Str(start, end, escaped));
+    }
+
+    fn member(&mut self, _: &mut usize, _: ()) {}
+
+    fn close_object(&mut self, at: usize, len: u32, escaped: bool) {
+        let next = self.0.len() as u32;
+        self.0[at] = Tok::Obj { len, next, escaped };
+    }
+}
+
+struct Lexer<'a, S> {
     b: &'a [u8],
     row: &'a str,
     i: usize,
-    toks: &'a mut Vec<Tok>,
+    sink: &'a mut S,
 }
 
-impl Lexer<'_> {
+impl<S: Sink> Lexer<'_, S> {
+    #[inline]
     fn peek(&self) -> Option<u8> {
         self.b.get(self.i).copied()
     }
 
+    #[inline]
     fn ws(&mut self) {
         while let Some(b' ' | b'\n' | b'\t' | b'\r') = self.peek() {
             self.i += 1;
         }
     }
 
+    #[inline]
     fn expect(&mut self, c: u8) -> Result<(), Invalid> {
         if self.peek() == Some(c) {
             self.i += 1;
@@ -83,44 +179,50 @@ impl Lexer<'_> {
         }
     }
 
-    fn value(&mut self, depth: usize) -> Result<(), Invalid> {
+    fn value(&mut self, depth: usize) -> Result<S::Value, Invalid> {
         match self.peek() {
             Some(b'{') => self.object(depth + 1),
             Some(b'[') => self.array(depth + 1),
             Some(b'"') => {
                 let (start, end, escaped) = self.string()?;
-                self.toks.push(Tok::Str(start, end, escaped));
-                Ok(())
+                Ok(self.sink.string(start, end, escaped))
             }
-            Some(b't') => self.literal(b"true", Tok::Bool(true)),
-            Some(b'f') => self.literal(b"false", Tok::Bool(false)),
-            Some(b'n') => self.literal(b"null", Tok::Null),
+            Some(b't') => {
+                self.literal(b"true")?;
+                Ok(self.sink.boolean(true))
+            }
+            Some(b'f') => {
+                self.literal(b"false")?;
+                Ok(self.sink.boolean(false))
+            }
+            Some(b'n') => {
+                self.literal(b"null")?;
+                Ok(self.sink.null())
+            }
             Some(b'-' | b'0'..=b'9') => {
                 let start = self.i;
-                self.number()?;
-                self.toks.push(Tok::Num(start as u32, self.i as u32));
-                Ok(())
+                let short_integer = self.number()?;
+                self.sink.number(start as u32, self.i as u32, short_integer)
             }
             _ => Err(Invalid),
         }
     }
 
-    fn literal(&mut self, word: &[u8], tok: Tok) -> Result<(), Invalid> {
+    #[inline]
+    fn literal(&mut self, word: &[u8]) -> Result<(), Invalid> {
         if self.b[self.i..].starts_with(word) {
             self.i += word.len();
-            self.toks.push(tok);
             Ok(())
         } else {
             Err(Invalid)
         }
     }
 
-    fn array(&mut self, depth: usize) -> Result<(), Invalid> {
+    fn array(&mut self, depth: usize) -> Result<S::Value, Invalid> {
         if depth > MAX_DEPTH {
             return Err(Invalid);
         }
-        let at = self.toks.len();
-        self.toks.push(Tok::Null);
+        let mut list = self.sink.open_list();
         self.i += 1;
         self.ws();
         let mut len = 0;
@@ -129,7 +231,8 @@ impl Lexer<'_> {
         } else {
             loop {
                 self.ws();
-                self.value(depth)?;
+                let item = self.value(depth)?;
+                self.sink.item(&mut list, item);
                 len += 1;
                 self.ws();
                 match self.peek() {
@@ -142,19 +245,14 @@ impl Lexer<'_> {
                 }
             }
         }
-        self.toks[at] = Tok::Arr {
-            len,
-            next: self.toks.len() as u32,
-        };
-        Ok(())
+        self.sink.close_list(list, len)
     }
 
-    fn object(&mut self, depth: usize) -> Result<(), Invalid> {
+    fn object(&mut self, depth: usize) -> Result<S::Value, Invalid> {
         if depth > MAX_DEPTH {
             return Err(Invalid);
         }
-        let at = self.toks.len();
-        self.toks.push(Tok::Null);
+        let mut object = self.sink.open_object();
         self.i += 1;
         self.ws();
         let mut len = 0;
@@ -166,11 +264,12 @@ impl Lexer<'_> {
                 self.ws();
                 let (key_start, key_end, key_escaped) = self.string()?;
                 escaped |= key_escaped;
-                self.toks.push(Tok::Str(key_start, key_end, key_escaped));
+                self.sink.key(&mut object, key_start, key_end, key_escaped);
                 self.ws();
                 self.expect(b':')?;
                 self.ws();
-                self.value(depth)?;
+                let value = self.value(depth)?;
+                self.sink.member(&mut object, value);
                 len += 1;
                 self.ws();
                 match self.peek() {
@@ -183,17 +282,12 @@ impl Lexer<'_> {
                 }
             }
         }
-        self.toks[at] = Tok::Obj {
-            len,
-            next: self.toks.len() as u32,
-            escaped,
-        };
-        Ok(())
+        Ok(self.sink.close_object(object, len, escaped))
     }
 
     /// A number in JSON's grammar; one that might be out of `f64`'s range is checked with
-    /// `serde_json` itself.
-    fn number(&mut self) -> Result<(), Invalid> {
+    /// `serde_json` itself. Whether it is an integer of 18 digits or fewer.
+    fn number(&mut self) -> Result<bool, Invalid> {
         let start = self.i;
         let digits = |s: &mut Self| {
             let from = s.i;
@@ -205,15 +299,18 @@ impl Lexer<'_> {
         if self.peek() == Some(b'-') {
             self.i += 1;
         }
-        match self.peek() {
-            Some(b'0') => self.i += 1,
-            Some(b'1'..=b'9') => {
-                digits(self);
+        let whole = match self.peek() {
+            Some(b'0') => {
+                self.i += 1;
+                1
             }
+            Some(b'1'..=b'9') => digits(self),
             _ => return Err(Invalid),
-        }
+        };
         let mut plain = true;
+        let mut integer = true;
         if self.peek() == Some(b'.') {
+            integer = false;
             self.i += 1;
             if digits(self) == 0 {
                 return Err(Invalid);
@@ -221,6 +318,7 @@ impl Lexer<'_> {
         }
         if let Some(b'e' | b'E') = self.peek() {
             plain = false;
+            integer = false;
             self.i += 1;
             if let Some(b'+' | b'-') = self.peek() {
                 self.i += 1;
@@ -236,10 +334,11 @@ impl Lexer<'_> {
                 return Err(Invalid);
             }
         }
-        Ok(())
+        Ok(integer && whole <= 18)
     }
 
     /// A string: the range of its text inside the quotes, and whether it holds an escape.
+    #[inline]
     fn string(&mut self) -> Result<(u32, u32, bool), Invalid> {
         self.expect(b'"')?;
         let start = self.i;
