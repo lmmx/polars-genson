@@ -184,14 +184,13 @@ bench-update:
     tmp=$(mktemp)
     trap 'rm -f "$tmp"' EXIT
 
-    for ((i=${#missing[@]}-1; i>=0; i--)); do
-        version="${missing[i]}"
+    for version in "${missing[@]}"; do
         echo
         echo "=== Benchmarking polars-genson $version ==="
 
         # Isolated environment, pinned genson version, no changes
         # to bench/.venv or bench/uv.lock.
-        if ! uv run --no-project --python 3.13 \
+        if ! UV_EXCLUDE_NEWER=false uv run --no-project --python 3.13 \
             --exclude-newer-package polars=P0D \
             --exclude-newer-package polars-genson=P0D \
             --with "polars-genson[polars]==$version" \
