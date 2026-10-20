@@ -1,8 +1,8 @@
 //! The schemas of rows as interned states: each distinct subtree a row's schema holds is
 //! stored once, and the rows' trees share them. A row's state is what its own builder
 //! holds after `add_object` (schemas made only from values, so without keywords, and
-//! with only the object, list and scalar strategies), built from the row's token tape
-//! without allocating a node per value.
+//! with only the object, list and scalar strategies), built as the lexer reads the row's
+//! text (`tape::read`), without a token tape or a node per value.
 //!
 //! `add_object` of a value on a node gives the node joined with the value's own state
 //! (`join`): properties and strategies in the order they are first seen, `required`
@@ -15,9 +15,8 @@
 //! absorbed (known by their schema hash, which covers all `absorb` reads): a subtree the
 //! rows repeat at a node is merged there once.
 
-use crate::tape::{lex, unescape, Tok};
+use crate::tape::{read, unescape, Invalid, Sink};
 use rustc_hash::FxHashMap;
-use std::borrow::Cow;
 
 /// A state: a node's strategies.
 pub(crate) type StateId = u32;
@@ -96,6 +95,8 @@ pub(crate) struct RowStates {
     /// The position in the row of the next key and of the next object to end
     key_at: usize,
     object_at: usize,
+    /// Key positions of wide objects read before, cleared, for the next to reuse
+    position_maps: Vec<FxHashMap<KeyId, usize>>,
 }
 
 impl RowStates {
@@ -118,6 +119,7 @@ impl RowStates {
             last_objects: Vec::new(),
             key_at: 0,
             object_at: 0,
+            position_maps: Vec::new(),
         };
         for strats in [
             &[][..],
@@ -216,6 +218,7 @@ impl RowStates {
 
     /// The id of a row's next key: the previous row's key at its position, if it is the
     /// same text.
+    #[inline]
     fn row_key(&mut self, key: &str) -> KeyId {
         let at = self.key_at;
         self.key_at += 1;
@@ -339,7 +342,6 @@ impl RowStates {
         row: &str,
         ndjson: bool,
         wrap_root: Option<&str>,
-        toks: &mut Vec<Tok>,
     ) -> Result<RowState, Unsupported> {
         if row.trim().is_empty() {
             return Ok(None);
@@ -353,8 +355,8 @@ impl RowStates {
         } else {
             row
         };
-        lex(text, toks).map_err(|_| Unsupported)?;
-        let is_object = matches!(toks[0], Tok::Obj { .. });
+        // Text the lexer accepts is an object where it opens with a brace
+        let is_object = text.trim_start().starts_with('{');
         match wrap_root {
             None if !is_object => return Err(Unsupported),
             // Without a delimiter the usual path splits the text where its braces close, a
@@ -366,7 +368,7 @@ impl RowStates {
             return Err(Unsupported);
         }
         (self.key_at, self.object_at) = (0, 0);
-        let mut state = self.value(text, toks, 0)?;
+        let mut state = read(text, &mut States { states: self, text }).map_err(|_| Unsupported)?;
         if let Some(field) = wrap_root {
             let key = self.key_id(field);
             state = self.object(Obj {
@@ -375,81 +377,6 @@ impl RowStates {
             });
         }
         Ok(Some((state, self.hash(state))))
-    }
-
-    /// The state of the value at token `i`.
-    fn value(&mut self, text: &str, toks: &[Tok], i: usize) -> Result<StateId, Unsupported> {
-        Ok(match toks[i] {
-            Tok::Null => NULL,
-            Tok::Bool(_) => BOOLEAN,
-            Tok::Str(..) => STRING,
-            Tok::Num(s, e) => number_kind(&text[s as usize..e as usize])?,
-            Tok::Arr { len, .. } => {
-                let mut items = EMPTY;
-                let mut j = i + 1;
-                for _ in 0..len {
-                    let item = self.value(text, toks, j)?;
-                    items = self.join(items, item);
-                    j = after(toks, j);
-                }
-                // `ListStrategy::add_object` merges the items of a list this long in parallel
-                // pieces by `absorb`, which puts a piece's bare objects after its lists: where
-                // a node of the items holds both, the order depends on where rayon split
-                if len as usize >= LONG_LIST && self.mixed(items) {
-                    return Err(Unsupported);
-                }
-                match self.lists.get(&items) {
-                    Some(&state) => state,
-                    None => {
-                        let state = self.state(&[Strat::List(items)]);
-                        self.lists.insert(items, state);
-                        state
-                    }
-                }
-            }
-            Tok::Obj { len, .. } => {
-                let first = self.members.len();
-                // A wide object's keys are found again by hash, a narrow one's in turn
-                let mut positions: Option<FxHashMap<KeyId, usize>> = (len > 16)
-                    .then(|| FxHashMap::with_capacity_and_hasher(len as usize, Default::default()));
-                let mut j = i + 1;
-                for _ in 0..len {
-                    let Tok::Str(s, e, escaped) = toks[j] else {
-                        unreachable!("a key is a string")
-                    };
-                    let key = if escaped {
-                        Cow::Owned(unescape(&text[s as usize..e as usize]))
-                    } else {
-                        Cow::Borrowed(&text[s as usize..e as usize])
-                    };
-                    let key = self.row_key(&key);
-                    let value = self.value(text, toks, j + 1)?;
-                    // A key given again adds its value to the same property
-                    let seen = match &mut positions {
-                        Some(positions) => {
-                            let next = self.members.len();
-                            match positions.entry(key) {
-                                std::collections::hash_map::Entry::Occupied(at) => Some(*at.get()),
-                                std::collections::hash_map::Entry::Vacant(slot) => {
-                                    slot.insert(next);
-                                    None
-                                }
-                            }
-                        }
-                        None => self.members[first..]
-                            .iter()
-                            .position(|&(k, _)| k == key)
-                            .map(|at| first + at),
-                    };
-                    match seen {
-                        Some(at) => self.members[at].1 = self.join(self.members[at].1, value),
-                        None => self.members.push((key, value)),
-                    }
-                    j = after(toks, j + 1);
-                }
-                self.row_object(first)
-            }
-        })
     }
 
     /// Whether a node of the state's tree holds both an object and a list.
@@ -572,14 +499,6 @@ fn hash_words(words: &[u64]) -> u64 {
     xxhash_rust::xxh64::xxh64(&bytes, 0x9e37_79b9)
 }
 
-/// The token after the value at `i`.
-fn after(toks: &[Tok], i: usize) -> usize {
-    match toks[i] {
-        Tok::Arr { next, .. } | Tok::Obj { next, .. } => next as usize,
-        _ => i + 1,
-    }
-}
-
 /// A number's state: an integer that fits an `i64` is one, any other number a float (an
 /// integer above `i64::MAX` too, as no Avro `long` or Arrow `Int64` holds it). simd-json
 /// rejects a negative integer below `i64::MIN`, and floats near the end of `f64`'s range.
@@ -622,5 +541,152 @@ fn number_kind(text: &str) -> Result<StateId, Unsupported> {
     match text.parse::<f64>() {
         Ok(f) if f.abs() < 1e308 => Ok(FLOAT),
         _ => Err(Unsupported),
+    }
+}
+
+/// Interning as the lexer reads a row (`tape::read`): each value's state, found as
+/// `RowStates::row` once found it from the row's tape. A refusal (`Invalid`) is a row these
+/// states do not reproduce: a number simd-json rejects, a long list of mixed items.
+struct States<'r, 't> {
+    states: &'r mut RowStates,
+    text: &'t str,
+}
+
+/// An object while its members are read: where its members start among the scratch ones,
+/// the positions of its keys once it has many (a wide object's keys are found again by
+/// hash, a narrow one's in turn), and the key of the member being read.
+struct OpenObject {
+    first: usize,
+    positions: Option<FxHashMap<KeyId, usize>>,
+    key: KeyId,
+}
+
+/// The number of members from which an object's keys are found again by hash.
+const WIDE: usize = 16;
+
+impl Sink for States<'_, '_> {
+    type Value = StateId;
+    /// The items' state so far
+    type List = StateId;
+    type Object = OpenObject;
+
+    #[inline]
+    fn null(&mut self) -> StateId {
+        NULL
+    }
+
+    #[inline]
+    fn boolean(&mut self, _: bool) -> StateId {
+        BOOLEAN
+    }
+
+    #[inline]
+    fn string(&mut self, _: u32, _: u32, _: bool) -> StateId {
+        STRING
+    }
+
+    #[inline]
+    fn number(&mut self, start: u32, end: u32, short_integer: bool) -> Result<StateId, Invalid> {
+        if short_integer {
+            return Ok(INTEGER);
+        }
+        number_kind(&self.text[start as usize..end as usize]).map_err(|_| Invalid)
+    }
+
+    #[inline]
+    fn open_list(&mut self) -> StateId {
+        EMPTY
+    }
+
+    #[inline]
+    fn item(&mut self, items: &mut StateId, item: StateId) {
+        *items = self.states.join(*items, item);
+    }
+
+    #[inline]
+    fn close_list(&mut self, items: StateId, len: u32) -> Result<StateId, Invalid> {
+        let states = &mut *self.states;
+        // `ListStrategy::add_object` merges the items of a list this long in parallel
+        // pieces by `absorb`, which puts a piece's bare objects after its lists: where a
+        // node of the items holds both, the order depends on where rayon split
+        if len as usize >= LONG_LIST && states.mixed(items) {
+            return Err(Invalid);
+        }
+        Ok(match states.lists.get(&items) {
+            Some(&state) => state,
+            None => {
+                let state = states.state(&[Strat::List(items)]);
+                states.lists.insert(items, state);
+                state
+            }
+        })
+    }
+
+    #[inline]
+    fn open_object(&mut self) -> OpenObject {
+        OpenObject {
+            first: self.states.members.len(),
+            positions: None,
+            key: 0,
+        }
+    }
+
+    #[inline]
+    fn key(&mut self, object: &mut OpenObject, start: u32, end: u32, escaped: bool) {
+        let text = &self.text[start as usize..end as usize];
+        object.key = if escaped {
+            self.states.row_key(&unescape(text))
+        } else {
+            self.states.row_key(text)
+        };
+    }
+
+    #[inline]
+    fn member(&mut self, object: &mut OpenObject, value: StateId) {
+        let states = &mut *self.states;
+        let (first, key) = (object.first, object.key);
+        let members = states.members.len() - first;
+        if object.positions.is_none() && members == WIDE {
+            let positions = states.members[first..]
+                .iter()
+                .enumerate()
+                .map(|(at, &(k, _))| (k, first + at));
+            // A key given again is the first one's position
+            let mut map = states.position_maps.pop().unwrap_or_default();
+            for (k, at) in positions {
+                map.entry(k).or_insert(at);
+            }
+            object.positions = Some(map);
+        }
+        // A key given again adds its value to the same property
+        let seen = match &mut object.positions {
+            Some(positions) => {
+                let next = states.members.len();
+                match positions.entry(key) {
+                    std::collections::hash_map::Entry::Occupied(at) => Some(*at.get()),
+                    std::collections::hash_map::Entry::Vacant(slot) => {
+                        slot.insert(next);
+                        None
+                    }
+                }
+            }
+            None => states.members[first..]
+                .iter()
+                .position(|&(k, _)| k == key)
+                .map(|at| first + at),
+        };
+        match seen {
+            Some(at) => states.members[at].1 = states.join(states.members[at].1, value),
+            None => states.members.push((key, value)),
+        }
+    }
+
+    #[inline]
+    fn close_object(&mut self, object: OpenObject, _: u32, _: bool) -> StateId {
+        if let Some(mut map) = object.positions {
+            map.clear();
+            self.states.position_maps.push(map);
+        }
+        self.states.row_object(object.first)
     }
 }
