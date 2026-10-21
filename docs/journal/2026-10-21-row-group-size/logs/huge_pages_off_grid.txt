@@ -1,0 +1,9 @@
+flat_1       polars 0.514 (0.466-0.531) u2.11 s0.42 | genson 0.641 (0.606-0.719) u1.87 s0.62 | polars 1.25x
+flat_2       polars 0.364 (0.312-0.384) u1.60 s0.30 | genson 0.465 (0.425-0.688) u1.31 s0.53 | polars 1.28x
+flat_4       polars 0.350 (0.305-0.408) u1.54 s0.33 | genson 0.486 (0.433-0.525) u1.37 s0.60 | polars 1.39x
+flat_8       polars 0.337 (0.320-0.376) u1.44 s0.34 | genson 0.424 (0.395-0.512) u1.28 s0.54 | polars 1.26x
+flat_32      polars 0.360 (0.288-0.378) u1.52 s0.31 | genson 0.445 (0.368-0.705) u1.19 s0.52 | polars 1.24x
+flat_94      polars 0.419 (0.360-0.490) u1.60 s0.39 | genson 0.413 (0.372-0.742) u1.28 s0.50 | genson 1.01x
+list_str     polars 0.680 (0.590-0.765) u2.79 s0.54 | genson 1.226 (0.825-1.282) u2.42 s1.36 | polars 1.80x
+list_struct  polars 1.413 (1.223-1.442) u5.99 s0.80 | genson 1.563 (1.078-1.923) u3.69 s2.07 | polars 1.11x
+claims       polars 19.694 (18.858-20.655) u21.58 s1.78 | genson 0.895 (0.834-1.030) u3.74 s0.87 | genson 22.00x
