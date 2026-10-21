@@ -1,0 +1,13 @@
+# flat_2 (12.5M rows: c0 string, c1 Int64), every data page summarised by pages.py
+# genson, 20,000-row pages (the parent)
+{'created_by': 'parquet-rs version 60.0.0', 'version': 1, 'row_groups': 12, 'compression': 'ZSTD(ZstdLevel(1))', 'has_column_index': True, 'stats': True}
+  c0               data pages   626 (data_v1, PLAIN)  values/page med    20000  uncompressed/page med   257.8 kB  data unc  161.12 MB  comp   46.16 MB  ratio  3.49
+  c1               data pages   626 (data_v1, PLAIN)  values/page med    20000  uncompressed/page med   160.0 kB  data unc  100.01 MB  comp   21.39 MB  ratio  4.67
+# genson, 1 MiB pages (this change)
+{'created_by': 'parquet-rs version 60.0.0', 'version': 1, 'row_groups': 12, 'compression': 'ZSTD(ZstdLevel(1))', 'has_column_index': True, 'stats': True}
+  c0               data pages   145 (data_v1, PLAIN)  values/page med    81356  uncompressed/page med  1048.6 kB  data unc  161.11 MB  comp   45.03 MB  ratio  3.58
+  c1               data pages    92 (data_v1, PLAIN)  values/page med   131072  uncompressed/page med  1048.6 kB  data unc  100.00 MB  comp   17.34 MB  ratio  5.77
+# Polars 0.55.2 sink
+{'created_by': 'Polars', 'version': 1, 'row_groups': 12, 'compression': 'ZSTD(ZstdLevel(1))', 'has_column_index': True, 'stats': True}
+  c0               data pages   214 (data_v1, PLAIN)  values/page med    61680  uncompressed/page med   795.0 kB  data unc  161.11 MB  comp   45.14 MB  ratio  3.57
+  c1               data pages   119 (data_v1, PLAIN)  values/page med   116508  uncompressed/page med   932.1 kB  data unc  100.00 MB  comp   17.46 MB  ratio  5.73
