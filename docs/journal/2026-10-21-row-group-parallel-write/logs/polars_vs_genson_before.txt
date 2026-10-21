@@ -1,0 +1,9 @@
+flat_1 rows=25000000 | polars {"write_s": 0.546, "cpu_s": 1.62} equal=True rgs=203 mb= size=90343093 | genson {"rows": 25000000, "batch_rows": 1562500, "write_s": 1.867, "cpu_s": 1.85} equal=True rgs=24 mb= size=95930074
+flat_2 rows=12500000 | polars {"write_s": 0.311, "cpu_s": 1.05} equal=True rgs=102 mb= size=63266478 | genson {"rows": 12500000, "batch_rows": 781250, "write_s": 1.067, "cpu_s": 1.54} equal=True rgs=12 mb= size=72144149
+flat_4 rows=6250000 | polars {"write_s": 0.339, "cpu_s": 1.1} equal=True rgs=51 mb= size=60315449 | genson {"rows": 6250000, "batch_rows": 390625, "write_s": 0.415, "cpu_s": 1.16} equal=True rgs=6 mb= size=68036328
+flat_8 rows=3125000 | polars {"write_s": 0.337, "cpu_s": 1.12} equal=True rgs=25 mb= size=56166372 | genson {"rows": 3125000, "batch_rows": 195313, "write_s": 0.420, "cpu_s": 1.36} equal=True rgs=3 mb= size=64407079
+flat_32 rows=781250 | polars {"write_s": 0.415, "cpu_s": 1.44} equal=True rgs=6 mb= size=57440843 | genson {"rows": 781250, "batch_rows": 48829, "write_s": 0.498, "cpu_s": 1.76} equal=True rgs=1 mb= size=65767779
+flat_94 rows=265957 | polars {"write_s": 0.366, "cpu_s": 1.19} equal=True rgs=2 mb= size=58934900 | genson {"rows": 265957, "batch_rows": 16623, "write_s": 0.872, "cpu_s": 3.26} equal=True rgs=1 mb= size=79893970
+list_str rows=2500000 | polars {"write_s": 0.727, "cpu_s": 2.35} equal=True rgs=20 mb= size=80325797 | genson {"rows": 2500000, "batch_rows": 156250, "write_s": 1.420, "cpu_s": 1.44} equal=True rgs=3 mb= size=80900472
+list_struct rows=2500000 | polars {"write_s": 1.372, "cpu_s": 4.53} equal=True rgs=20 mb= size=113373114 | genson {"rows": 2500000, "batch_rows": 156250, "write_s": 1.670, "cpu_s": 2.52} equal=True rgs=3 mb= size=114684727
+DONE

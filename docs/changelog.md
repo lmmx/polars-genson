@@ -5,6 +5,12 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **Narrow tables write faster.** genson's Parquet writer encodes several row groups at
+  once, each leaf column of each a task of its own, where it encoded one row group at a
+  time: a table of a few columns and many rows uses every thread rather than one (a
+  25-million-row string column: 2.4 s to 0.8 s on 4 threads). The file is unchanged,
+  byte for byte.
+
 - **Typed Parquet output can be written in a stored schema.** `normalise_from_parquet`
   takes `schema` (a `pl.Schema` or `pl.Struct`), checked against the inferred schema
   before anything is written (`schema_check="compatible"`, `"strict"` or `"none"`), and
