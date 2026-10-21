@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2](https://github.com/lmmx/polars-genson/compare/genson-core-v1.2.1...genson-core-v1.2.2) - 2026-10-21
+
+### <!-- 3 -->Performance
+
+- *(parquet)* end data pages at 1 MiB, not every 20,000 rows ([#292](https://github.com/lmmx/polars-genson/pull/292))
+- *(parquet)* dictionary-encode only the leaf columns whose values repeat ([#290](https://github.com/lmmx/polars-genson/pull/290))
+
 ## [1.2.1](https://github.com/lmmx/polars-genson/compare/genson-core-v1.2.0...genson-core-v1.2.1) - 2026-10-21
 
 ### <!-- 3 -->Performance
