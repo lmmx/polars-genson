@@ -55,61 +55,151 @@ print(pl.read_parquet("typed.parquet").unnest("data"))
 `typed=True` takes `map_encoding="mapping"` (the default) or `"kv"`, which stores maps
 as lists of `{key, value}` structs.
 
-## Write in a stored schema: `schema=`
+With `unnest=True`, the struct's fields are written as top-level columns after the
+`keep_columns`, as `DataFrame.unnest` makes them (a null row is null in each column), so
+the file reads back without the `.unnest("data")`. A kept column with the same name as
+one of the struct's fields is an error.
 
-When many files are normalised separately, as chunks of one dataset, each infers its
-own schema: a field no row of a chunk has is missing from that chunk's output. Pass the
-dataset's stored schema as `schema` and each file is written in it, fields the chunk
-lacks as nulls, with `unnest=True` to write the struct's fields as columns of their own:
+## Write files in a shared schema: `schema=`
+
+Files normalised one at a time but read together, such as chunks of a large dataset or
+shards processed in parallel, need one schema between them. Each file's inferred schema
+is only what its own rows hold: a nested field no row of a chunk has is missing from that
+chunk's file, and a field null in every row has the dtype `Null`. Pass the dataset's
+schema as `schema`, and every file is written in it, however little of it a file's rows
+use.
+
+genson still infers each file's schema, and uses it twice:
+
+- it checks it against yours before writing, so a file holding data your schema has no
+  place for (a new field, a string where you have an integer) stops with an error naming
+  the field, rather than losing the data or writing another schema;
+- it keeps it in the file's metadata, so you can see what each file actually held.
+
+The rows are put into your schema's shape as they are written, in the same pass.
+
+Take two chunks of one dataset. No row of `chunk_a` has a `postcode` or a `score`:
+
+```python exec="on" source="above" session="parquet"
+pl.DataFrame({
+    "id": ["a1", "a2"],
+    "data": [
+        '{"name": "Alice", "address": {"city": "Paris"}, "score": null}',
+        '{"name": "Ana", "address": {"city": "Lisbon"}, "score": null}',
+    ],
+}).write_parquet("chunk_a.parquet")
+
+pl.DataFrame({
+    "id": ["b1", "b2"],
+    "data": [
+        '{"name": "Bob", "address": {"city": "Rome", "postcode": "00100"}, "score": 3}',
+        '{"name": "Bea", "address": null, "score": 7}',
+    ],
+}).write_parquet("chunk_b.parquet")
+```
+
+`schema` is the output column's fields, as a `pl.Schema` (or a `pl.Struct`), and needs
+`typed=True`:
 
 ```python exec="on" source="above" result="text" session="parquet"
 stored = pl.Schema({
     "name": pl.String,
-    "nickname": pl.String,  # in no row of this file
-    "tags": pl.List(pl.String),
-    "labels": pl.List(pl.Struct({"key": pl.String, "value": pl.String})),
+    "address": pl.Struct({"city": pl.String, "postcode": pl.String}),
+    "score": pl.Int64,
 })
-normalise_from_parquet(
-    "input.parquet",
-    column="data",
-    output_path="stored.parquet",
-    map_threshold=2,
-    map_encoding="kv",
-    typed=True,
-    keep_columns=["id"],
-    schema=stored,
-    unnest=True,
-)
-print(pl.read_parquet("stored.parquet"))
+
+for chunk in ["a", "b"]:
+    normalise_from_parquet(
+        f"chunk_{chunk}.parquet",
+        column="data",
+        output_path=f"out_{chunk}.parquet",
+        typed=True,
+        keep_columns=["id"],
+        schema=stored,
+        unnest=True,
+    )
+
+print(pl.read_parquet("out_*.parquet"))
 ```
 
-The file is laid out as Polars would write the same frame, and its
-`genson_avro_schema` metadata still holds the inferred schema, so drift can be checked
-from it later.
+Both files have the schema's columns and dtypes, its fields in its order at every depth:
+`chunk_a`'s `address.postcode` is null in each row, and its `score`, `Null` in its
+inferred schema, is written as the schema's `Int64`. A null value stays null (`Bea`'s
+`address`).
 
-Before anything is written, the inferred schema is checked against the stored one.
-With `schema_check="compatible"` (the default) it must fit: each of its fields must be
-one of the stored schema's, of the same dtype (no widening, so `Int64` does not fit
-`Float64`), or `Null` (never seen with a value). A field the stored schema lacks raises
-`ValueError`, naming it:
+### Which inferred schemas fit: `schema_check`
+
+The inferred schema is checked against `schema` before anything is written. With
+`schema_check="compatible"` (the default) it fits when, recursively:
+
+| inferred | fits the schema's |
+|---|---|
+| `Null` (no value seen) | any dtype |
+| a dtype | same dtype (no widening: `Int64` does not fit `Float64`) |
+| a struct | struct holding each of its fields, each fitting (the schema may have more) |
+| a list, an array, a map | list, array of the same size, or map whose items (keys and values) fit |
+
+A schema field typed `Null` takes only `Null`: a value there is data the schema has no
+type for. Anything else raises `ValueError`, one line per offending field, its path
+written with `.` between fields, `[]` for a list's items and `{}` for a map's values:
 
 ```python exec="on" source="above" result="text" session="parquet"
+pl.DataFrame({
+    "id": ["c1"],
+    "data": ['{"name": "Cy", "address": {"city": "Oslo", "floor": 3}, "score": "high"}'],
+}).write_parquet("chunk_c.parquet")
+
 try:
     normalise_from_parquet(
-        "input.parquet",
+        "chunk_c.parquet",
         column="data",
-        output_path="narrow.parquet",
+        output_path="out_c.parquet",
         typed=True,
-        schema=pl.Schema({"name": pl.String, "tags": pl.List(pl.String)}),
+        schema=stored,
     )
 except ValueError as e:
     print(e)
+print(os.path.exists("out_c.parquet"))
 ```
 
-`schema_check="strict"` also requires every stored field to be inferred, and
-`schema_check="none"` checks nothing (fields the stored schema lacks are dropped).
-`check_schema_compatibility(inferred, stored)` gives the same verdict for two schemas,
-as a list of problems.
+Nothing is written for a file that fails, including its lookup and pruned files.
+
+With `schema_check="strict"` the inferred schema must be the schema, field for field, so a
+missing field, or a `Null` where the schema has another dtype, is an error too: `chunk_a`
+fails it. Use it when every file is expected to use the whole schema. With
+`schema_check="none"` nothing is checked: fields the schema lacks are dropped, and other
+scalar dtypes are cast (an error if a value can't be).
+
+### Check a schema without writing: `check_schema_compatibility`
+
+A file written in a schema keeps the schema inferred from its rows in its
+`genson_avro_schema` metadata. `check_schema_compatibility(inferred, target)` gives the
+same verdict as `schema_check` for any two schemas, as a list of problems, empty when the
+inferred schema fits:
+
+```python exec="on" source="above" result="text" session="parquet"
+from polars_genson import (
+    avro_to_polars_schema,
+    check_schema_compatibility,
+    read_parquet_metadata,
+)
+
+meta = read_parquet_metadata("out_a.parquet")
+inferred_a = pl.Schema(avro_to_polars_schema(meta["genson_avro_schema"]))
+print(inferred_a)
+print(check_schema_compatibility(inferred_a, stored))
+print(check_schema_compatibility(inferred_a, stored, schema_check="strict"))
+```
+
+### What the file holds
+
+The columns have the schema's dtypes, laid out as Polars writes them to Parquet (strings
+and lists with 64-bit offsets, list items named `element`), so readers that take the
+Arrow schema from the file, such as pyarrow, see one schema across files.
+
+`schema` takes strings, binaries, booleans, nulls, integers, floats, structs, lists,
+arrays and maps; other dtypes (dates and times, decimals, categoricals, enums) raise
+`ValueError`.
 
 ## Write JSON strings instead
 
