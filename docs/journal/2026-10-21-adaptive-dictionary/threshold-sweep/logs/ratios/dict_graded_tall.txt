@@ -1,0 +1,19 @@
+DICT sample_s 0.019243
+DICT leaf 0 "int_1000_0" INT64 typed=true distinct=1000 sampled=16384 plain=false
+DICT leaf 1 "short_1000_0" BYTE_ARRAY typed=true distinct=1000 sampled=16384 plain=false
+DICT leaf 2 "long_1000_0" BYTE_ARRAY typed=true distinct=1000 sampled=16384 plain=false
+DICT leaf 3 "int_10000_0" INT64 typed=true distinct=8087 sampled=16384 plain=false
+DICT leaf 4 "short_10000_0" BYTE_ARRAY typed=true distinct=8087 sampled=16384 plain=false
+DICT leaf 5 "long_10000_0" BYTE_ARRAY typed=true distinct=8087 sampled=16384 plain=false
+DICT leaf 6 "int_20000_0" INT64 typed=true distinct=11284 sampled=16384 plain=false
+DICT leaf 7 "short_20000_0" BYTE_ARRAY typed=true distinct=11284 sampled=16384 plain=false
+DICT leaf 8 "long_20000_0" BYTE_ARRAY typed=true distinct=11284 sampled=16384 plain=false
+DICT leaf 9 "int_50000_0" INT64 typed=true distinct=13933 sampled=16384 plain=true
+DICT leaf 10 "short_50000_0" BYTE_ARRAY typed=true distinct=13933 sampled=16384 plain=true
+DICT leaf 11 "long_50000_0" BYTE_ARRAY typed=true distinct=13933 sampled=16384 plain=true
+DICT leaf 12 "int_200000_0" INT64 typed=true distinct=15761 sampled=16384 plain=true
+DICT leaf 13 "short_200000_0" BYTE_ARRAY typed=true distinct=15761 sampled=16384 plain=true
+DICT leaf 14 "long_200000_0" BYTE_ARRAY typed=true distinct=15761 sampled=16384 plain=true
+DICT leaf 15 "int_unique_0" INT64 typed=true distinct=16384 sampled=16384 plain=true
+DICT leaf 16 "short_unique_0" BYTE_ARRAY typed=true distinct=16384 sampled=16384 plain=true
+DICT leaf 17 "long_unique_0" BYTE_ARRAY typed=true distinct=16384 sampled=16384 plain=true

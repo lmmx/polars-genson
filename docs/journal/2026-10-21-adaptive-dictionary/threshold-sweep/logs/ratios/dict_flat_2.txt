@@ -1,0 +1,3 @@
+DICT sample_s 0.034477
+DICT leaf 0 "c0" BYTE_ARRAY typed=true distinct=16384 sampled=16384 plain=true
+DICT leaf 1 "c1" INT64 typed=true distinct=16384 sampled=16384 plain=true

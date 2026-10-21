@@ -1,0 +1,12 @@
+flat_1: master=0.760 dict=0.497 dict=0.808 master=0.753 | MB master 95.93 adaptive 92.40 | equal=True
+flat_2: master=0.703 dict=0.428 dict=0.392 master=0.398 | MB master 72.14 adaptive 67.60 | equal=True
+flat_94: master=1.357 dict=0.439 dict=0.457 master=1.069 | MB master 79.89 adaptive 60.16 | equal=True
+list_str: master=0.765 dict=1.159 dict=1.243 master=1.285 | MB master 80.90 adaptive 80.40 | equal=True
+list_struct: master=1.576 dict=1.623 dict=1.107 master=1.251 | MB master 114.68 adaptive 113.34 | equal=True
+claims: master=0.809 dict=0.833 dict=1.014 master=0.829 | MB master 54.34 adaptive 54.08 | equal=True
+labels: master=0.078 dict=0.072 dict=0.071 master=0.059 | MB master 4.16 adaptive 4.14 | equal=True
+descriptions: master=0.052 dict=0.069 dict=0.064 master=0.056 | MB master 4.50 adaptive 4.48 | equal=True
+aliases: master=0.031 dict=0.029 dict=0.027 master=0.032 | MB master 1.81 adaptive 1.80 | equal=True
+claims cpu s: master=7.66 dict=2.76 master=3.18 dict=3.34
+flat_1 cpu s: master=2.14 dict=1.69 master=1.64 dict=1.96
+flat_2 cpu s: master=1.55 dict=1.20 master=1.71 dict=1.16

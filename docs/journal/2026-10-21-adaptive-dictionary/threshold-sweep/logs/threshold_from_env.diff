@@ -1,0 +1,60 @@
+diff --git a/genson-core/src/parquet.rs b/genson-core/src/parquet.rs
+index fe8065b..30e8a47 100644
+--- a/genson-core/src/parquet.rs
++++ b/genson-core/src/parquet.rs
+@@ -510,22 +510,50 @@ fn unrepeated_leaves(
+     if leaves.iter().any(|l| l.len() != descr.num_columns()) {
+         return Vec::new();
+     }
+-    (0..descr.num_columns())
++    // SWEEP (scratch, not for commit): threshold from GENSON_DICT_THRESHOLD (default 0.75),
++    // per-leaf decisions and the sampling time to stderr when GENSON_DICT_LOG is set
++    let threshold: f64 = std::env::var("GENSON_DICT_THRESHOLD")
++        .ok()
++        .and_then(|v| v.parse().ok())
++        .unwrap_or(0.75);
++    let log = std::env::var_os("GENSON_DICT_LOG").is_some();
++    let started = std::time::Instant::now();
++    let decided: Vec<(usize, bool, usize, usize, bool)> = (0..descr.num_columns())
+         .into_par_iter()
+-        .filter(|&i| {
++        .map(|i| {
+             let mut seen = rustc_hash::FxHashSet::default();
+             let mut sampled = 0;
+             for batch_leaves in &leaves {
+                 if !sample(&batch_leaves[i], &mut seen, &mut sampled) {
+-                    return false;
++                    return (i, false, 0, 0, false);
+                 }
+                 if sampled >= DICTIONARY_SAMPLE {
+                     break;
+                 }
+             }
+-            sampled >= 128 && seen.len() * 4 > sampled * 3
++            let plain = sampled >= 128 && seen.len() as f64 > threshold * sampled as f64;
++            (i, plain, seen.len(), sampled, true)
+         })
+-        .map(|i| descr.column(i).path().clone())
++        .collect();
++    if log {
++        eprintln!("DICT sample_s {:.6}", started.elapsed().as_secs_f64());
++        for &(i, plain, distinct, sampled, typed) in &decided {
++            eprintln!(
++                "DICT leaf {} {} {:?} typed={} distinct={} sampled={} plain={}",
++                i,
++                descr.column(i).path(),
++                descr.column(i).physical_type(),
++                typed,
++                distinct,
++                sampled,
++                plain
++            );
++        }
++    }
++    decided
++        .into_iter()
++        .filter(|d| d.1)
++        .map(|d| descr.column(d.0).path().clone())
+         .collect()
+ }
+ 
