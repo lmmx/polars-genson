@@ -1,10 +1,12 @@
-"""Write NDJSON rows of Wikidata-like claims for `genson-core/examples/bench_claims.rs`.
+"""Write rows of Wikidata-like claims, as NDJSON (for `genson-core/examples/bench_claims.rs`)
+or, if the output ends in `.parquet`, as a Parquet file of one string column, `claims`
+(for `workloads.py`).
 
 Each row is a random half of the properties of one entity's claims, each property keeping
 a random number of its statements. The entities are the one-line fixtures in
 `genson-cli/tests/data/claims/x1818_L*.jsonl` and the rows of `data/claims.parquet`.
 
-Usage: python claims_rows.py <rows> <out.ndjson> [seed]
+Usage: python claims_rows.py <rows> <out.ndjson|out.parquet> [seed]
 """
 
 import json
@@ -27,12 +29,16 @@ def entities() -> list[dict]:
 def main(rows: int, out: Path, seed: int = 0) -> None:
     rng = random.Random(seed)
     pool = entities()
-    with out.open("w") as f:
-        for _ in range(rows):
-            entity = rng.choice(pool)
-            keys = [k for k in entity if rng.random() < 0.5]
-            row = {k: entity[k][: rng.randint(1, len(entity[k]))] for k in keys}
-            f.write(json.dumps(row) + "\n")
+    lines = []
+    for _ in range(rows):
+        entity = rng.choice(pool)
+        keys = [k for k in entity if rng.random() < 0.5]
+        row = {k: entity[k][: rng.randint(1, len(entity[k]))] for k in keys}
+        lines.append(json.dumps(row))
+    if out.suffix == ".parquet":
+        pl.DataFrame({"claims": lines}).write_parquet(out)
+    else:
+        out.write_text("".join(line + "\n" for line in lines))
 
 
 if __name__ == "__main__":

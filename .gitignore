@@ -24,3 +24,8 @@ target/
 # The performance scorecard's worktrees, builds and reports (scripts/scorecard.py)
 .scorecard/
 scorecard-out/
+
+# compare.py environments and generated input
+bench/.envs/
+bench/data/claims_*.parquet
+bench/data/flat_*.parquet
