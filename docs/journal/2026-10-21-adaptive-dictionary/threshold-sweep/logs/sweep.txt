@@ -1,0 +1,49 @@
+labels        genson 0                   user 0.072 (0.058-0.104)  wall 0.051 (0.050-0.205)      4.35 MB  1 rg  plain  3 leaves  sample   1.34 ms
+labels        genson 0.25/0.5            user 0.068 (0.053-0.078)  wall 0.059 (0.051-0.122)      4.09 MB  1 rg  plain  2 leaves  sample   1.46 ms
+labels        genson 0.75/0.9            user 0.070 (0.064-0.095)  wall 0.060 (0.055-0.066)      4.14 MB  1 rg  plain  1 leaves  sample   1.49 ms
+labels        genson 1                   user 0.071 (0.059-0.080)  wall 0.063 (0.048-0.109)      4.16 MB  1 rg  plain  0 leaves  sample   1.36 ms
+labels        polars (1Mi rg)            user 0.124 (0.111-0.140)  wall 0.145 (0.132-0.281)      4.36 MB  1 rg
+aliases       genson 0                   user 0.033 (0.021-0.044)  wall 0.032 (0.025-0.093)      1.76 MB  1 rg  plain  3 leaves  sample   2.55 ms
+aliases       genson 0.25/0.5            user 0.024 (0.020-0.043)  wall 0.028 (0.024-0.075)      1.72 MB  1 rg  plain  2 leaves  sample   1.58 ms
+aliases       genson 0.75/0.9            user 0.033 (0.023-0.038)  wall 0.032 (0.026-0.043)      1.80 MB  1 rg  plain  1 leaves  sample   1.50 ms
+aliases       genson 1                   user 0.041 (0.037-0.043)  wall 0.038 (0.028-0.044)      1.81 MB  1 rg  plain  0 leaves  sample   1.47 ms
+aliases       polars (1Mi rg)            user 0.050 (0.047-0.067)  wall 0.083 (0.052-0.107)      1.75 MB  1 rg
+descriptions  genson 0                   user 0.056 (0.040-0.085)  wall 0.054 (0.043-0.068)      4.59 MB  1 rg  plain  3 leaves  sample   1.55 ms
+descriptions  genson 0.25/0.5            user 0.059 (0.054-0.064)  wall 0.056 (0.048-0.093)      4.48 MB  1 rg  plain  2 leaves  sample   1.61 ms
+descriptions  genson 0.75/0.9            user 0.066 (0.051-0.072)  wall 0.061 (0.049-0.129)      4.48 MB  1 rg  plain  1 leaves  sample   1.58 ms
+descriptions  genson 1                   user 0.066 (0.050-0.083)  wall 0.064 (0.044-0.065)      4.50 MB  1 rg  plain  0 leaves  sample   1.81 ms
+descriptions  polars (1Mi rg)            user 0.103 (0.081-0.107)  wall 0.119 (0.095-0.134)      4.60 MB  1 rg
+list_str      genson 0/0.25/0.5/0.75/0.9 user 1.775 (1.523-1.868)  wall 0.892 (0.673-1.598)     80.40 MB  3 rg  plain  1 leaves  sample   0.70 ms
+list_str      genson 1                   user 1.686 (1.445-1.975)  wall 0.913 (0.689-1.357)     80.90 MB  3 rg  plain  0 leaves  sample   0.67 ms
+list_str      polars (1Mi rg)            user 2.134 (2.057-2.508)  wall 2.838 (2.329-3.255)     80.32 MB  3 rg
+list_struct   genson 0/0.25/0.5/0.75/0.9 user 2.437 (2.380-2.849)  wall 1.073 (0.840-1.963)    113.34 MB  3 rg  plain  2 leaves  sample   1.31 ms
+list_struct   genson 1                   user 3.110 (2.251-3.191)  wall 1.927 (0.990-3.034)    114.68 MB  3 rg  plain  0 leaves  sample   1.41 ms
+list_struct   polars (1Mi rg)            user 5.228 (4.722-5.629)  wall 4.690 (3.606-6.297)    113.36 MB  3 rg
+flat_2        genson 0/0.25/0.5/0.75/0.9 user 1.157 (1.096-1.283)  wall 0.429 (0.384-0.590)     67.60 MB  12 rg  plain  2 leaves  sample   1.48 ms
+flat_2        genson 1                   user 1.427 (1.325-1.577)  wall 0.502 (0.433-0.647)     72.14 MB  12 rg  plain  0 leaves  sample   1.48 ms
+flat_2        polars (1Mi rg)            user 1.392 (1.254-1.566)  wall 0.494 (0.430-0.600)     62.62 MB  12 rg
+flat_94       genson 0/0.25/0.5/0.75/0.9 user 1.177 (1.052-1.244)  wall 0.467 (0.388-0.528)     60.16 MB  1 rg  plain 94 leaves  sample  10.12 ms
+flat_94       genson 1                   user 1.826 (1.719-2.159)  wall 0.917 (0.651-1.334)     79.89 MB  1 rg  plain  0 leaves  sample  11.46 ms
+flat_94       polars (1Mi rg)            user 1.116 (1.056-1.306)  wall 0.397 (0.375-0.497)     58.67 MB  1 rg
+graded_tall   genson 0                   user 2.254 (1.832-2.389)  wall 0.891 (0.878-1.067)     92.45 MB  2 rg  plain 18 leaves  sample   3.17 ms
+graded_tall   genson 0.25                user 1.835 (1.715-2.150)  wall 0.727 (0.598-1.275)     87.42 MB  2 rg  plain 15 leaves  sample   3.30 ms
+graded_tall   genson 0.5                 user 1.964 (1.634-2.032)  wall 0.896 (0.723-1.216)     83.02 MB  2 rg  plain 12 leaves  sample   4.59 ms
+graded_tall   genson 0.75                user 1.963 (1.754-2.119)  wall 0.787 (0.669-1.101)     78.71 MB  2 rg  plain  9 leaves  sample  12.23 ms
+graded_tall   genson 0.9                 user 1.850 (1.716-2.031)  wall 0.809 (0.552-1.042)     76.95 MB  2 rg  plain  6 leaves  sample   3.59 ms
+graded_tall   genson 1                   user 1.946 (1.734-2.121)  wall 0.637 (0.575-0.935)     78.56 MB  2 rg  plain  0 leaves  sample   3.23 ms
+graded_tall   polars (1Mi rg)            user 2.348 (2.293-2.748)  wall 0.895 (0.767-0.924)     70.12 MB  2 rg
+graded_wide   genson 0                   user 2.398 (2.101-2.618)  wall 1.127 (0.916-1.184)     96.81 MB  1 rg  plain 90 leaves  sample  11.55 ms
+graded_wide   genson 0.25                user 2.022 (1.847-2.235)  wall 1.150 (0.657-1.387)     91.81 MB  1 rg  plain 75 leaves  sample  11.94 ms
+graded_wide   genson 0.5                 user 2.047 (1.857-2.273)  wall 1.232 (0.731-1.265)     87.64 MB  1 rg  plain 60 leaves  sample  12.66 ms
+graded_wide   genson 0.75                user 1.949 (1.892-2.094)  wall 0.848 (0.584-1.128)     83.80 MB  1 rg  plain 45 leaves  sample  12.40 ms
+graded_wide   genson 0.9                 user 1.921 (1.747-2.034)  wall 0.671 (0.605-1.043)     82.86 MB  1 rg  plain 30 leaves  sample  10.86 ms
+graded_wide   genson 1                   user 2.442 (2.132-2.584)  wall 1.256 (0.949-1.422)     87.32 MB  1 rg  plain  0 leaves  sample  12.89 ms
+graded_wide   polars (1Mi rg)            user 2.283 (2.168-2.336)  wall 0.773 (0.711-0.798)     81.73 MB  1 rg
+claims        genson 0                   user 3.115 (2.888-3.521)  wall 1.842 (1.102-2.084)     57.63 MB  1 rg  plain 73 leaves  sample  16.41 ms
+claims        genson 0.25                user 2.723 (2.594-3.230)  wall 0.925 (0.772-1.572)     53.89 MB  1 rg  plain 23 leaves  sample  16.18 ms
+claims        genson 0.5                 user 2.703 (2.447-3.123)  wall 0.813 (0.727-1.024)     53.78 MB  1 rg  plain 16 leaves  sample  15.73 ms
+claims        genson 0.75                user 2.905 (2.883-3.099)  wall 0.854 (0.850-1.593)     54.08 MB  1 rg  plain 12 leaves  sample  16.47 ms
+claims        genson 0.9                 user 2.882 (2.718-3.086)  wall 0.862 (0.805-0.910)     54.24 MB  1 rg  plain  8 leaves  sample  15.20 ms
+claims        genson 1                   user 3.062 (2.690-3.174)  wall 0.899 (0.817-1.026)     54.34 MB  1 rg  plain  0 leaves  sample  16.13 ms
+claims        polars (1Mi rg)            user 23.062 (22.136-24.946)  wall 26.480 (24.595-29.399)     59.02 MB  1 rg
+exit 0

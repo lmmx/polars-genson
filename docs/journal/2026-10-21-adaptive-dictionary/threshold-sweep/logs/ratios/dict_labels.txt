@@ -1,0 +1,4 @@
+DICT sample_s 0.002217
+DICT leaf 0 "id" BYTE_ARRAY typed=true distinct=10000 sampled=10000 plain=true
+DICT leaf 1 "labels.list.element.key" BYTE_ARRAY typed=true distinct=488 sampled=16384 plain=false
+DICT leaf 2 "labels.list.element.value" BYTE_ARRAY typed=true distinct=8729 sampled=16384 plain=false

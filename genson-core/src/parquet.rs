@@ -483,8 +483,9 @@ const DICTIONARY_SAMPLE: usize = 16_384;
 /// The Parquet leaf columns of `batches` whose sampled values are more than three
 /// quarters distinct (of at least 128 sampled), for which a dictionary costs a hash per
 /// value and grows the file until arrow-rs gives it up at its page size limit: Polars
-/// skips dictionaries at the same ratio. None when the Arrow leaves do not line up with
-/// the Parquet leaf columns one to one.
+/// skips dictionaries at the same ratio, and no other ratio from 0 to 1 measured better
+/// across flat, nested and Wikidata tables (docs/journal/2026-10-21-adaptive-dictionary.md).
+/// None when the Arrow leaves do not line up with the Parquet leaf columns one to one.
 fn unrepeated_leaves(
     schema: &SchemaRef,
     spec_names: bool,

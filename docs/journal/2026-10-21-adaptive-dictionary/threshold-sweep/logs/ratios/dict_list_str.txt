@@ -1,0 +1,2 @@
+DICT sample_s 0.002049
+DICT leaf 0 "l.list.element" BYTE_ARRAY typed=true distinct=16384 sampled=16384 plain=true
