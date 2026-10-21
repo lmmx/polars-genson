@@ -249,6 +249,9 @@ fn test_write_batches_matches_arrow_writer() {
                 .build(),
         ),
     ];
+    // Row groups are encoded up to one per thread at a time: waves of one row group, uneven
+    // waves, and waves wider than the row groups there are
+    let pools = [1, 3, 8].map(|n| rayon::ThreadPoolBuilder::new().num_threads(n).build().unwrap());
     for (layout, props) in layouts {
         for rows in [0, 1, 2, 37, 38, 74, 300] {
             let (schema, batches) = struct_batches(rows, rows as u64 + 1);
@@ -259,12 +262,16 @@ fn test_write_batches_matches_arrow_writer() {
                 writer.write(batch).unwrap();
             }
             writer.close().unwrap();
-            let parallel = NamedTempFile::new().unwrap();
-            let writer =
-                ArrowWriter::try_new(File::create(parallel.path()).unwrap(), schema.clone(), Some(props.clone())).unwrap();
-            write_batches(writer, &schema, batches).unwrap();
-            let (one, parallel) = (std::fs::read(one.path()).unwrap(), std::fs::read(parallel.path()).unwrap());
-            assert!(one == parallel, "{layout}, {rows} rows: {} and {} bytes", one.len(), parallel.len());
+            let one = std::fs::read(one.path()).unwrap();
+            for pool in &pools {
+                let parallel = NamedTempFile::new().unwrap();
+                let writer = ArrowWriter::try_new(File::create(parallel.path()).unwrap(), schema.clone(), Some(props.clone()))
+                    .unwrap();
+                pool.install(|| write_batches(writer, &schema, batches.clone())).unwrap();
+                let parallel = std::fs::read(parallel.path()).unwrap();
+                let threads = pool.current_num_threads();
+                assert!(one == parallel, "{layout}, {rows} rows, {threads} threads: {} and {} bytes", one.len(), parallel.len());
+            }
         }
     }
 }
