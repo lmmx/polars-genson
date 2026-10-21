@@ -16,7 +16,8 @@ the tables of `2026-10-21-row-group-parallel-write/scripts/gen.py` and chunk 0's
 with arrow-rs settings set from the environment in a scratch build
 (`writer_options.txt`): with dictionaries off, genson's writes of flat tables matched or
 beat Polars' (1 column 0.55-0.58 s against 0.51; 94 columns 0.36 s against 0.43), where
-with them on they took 0.90-0.92 s and 0.72-1.54 s. The near-unique synthetic columns
+with them on they took 0.90-0.92 s and 0.72-1.54 s. These were single runs; repeated runs against the official
+wheel put genson behind on flat tables (below, "Against Polars"). The near-unique synthetic columns
 also came out larger with dictionaries (94 columns: 79.9 MB against 60.2 MB off), and
 real claims smaller (54.3 MB against 57.6 MB off): some of their leaves repeat (property
 ids, snak types, ranks) and some do not (statement ids, hashes).
@@ -121,17 +122,24 @@ user CPU slower than at 0.75, with disjoint ranges; `logs/summary.txt`):
     columns; 15 to 16 ms on claims (2% of 0.85 s). On 94 columns it buys 0.65 s of CPU
     time and 25% of size.
 
-At 0.75 against Polars (`logs/vs_polars.txt`):
+Against Polars (corrected). `logs/vs_polars.txt` compares 0.75 with Polars 0.55.2 built
+from crates inside the benchmark binary. That build is much slower than the official
+Polars 2.0.0 wheel: at the same row groups the wheel writes `List(String)` in 1.23 s,
+against the crate build's 2.93 s. So `logs/vs_polars.txt` holds for file sizes, not for
+genson against Polars in time.
 
-| table | user CPU | wall time |
+The #288 journal's grid harness was rerun against the official wheel (`sink_parquet`,
+zstd 1, its default row groups), with genson at #292's head (this change plus 1 MiB data
+pages). It ran 5 rounds of fresh processes, and 10 for the 1-column, 2-column and
+94-column tables. Median wall time:
+
+| table | Polars wheel | genson |
 |---|---|---|
-| claims | 2.91 s against 23.06 s | 0.85 s against 26.48 s |
-| labels, descriptions, aliases | faster | faster, or within noise |
-| `List(String)`, `List(Struct)` | faster | 0.89 and 1.07 s against 2.84 and 4.69 s |
-| graded_tall, graded_wide | faster | within noise |
-| flat, 2 and 94 columns | within noise | within noise |
+| flat, 1 to 94 columns | 0.35–0.51 s | 0.44–0.77 s (Polars 1.2–1.55× faster) |
+| `List(String)` | 0.71 s | 1.13 s |
+| `List(Struct)` | 1.55 s | 1.59 s |
+| claims | 20.0 s | 0.88 s (genson 23× faster) |
 
-- Genson is faster on nested and Wikidata tables, and level on flat ones.
 - On the flat tables both writers write every column plain. Their files differ in the
   plain columns: the Int64 column of the 2-column table is 21.4 MB from genson and 17.5 MB
   from Polars, with the same encoding (`logs/columns.txt`). This is not the dictionary
