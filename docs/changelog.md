@@ -5,6 +5,13 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **Tall flat Parquet output is smaller.** Data pages end at 1 MiB, as Polars' do,
+  rather than every 20,000 rows (arrow-rs's default). zstd compresses each page on its
+  own, so larger pages compress better: a 12.5-million-row table of a string and an
+  Int64 column is 7.7% smaller (67.6 MB to 62.4 MB, under Polars' 62.6 MB), and a
+  94-column table 3.0% smaller. Tables of fewer than 20,000 rows, and nested columns
+  whose pages already reached 1 MiB first, are written byte for byte as before.
+
 - **Parquet output dictionary-encodes only columns whose values repeat.** A leaf column
   whose first values are mostly distinct (more than three quarters, as Polars decides) is
   written without a dictionary, which cost a hash per value and grew the file until

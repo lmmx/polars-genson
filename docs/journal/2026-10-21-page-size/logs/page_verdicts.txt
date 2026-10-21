@@ -1,0 +1,12 @@
+| table | user CPU s: 20k pages / 1 MiB pages / Polars | wall s: 20k / 1 MiB / Polars | MB: 20k / 1 MiB / Polars | 1 MiB vs 20k (user, wall) | 1 MiB vs Polars (user, wall) |
+|---|---|---|---|---|---|
+| flat_2 | 1.15 / 1.21 / 1.48 | 0.41 / 0.39 / 0.56 | 67.60 / 62.38 / 62.62 | within noise, within noise | faster, within noise |
+| flat_94 | 1.12 / 1.18 / 1.34 | 0.47 / 0.55 / 0.45 | 60.16 / 58.34 / 58.67 | within noise, within noise | within noise, within noise |
+| graded_tall | 1.96 / 1.84 / 2.30 | 1.01 / 0.77 / 0.80 | 78.71 / 77.13 / 70.12 | within noise, within noise | within noise, within noise |
+| graded_wide | 2.06 / 2.14 / 2.45 | 1.06 / 0.79 / 0.82 | 83.80 / 83.21 / 81.73 | within noise, within noise | within noise, within noise |
+| list_str | 1.72 / 1.67 / 2.07 | 0.76 / 0.87 / 2.93 | 80.40 / 80.40 / 80.32 | within noise, within noise | within noise, faster |
+| list_struct | 2.41 / 2.41 / 4.65 | 1.15 / 1.04 / 4.96 | 113.34 / 113.34 / 113.36 | within noise, within noise | faster, faster |
+| labels | 0.08 / 0.08 / 0.14 | 0.07 / 0.06 / 0.14 | 4.14 / 4.14 / 4.36 | within noise, within noise | faster, faster |
+| aliases | 0.03 / 0.03 / 0.03 | 0.03 / 0.03 / 0.04 | 1.80 / 1.80 / 1.75 | within noise, within noise | within noise, within noise |
+| descriptions | 0.05 / 0.07 / 0.08 | 0.05 / 0.06 / 0.16 | 4.48 / 4.48 / 4.60 | within noise, within noise | within noise, within noise |
+| claims | 2.87 / 3.18 / 22.62 | 1.50 / 1.04 / 25.20 | 54.08 / 54.08 / 59.02 | within noise, within noise | faster, faster |

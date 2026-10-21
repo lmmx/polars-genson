@@ -435,3 +435,36 @@ fn test_mostly_distinct_leaves_are_not_dictionary_encoded() {
     write_string_column_with(json.path().to_str().unwrap(), "json", strings, &[], None).unwrap();
     assert!(!dictionary_pages(json.path())["json"]);
 }
+
+/// A flat column's data pages end at the page size limit (1 MiB), not every 20,000 rows as
+/// arrow-rs's default would have them: 300,000 distinct Int64 values (2.4 MB, written
+/// plain) take three pages, and read back unchanged.
+#[test]
+fn test_flat_pages_end_at_the_page_size_limit() {
+    use arrow::array::{Int64Array, StructArray};
+    use arrow::datatypes::Fields;
+    let rows = 300_000;
+    let values = Int64Array::from_iter_values((0..rows as i64).map(|i| i * 7919));
+    let fields = Fields::from(vec![Field::new("n", DataType::Int64, true)]);
+    let array = StructArray::new(fields.clone(), vec![Arc::new(values.clone())], None);
+    let file = NamedTempFile::new().unwrap();
+    let layout = StructLayout { unnest: true, spec_names: true };
+    write_struct_columns(file.path().to_str().unwrap(), "x", vec![array], &fields, &[], None, layout).unwrap();
+
+    let options = ArrowReaderOptions::new().with_offset_index_policy(PageIndexPolicy::Required);
+    let metadata = ArrowReaderMetadata::load(&File::open(file.path()).unwrap(), options).unwrap();
+    let pages = metadata.metadata().page_index_for_row_group(0).page_locations(0).unwrap().clone();
+    let starts: Vec<usize> = pages.iter().map(|p| p.first_row_index as usize).chain([rows]).collect();
+    let page_rows: Vec<usize> = starts.windows(2).map(|w| w[1] - w[0]).collect();
+    assert_eq!(page_rows.len(), 3, "{page_rows:?}");
+    assert!(page_rows[..page_rows.len() - 1].iter().all(|&n| n > 20_000), "{page_rows:?}");
+
+    let reader = ParquetRecordBatchReaderBuilder::try_new(File::open(file.path()).unwrap()).unwrap().build().unwrap();
+    let read: Vec<i64> = reader
+        .flat_map(|batch| {
+            let batch = batch.unwrap();
+            batch.column(0).as_any().downcast_ref::<Int64Array>().unwrap().values().to_vec()
+        })
+        .collect();
+    assert_eq!(read, values.values().to_vec());
+}

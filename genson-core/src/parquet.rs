@@ -457,8 +457,11 @@ fn compression() -> Compression {
 
 /// A writer for `batches` (which it does not write): with `spec_names`, the Parquet
 /// schema's list and map groups take the specification's names (arrow-rs's
-/// `coerce_types`, which changes nothing else for genson's types), and leaf columns whose
-/// values are mostly distinct are not dictionary encoded (see [`unrepeated_leaves`]).
+/// `coerce_types`, which changes nothing else for genson's types), leaf columns whose
+/// values are mostly distinct are not dictionary encoded (see [`unrepeated_leaves`]), and
+/// a data page ends at arrow-rs's page size limit (1 MiB) alone, as Polars' do, rather
+/// than also at 20,000 rows: zstd compresses each page on its own, and pages of 20,000
+/// fixed-width values (160 kB of Int64) compress worse.
 fn open_writer(
     path: &str,
     schema: SchemaRef,
@@ -469,7 +472,8 @@ fn open_writer(
         .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
     let mut props = WriterProperties::builder()
         .set_compression(compression())
-        .set_coerce_types(spec_names);
+        .set_coerce_types(spec_names)
+        .set_data_page_row_count_limit(usize::MAX);
     for column in unrepeated_leaves(&schema, spec_names, batches) {
         props = props.set_column_dictionary_enabled(column, false);
     }
