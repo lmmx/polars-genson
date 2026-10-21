@@ -1,0 +1,22 @@
+flat_2
+  c0                     genson   46.16 MB plain  polars   45.14 MB plain
+  c1                     genson   21.39 MB plain  polars   17.46 MB plain <<
+graded_tall
+  int_1000_0             genson    2.63 MB dict   polars    2.63 MB dict 
+  short_1000_0           genson    2.63 MB dict   polars    2.63 MB dict 
+  long_1000_0            genson    2.63 MB dict   polars    2.63 MB dict 
+  int_10000_0            genson    3.72 MB dict   polars    3.69 MB dict 
+  short_10000_0          genson    3.73 MB dict   polars    3.72 MB dict 
+  long_10000_0           genson    3.74 MB dict   polars    3.73 MB dict 
+  int_20000_0            genson    4.01 MB dict   polars    3.98 MB dict 
+  short_20000_0          genson    4.05 MB dict   polars    4.05 MB dict 
+  long_20000_0           genson    4.06 MB dict   polars    4.06 MB dict 
+  int_50000_0            genson    4.23 MB plain  polars    4.30 MB dict 
+  short_50000_0          genson    6.48 MB plain  polars    4.50 MB dict  <<
+  long_50000_0           genson    6.97 MB plain  polars    4.53 MB dict  <<
+  int_200000_0           genson    6.57 MB plain  polars    5.96 MB dict  <<
+  short_200000_0         genson    6.95 MB plain  polars    5.98 MB dict  <<
+  long_200000_0          genson    7.43 MB plain  polars    6.08 MB dict  <<
+  int_unique_0           genson    3.57 MB plain  polars    2.93 MB plain <<
+  short_unique_0         genson    2.61 MB plain  polars    2.14 MB plain <<
+  long_unique_0          genson    2.58 MB plain  polars    2.57 MB plain
