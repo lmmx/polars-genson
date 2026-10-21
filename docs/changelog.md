@@ -5,6 +5,12 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **Parquet output dictionary-encodes only columns whose values repeat.** A leaf column
+  whose first values are mostly distinct (more than three quarters, as Polars decides) is
+  written without a dictionary, which cost a hash per value and grew the file until
+  arrow-rs gave the dictionary up: a table of 94 near-unique columns writes 2.5 times
+  faster and 25% smaller. No file is larger; Wikidata claims are 0.5% smaller.
+
 - **Narrow tables write faster.** genson's Parquet writer encodes several row groups at
   once, each leaf column of each a task of its own, where it encoded one row group at a
   time: a table of a few columns and many rows uses every thread rather than one (a
