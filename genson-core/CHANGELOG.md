@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0](https://github.com/lmmx/polars-genson/compare/genson-core-v1.1.0...genson-core-v1.2.0) - 2026-10-21
+
+### <!-- 1 -->Features
+
+- typed Parquet output in a target schema (schema, schema_check, unnest) ([#287](https://github.com/lmmx/polars-genson/pull/287))
+
 ## [1.1.0](https://github.com/lmmx/polars-genson/compare/genson-core-v1.0.2...genson-core-v1.1.0) - 2026-10-19
 
 ### <!-- 2 -->Bug Fixes
