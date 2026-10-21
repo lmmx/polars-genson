@@ -288,3 +288,93 @@ def test_a_null_stored_field_takes_only_null():
     assert check_schema_compatibility(pl.Schema({"altitude": pl.Float64}), stored) == [
         "altitude: Float64, the target has Null"
     ]
+
+
+MAP_ROWS = [
+    {
+        "labels": {"en": "Alice", "fr": "Alice"},
+        "props": {"p1": {"v": 1}, "p2": {"v": 2}},
+    },
+    {"labels": {"de": "Bob"}, "props": {"p3": {"v": 3}}},
+    None,
+    {"labels": {}, "props": {}},
+]
+
+
+@pytest.mark.parametrize("unnest", [True, False])
+@pytest.mark.parametrize(
+    "target",
+    [
+        pl.Schema(
+            {
+                "labels": pl.Map(pl.String, pl.String),
+                "props": pl.Map(pl.String, pl.Struct({"v": pl.Int64})),
+            }
+        ),
+        pl.Schema(
+            {
+                "labels": pl.Map(pl.String, pl.String),
+                "props": pl.Map(pl.String, pl.Struct({"v": pl.Int64, "w": pl.String})),
+            }
+        ),
+    ],
+    ids=["same values", "value struct with a field the rows lack"],
+)
+def test_map_targets_are_laid_out_as_polars_writes_them(tmp_path, target, unnest):
+    """A target schema with Map dtypes is written as Polars writes the frame.
+
+    The output has the target's dtypes and the rows' values (fields the map values lack
+    as nulls), and the Parquet layout Polars writes for the same frame.
+    """
+    path = tmp_path / "in.parquet"
+    text = [None if r is None else orjson.dumps(r).decode() for r in MAP_ROWS]
+    pl.DataFrame({"id": ["a", "b", "c", "d"], "j": text}).write_parquet(path)
+    out, by_polars = tmp_path / "out.parquet", tmp_path / "polars.parquet"
+    normalise_from_parquet(
+        input_path=path,
+        column="j",
+        output_path=out,
+        force_field_types={"labels": "map", "props": "map"},
+        typed=True,
+        keep_columns=["id"],
+        schema=target,
+        unnest=unnest,
+    )
+    got = pl.read_parquet(out)
+    frame = got if unnest else got.unnest("j")
+    assert frame.schema == pl.Schema({"id": pl.String, **target})
+    fill = {f: None for f in target["props"].value.to_schema()}
+    expected = [
+        {
+            k: None
+            if r is None
+            else (
+                r[k] if k == "labels" else {p: {**fill, **v} for p, v in r[k].items()}
+            )
+            for k in target
+        }
+        for r in MAP_ROWS
+    ]
+    rows = frame.drop("id").to_dicts()
+    assert [
+        {k: (dict(sorted(v.items())) if v else v) for k, v in r.items()}
+        for r in rows[:2]
+    ] == expected[:2]
+    assert rows[2] == {"labels": None, "props": None}
+    got.write_parquet(by_polars)
+    a, b = pq.ParquetFile(out), pq.ParquetFile(by_polars)
+    assert a.schema_arrow.remove_metadata() == b.schema_arrow.remove_metadata()
+
+    def columns(f):
+        return [
+            (
+                c.path,
+                c.physical_type,
+                str(c.logical_type),
+                c.max_definition_level,
+                c.max_repetition_level,
+            )
+            for c in (f.schema.column(i) for i in range(len(f.schema)))
+        ]
+
+    assert columns(a) == columns(b)

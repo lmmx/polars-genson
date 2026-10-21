@@ -1254,9 +1254,8 @@ class GensonNamespace:
               ``True`` and projected onto it, unless one of its leaf dtypes differs
               from the inferred one, when ``str.json_decode`` decodes the JSON text.
         unnest : bool, default True
-            Only applies if `decode=True`. If True, expand the decoded struct
-            into separate columns for each schema field. If False, keep a
-            single Series of structs.
+            Whether to expand the decoded struct into a column per field, in place
+            of a single column of structs. Only applies if `decode=True`.
         ignore_outer_array : bool, default True
             Whether to treat a top-level JSON array as a stream of objects instead
             of a single array value.
