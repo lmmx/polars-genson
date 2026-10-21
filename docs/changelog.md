@@ -5,6 +5,16 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **Typed Parquet output can be written in a stored schema.** `normalise_from_parquet`
+  takes `schema` (a `pl.Schema` or `pl.Struct`), checked against the inferred schema
+  before anything is written (`schema_check="compatible"`, `"strict"` or `"none"`), and
+  `unnest=True` to write the struct's fields as top-level columns. Fields the file lacks
+  are written as nulls and the file is laid out as Polars writes the same frame, so
+  chunks inferred separately share one schema without reading the output back to
+  conform it. `check_schema_compatibility` gives the same verdict for two schemas. On a
+  10,000-entity chunk of the Wikidata dump, writing the claims this way took 3.0 s where
+  genson's output read back, conformed and written again by Polars took 30 s.
+
 - **`normalise_json(decode=False)` is faster.** It parsed every row into a `Value`,
   normalised it and serialised it; rows now go through the typed decoder into Arrow and
   are written back as JSON, with the same text. Rows the typed decoder declines, and

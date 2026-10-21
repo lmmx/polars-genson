@@ -1,0 +1,5 @@
+claims[].value[].mainsnak.datavalue: 305 rows null on one side only: valid in A 305, in B 0; every field null where valid: False
+claims[].value[].mainsnak.datavalue.precision: 603420 rows null on one side only: valid in A 603420, in B 0; every field null where valid: True
+claims[].value[].mainsnak.datavalue.latitude: 613258 rows null on one side only: valid in A 613258, in B 0; every field null where valid: True
+claims[].value[].mainsnak.datavalue.longitude: 613258 rows null on one side only: valid in A 613258, in B 0; every field null where valid: True
+claims[].value[].references[].snaks[].value[].datavalue: 31 rows null on one side only: valid in A 31, in B 0; every field null where valid: True

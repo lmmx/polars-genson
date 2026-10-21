@@ -1,0 +1,166 @@
+{
+ "chunk": "chunk_0.parquet",
+ "polars": "1.44.2",
+ "polars_genson": "0.9.6",
+ "runs": [
+  {
+   "run": 0,
+   "wall": 71.1035565559996,
+   "cpu": 148.294441,
+   "steps": {
+    "polars.read_parquet[process]": {
+     "calls": 1,
+     "wall": 0.49186111400013033,
+     "cpu": 0.5196700000000001,
+     "peak_over_base_mb": 438.234375
+    },
+    "polars.collect[n_ids]": {
+     "calls": 7,
+     "wall": 0.010469220998857054,
+     "cpu": 0.007187999999978878,
+     "peak_over_base_mb": 0.98046875
+    },
+    "genson.normalise_from_parquet[labels]": {
+     "calls": 1,
+     "wall": 2.6083105119996617,
+     "cpu": 4.579370999999999,
+     "peak_over_base_mb": 13.80078125
+    },
+    "polars.read_parquet[normalise_map_direct]": {
+     "calls": 3,
+     "wall": 0.12040343999979086,
+     "cpu": 0.11833399999999905,
+     "peak_over_base_mb": 38.78125
+    },
+    "process.normalise_map_direct[labels]": {
+     "calls": 1,
+     "wall": 2.681440301999828,
+     "cpu": 4.648072999999999,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[labels]": {
+     "calls": 1,
+     "wall": 0.18499489199984964,
+     "cpu": 0.17803699999999978,
+     "peak_over_base_mb": 32.53125
+    },
+    "genson.normalise_from_parquet[descriptions]": {
+     "calls": 1,
+     "wall": 1.3973107350002465,
+     "cpu": 2.072899999999999,
+     "peak_over_base_mb": 144.28515625
+    },
+    "process.normalise_map_direct[descriptions]": {
+     "calls": 1,
+     "wall": 1.4353716109999368,
+     "cpu": 2.1106169999999995,
+     "peak_over_base_mb": 109.83984375
+    },
+    "polars.sink_parquet[descriptions]": {
+     "calls": 1,
+     "wall": 0.13236901500022213,
+     "cpu": 0.13216999999999857,
+     "peak_over_base_mb": 26.40234375
+    },
+    "genson.normalise_from_parquet[aliases]": {
+     "calls": 1,
+     "wall": 0.8551275899999382,
+     "cpu": 1.2957420000000006,
+     "peak_over_base_mb": 37.58203125
+    },
+    "process.normalise_map_direct[aliases]": {
+     "calls": 1,
+     "wall": 0.8767868420000013,
+     "cpu": 1.317693000000002,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[aliases]": {
+     "calls": 1,
+     "wall": 0.05950767000013002,
+     "cpu": 0.06166799999999917,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[entities]": {
+     "calls": 1,
+     "wall": 0.006975692000196432,
+     "cpu": 0.010425999999998936,
+     "peak_over_base_mb": 1.484375
+    },
+    "process.normalise_sitelinks (genson.normalise_json)": {
+     "calls": 1,
+     "wall": 2.0921768309999607,
+     "cpu": 3.667570999999999,
+     "peak_over_base_mb": 396.484375
+    },
+    "polars.sink_parquet[links]": {
+     "calls": 1,
+     "wall": 0.2882445489995007,
+     "cpu": 0.3139220000000016,
+     "peak_over_base_mb": 27.6953125
+    },
+    "genson.normalise_from_parquet[claims]": {
+     "calls": 1,
+     "wall": 38.27490812300039,
+     "cpu": 110.853746,
+     "peak_over_base_mb": 2726.55078125
+    },
+    "polars.collect[normalise_claims_direct]": {
+     "calls": 1,
+     "wall": 3.28390213900002,
+     "cpu": 3.280234000000007,
+     "peak_over_base_mb": 750.16796875
+    },
+    "polars.read_parquet[normalise_claims_direct]": {
+     "calls": 2,
+     "wall": 0.0025687209999887273,
+     "cpu": 0.0027990000000386317,
+     "peak_over_base_mb": 0.00390625
+    },
+    "process.lookup_to_long": {
+     "calls": 1,
+     "wall": 0.00014990199997555465,
+     "cpu": 0.00014899999999329339,
+     "peak_over_base_mb": 0.0
+    },
+    "polars.sink_parquet[claims_labels]": {
+     "calls": 1,
+     "wall": 0.0008681079998495989,
+     "cpu": 0.0010109999999770025,
+     "peak_over_base_mb": 0.0
+    },
+    "process.normalise_claims_direct (all)": {
+     "calls": 1,
+     "wall": 41.57542731799913,
+     "cpu": 114.152749,
+     "peak_over_base_mb": 2935.1484375
+    },
+    "polars.sink_parquet[claims]": {
+     "calls": 1,
+     "wall": 21.20901223799956,
+     "cpu": 21.12381099999999,
+     "peak_over_base_mb": 618.47265625
+    }
+   },
+   "output_mb": {
+    "claims_labels": 0.0,
+    "labels": 3.8,
+    "descriptions": 3.7,
+    "claims": 57.5,
+    "entities": 0.2,
+    "links": 4.3,
+    "aliases": 1.6
+   }
+  }
+ ],
+ "input": {
+  "rows": 10000,
+  "file_mb": 48.8,
+  "labels_json_mb": 13.2,
+  "descriptions_json_mb": 12.6,
+  "aliases_json_mb": 4.3,
+  "sitelinks_json_mb": 28.7,
+  "claims_json_mb": 374.8,
+  "entity_json_mb": 1.1
+ },
+ "maxrss_mb": 4521.74609375
+}

@@ -1,0 +1,129 @@
+{
+ "chunk": "chunk_0.parquet",
+ "polars": "2.0.0",
+ "rounds": [
+  {
+   "today": {
+    "labels": 0.7323703420001948,
+    "descriptions": 0.38056121199997506,
+    "aliases": 0.17702142100006313,
+    "claims": 33.640457366999726
+   },
+   "direct": {
+    "labels": 0.2042593669998496,
+    "descriptions": 0.13274440199984383,
+    "aliases": 0.07277555299970118,
+    "claims": 3.695853915999578
+   }
+  },
+  {
+   "today": {
+    "labels": 0.4035065630000645,
+    "descriptions": 0.3268739049999567,
+    "aliases": 0.22195560800037129,
+    "claims": 30.802241504999984
+   },
+   "direct": {
+    "labels": 0.16256724900040354,
+    "descriptions": 0.16524092300005577,
+    "aliases": 0.08132599800001117,
+    "claims": 2.9457265910000388
+   }
+  },
+  {
+   "today": {
+    "labels": 0.42187138300005245,
+    "descriptions": 0.2977361439998276,
+    "aliases": 0.20945767800003523,
+    "claims": 30.061904352000056
+   },
+   "direct": {
+    "labels": 0.22014012799991178,
+    "descriptions": 0.18466273500007446,
+    "aliases": 0.07040529699997933,
+    "claims": 2.9934757099999842
+   }
+  }
+ ],
+ "checks": {
+  "labels": {
+   "rows": 10000,
+   "polars_schema_equal": true,
+   "tables_equal": true,
+   "arrow_schema_equal": true,
+   "columns": [
+    "id",
+    "labels"
+   ],
+   "mb_today": 3.8,
+   "mb_direct": 4.2,
+   "direct_metadata_keys": [
+    "genson_avro_schema",
+    "genson_normalise_config"
+   ]
+  },
+  "descriptions": {
+   "rows": 10000,
+   "polars_schema_equal": true,
+   "tables_equal": true,
+   "arrow_schema_equal": true,
+   "columns": [
+    "id",
+    "descriptions"
+   ],
+   "mb_today": 3.7,
+   "mb_direct": 4.5,
+   "direct_metadata_keys": [
+    "genson_avro_schema",
+    "genson_normalise_config"
+   ]
+  },
+  "aliases": {
+   "rows": 10000,
+   "polars_schema_equal": true,
+   "tables_equal": true,
+   "arrow_schema_equal": true,
+   "columns": [
+    "id",
+    "aliases"
+   ],
+   "mb_today": 1.6,
+   "mb_direct": 1.8,
+   "direct_metadata_keys": [
+    "genson_avro_schema",
+    "genson_normalise_config"
+   ]
+  },
+  "claims": {
+   "rows": 10000,
+   "polars_schema_equal": true,
+   "tables_equal": true,
+   "arrow_schema_equal": true,
+   "columns": [
+    "id",
+    "claims"
+   ],
+   "mb_today": 57.6,
+   "mb_direct": 54.3,
+   "direct_metadata_keys": [
+    "genson_avro_schema",
+    "genson_normalise_config"
+   ]
+  },
+  "lookup": {
+   "rows": 0,
+   "polars_schema_equal": true,
+   "tables_equal": true,
+   "arrow_schema_equal": true,
+   "columns": [
+    "field",
+    "ref",
+    "language",
+    "label"
+   ],
+   "mb_today": 0.0,
+   "mb_direct": 0.0,
+   "direct_metadata_keys": []
+  }
+ }
+}
