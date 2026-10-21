@@ -21,7 +21,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Install just
-        uses: taiki-e/install-action@64adfd9e935fa438859b9e080fd026720b2ba070 # tag=just
+        uses: taiki-e/install-action@67729d5c413db75907f0ad1e39bb04b9c868ff60 # tag=just
         with:
           tool: just@1.38.0,echo-comment@0.2.0
 
