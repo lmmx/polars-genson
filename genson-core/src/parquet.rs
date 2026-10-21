@@ -318,9 +318,9 @@ pub fn write_string_column_with(
 
     check_keep_len(keep, array.len())?;
     let schema = output_schema(field, keep, metadata)?;
-    let writer = open_writer(path, schema.clone())?;
-    let batch = batch_of(&schema, keep, 0, array)?;
-    write_batches(writer, &schema, vec![batch])
+    let batches = vec![batch_of(&schema, keep, 0, array)?];
+    let writer = open_writer(path, schema.clone(), false, &batches)?;
+    write_batches(writer, &schema, batches)
 }
 
 /// Write an `extract_invariants` lookup table: `field`, `key` and `value` (as JSON).
@@ -455,25 +455,142 @@ fn compression() -> Compression {
     Compression::ZSTD(ZstdLevel::try_new(1).expect("1 is a zstd level"))
 }
 
-fn open_writer(path: &str, schema: SchemaRef) -> Result<ArrowWriter<File>, String> {
-    open_writer_with(path, schema, false)
-}
-
-/// With `spec_names`, the Parquet schema's list and map groups take the specification's
-/// names (arrow-rs's `coerce_types`, which changes nothing else for genson's types)
-fn open_writer_with(
+/// A writer for `batches` (which it does not write): with `spec_names`, the Parquet
+/// schema's list and map groups take the specification's names (arrow-rs's
+/// `coerce_types`, which changes nothing else for genson's types), and leaf columns whose
+/// values are mostly distinct are not dictionary encoded (see [`unrepeated_leaves`]).
+fn open_writer(
     path: &str,
     schema: SchemaRef,
     spec_names: bool,
+    batches: &[RecordBatch],
 ) -> Result<ArrowWriter<File>, String> {
     let file = File::create(path)
         .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
-    let props = WriterProperties::builder()
+    let mut props = WriterProperties::builder()
         .set_compression(compression())
-        .set_coerce_types(spec_names)
-        .build();
-    ArrowWriter::try_new(file, schema, Some(props))
+        .set_coerce_types(spec_names);
+    for column in unrepeated_leaves(&schema, spec_names, batches) {
+        props = props.set_column_dictionary_enabled(column, false);
+    }
+    ArrowWriter::try_new(file, schema, Some(props.build()))
         .map_err(|e| format!("Failed to create Parquet writer: {}", e))
+}
+
+/// Values sampled from each leaf column, from its first rows
+const DICTIONARY_SAMPLE: usize = 16_384;
+
+/// The Parquet leaf columns of `batches` whose sampled values are more than three
+/// quarters distinct (of at least 128 sampled), for which a dictionary costs a hash per
+/// value and grows the file until arrow-rs gives it up at its page size limit: Polars
+/// skips dictionaries at the same ratio. None when the Arrow leaves do not line up with
+/// the Parquet leaf columns one to one.
+fn unrepeated_leaves(
+    schema: &SchemaRef,
+    spec_names: bool,
+    batches: &[RecordBatch],
+) -> Vec<parquet::schema::types::ColumnPath> {
+    let Ok(descr) = parquet::arrow::ArrowSchemaConverter::new()
+        .with_coerce_types(spec_names)
+        .convert(schema)
+    else {
+        return Vec::new();
+    };
+    // Each batch's leaf arrays, in Parquet leaf order
+    let leaves: Vec<Vec<ArrayRef>> = batches
+        .iter()
+        .map(|batch| {
+            let mut leaves = Vec::new();
+            for column in batch.columns() {
+                leaf_arrays(column, &mut leaves);
+            }
+            leaves
+        })
+        .collect();
+    if leaves.iter().any(|l| l.len() != descr.num_columns()) {
+        return Vec::new();
+    }
+    (0..descr.num_columns())
+        .into_par_iter()
+        .filter(|&i| {
+            let mut seen = rustc_hash::FxHashSet::default();
+            let mut sampled = 0;
+            for batch_leaves in &leaves {
+                if !sample(&batch_leaves[i], &mut seen, &mut sampled) {
+                    return false;
+                }
+                if sampled >= DICTIONARY_SAMPLE {
+                    break;
+                }
+            }
+            sampled >= 128 && seen.len() * 4 > sampled * 3
+        })
+        .map(|i| descr.column(i).path().clone())
+        .collect()
+}
+
+/// The leaf arrays under `array`, depth first, as Parquet's leaf columns are ordered.
+fn leaf_arrays(array: &ArrayRef, out: &mut Vec<ArrayRef>) {
+    use arrow::array::AsArray;
+    match array.data_type() {
+        DataType::Struct(_) => array
+            .as_struct()
+            .columns()
+            .iter()
+            .for_each(|c| leaf_arrays(c, out)),
+        DataType::List(_) => leaf_arrays(array.as_list::<i32>().values(), out),
+        DataType::LargeList(_) => leaf_arrays(array.as_list::<i64>().values(), out),
+        DataType::FixedSizeList(..) => leaf_arrays(array.as_fixed_size_list().values(), out),
+        DataType::Map(..) => {
+            let entries = array.as_map().entries();
+            entries.columns().iter().for_each(|c| leaf_arrays(c, out))
+        }
+        _ => out.push(array.clone()),
+    }
+}
+
+/// Hash `array`'s non-null values into `seen` until `sampled` reaches the sample size;
+/// false for a type not sampled (its dictionary setting is left as it is).
+fn sample(array: &ArrayRef, seen: &mut rustc_hash::FxHashSet<u64>, sampled: &mut usize) -> bool {
+    use arrow::array::AsArray;
+    use arrow::datatypes::*;
+    use xxhash_rust::xxh64::xxh64;
+    let mut take = |bytes: &[u8]| {
+        seen.insert(xxh64(bytes, 0));
+        *sampled += 1;
+        *sampled < DICTIONARY_SAMPLE
+    };
+    macro_rules! each {
+        ($iter:expr, $bytes:expr) => {{
+            for v in $iter.flatten() {
+                let bytes = $bytes(v);
+                if !take(AsRef::<[u8]>::as_ref(&bytes)) {
+                    break;
+                }
+            }
+        }};
+    }
+    match array.data_type() {
+        DataType::Utf8 => each!(array.as_string::<i32>().iter(), str::as_bytes),
+        DataType::LargeUtf8 => each!(array.as_string::<i64>().iter(), str::as_bytes),
+        DataType::Utf8View => each!(array.as_string_view().iter(), str::as_bytes),
+        DataType::Binary => each!(array.as_binary::<i32>().iter(), |b| b),
+        DataType::LargeBinary => each!(array.as_binary::<i64>().iter(), |b| b),
+        DataType::Int32 => each!(array.as_primitive::<Int32Type>().iter(), |v: i32| v
+            .to_le_bytes()),
+        DataType::Int64 => each!(array.as_primitive::<Int64Type>().iter(), |v: i64| v
+            .to_le_bytes()),
+        DataType::UInt32 => each!(array.as_primitive::<UInt32Type>().iter(), |v: u32| v
+            .to_le_bytes()),
+        DataType::UInt64 => each!(array.as_primitive::<UInt64Type>().iter(), |v: u64| v
+            .to_le_bytes()),
+        DataType::Float32 => each!(array.as_primitive::<Float32Type>().iter(), |v: f32| v
+            .to_le_bytes()),
+        DataType::Float64 => each!(array.as_primitive::<Float64Type>().iter(), |v: f64| v
+            .to_le_bytes()),
+        _ => return false,
+    }
+    true
 }
 
 /// `array` as one batch, with the rows of each `keep` column starting at `offset`.
@@ -789,7 +906,6 @@ pub fn write_struct_columns(
     } else {
         output_schema(field, keep, metadata)?
     };
-    let writer = open_writer_with(path, schema.clone(), layout.spec_names)?;
     let mut offset = 0;
     let mut batches = Vec::with_capacity(arrays.len());
     for array in arrays {
@@ -806,6 +922,7 @@ pub fn write_struct_columns(
         batches.push(batch);
         offset += len;
     }
+    let writer = open_writer(path, schema.clone(), layout.spec_names, &batches)?;
     write_batches(writer, &schema, batches)
 }
 

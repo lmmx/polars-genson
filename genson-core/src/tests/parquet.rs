@@ -380,3 +380,58 @@ fn test_split_read_errors_as_one_reader() {
     let err = read_string_column_arrays("/nonexistent.parquet", "json").err().unwrap();
     assert!(err.starts_with("Failed to open Parquet file"), "{err}");
 }
+
+/// Whether each leaf column chunk of the file's first row group has a dictionary page,
+/// by its dotted Parquet path.
+fn dictionary_pages(path: &std::path::Path) -> HashMap<String, bool> {
+    let reader = ParquetRecordBatchReaderBuilder::try_new(File::open(path).unwrap()).unwrap();
+    let row_group = reader.metadata().row_group(0);
+    row_group
+        .columns()
+        .iter()
+        .map(|c| (c.column_path().string(), c.dictionary_page_offset().is_some()))
+        .collect()
+}
+
+/// A dictionary is kept for a leaf whose sampled values repeat and left out for one whose
+/// values are mostly distinct, at any depth: a top-level string, an integer and a string
+/// in a list of structs, and a JSON string column.
+#[test]
+fn test_mostly_distinct_leaves_are_not_dictionary_encoded() {
+    use arrow::array::{Int64Array, ListArray, StructArray};
+    use arrow::buffer::OffsetBuffer;
+    use arrow::datatypes::Fields;
+    let rows = 2_000;
+    let unique: ArrayRef = Arc::new(StringArray::from_iter_values((0..rows).map(|i| format!("Q{i}"))));
+    let repeated: ArrayRef = Arc::new(StringArray::from_iter_values((0..rows).map(|i| format!("P{}", i % 7))));
+    // A list of two structs per row: `n` unique, `kind` one of three
+    let n: ArrayRef = Arc::new(Int64Array::from_iter_values((0..2 * rows as i64).map(|i| i * 7919)));
+    let kind: ArrayRef = Arc::new(StringArray::from_iter_values((0..2 * rows).map(|i| ["a", "b", "c"][i % 3])));
+    let item_fields = Fields::from(vec![Field::new("n", DataType::Int64, true), Field::new("kind", DataType::Utf8, true)]);
+    let items = StructArray::new(item_fields.clone(), vec![n, kind], None);
+    let list: ArrayRef = Arc::new(ListArray::new(
+        Arc::new(Field::new("item", DataType::Struct(item_fields), true)),
+        OffsetBuffer::from_lengths(std::iter::repeat_n(2, rows)),
+        Arc::new(items),
+        None,
+    ));
+    let fields = Fields::from(vec![
+        Field::new("unique", DataType::Utf8, true),
+        Field::new("repeated", DataType::Utf8, true),
+        Field::new("items", list.data_type().clone(), true),
+    ]);
+    let array = StructArray::new(fields.clone(), vec![unique, repeated, list], None);
+    let file = NamedTempFile::new().unwrap();
+    let layout = StructLayout { unnest: true, spec_names: true };
+    write_struct_columns(file.path().to_str().unwrap(), "x", vec![array], &fields, &[], None, layout).unwrap();
+    let pages = dictionary_pages(file.path());
+    assert!(!pages["unique"], "{pages:?}");
+    assert!(pages["repeated"], "{pages:?}");
+    assert!(!pages["items.list.element.n"], "{pages:?}");
+    assert!(pages["items.list.element.kind"], "{pages:?}");
+
+    let json = NamedTempFile::new().unwrap();
+    let strings = (0..rows).map(|i| Some(format!("{{\"id\": {i}}}"))).collect();
+    write_string_column_with(json.path().to_str().unwrap(), "json", strings, &[], None).unwrap();
+    assert!(!dictionary_pages(json.path())["json"]);
+}
