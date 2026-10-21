@@ -1,8 +1,34 @@
-# 2026-10-21: Row groups of 128Ki rows (draft, in progress)
+# 2026-10-21: Row-group size: investigated, not shipped
 
-Draft pushed mid-work: the measurements below are final for the sweep, but the
-confirmation run (`confirm_rg.py`, `logs/confirm_rg.jsonl`) and the code commit are not
-yet in. Scripts and logs are in `2026-10-21-row-group-size/`.
+**Outcome:** genson keeps arrow-rs's 1Mi-row row groups. No code change was made, and the
+rule that was built is kept as `logs/row_group_rule_not_shipped.diff`. The maintainer
+decided to stop here. Scripts and logs are in `2026-10-21-row-group-size/`.
+
+**Summary:**
+1. **The first sweep (below) pointed to 128Ki rows,** close to Polars' own about 125k.
+   At default settings it was faster than 1Mi on every synthetic table.
+2. **The repeat runs didn't hold that up** (`confirm_rg.py`, `split_rg.sh`;
+   `logs/confirm_rg_summary.txt`, `logs/split_rg_summary.txt`). At 128Ki rows:
+   - `List(Struct)` and graded_tall got slower (1.12 to 1.53 s, and 0.82 to 0.95 s);
+   - the graded tables' files grew 4 to 5%, because every row group rebuilds its
+     dictionaries.
+3. **Most of the flat-table gain was this VM's memory cost.** With transparent huge pages
+   switched off for the benchmark process, a measurement setting only, row-group size
+   made no difference to flat tables (`sweep_clean.sh`; `logs/sweep_clean_summary.txt`).
+   So the default-settings gain came mostly from less kernel time on memory, not from
+   extra parallelism.
+4. **A shape-aware rule changed only two tables.** It cut row groups down (to no fewer
+   than 128Ki rows) until a table had 4 column chunks per thread
+   (`logs/row_group_rule_not_shipped.diff`). The two tables, at default settings
+   (`confirm_shape.sh`; `logs/confirm_shape_summary.txt`):
+   - `List(String)`: 1.32 to 0.60 s, against the Polars wheel's 0.63;
+   - `List(Struct)`: 1.19 to 1.45 s, worse.
+
+   Every other table, the Wikidata ones included, was byte-identical.
+5. **The decision:** the only clear win was one shape, which doesn't justify a layout
+   change.
+
+The sections below are the investigation as it was written while in progress.
 
 ## Why: the original writer grid, rerun against the official Polars wheel
 
@@ -93,13 +119,3 @@ Median write wall time in seconds:
 - **Reads are as fast or faster at 128Ki, in both Polars and pyarrow.** flat_1 reads in
   0.19 s against 0.32 s at 1Mi (Polars), and 0.22 against 0.53 (pyarrow).
 - **Chosen size:** 128Ki rows, close to Polars' own about 125k.
-
-## Pending
-
-- **Confirmation** (`confirm_rg.py`): #292 against the branch against the wheel, 7 rounds,
-  with reads. It adds the graded tables, whose dictionary-encoded columns repeat their
-  dictionary in every row group.
-- **The code:** `ROW_GROUP_ROWS = 128 * 1024` in `open_writer`, and waves of
-  `threads × (1Mi / rows per row group)` row groups in `write_batches`.
-- **Wikidata chunk tables** (10,000 rows) stay byte-identical, having fewer rows than one
-  row group.

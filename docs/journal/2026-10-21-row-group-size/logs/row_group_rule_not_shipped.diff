@@ -1,0 +1,163 @@
+diff --git a/genson-core/src/parquet.rs b/genson-core/src/parquet.rs
+index cc0b6e6..88af98a 100644
+--- a/genson-core/src/parquet.rs
++++ b/genson-core/src/parquet.rs
+@@ -10,7 +10,7 @@ use parquet::arrow::arrow_reader::{
+ use parquet::arrow::{ArrowWriter, ProjectionMask};
+ use parquet::basic::{Compression, ZstdLevel};
+ use parquet::file::metadata::{PageIndexPolicy, ParquetMetaData};
+-use parquet::file::properties::WriterProperties;
++use parquet::file::properties::{WriterProperties, DEFAULT_MAX_ROW_GROUP_ROW_COUNT};
+ use rayon::prelude::*;
+ use std::collections::HashMap;
+ use std::fs::File;
+@@ -462,6 +462,9 @@ fn compression() -> Compression {
+ /// a data page ends at arrow-rs's page size limit (1 MiB) alone, as Polars' do, rather
+ /// than also at 20,000 rows: zstd compresses each page on its own, and pages of 20,000
+ /// fixed-width values (160 kB of Int64) compress worse.
++///
++/// Row groups hold up to arrow-rs's default of 1Mi rows, fewer when the table has too
++/// few leaf columns to keep the threads busy (see [`row_group_rows`]).
+ fn open_writer(
+     path: &str,
+     schema: SchemaRef,
+@@ -473,7 +476,8 @@ fn open_writer(
+     let mut props = WriterProperties::builder()
+         .set_compression(compression())
+         .set_coerce_types(spec_names)
+-        .set_data_page_row_count_limit(usize::MAX);
++        .set_data_page_row_count_limit(usize::MAX)
++        .set_max_row_group_row_count(Some(row_group_rows(&schema, spec_names, batches)));
+     for column in unrepeated_leaves(&schema, spec_names, batches) {
+         props = props.set_column_dictionary_enabled(column, false);
+     }
+@@ -481,6 +485,32 @@ fn open_writer(
+         .map_err(|e| format!("Failed to create Parquet writer: {}", e))
+ }
+ 
++/// (Row group, leaf column) chunks wanted per thread
++const CHUNKS_PER_THREAD: usize = 4;
++
++/// The fewest rows a row group is cut down to
++const MIN_ROW_GROUP_ROWS: usize = 128 * 1024;
++
++/// Rows per row group for `batches`: arrow-rs's 1Mi, or fewer (down to 128Ki) until the
++/// table has [`CHUNKS_PER_THREAD`] column chunks per thread. `write_batches` encodes each
++/// column chunk on one thread, so a table of few leaf columns in few row groups leaves
++/// threads idle: 2.5M rows of one list column made 3 chunks for 4 threads, and wrote in
++/// 0.76 s at 1Mi-row row groups against 0.57 s at 128Ki. Tables that already have enough
++/// chunks keep 1Mi-row row groups. Smaller ones gained nothing there, and cost
++/// dictionary-encoded columns a dictionary per row group: 4 to 5% larger files and 8 to
++/// 14% more CPU on the graded tables (docs/journal/2026-10-21-row-group-size.md).
++fn row_group_rows(schema: &SchemaRef, spec_names: bool, batches: &[RecordBatch]) -> usize {
++    let leaves = parquet::arrow::ArrowSchemaConverter::new()
++        .with_coerce_types(spec_names)
++        .convert(schema)
++        .map_or(schema.fields().len(), |descr| descr.num_columns())
++        .max(1);
++    let rows: usize = batches.iter().map(RecordBatch::num_rows).sum();
++    let groups = (CHUNKS_PER_THREAD * rayon::current_num_threads()).div_ceil(leaves);
++    rows.div_ceil(groups)
++        .clamp(MIN_ROW_GROUP_ROWS, DEFAULT_MAX_ROW_GROUP_ROW_COUNT)
++}
++
+ /// Values sampled from each leaf column, from its first rows
+ const DICTIONARY_SAMPLE: usize = 16_384;
+ 
+@@ -618,11 +648,12 @@ fn batch_of(
+ /// sets no byte limit or content-defined chunking), and each column's writer is handed its
+ /// leaf of each batch in turn, as `ArrowWriter`'s are.
+ ///
+-/// Row groups are encoded a few at a time, up to one per thread, each row group's leaf
+-/// columns (and each batch's levels) a task of their own: a wide table's columns fill the
+-/// threads within one row group, and a narrow table's row groups fill them side by side.
+-/// The encoded chunks are then written in row group order, so at most that many row
+-/// groups' levels and encoded chunks are held at once.
++/// Row groups are encoded in waves of up to 1Mi rows per thread (one row group per thread
++/// at arrow-rs's default size, eight at 128Ki rows), each row group's leaf columns
++/// (and each batch's levels) a task of their own: a wide table's columns fill the threads
++/// within one row group, and a narrow table's row groups fill them side by side. The
++/// encoded chunks are then written in row group order, so at most a wave's levels and
++/// encoded chunks are held at once.
+ fn write_batches(
+     writer: ArrowWriter<File>,
+     schema: &SchemaRef,
+@@ -656,7 +687,8 @@ fn write_batches(
+     if !current.is_empty() {
+         row_groups.push(current);
+     }
+-    let in_flight = rayon::current_num_threads().max(1);
++    let per_thread = (DEFAULT_MAX_ROW_GROUP_ROW_COUNT / max_rows).max(1);
++    let in_flight = rayon::current_num_threads().max(1) * per_thread;
+     for (wave, groups) in row_groups.chunks(in_flight).enumerate() {
+         let first = wave * in_flight;
+         let writers: Vec<Vec<ArrowColumnWriter>> = (0..groups.len())
+diff --git a/genson-core/src/tests/parquet.rs b/genson-core/src/tests/parquet.rs
+index b8091bc..018ee90 100644
+--- a/genson-core/src/tests/parquet.rs
++++ b/genson-core/src/tests/parquet.rs
+@@ -451,13 +451,16 @@ fn test_flat_pages_end_at_the_page_size_limit() {
+     let layout = StructLayout { unnest: true, spec_names: true };
+     write_struct_columns(file.path().to_str().unwrap(), "x", vec![array], &fields, &[], None, layout).unwrap();
+ 
++    // Within each row group, every page but the last holds more than 20,000 rows
+     let options = ArrowReaderOptions::new().with_offset_index_policy(PageIndexPolicy::Required);
+     let metadata = ArrowReaderMetadata::load(&File::open(file.path()).unwrap(), options).unwrap();
+-    let pages = metadata.metadata().page_index_for_row_group(0).page_locations(0).unwrap().clone();
+-    let starts: Vec<usize> = pages.iter().map(|p| p.first_row_index as usize).chain([rows]).collect();
+-    let page_rows: Vec<usize> = starts.windows(2).map(|w| w[1] - w[0]).collect();
+-    assert_eq!(page_rows.len(), 3, "{page_rows:?}");
+-    assert!(page_rows[..page_rows.len() - 1].iter().all(|&n| n > 20_000), "{page_rows:?}");
++    for (g, group) in metadata.metadata().row_groups().iter().enumerate() {
++        let pages = metadata.metadata().page_index_for_row_group(g).page_locations(0).unwrap().clone();
++        let end = group.num_rows() as usize;
++        let starts: Vec<usize> = pages.iter().map(|p| p.first_row_index as usize).chain([end]).collect();
++        let page_rows: Vec<usize> = starts.windows(2).map(|w| w[1] - w[0]).collect();
++        assert!(page_rows[..page_rows.len() - 1].iter().all(|&n| n > 20_000), "row group {g}: {page_rows:?}");
++    }
+ 
+     let reader = ParquetRecordBatchReaderBuilder::try_new(File::open(file.path()).unwrap()).unwrap().build().unwrap();
+     let read: Vec<i64> = reader
+@@ -468,3 +471,42 @@ fn test_flat_pages_end_at_the_page_size_limit() {
+         .collect();
+     assert_eq!(read, values.values().to_vec());
+ }
++
++/// Written on 4 threads, `columns` Int64 columns of 300,000 rows (in batches that straddle
++/// the row group boundaries) read back unchanged; returns the rows of each row group.
++fn row_groups_of(columns: usize) -> Vec<i64> {
++    use arrow::array::{Int64Array, StructArray};
++    use arrow::datatypes::Fields;
++    let rows = 300_000;
++    let values = Int64Array::from_iter_values(0..rows as i64);
++    let fields: Fields = (0..columns).map(|i| Field::new(format!("c{i}"), DataType::Int64, true)).collect();
++    let batches: Vec<StructArray> = (0..rows)
++        .step_by(70_000)
++        .map(|start| {
++            let slice: ArrayRef = Arc::new(values.slice(start, 70_000.min(rows - start)));
++            StructArray::new(fields.clone(), vec![slice; columns], None)
++        })
++        .collect();
++    let file = NamedTempFile::new().unwrap();
++    let layout = StructLayout { unnest: true, spec_names: true };
++    let pool = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
++    pool.install(|| write_struct_columns(file.path().to_str().unwrap(), "x", batches, &fields, &[], None, layout))
++        .unwrap();
++
++    let builder = ParquetRecordBatchReaderBuilder::try_new(File::open(file.path()).unwrap()).unwrap();
++    let group_rows = builder.metadata().row_groups().iter().map(|g| g.num_rows()).collect();
++    let read: Vec<_> = builder.build().unwrap().map(|b| b.unwrap()).collect();
++    let read = arrow::compute::concat_batches(&read[0].schema(), &read).unwrap();
++    for column in read.columns() {
++        assert_eq!(column.as_any().downcast_ref::<Int64Array>().unwrap(), &values);
++    }
++    group_rows
++}
++
++#[test]
++fn test_narrow_tables_get_row_groups_for_every_thread() {
++    // 2 columns on 4 threads want 8 row groups: 37,500 rows, raised to the 128Ki minimum
++    assert_eq!(row_groups_of(2), vec![131_072, 131_072, 37_856]);
++    // 16 columns fill 4 threads 4 times over in one row group
++    assert_eq!(row_groups_of(16), vec![300_000]);
++}
