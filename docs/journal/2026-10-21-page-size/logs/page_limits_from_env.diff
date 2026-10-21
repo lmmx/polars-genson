@@ -1,0 +1,18 @@
+diff --git a/genson-core/src/parquet.rs b/genson-core/src/parquet.rs
+index fe8065b..9d92318 100644
+--- a/genson-core/src/parquet.rs
++++ b/genson-core/src/parquet.rs
+@@ -470,6 +470,13 @@ fn open_writer(
+     let mut props = WriterProperties::builder()
+         .set_compression(compression())
+         .set_coerce_types(spec_names);
++    // SWEEP (scratch, not for commit): page limits from the environment
++    if let Some(rows) = std::env::var("GENSON_PAGE_ROWS").ok().and_then(|v| v.parse().ok()) {
++        props = props.set_data_page_row_count_limit(rows);
++    }
++    if let Some(bytes) = std::env::var("GENSON_PAGE_BYTES").ok().and_then(|v| v.parse().ok()) {
++        props = props.set_data_page_size_limit(bytes);
++    }
+     for column in unrepeated_leaves(&schema, spec_names, batches) {
+         props = props.set_column_dictionary_enabled(column, false);
+     }

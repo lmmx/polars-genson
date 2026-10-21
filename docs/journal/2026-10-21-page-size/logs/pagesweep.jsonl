@@ -1,0 +1,200 @@
+{"writer": "genson", "rows": 12500000, "wall": 0.3706, "user": 1.0734, "sys": 0.0728, "table": "flat_2", "name": "genson 20k rows/1MiB", "bytes": 67604819, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.3746, "user": 1.114, "sys": 0.0536, "table": "flat_2", "name": "genson no rows/1MiB", "bytes": 62378644, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.712, "user": 1.1403, "sys": 0.9742, "table": "flat_2", "name": "genson no rows/2MiB", "bytes": 61903495, "row_groups": 12}
+{"writer": "polars", "rows": 12500000, "wall": 0.5077, "user": 1.3974, "sys": 0.2228, "table": "flat_2", "name": "polars", "bytes": 62617985, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.4936, "user": 1.2073, "sys": 0.3557, "table": "flat_2", "name": "genson no rows/1MiB", "bytes": 62378644, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.4559, "user": 1.2956, "sys": 0.1316, "table": "flat_2", "name": "genson no rows/2MiB", "bytes": 61903495, "row_groups": 12}
+{"writer": "polars", "rows": 12500000, "wall": 0.7343, "user": 1.475, "sys": 1.1163, "table": "flat_2", "name": "polars", "bytes": 62617985, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.3935, "user": 1.1467, "sys": 0.0825, "table": "flat_2", "name": "genson 20k rows/1MiB", "bytes": 67604819, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.4599, "user": 1.1998, "sys": 0.1581, "table": "flat_2", "name": "genson no rows/2MiB", "bytes": 61903495, "row_groups": 12}
+{"writer": "polars", "rows": 12500000, "wall": 0.5643, "user": 1.6533, "sys": 0.2425, "table": "flat_2", "name": "polars", "bytes": 62617985, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.4079, "user": 1.146, "sys": 0.0971, "table": "flat_2", "name": "genson 20k rows/1MiB", "bytes": 67604819, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.4178, "user": 1.2219, "sys": 0.0683, "table": "flat_2", "name": "genson no rows/1MiB", "bytes": 62378644, "row_groups": 12}
+{"writer": "polars", "rows": 12500000, "wall": 0.8743, "user": 1.488, "sys": 1.6056, "table": "flat_2", "name": "polars", "bytes": 62617985, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.4054, "user": 1.0102, "sys": 0.1261, "table": "flat_2", "name": "genson 20k rows/1MiB", "bytes": 67604819, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.3812, "user": 1.2327, "sys": 0.0722, "table": "flat_2", "name": "genson no rows/1MiB", "bytes": 62378644, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.4946, "user": 1.4769, "sys": 0.1782, "table": "flat_2", "name": "genson no rows/2MiB", "bytes": 61903495, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.5851, "user": 1.2292, "sys": 0.4481, "table": "flat_2", "name": "genson 20k rows/1MiB", "bytes": 67604819, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.3865, "user": 1.1941, "sys": 0.0812, "table": "flat_2", "name": "genson no rows/1MiB", "bytes": 62378644, "row_groups": 12}
+{"writer": "genson", "rows": 12500000, "wall": 0.7537, "user": 1.3457, "sys": 0.8, "table": "flat_2", "name": "genson no rows/2MiB", "bytes": 61903495, "row_groups": 12}
+{"writer": "polars", "rows": 12500000, "wall": 0.4747, "user": 1.3813, "sys": 0.2481, "table": "flat_2", "name": "polars", "bytes": 62617985, "row_groups": 12}
+{"writer": "genson", "rows": 265957, "wall": 0.4702, "user": 1.2319, "sys": 0.4851, "table": "flat_94", "name": "genson 20k rows/1MiB", "bytes": 60155821, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.5379, "user": 1.1658, "sys": 0.5113, "table": "flat_94", "name": "genson no rows/1MiB", "bytes": 58337513, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.4031, "user": 1.3372, "sys": 0.125, "table": "flat_94", "name": "genson no rows/2MiB", "bytes": 57882147, "row_groups": 1}
+{"writer": "polars", "rows": 265957, "wall": 0.4596, "user": 1.3802, "sys": 0.1427, "table": "flat_94", "name": "polars", "bytes": 58666157, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.4318, "user": 1.3232, "sys": 0.2431, "table": "flat_94", "name": "genson no rows/1MiB", "bytes": 58337513, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.6342, "user": 1.1501, "sys": 0.9693, "table": "flat_94", "name": "genson no rows/2MiB", "bytes": 57882147, "row_groups": 1}
+{"writer": "polars", "rows": 265957, "wall": 0.408, "user": 1.1625, "sys": 0.1769, "table": "flat_94", "name": "polars", "bytes": 58666157, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.5331, "user": 1.0942, "sys": 0.7155, "table": "flat_94", "name": "genson 20k rows/1MiB", "bytes": 60155821, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.363, "user": 1.1839, "sys": 0.1073, "table": "flat_94", "name": "genson no rows/2MiB", "bytes": 57882147, "row_groups": 1}
+{"writer": "polars", "rows": 265957, "wall": 0.4546, "user": 1.2085, "sys": 0.2412, "table": "flat_94", "name": "polars", "bytes": 58666157, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.3414, "user": 1.1085, "sys": 0.0922, "table": "flat_94", "name": "genson 20k rows/1MiB", "bytes": 60155821, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.5525, "user": 1.0556, "sys": 0.7018, "table": "flat_94", "name": "genson no rows/1MiB", "bytes": 58337513, "row_groups": 1}
+{"writer": "polars", "rows": 265957, "wall": 0.4379, "user": 1.336, "sys": 0.1603, "table": "flat_94", "name": "polars", "bytes": 58666157, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.5428, "user": 1.1238, "sys": 0.7709, "table": "flat_94", "name": "genson 20k rows/1MiB", "bytes": 60155821, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.5463, "user": 1.1901, "sys": 0.7442, "table": "flat_94", "name": "genson no rows/1MiB", "bytes": 58337513, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.5868, "user": 1.1236, "sys": 0.6019, "table": "flat_94", "name": "genson no rows/2MiB", "bytes": 57882147, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.4712, "user": 1.2225, "sys": 0.2626, "table": "flat_94", "name": "genson 20k rows/1MiB", "bytes": 60155821, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.5813, "user": 1.1759, "sys": 0.6087, "table": "flat_94", "name": "genson no rows/1MiB", "bytes": 58337513, "row_groups": 1}
+{"writer": "genson", "rows": 265957, "wall": 0.6129, "user": 1.0862, "sys": 0.9189, "table": "flat_94", "name": "genson no rows/2MiB", "bytes": 57882147, "row_groups": 1}
+{"writer": "polars", "rows": 265957, "wall": 0.4564, "user": 1.338, "sys": 0.1714, "table": "flat_94", "name": "polars", "bytes": 58666157, "row_groups": 1}
+{"writer": "genson", "rows": 2097152, "wall": 0.9493, "user": 1.9615, "sys": 1.2774, "table": "graded_tall", "name": "genson 20k rows/1MiB", "bytes": 78712152, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.7735, "user": 2.1934, "sys": 0.7013, "table": "graded_tall", "name": "genson no rows/1MiB", "bytes": 77131264, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 1.1253, "user": 2.2532, "sys": 1.8615, "table": "graded_tall", "name": "genson no rows/2MiB", "bytes": 76694702, "row_groups": 2}
+{"writer": "polars", "rows": 2097152, "wall": 0.9253, "user": 2.6122, "sys": 0.3204, "table": "graded_tall", "name": "polars", "bytes": 70119686, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.9366, "user": 1.7986, "sys": 1.4007, "table": "graded_tall", "name": "genson no rows/1MiB", "bytes": 77131264, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.6765, "user": 1.9719, "sys": 0.6005, "table": "graded_tall", "name": "genson no rows/2MiB", "bytes": 76694702, "row_groups": 2}
+{"writer": "polars", "rows": 2097152, "wall": 0.9329, "user": 2.8272, "sys": 0.2985, "table": "graded_tall", "name": "polars", "bytes": 70119686, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 1.0131, "user": 1.8472, "sys": 1.7214, "table": "graded_tall", "name": "genson 20k rows/1MiB", "bytes": 78712152, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.6968, "user": 1.931, "sys": 0.5809, "table": "graded_tall", "name": "genson no rows/2MiB", "bytes": 76694702, "row_groups": 2}
+{"writer": "polars", "rows": 2097152, "wall": 0.7987, "user": 2.2324, "sys": 0.29, "table": "graded_tall", "name": "polars", "bytes": 70119686, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 1.1207, "user": 2.0288, "sys": 1.9159, "table": "graded_tall", "name": "genson 20k rows/1MiB", "bytes": 78712152, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.57, "user": 1.7873, "sys": 0.1923, "table": "graded_tall", "name": "genson no rows/1MiB", "bytes": 77131264, "row_groups": 2}
+{"writer": "polars", "rows": 2097152, "wall": 0.7357, "user": 2.1081, "sys": 0.2746, "table": "graded_tall", "name": "polars", "bytes": 70119686, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 1.116, "user": 1.7802, "sys": 1.8542, "table": "graded_tall", "name": "genson 20k rows/1MiB", "bytes": 78712152, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.602, "user": 1.8366, "sys": 0.1743, "table": "graded_tall", "name": "genson no rows/1MiB", "bytes": 77131264, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.9824, "user": 1.9215, "sys": 1.5496, "table": "graded_tall", "name": "genson no rows/2MiB", "bytes": 76694702, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.678, "user": 2.0986, "sys": 0.1878, "table": "graded_tall", "name": "genson 20k rows/1MiB", "bytes": 78712152, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.9283, "user": 2.1085, "sys": 1.1142, "table": "graded_tall", "name": "genson no rows/1MiB", "bytes": 77131264, "row_groups": 2}
+{"writer": "genson", "rows": 2097152, "wall": 0.6447, "user": 1.7041, "sys": 0.5222, "table": "graded_tall", "name": "genson no rows/2MiB", "bytes": 76694702, "row_groups": 2}
+{"writer": "polars", "rows": 2097152, "wall": 0.771, "user": 2.2954, "sys": 0.2816, "table": "graded_tall", "name": "polars", "bytes": 70119686, "row_groups": 2}
+{"writer": "genson", "rows": 419430, "wall": 1.0964, "user": 2.0566, "sys": 1.7896, "table": "graded_wide", "name": "genson 20k rows/1MiB", "bytes": 83801932, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.6319, "user": 1.9754, "sys": 0.2968, "table": "graded_wide", "name": "genson no rows/1MiB", "bytes": 83208165, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 1.2682, "user": 2.3727, "sys": 2.1708, "table": "graded_wide", "name": "genson no rows/2MiB", "bytes": 82942881, "row_groups": 1}
+{"writer": "polars", "rows": 419430, "wall": 0.8255, "user": 2.4772, "sys": 0.2611, "table": "graded_wide", "name": "polars", "bytes": 81728238, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 1.497, "user": 2.1263, "sys": 3.405, "table": "graded_wide", "name": "genson no rows/1MiB", "bytes": 83208165, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.6054, "user": 1.8357, "sys": 0.3339, "table": "graded_wide", "name": "genson no rows/2MiB", "bytes": 82942881, "row_groups": 1}
+{"writer": "polars", "rows": 419430, "wall": 0.7343, "user": 2.1969, "sys": 0.2844, "table": "graded_wide", "name": "polars", "bytes": 81728238, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 1.3271, "user": 1.9904, "sys": 2.6945, "table": "graded_wide", "name": "genson 20k rows/1MiB", "bytes": 83801932, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.7382, "user": 2.1187, "sys": 0.4575, "table": "graded_wide", "name": "genson no rows/2MiB", "bytes": 82942881, "row_groups": 1}
+{"writer": "polars", "rows": 419430, "wall": 0.719, "user": 2.2443, "sys": 0.1957, "table": "graded_wide", "name": "polars", "bytes": 81728238, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 1.0603, "user": 2.2632, "sys": 1.4106, "table": "graded_wide", "name": "genson 20k rows/1MiB", "bytes": 83801932, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 1.0906, "user": 2.1452, "sys": 1.6798, "table": "graded_wide", "name": "genson no rows/1MiB", "bytes": 83208165, "row_groups": 1}
+{"writer": "polars", "rows": 419430, "wall": 0.8613, "user": 2.5669, "sys": 0.2815, "table": "graded_wide", "name": "polars", "bytes": 81728238, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 1.0105, "user": 2.0552, "sys": 1.3811, "table": "graded_wide", "name": "genson 20k rows/1MiB", "bytes": 83801932, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.7531, "user": 2.2555, "sys": 0.393, "table": "graded_wide", "name": "genson no rows/1MiB", "bytes": 83208165, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.7216, "user": 1.9684, "sys": 0.626, "table": "graded_wide", "name": "genson no rows/2MiB", "bytes": 82942881, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.9355, "user": 2.1654, "sys": 1.0343, "table": "graded_wide", "name": "genson 20k rows/1MiB", "bytes": 83801932, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.7897, "user": 2.1378, "sys": 0.5767, "table": "graded_wide", "name": "genson no rows/1MiB", "bytes": 83208165, "row_groups": 1}
+{"writer": "genson", "rows": 419430, "wall": 0.5539, "user": 1.737, "sys": 0.2148, "table": "graded_wide", "name": "genson no rows/2MiB", "bytes": 82942881, "row_groups": 1}
+{"writer": "polars", "rows": 419430, "wall": 0.8187, "user": 2.4505, "sys": 0.2216, "table": "graded_wide", "name": "polars", "bytes": 81728238, "row_groups": 1}
+{"writer": "genson", "rows": 2500000, "wall": 0.7571, "user": 1.7667, "sys": 0.0994, "table": "list_str", "name": "genson 20k rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.8042, "user": 1.6222, "sys": 0.1134, "table": "list_str", "name": "genson no rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.8495, "user": 1.5136, "sys": 0.3457, "table": "list_str", "name": "genson no rows/2MiB", "bytes": 80542317, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 3.2206, "user": 2.3443, "sys": 4.5943, "table": "list_str", "name": "polars", "bytes": 80322658, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.7644, "user": 1.6701, "sys": 0.0868, "table": "list_str", "name": "genson no rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.6836, "user": 1.4394, "sys": 0.0863, "table": "list_str", "name": "genson no rows/2MiB", "bytes": 80542317, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 2.3344, "user": 2.0201, "sys": 3.6875, "table": "list_str", "name": "polars", "bytes": 80322658, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.9629, "user": 1.8744, "sys": 0.1576, "table": "list_str", "name": "genson 20k rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.8638, "user": 1.9877, "sys": 0.1585, "table": "list_str", "name": "genson no rows/2MiB", "bytes": 80542317, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 2.9498, "user": 2.5582, "sys": 3.9322, "table": "list_str", "name": "polars", "bytes": 80322658, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.6316, "user": 1.481, "sys": 0.061, "table": "list_str", "name": "genson 20k rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.868, "user": 1.8937, "sys": 0.1417, "table": "list_str", "name": "genson no rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 2.3486, "user": 2.0718, "sys": 3.4256, "table": "list_str", "name": "polars", "bytes": 80322658, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.8313, "user": 1.7169, "sys": 0.0735, "table": "list_str", "name": "genson 20k rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.8746, "user": 1.8649, "sys": 0.1227, "table": "list_str", "name": "genson no rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.0945, "user": 1.8245, "sys": 0.4184, "table": "list_str", "name": "genson no rows/2MiB", "bytes": 80542317, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.6807, "user": 1.4672, "sys": 0.0965, "table": "list_str", "name": "genson 20k rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.036, "user": 1.6033, "sys": 0.7671, "table": "list_str", "name": "genson no rows/1MiB", "bytes": 80396235, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.7358, "user": 1.4469, "sys": 0.2635, "table": "list_str", "name": "genson no rows/2MiB", "bytes": 80542317, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 2.9279, "user": 1.885, "sys": 4.6954, "table": "list_str", "name": "polars", "bytes": 80322658, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.8216, "user": 2.4074, "sys": 0.1724, "table": "list_struct", "name": "genson 20k rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.0303, "user": 2.1875, "sys": 0.1736, "table": "list_struct", "name": "genson no rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.5715, "user": 2.9227, "sys": 1.9724, "table": "list_struct", "name": "genson no rows/2MiB", "bytes": 112678081, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 5.0399, "user": 4.6483, "sys": 5.6606, "table": "list_struct", "name": "polars", "bytes": 113360895, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.9545, "user": 2.2642, "sys": 0.1458, "table": "list_struct", "name": "genson no rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.9492, "user": 2.7203, "sys": 0.1609, "table": "list_struct", "name": "genson no rows/2MiB", "bytes": 112678081, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 4.2197, "user": 4.4044, "sys": 4.5223, "table": "list_struct", "name": "polars", "bytes": 113360895, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.1612, "user": 2.6747, "sys": 0.1533, "table": "list_struct", "name": "genson 20k rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.984, "user": 2.3284, "sys": 0.1782, "table": "list_struct", "name": "genson no rows/2MiB", "bytes": 112678081, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 5.1857, "user": 5.0597, "sys": 6.6698, "table": "list_struct", "name": "polars", "bytes": 113360895, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.1504, "user": 2.7636, "sys": 0.1422, "table": "list_struct", "name": "genson 20k rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.0361, "user": 2.4109, "sys": 0.161, "table": "list_struct", "name": "genson no rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 4.0806, "user": 4.3713, "sys": 4.6478, "table": "list_struct", "name": "polars", "bytes": 113360895, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 0.9339, "user": 2.3104, "sys": 0.1387, "table": "list_struct", "name": "genson 20k rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.1278, "user": 2.58, "sys": 0.1703, "table": "list_struct", "name": "genson no rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.337, "user": 2.4475, "sys": 1.7584, "table": "list_struct", "name": "genson no rows/2MiB", "bytes": 112678081, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.7911, "user": 2.138, "sys": 2.7028, "table": "list_struct", "name": "genson 20k rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 1.6637, "user": 3.1229, "sys": 2.7457, "table": "list_struct", "name": "genson no rows/1MiB", "bytes": 113335831, "row_groups": 3}
+{"writer": "genson", "rows": 2500000, "wall": 2.4429, "user": 2.7659, "sys": 3.8987, "table": "list_struct", "name": "genson no rows/2MiB", "bytes": 112678081, "row_groups": 3}
+{"writer": "polars", "rows": 2500000, "wall": 4.957, "user": 5.3037, "sys": 5.5179, "table": "list_struct", "name": "polars", "bytes": 113360895, "row_groups": 3}
+{"writer": "genson", "rows": 10000, "wall": 0.075, "user": 0.0891, "sys": 0.0083, "table": "labels", "name": "genson 20k rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0586, "user": 0.0885, "sys": 0.0046, "table": "labels", "name": "genson no rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0632, "user": 0.0877, "sys": 0.001, "table": "labels", "name": "genson no rows/2MiB", "bytes": 4133990, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.1367, "user": 0.1366, "sys": 0.0061, "table": "labels", "name": "polars", "bytes": 4355267, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0625, "user": 0.0751, "sys": 0.0076, "table": "labels", "name": "genson no rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.065, "user": 0.0838, "sys": 0.0117, "table": "labels", "name": "genson no rows/2MiB", "bytes": 4133990, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.1637, "user": 0.1572, "sys": 0.012, "table": "labels", "name": "polars", "bytes": 4355267, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0655, "user": 0.0751, "sys": 0.014, "table": "labels", "name": "genson 20k rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0547, "user": 0.0694, "sys": 0.0175, "table": "labels", "name": "genson no rows/2MiB", "bytes": 4133990, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.3662, "user": 0.1697, "sys": 0.211, "table": "labels", "name": "polars", "bytes": 4355267, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.058, "user": 0.0781, "sys": 0.0112, "table": "labels", "name": "genson 20k rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0559, "user": 0.0573, "sys": 0.0089, "table": "labels", "name": "genson no rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.1344, "user": 0.1219, "sys": 0.0077, "table": "labels", "name": "polars", "bytes": 4355267, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.069, "user": 0.0784, "sys": 0.0105, "table": "labels", "name": "genson 20k rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0543, "user": 0.0658, "sys": 0.0115, "table": "labels", "name": "genson no rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.057, "user": 0.0614, "sys": 0.0147, "table": "labels", "name": "genson no rows/2MiB", "bytes": 4133990, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0574, "user": 0.083, "sys": 0.0043, "table": "labels", "name": "genson 20k rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0682, "user": 0.0845, "sys": 0.0094, "table": "labels", "name": "genson no rows/1MiB", "bytes": 4142076, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0517, "user": 0.0657, "sys": 0.0078, "table": "labels", "name": "genson no rows/2MiB", "bytes": 4133990, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.1363, "user": 0.1264, "sys": 0.0109, "table": "labels", "name": "polars", "bytes": 4355267, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0258, "user": 0.0221, "sys": 0.0098, "table": "aliases", "name": "genson 20k rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0285, "user": 0.0238, "sys": 0.0144, "table": "aliases", "name": "genson no rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0292, "user": 0.0338, "sys": 0.0049, "table": "aliases", "name": "genson no rows/2MiB", "bytes": 1798465, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.0761, "user": 0.0666, "sys": 0.0157, "table": "aliases", "name": "polars", "bytes": 1754435, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0271, "user": 0.025, "sys": 0.011, "table": "aliases", "name": "genson no rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0334, "user": 0.0391, "sys": 0.0036, "table": "aliases", "name": "genson no rows/2MiB", "bytes": 1798465, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.0386, "user": 0.0271, "sys": 0.0162, "table": "aliases", "name": "polars", "bytes": 1754435, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0309, "user": 0.0317, "sys": 0.007, "table": "aliases", "name": "genson 20k rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0282, "user": 0.0325, "sys": 0.0044, "table": "aliases", "name": "genson no rows/2MiB", "bytes": 1798465, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.0382, "user": 0.0262, "sys": 0.0162, "table": "aliases", "name": "polars", "bytes": 1754435, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0317, "user": 0.0301, "sys": 0.011, "table": "aliases", "name": "genson 20k rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0282, "user": 0.0266, "sys": 0.009, "table": "aliases", "name": "genson no rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.0504, "user": 0.0514, "sys": 0.0036, "table": "aliases", "name": "polars", "bytes": 1754435, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0277, "user": 0.0334, "sys": 0.0007, "table": "aliases", "name": "genson 20k rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0328, "user": 0.0416, "sys": 0.0029, "table": "aliases", "name": "genson no rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.1425, "user": 0.0347, "sys": 0.1397, "table": "aliases", "name": "genson no rows/2MiB", "bytes": 1798465, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.025, "user": 0.0334, "sys": 0.0, "table": "aliases", "name": "genson 20k rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0984, "user": 0.0256, "sys": 0.0811, "table": "aliases", "name": "genson no rows/1MiB", "bytes": 1795763, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.061, "user": 0.0401, "sys": 0.0294, "table": "aliases", "name": "genson no rows/2MiB", "bytes": 1798465, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.0397, "user": 0.0304, "sys": 0.0149, "table": "aliases", "name": "polars", "bytes": 1754435, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.051, "user": 0.0625, "sys": 0.0042, "table": "descriptions", "name": "genson 20k rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0531, "user": 0.0586, "sys": 0.0034, "table": "descriptions", "name": "genson no rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0568, "user": 0.0651, "sys": 0.0122, "table": "descriptions", "name": "genson no rows/2MiB", "bytes": 4461546, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.2102, "user": 0.114, "sys": 0.0973, "table": "descriptions", "name": "polars", "bytes": 4599420, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0532, "user": 0.0516, "sys": 0.0262, "table": "descriptions", "name": "genson no rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0631, "user": 0.0526, "sys": 0.0432, "table": "descriptions", "name": "genson no rows/2MiB", "bytes": 4461546, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.1589, "user": 0.0839, "sys": 0.0896, "table": "descriptions", "name": "polars", "bytes": 4599420, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0451, "user": 0.0543, "sys": 0.0069, "table": "descriptions", "name": "genson 20k rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0487, "user": 0.0558, "sys": 0.016, "table": "descriptions", "name": "genson no rows/2MiB", "bytes": 4461546, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.0818, "user": 0.0725, "sys": 0.0127, "table": "descriptions", "name": "polars", "bytes": 4599420, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0498, "user": 0.0548, "sys": 0.009, "table": "descriptions", "name": "genson 20k rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0646, "user": 0.0727, "sys": 0.0077, "table": "descriptions", "name": "genson no rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.0793, "user": 0.0698, "sys": 0.0141, "table": "descriptions", "name": "polars", "bytes": 4599420, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0535, "user": 0.0542, "sys": 0.0132, "table": "descriptions", "name": "genson 20k rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.1096, "user": 0.0746, "sys": 0.0481, "table": "descriptions", "name": "genson no rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0567, "user": 0.0573, "sys": 0.0147, "table": "descriptions", "name": "genson no rows/2MiB", "bytes": 4461546, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.065, "user": 0.0684, "sys": 0.0109, "table": "descriptions", "name": "genson 20k rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.084, "user": 0.0678, "sys": 0.0341, "table": "descriptions", "name": "genson no rows/1MiB", "bytes": 4481320, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.0707, "user": 0.0607, "sys": 0.0266, "table": "descriptions", "name": "genson no rows/2MiB", "bytes": 4461546, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 0.1968, "user": 0.1359, "sys": 0.1299, "table": "descriptions", "name": "polars", "bytes": 4599420, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.4957, "user": 2.8257, "sys": 2.6115, "table": "claims", "name": "genson 20k rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.0445, "user": 2.6296, "sys": 1.0305, "table": "claims", "name": "genson no rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.7732, "user": 2.605, "sys": 0.2473, "table": "claims", "name": "genson no rows/2MiB", "bytes": 53901236, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 25.2026, "user": 21.124, "sys": 3.7363, "table": "claims", "name": "polars", "bytes": 59017312, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.8065, "user": 3.0363, "sys": 3.3499, "table": "claims", "name": "genson no rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.9978, "user": 3.3379, "sys": 0.3803, "table": "claims", "name": "genson no rows/2MiB", "bytes": 53901236, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 24.8912, "user": 22.6704, "sys": 1.9545, "table": "claims", "name": "polars", "bytes": 59017312, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.5159, "user": 2.9805, "sys": 2.4433, "table": "claims", "name": "genson 20k rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.8753, "user": 2.9894, "sys": 0.2195, "table": "claims", "name": "genson no rows/2MiB", "bytes": 53901236, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 25.9538, "user": 22.4539, "sys": 3.3034, "table": "claims", "name": "polars", "bytes": 59017312, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.1896, "user": 2.8747, "sys": 1.2741, "table": "claims", "name": "genson 20k rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.9224, "user": 3.1893, "sys": 0.2214, "table": "claims", "name": "genson no rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 27.9382, "user": 23.9698, "sys": 3.7147, "table": "claims", "name": "polars", "bytes": 59017312, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.8535, "user": 2.8482, "sys": 3.5572, "table": "claims", "name": "genson 20k rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.9531, "user": 3.1817, "sys": 0.3144, "table": "claims", "name": "genson no rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.945, "user": 3.1639, "sys": 0.2838, "table": "claims", "name": "genson no rows/2MiB", "bytes": 53901236, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.0161, "user": 3.2514, "sys": 0.501, "table": "claims", "name": "genson 20k rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 1.0475, "user": 3.2857, "sys": 0.5179, "table": "claims", "name": "genson no rows/1MiB", "bytes": 54083026, "row_groups": 1}
+{"writer": "genson", "rows": 10000, "wall": 0.9348, "user": 2.9461, "sys": 0.3583, "table": "claims", "name": "genson no rows/2MiB", "bytes": 53901236, "row_groups": 1}
+{"writer": "polars", "rows": 10000, "wall": 25.0713, "user": 22.6245, "sys": 2.1554, "table": "claims", "name": "polars", "bytes": 59017312, "row_groups": 1}

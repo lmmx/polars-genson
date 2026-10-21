@@ -1,0 +1,41 @@
+flat_2        genson 20k rows/1MiB   user 1.146 (1.010-1.229)  wall 0.405 (0.371-0.585)     67.60 MB  12 rg
+flat_2        genson no rows/1MiB    user 1.207 (1.114-1.233)  wall 0.387 (0.375-0.494)     62.38 MB  12 rg
+flat_2        genson no rows/2MiB    user 1.296 (1.140-1.477)  wall 0.495 (0.456-0.754)     61.90 MB  12 rg
+flat_2        polars                 user 1.475 (1.381-1.653)  wall 0.564 (0.475-0.874)     62.62 MB  12 rg
+flat_94       genson 20k rows/1MiB   user 1.124 (1.094-1.232)  wall 0.471 (0.341-0.543)     60.16 MB  1 rg
+flat_94       genson no rows/1MiB    user 1.176 (1.056-1.323)  wall 0.546 (0.432-0.581)     58.34 MB  1 rg
+flat_94       genson no rows/2MiB    user 1.150 (1.086-1.337)  wall 0.587 (0.363-0.634)     57.88 MB  1 rg
+flat_94       polars                 user 1.336 (1.163-1.380)  wall 0.455 (0.408-0.460)     58.67 MB  1 rg
+graded_tall   genson 20k rows/1MiB   user 1.962 (1.780-2.099)  wall 1.013 (0.678-1.121)     78.71 MB  2 rg
+graded_tall   genson no rows/1MiB    user 1.837 (1.787-2.193)  wall 0.773 (0.570-0.937)     77.13 MB  2 rg
+graded_tall   genson no rows/2MiB    user 1.931 (1.704-2.253)  wall 0.697 (0.645-1.125)     76.69 MB  2 rg
+graded_tall   polars                 user 2.295 (2.108-2.827)  wall 0.799 (0.736-0.933)     70.12 MB  2 rg
+graded_wide   genson 20k rows/1MiB   user 2.057 (1.990-2.263)  wall 1.060 (0.935-1.327)     83.80 MB  1 rg
+graded_wide   genson no rows/1MiB    user 2.138 (1.975-2.256)  wall 0.790 (0.632-1.497)     83.21 MB  1 rg
+graded_wide   genson no rows/2MiB    user 1.968 (1.737-2.373)  wall 0.722 (0.554-1.268)     82.94 MB  1 rg
+graded_wide   polars                 user 2.450 (2.197-2.567)  wall 0.819 (0.719-0.861)     81.73 MB  1 rg
+list_str      genson 20k rows/1MiB   user 1.717 (1.467-1.874)  wall 0.757 (0.632-0.963)     80.40 MB  3 rg
+list_str      genson no rows/1MiB    user 1.670 (1.603-1.894)  wall 0.868 (0.764-1.036)     80.40 MB  3 rg
+list_str      genson no rows/2MiB    user 1.514 (1.439-1.988)  wall 0.850 (0.684-1.095)     80.54 MB  3 rg
+list_str      polars                 user 2.072 (1.885-2.558)  wall 2.928 (2.334-3.221)     80.32 MB  3 rg
+list_struct   genson 20k rows/1MiB   user 2.407 (2.138-2.764)  wall 1.150 (0.822-1.791)    113.34 MB  3 rg
+list_struct   genson no rows/1MiB    user 2.411 (2.188-3.123)  wall 1.036 (0.955-1.664)    113.34 MB  3 rg
+list_struct   genson no rows/2MiB    user 2.720 (2.328-2.923)  wall 1.337 (0.949-2.443)    112.68 MB  3 rg
+list_struct   polars                 user 4.648 (4.371-5.304)  wall 4.957 (4.081-5.186)    113.36 MB  3 rg
+labels        genson 20k rows/1MiB   user 0.078 (0.075-0.089)  wall 0.066 (0.057-0.075)      4.14 MB  1 rg
+labels        genson no rows/1MiB    user 0.075 (0.057-0.088)  wall 0.059 (0.054-0.068)      4.14 MB  1 rg
+labels        genson no rows/2MiB    user 0.069 (0.061-0.088)  wall 0.057 (0.052-0.065)      4.13 MB  1 rg
+labels        polars                 user 0.137 (0.122-0.170)  wall 0.137 (0.134-0.366)      4.36 MB  1 rg
+aliases       genson 20k rows/1MiB   user 0.032 (0.022-0.033)  wall 0.028 (0.025-0.032)      1.80 MB  1 rg
+aliases       genson no rows/1MiB    user 0.026 (0.024-0.042)  wall 0.029 (0.027-0.098)      1.80 MB  1 rg
+aliases       genson no rows/2MiB    user 0.035 (0.033-0.040)  wall 0.033 (0.028-0.142)      1.80 MB  1 rg
+aliases       polars                 user 0.030 (0.026-0.067)  wall 0.040 (0.038-0.076)      1.75 MB  1 rg
+descriptions  genson 20k rows/1MiB   user 0.055 (0.054-0.068)  wall 0.051 (0.045-0.065)      4.48 MB  1 rg
+descriptions  genson no rows/1MiB    user 0.068 (0.052-0.075)  wall 0.065 (0.053-0.110)      4.48 MB  1 rg
+descriptions  genson no rows/2MiB    user 0.057 (0.053-0.065)  wall 0.057 (0.049-0.071)      4.46 MB  1 rg
+descriptions  polars                 user 0.084 (0.070-0.136)  wall 0.159 (0.079-0.210)      4.60 MB  1 rg
+claims        genson 20k rows/1MiB   user 2.875 (2.826-3.251)  wall 1.496 (1.016-1.853)     54.08 MB  1 rg
+claims        genson no rows/1MiB    user 3.182 (2.630-3.286)  wall 1.044 (0.922-1.806)     54.08 MB  1 rg
+claims        genson no rows/2MiB    user 2.989 (2.605-3.338)  wall 0.935 (0.773-0.998)     53.90 MB  1 rg
+claims        polars                 user 22.625 (21.124-23.970)  wall 25.203 (24.891-27.938)     59.02 MB  1 rg
+exit 0
