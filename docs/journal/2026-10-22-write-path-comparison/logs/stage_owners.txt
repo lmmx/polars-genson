@@ -1,0 +1,133 @@
+== c0: 1552 busy genson thread samples
+  write                       550  35.4%   alloc/memcpy innermost:   44%
+  decode                      324  20.9%   alloc/memcpy innermost:   52%
+  extract                     263  16.9%   alloc/memcpy innermost:   60%
+  infer                       171  11.0%   alloc/memcpy innermost:   38%
+  read                        133   8.6%   alloc/memcpy innermost:   89%
+  conform                     111   7.2%   alloc/memcpy innermost:   50%
+
+  read: top owners (share of stage, alloc share)
+     64.7%  alloc 100%  read<i64> [src/arrow/array_reader/byte_array.rs:394]
+     21.8%  alloc 100%  try_push<i64> [src/arrow/buffer/offset_buffer.rs:75]
+      6.0%  alloc   0%  zstd (C)
+      3.8%  alloc   0%  _mm_storeu_si128 [/usr/lib/gcc/x86_64-linux-gnu/13/include/emmintrin.h:742]
+      1.5%  alloc 100%  decode_page [src/file/serialized_reader.rs:457]
+      1.5%  alloc 100%  get_bytes [src/file/reader.rs:100]
+      0.8%  alloc   0%  is_ascii [src/implementation/x86/avx2.rs:228]
+
+  decode: top owners (share of stage, alloc share)
+     19.1%  alloc  97%  append_value<arrow_array::types::GenericStringType [arrow-array-60.0.0/src/builder/generic_bytes_builder.rs:108]
+     11.7%  alloc  97%  append_value<arrow_array::types::GenericStringType [arrow-array-60.0.0/src/builder/generic_bytes_builder.rs:110]
+      8.6%  alloc  89%  append_nulls<arrow_array::types::GenericStringType [arrow-array-60.0.0/src/builder/generic_bytes_builder.rs:163]
+      8.6%  alloc  96%  pad [genson-core/src/normalise/typed.rs:419]
+      5.9%  alloc   0%  peek<genson_core::tape::Tape> [genson-core/src/tape.rs:165]
+      2.2%  alloc   0%  key [genson-core/src/tape.rs:144]
+      2.2%  alloc 100%  append_nulls [genson-core/src/normalise/typed.rs:383]
+      1.9%  alloc   0%  text [genson-core/src/normalise/typed.rs:555]
+      1.5%  alloc   0%  field_input [genson-core/src/normalise/typed.rs:709]
+      1.5%  alloc  40%  push_offset [genson-core/src/normalise/typed.rs:503]
+      1.5%  alloc  40%  field_input [genson-core/src/normalise/typed.rs:710]
+      1.2%  alloc   0%  put [genson-core/src/normalise/typed.rs:807]
+
+  infer: top owners (share of stage, alloc share)
+     11.1%  alloc   0%  key_id [genson-core/src/genson_rs/interned.rs:239]
+      5.8%  alloc   0%  row [genson-core/src/genson_rs/interned.rs:351]
+      4.7%  alloc 100%  absorb_interned_strategy [genson-core/src/genson_rs/node.rs:392]
+      4.1%  alloc  86%  state [genson-core/src/genson_rs/interned.rs:164]
+      4.1%  alloc   0%  new_row_object [genson-core/src/genson_rs/interned.rs:204]
+      3.5%  alloc  83%  object [genson-core/src/genson_rs/interned.rs:174]
+      2.9%  alloc   0%  peek<genson_core::genson_rs::interned::States> [genson-core/src/tape.rs:165]
+      2.9%  alloc   0%  add_to_hash [rustc-hash-2.1.1/src/lib.rs:99]
+      2.3%  alloc  50%  state [genson-core/src/genson_rs/interned.rs:161]
+      2.3%  alloc 100%  reserve_entries<alloc::string::String, genson_core [indexmap-2.14.2/src/inner.rs:489]
+      2.3%  alloc   0%  key [genson-core/src/genson_rs/interned.rs:146]
+      2.3%  alloc 100%  absorb_interned_strategy_deferred [genson-core/src/genson_rs/node.rs:354]
+
+  extract: top owners (share of stage, alloc share)
+     36.5%  alloc 100%  scan_known [genson-core/src/extract/scan.rs:88]
+     16.7%  alloc 100%  scan_known [genson-core/src/extract/scan.rs:94]
+      4.9%  alloc   0%  {closure#0} [genson-core/src/extract/scan.rs:457]
+      4.2%  alloc   0%  cmpeq [src/vector.rs:277]
+      3.0%  alloc   0%  object [genson-core/src/extract/scan.rs:405]
+      2.7%  alloc 100%  close_object [genson-core/src/extract/scan.rs:472]
+      2.7%  alloc   0%  peek [genson-core/src/extract/scan.rs:131]
+      2.3%  alloc   0%  {closure#0} [genson-core/src/extract/scan.rs:567]
+      2.3%  alloc   0%  {closure#1} [genson-core/src/extract/scan.rs:461]
+      1.9%  alloc  60%  {closure#2} [genson-core/src/extract/scan.rs:467]
+      1.9%  alloc   0%  plain_prefix [genson-core/src/extract/scan.rs:586]
+      1.9%  alloc   0%  scalar [genson-core/src/extract/scan.rs:229]
+
+  conform: top owners (share of stage, alloc share)
+     37.8%  alloc   0%  {closure#0}<arrow_array::types::GenericStringType< [src/cast/mod.rs:2849]
+     18.9%  alloc 100%  cast_byte_container<arrow_array::types::GenericStr [src/cast/mod.rs:2835]
+     16.2%  alloc 100%  memset [/usr/include/x86_64-linux-gnu/bits/string_fortified.h:59]
+     15.3%  alloc  41%  widen [genson-core/src/conform.rs:328]
+      6.3%  alloc 100%  try_from_len_zeroed [arrow-buffer-60.0.0/src/buffer/mutable.rs:213]
+      2.7%  alloc   0%  {closure#0} [genson-core/src/conform.rs:328]
+      1.8%  alloc 100%  add_buffer [arrow-data-60.0.0/src/data.rs:2271]
+      0.9%  alloc   0%  clone [arrow-schema-60.0.0/src/field.rs:46]
+== s90: 628 busy genson thread samples
+  write                       288  45.9%   alloc/memcpy innermost:   55%
+  decode                      111  17.7%   alloc/memcpy innermost:   32%
+  extract                      91  14.5%   alloc/memcpy innermost:   36%
+  read                         60   9.6%   alloc/memcpy innermost:   82%
+  infer                        40   6.4%   alloc/memcpy innermost:    2%
+  conform                      38   6.1%   alloc/memcpy innermost:   50%
+
+  read: top owners (share of stage, alloc share)
+     68.3%  alloc 100%  read<i64> [src/arrow/array_reader/byte_array.rs:394]
+     13.3%  alloc 100%  try_push<i64> [src/arrow/buffer/offset_buffer.rs:75]
+      6.7%  alloc   0%  zstd (C)
+      5.0%  alloc   0%  _mm_storeu_si128 [/usr/lib/gcc/x86_64-linux-gnu/13/include/emmintrin.h:742]
+      3.3%  alloc   0%  simd_prefetch [src/implementation/x86/avx2.rs:255]
+      1.7%  alloc   0%  is_ascii [src/implementation/x86/avx2.rs:228]
+      1.7%  alloc   0%  drop [src/bytes.rs:1343]
+
+  decode: top owners (share of stage, alloc share)
+     11.7%  alloc  85%  append_value<arrow_array::types::GenericStringType [arrow-array-60.0.0/src/builder/generic_bytes_builder.rs:108]
+      7.2%  alloc  88%  pad [genson-core/src/normalise/typed.rs:419]
+      5.4%  alloc   0%  peek<genson_core::tape::Tape> [genson-core/src/tape.rs:165]
+      5.4%  alloc  67%  append_value<arrow_array::types::GenericStringType [arrow-array-60.0.0/src/builder/generic_bytes_builder.rs:110]
+      4.5%  alloc  40%  key [genson-core/src/tape.rs:144]
+      3.6%  alloc   0%  put [genson-core/src/normalise/typed.rs:794]
+      2.7%  alloc 100%  append_nulls<arrow_array::types::GenericStringType [arrow-array-60.0.0/src/builder/generic_bytes_builder.rs:163]
+      2.7%  alloc  67%  append_value<arrow_array::types::Int64Type> [arrow-array-60.0.0/src/builder/primitive_builder.rs:248]
+      2.7%  alloc   0%  try_reallocate [src/buffer/mutable.rs:440]
+      1.8%  alloc   0%  string [genson-core/src/tape.rs:117]
+      1.8%  alloc   0%  append_value<arrow_array::types::GenericStringType [arrow-array-60.0.0/src/builder/generic_bytes_builder.rs:106]
+      1.8%  alloc   0%  put [genson-core/src/normalise/typed.rs:879]
+
+  infer: top owners (share of stage, alloc share)
+     25.0%  alloc   0%  key_id [genson-core/src/genson_rs/interned.rs:239]
+     12.5%  alloc   0%  row [genson-core/src/genson_rs/interned.rs:351]
+     12.5%  alloc   0%  new_row_object [genson-core/src/genson_rs/interned.rs:204]
+      5.0%  alloc   0%  add_to_hash [rustc-hash-2.1.1/src/lib.rs:99]
+      5.0%  alloc   0%  member [genson-core/src/genson_rs/interned.rs:675]
+      5.0%  alloc   0%  row_key [genson-core/src/genson_rs/interned.rs:226]
+      5.0%  alloc   0%  peek<genson_core::genson_rs::interned::States> [genson-core/src/tape.rs:165]
+      2.5%  alloc   0%  close_list [genson-core/src/genson_rs/interned.rs:615]
+      2.5%  alloc   0%  string<genson_core::tape::Tape> [genson-core/src/tape.rs:354]
+      2.5%  alloc   0%  row_key [genson-core/src/genson_rs/interned.rs:224]
+      2.5%  alloc   0%  expect<genson_core::tape::Tape> [genson-core/src/tape.rs:178]
+      2.5%  alloc   0%  value<genson_core::genson_rs::interned::States> [genson-core/src/tape.rs:185]
+
+  extract: top owners (share of stage, alloc share)
+     23.1%  alloc 100%  scan_known [genson-core/src/extract/scan.rs:88]
+      9.9%  alloc   0%  {closure#0} [genson-core/src/extract/scan.rs:457]
+      6.6%  alloc 100%  scan_known [genson-core/src/extract/scan.rs:94]
+      5.5%  alloc   0%  peek [genson-core/src/extract/scan.rs:131]
+      4.4%  alloc   0%  cmpeq [src/vector.rs:277]
+      4.4%  alloc   0%  plain_prefix [genson-core/src/extract/scan.rs:586]
+      4.4%  alloc   0%  {closure#3} [genson-core/src/extract/scan.rs:479]
+      3.3%  alloc   0%  plain_prefix [genson-core/src/extract/scan.rs:569]
+      3.3%  alloc 100%  close_object [genson-core/src/extract/scan.rs:541]
+      3.3%  alloc   0%  load_aligned [src/vector.rs:262]
+      3.3%  alloc   0%  close_object [genson-core/src/extract/scan.rs:461]
+      3.3%  alloc   0%  object [genson-core/src/extract/scan.rs:393]
+
+  conform: top owners (share of stage, alloc share)
+     42.1%  alloc   0%  {closure#0}<arrow_array::types::GenericStringType< [src/cast/mod.rs:2849]
+     31.6%  alloc 100%  memset [/usr/include/x86_64-linux-gnu/bits/string_fortified.h:59]
+     10.5%  alloc 100%  try_from_len_zeroed [arrow-buffer-60.0.0/src/buffer/mutable.rs:213]
+      7.9%  alloc 100%  cast_byte_container<arrow_array::types::GenericStr [src/cast/mod.rs:2835]
+      7.9%  alloc   0%  widen [genson-core/src/conform.rs:328]
