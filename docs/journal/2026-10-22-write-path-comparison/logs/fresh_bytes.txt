@@ -1,0 +1,15 @@
+# fresh_bytes.rs 300 (4 threads, mimalloc as genson uses it): 300 MB in all
+-- round 0, 300 MB in all
+rows: a fresh String per row (kept)                0.523 s       652 faults
+rows: one buffer per thread, reused per row        0.004 s         0 faults
+rows: one exact arena per thread (kept)            0.507 s       147 faults
+Vec<u64> grown by push to MB/8 values              0.450 s      3736 faults
+Vec<u32> grown by push, same count                 0.039 s       558 faults
+Vec<u64> exact capacity, same count                0.031 s        33 faults
+-- round 1, 300 MB in all
+rows: a fresh String per row (kept)                0.269 s      2607 faults
+rows: one buffer per thread, reused per row        0.003 s         0 faults
+rows: one exact arena per thread (kept)            0.011 s         0 faults
+Vec<u64> grown by push to MB/8 values              0.609 s      3862 faults
+Vec<u32> grown by push, same count                 0.029 s         0 faults
+Vec<u64> exact capacity, same count                0.022 s         0 faults

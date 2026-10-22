@@ -1,0 +1,29 @@
+# The same build (#294) and chunk, its process() run (prof.py, a fresh process) right after
+# another run: after s90 (peak 1.2 GB), or after c0 (peak 1.7 GB); then each run preceded by
+# primer.py 3 (3 GB touched and freed). Wall and system CPU of process(), minor faults.
+s90       : wall 4.62 sys 10.41 faults 103k
+c0 first : wall 6.83 sys 9.06 faults 128k
+c0 second: wall 3.85 sys 2.28 faults 90k
+s90       : wall 1.35 sys 0.38 faults 38k
+c0 first : wall 5.48 sys 5.91 faults 107k
+c0 second: wall 4.30 sys 2.39 faults 94k
+s90       : wall 1.23 sys 0.40 faults 32k
+c0 first : wall 4.67 sys 4.98 faults 107k
+c0 second: wall 3.90 sys 2.36 faults 90k
+-- with a 3 GB primer before each run
+s90       : wall 1.33 sys 0.46 faults 38k
+c0 primed: wall 4.14 sys 2.40 faults 75k
+c0 primed: wall 4.15 sys 1.01 faults 73k
+s90       : wall 1.57 sys 0.52 faults 35k
+c0 primed: wall 4.40 sys 0.93 faults 77k
+c0 primed: wall 4.28 sys 1.83 faults 79k
+s90       : wall 1.88 sys 1.60 faults 41k
+c0 primed: wall 3.81 sys 1.56 faults 69k
+c0 primed: wall 3.47 sys 0.72 faults 68k
+
+# The unprimed, shuffled B-vs-series run (unprimed_series_c0_s90_15_rounds.md), its runs'
+# process() system CPU by the chunk run just before (median)
+('c0', 'c0')  n 15  median sys 3.46
+('c0', 's90') n 14  median sys 6.86
+('s90', 'c0') n 15  median sys 0.39
+('s90', 's90') n 15 median sys 1.33

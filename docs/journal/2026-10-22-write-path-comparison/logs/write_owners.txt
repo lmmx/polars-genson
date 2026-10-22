@@ -1,0 +1,49 @@
+
+c0: 550 busy write samples (alloc% = samples whose innermost frame is allocator/memcpy)
+   15.6%  alloc  16%  level/index RLE + bit-packing
+   14.7%  alloc  99%  dict: indices Vec<u64> growth
+   10.5%  alloc  72%  levels: append_run (rep/def runs)
+    9.3%  alloc   0%  levels: list/struct traversal
+    8.5%  alloc   0%  zstd compression (C)
+    6.5%  alloc   3%  dict: intern + push
+    6.2%  alloc  97%  compress output buffer (reserve compress_bound)
+    4.9%  alloc  70%  levels: write_leaf (non_null_indices, leaf levels)
+    3.5%  alloc  47%  levels: materialize / extend
+    3.3%  alloc  83%  plain/fallback byte-array encoding
+    3.1%  alloc  94%  page assembly buffers (add_data_page)
+    2.9%  alloc   0%  column writer other
+    2.2%  alloc   8%  level histograms / stats metadata
+    2.0%  alloc   9%  arrow buffer/bitmap iteration
+    1.8%  alloc  70%  dict (fixed-width): intern + push
+    1.5%  alloc   0%  statistics (min/max)
+    0.5%  alloc   0%  fixed-width value encoding
+    0.5%  alloc   0%  byte_array other (flush, gather)
+    0.5%  alloc   0%  other (writer.rs)
+    0.4%  alloc   0%  genson write_batches / sampling
+    0.4%  alloc   0%  other (lib.rs)
+    0.4%  alloc 100%  other (global.rs)
+    0.2%  alloc 100%  other (string_fortified.h)
+    0.2%  alloc   0%  other (_polars_genson.abi3.so)
+    0.2%  alloc   0%  other (emmintrin.h)
+    0.2%  alloc   0%  other (xxh64_common.rs)
+
+s90: 288 busy write samples (alloc% = samples whose innermost frame is allocator/memcpy)
+   22.9%  alloc 100%  dict: indices Vec<u64> growth
+   19.1%  alloc  18%  level/index RLE + bit-packing
+   12.8%  alloc  84%  levels: append_run (rep/def runs)
+    6.2%  alloc   0%  levels: list/struct traversal
+    6.2%  alloc   0%  zstd compression (C)
+    5.9%  alloc  18%  dict: intern + push
+    5.6%  alloc  75%  levels: write_leaf (non_null_indices, leaf levels)
+    4.2%  alloc 100%  compress output buffer (reserve compress_bound)
+    3.1%  alloc  89%  plain/fallback byte-array encoding
+    2.4%  alloc  86%  levels: materialize / extend
+    2.4%  alloc   0%  statistics (min/max)
+    2.4%  alloc   0%  column writer other
+    2.1%  alloc  83%  dict (fixed-width): intern + push
+    1.7%  alloc  80%  page assembly buffers (add_data_page)
+    1.0%  alloc  33%  byte_array other (flush, gather)
+    0.7%  alloc   0%  level histograms / stats metadata
+    0.3%  alloc   0%  arrow buffer/bitmap iteration
+    0.3%  alloc   0%  other (writer.rs)
+    0.3%  alloc 100%  other (string_fortified.h)
