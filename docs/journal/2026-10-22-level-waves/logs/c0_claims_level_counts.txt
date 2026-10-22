@@ -1,0 +1,6 @@
+10,000 rows, 1 row group(s), 94 leaf columns; 71,018,734 level entries, 56,362,395 null (79%)
+     976,577 values,    976,577 null  claims.list.element.value.list.element.references.list.element.snaks.list.element.value.list.element.hash
+     976,577 values,    976,577 null  claims.list.element.value.list.element.references.list.element.snaks.list.element.value.list.element.datavalue.upperBound
+     976,577 values,    976,577 null  claims.list.element.value.list.element.references.list.element.snaks.list.element.value.list.element.datavalue.precision.precision__number
+     976,577 values,    976,577 null  claims.list.element.value.list.element.references.list.element.snaks.list.element.value.list.element.datavalue.lowerBound
+     976,577 values,    976,577 null  claims.list.element.value.list.element.references.list.element.snaks.list.element.value.list.element.datavalue.longitude.longitude__number

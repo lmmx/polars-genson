@@ -1,0 +1,77 @@
+# bt 40 (stacks truncated: deep compute_leaves threads miss the write_batches frame)
+## c0
+417 samples, 1407 busy thread samples in genson
+  other genson     636   45.2%
+  write            419   29.8%
+  decode           289   20.5%
+  conform           49    3.5%
+  infer             13    0.9%
+  extract            1    0.1%
+
+write: 201 samples during the write, 419 busy and 231 idle thread samples (2.08 busy threads per sample)
+  level encoding (RLE/bit-pack)              122   29.1%
+  level computation (compute_leaves)         114   27.2%
+  allocator: realloc/memcpy/fresh pages       68   16.2%
+  compression (zstd)                          48   11.5%
+  value encoding                              17    4.1%
+  statistics (min/max)                        15    3.6%
+  page building / flush                       11    2.6%
+  dictionary (interner/hash)                  10    2.4%
+  other                                        8    1.9%
+  dictionary sampling (xxh64)                  6    1.4%
+## s90
+346 samples, 1107 busy thread samples in genson
+  other genson     535   48.3%
+  write            288   26.0%
+  decode           190   17.2%
+  conform           90    8.1%
+  infer              4    0.4%
+
+write: 174 samples during the write, 288 busy and 201 idle thread samples (1.66 busy threads per sample)
+  level encoding (RLE/bit-pack)               75   26.0%
+  level computation (compute_leaves)          53   18.4%
+  allocator: realloc/memcpy/fresh pages       53   18.4%
+  compression (zstd)                          30   10.4%
+  other                                       20    6.9%
+  value encoding                              18    6.2%
+  dictionary (interner/hash)                  17    5.9%
+  statistics (min/max)                        16    5.6%
+  page building / flush                        6    2.1%
+
+# bt 150
+## c0
+386 samples, 1327 busy thread samples in genson
+  write            691   52.1%
+  decode           298   22.5%
+  other genson     273   20.6%
+  conform           48    3.6%
+  infer             16    1.2%
+  extract            1    0.1%
+
+write: 186 samples during the write, 691 busy and 215 idle thread samples (3.72 busy threads per sample)
+  allocator: realloc/memcpy/fresh pages      346   50.1%
+  level computation (compute_leaves)         130   18.8%
+  level encoding (RLE/bit-pack)              106   15.3%
+  compression (zstd)                          48    6.9%
+  value encoding                              16    2.3%
+  page building / flush                       12    1.7%
+  dictionary (interner/hash)                  12    1.7%
+  statistics (min/max)                         9    1.3%
+  other                                        7    1.0%
+  dictionary sampling (xxh64)                  5    0.7%
+## s90
+207 samples, 719 busy thread samples in genson
+  write            400   55.6%
+  decode           152   21.1%
+  other genson     113   15.7%
+  conform           54    7.5%
+
+write: 107 samples during the write, 400 busy and 116 idle thread samples (3.74 busy threads per sample)
+  allocator: realloc/memcpy/fresh pages      242   60.5%
+  level computation (compute_leaves)          60   15.0%
+  level encoding (RLE/bit-pack)               41   10.2%
+  compression (zstd)                          20    5.0%
+  value encoding                              15    3.8%
+  dictionary (interner/hash)                  10    2.5%
+  page building / flush                        6    1.5%
+  statistics (min/max)                         6    1.5%

@@ -1,0 +1,256 @@
+== runs_tl/c0_r1.json.stages.json
+[
+ {
+  "stage": "read_parquet",
+  "wall": 0.854,
+  "user": 0.3,
+  "sys": 2.76,
+  "minflt": 22225.0
+ },
+ {
+  "stage": "extract_invariants",
+  "wall": 0.678,
+  "user": 0.78,
+  "sys": 1.72,
+  "minflt": 5985.0
+ },
+ {
+  "stage": "infer",
+  "wall": 0.503,
+  "user": 1.27,
+  "sys": 0.07,
+  "minflt": 1632.0
+ },
+ {
+  "stage": "parse+normalise+decode",
+  "wall": 0.855,
+  "user": 1.79,
+  "sys": 1.26,
+  "minflt": 16361.0
+ },
+ {
+  "stage": "conform",
+  "wall": 0.322,
+  "user": 0.09,
+  "sys": 1.08,
+  "minflt": 3052.0
+ },
+ {
+  "stage": "write_parquet",
+  "wall": 1.905,
+  "user": 2.74,
+  "sys": 4.14,
+  "minflt": 39956.0
+ },
+ {
+  "stage": "(after the stages, in the call)",
+  "wall": 0.003,
+  "user": 0.0,
+  "sys": 0.0,
+  "minflt": 0.0
+ }
+]== runs_tl/c0_r2.json.stages.json
+[
+ {
+  "stage": "read_parquet",
+  "wall": 0.116,
+  "user": 0.27,
+  "sys": 0.11,
+  "minflt": 5806.0
+ },
+ {
+  "stage": "extract_invariants",
+  "wall": 0.319,
+  "user": 1.05,
+  "sys": 0.14,
+  "minflt": 1360.0
+ },
+ {
+  "stage": "infer",
+  "wall": 0.555,
+  "user": 1.47,
+  "sys": 0.06,
+  "minflt": 2218.0
+ },
+ {
+  "stage": "parse+normalise+decode",
+  "wall": 0.572,
+  "user": 1.95,
+  "sys": 0.14,
+  "minflt": 6926.0
+ },
+ {
+  "stage": "conform",
+  "wall": 0.032,
+  "user": 0.1,
+  "sys": 0.03,
+  "minflt": 1261.0
+ },
+ {
+  "stage": "write_parquet",
+  "wall": 1.437,
+  "user": 2.81,
+  "sys": 2.28,
+  "minflt": 29290.0
+ },
+ {
+  "stage": "(after the stages, in the call)",
+  "wall": 0.003,
+  "user": 0.01,
+  "sys": 0.01,
+  "minflt": 0.0
+ }
+]== runs_tl/c0_r3.json.stages.json
+[
+ {
+  "stage": "read_parquet",
+  "wall": 0.096,
+  "user": 0.27,
+  "sys": 0.11,
+  "minflt": 4149.0
+ },
+ {
+  "stage": "extract_invariants",
+  "wall": 0.265,
+  "user": 0.95,
+  "sys": 0.06,
+  "minflt": 815.0
+ },
+ {
+  "stage": "infer",
+  "wall": 0.605,
+  "user": 1.46,
+  "sys": 0.05,
+  "minflt": 2109.0
+ },
+ {
+  "stage": "parse+normalise+decode",
+  "wall": 0.413,
+  "user": 1.43,
+  "sys": 0.07,
+  "minflt": 5260.0
+ },
+ {
+  "stage": "conform",
+  "wall": 0.032,
+  "user": 0.07,
+  "sys": 0.03,
+  "minflt": 945.0
+ },
+ {
+  "stage": "write_parquet",
+  "wall": 1.274,
+  "user": 2.8,
+  "sys": 1.75,
+  "minflt": 29485.0
+ },
+ {
+  "stage": "(after the stages, in the call)",
+  "wall": 0.004,
+  "user": 0.01,
+  "sys": 0.02,
+  "minflt": 0.0
+ }
+]== runs_tl/s90_r1.json.stages.json
+[
+ {
+  "stage": "read_parquet",
+  "wall": 0.07,
+  "user": 0.13,
+  "sys": 0.14,
+  "minflt": 7562.0
+ },
+ {
+  "stage": "extract_invariants",
+  "wall": 0.171,
+  "user": 0.52,
+  "sys": 0.07,
+  "minflt": 2283.0
+ },
+ {
+  "stage": "infer",
+  "wall": 0.2,
+  "user": 0.64,
+  "sys": 0.01,
+  "minflt": 1110.0
+ },
+ {
+  "stage": "parse+normalise+decode",
+  "wall": 0.247,
+  "user": 0.8,
+  "sys": 0.06,
+  "minflt": 3014.0
+ },
+ {
+  "stage": "conform",
+  "wall": 0.019,
+  "user": 0.05,
+  "sys": 0.01,
+  "minflt": 297.0
+ },
+ {
+  "stage": "write_parquet",
+  "wall": 0.345,
+  "user": 1.11,
+  "sys": 0.06,
+  "minflt": 2206.0
+ },
+ {
+  "stage": "(after the stages, in the call)",
+  "wall": 0.002,
+  "user": 0.0,
+  "sys": 0.0,
+  "minflt": 0.0
+ }
+]== runs_tl/s90_r2.json.stages.json
+[
+ {
+  "stage": "read_parquet",
+  "wall": 0.273,
+  "user": 0.15,
+  "sys": 0.83,
+  "minflt": 19886.0
+ },
+ {
+  "stage": "extract_invariants",
+  "wall": 0.2,
+  "user": 0.69,
+  "sys": 0.07,
+  "minflt": 6075.0
+ },
+ {
+  "stage": "infer",
+  "wall": 0.168,
+  "user": 0.55,
+  "sys": 0.01,
+  "minflt": 690.0
+ },
+ {
+  "stage": "parse+normalise+decode",
+  "wall": 0.314,
+  "user": 1.03,
+  "sys": 0.06,
+  "minflt": 4930.0
+ },
+ {
+  "stage": "conform",
+  "wall": 0.021,
+  "user": 0.03,
+  "sys": 0.02,
+  "minflt": 428.0
+ },
+ {
+  "stage": "write_parquet",
+  "wall": 0.423,
+  "user": 1.38,
+  "sys": 0.14,
+  "minflt": 3312.0
+ },
+ {
+  "stage": "(after the stages, in the call)",
+  "wall": 0.005,
+  "user": 0.01,
+  "sys": 0.02,
+  "minflt": 42.0
+ }
+]

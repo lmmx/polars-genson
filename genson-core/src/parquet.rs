@@ -622,7 +622,13 @@ fn batch_of(
 /// columns (and each batch's levels) a task of their own: a wide table's columns fill the
 /// threads within one row group, and a narrow table's row groups fill them side by side.
 /// The encoded chunks are then written in row group order, so at most that many row
-/// groups' levels and encoded chunks are held at once.
+/// groups' encoded chunks are held at once.
+///
+/// Levels are computed for up to one batch per thread at a time, and written to the column
+/// writers before the next batches': a batch's levels (two `i16` and a non-null index per
+/// leaf value, for every leaf column) are much larger than its encoded chunks, and holding
+/// a whole row group's at once (all of a Wikidata chunk's claims) left most of the write in
+/// faulting in fresh pages for them (docs/journal/2026-10-22-level-waves.md).
 fn write_batches(
     writer: ArrowWriter<File>,
     schema: &SchemaRef,
@@ -664,37 +670,53 @@ fn write_batches(
             .collect::<Result<_, _>>()
             .map_err(failed)?;
         let columns = writers.first().map_or(0, Vec::len);
-        // Each row group's batches' leaf columns, in the order of the column writers
-        let leaves: Vec<Vec<Vec<ArrowLeafColumn>>> = groups
-            .par_iter()
-            .map(|batches| {
-                batches
-                    .par_iter()
-                    .map(|batch| {
-                        let mut leaves = Vec::with_capacity(columns);
-                        for (field, column) in schema.fields().iter().zip(batch.columns()) {
-                            leaves.extend(compute_leaves(field, column)?);
-                        }
-                        Ok(leaves)
-                    })
-                    .collect::<Result<_, parquet::errors::ParquetError>>()
-            })
-            .collect::<Result<_, _>>()
-            .map_err(failed)?;
-        // One task per (row group, leaf column), collected in row group then column order
-        let tasks: Vec<(usize, usize, ArrowColumnWriter)> = writers
+        // One task per (row group, leaf column), in row group then column order
+        let mut tasks: Vec<(usize, usize, ArrowColumnWriter)> = writers
             .into_iter()
             .enumerate()
             .flat_map(|(g, ws)| ws.into_iter().enumerate().map(move |(i, w)| (g, i, w)))
             .collect();
+        // Each step takes the next `per_group` batches of every row group in the wave, so
+        // at most about one batch per thread has its levels held at once
+        let per_group = (in_flight / groups.len()).max(1);
+        let steps = groups
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0)
+            .div_ceil(per_group);
+        for step in 0..steps {
+            // Each row group's step batches' leaf columns, in the order of the column writers
+            let leaves: Vec<Vec<Vec<ArrowLeafColumn>>> = groups
+                .par_iter()
+                .map(|batches| {
+                    let end = ((step + 1) * per_group).min(batches.len());
+                    batches[(step * per_group).min(end)..end]
+                        .par_iter()
+                        .map(|batch| {
+                            let mut leaves = Vec::with_capacity(columns);
+                            for (field, column) in schema.fields().iter().zip(batch.columns()) {
+                                leaves.extend(compute_leaves(field, column)?);
+                            }
+                            Ok(leaves)
+                        })
+                        .collect::<Result<_, parquet::errors::ParquetError>>()
+                })
+                .collect::<Result<_, _>>()
+                .map_err(failed)?;
+            tasks
+                .par_iter_mut()
+                .try_for_each(|(g, i, writer)| {
+                    for batch_leaves in &leaves[*g] {
+                        writer.write(&batch_leaves[*i])?;
+                    }
+                    Ok::<_, parquet::errors::ParquetError>(())
+                })
+                .map_err(failed)?;
+        }
         let chunks: Vec<ArrowColumnChunk> = tasks
             .into_par_iter()
-            .map(|(g, i, mut writer)| {
-                for batch_leaves in &leaves[g] {
-                    writer.write(&batch_leaves[i])?;
-                }
-                writer.close()
-            })
+            .map(|(_, _, writer)| writer.close())
             .collect::<Result<_, _>>()
             .map_err(failed)?;
         let mut chunks = chunks.into_iter();
