@@ -1,0 +1,12 @@
+# c0's claims (94 leaf columns), the leaves with repetition levels grouped by their
+# innermost list, and the repetition-level entries computed per leaf against once per group
+94 leaves, 93 with repetition levels, in 9 groups by deepest list
+repetition-level entries computed now: 71,008,734; with sharing: 6,784,632 (90% fewer)
+   31 leaves    619,789 levels  claims.list.element.value.list
+   28 leaves    976,577 levels  aims.list.element.value.list.element.references.list.element.snaks.list.element.value.list
+   28 leaves    713,439 levels  claims.list.element.value.list.element.qualifiers.list.element.value.list
+    1 leaves    452,906 levels  claims.list
+    1 leaves    664,449 levels  claims.list.element.value.list.element.references.list
+    1 leaves    974,134 levels  claims.list.element.value.list.element.references.list.element.snaks.list
+    1 leaves    974,134 levels  claims.list.element.value.list.element.references.list.element.snaks-order.list
+    1 leaves    704,602 levels  claims.list.element.value.list.element.qualifiers.list

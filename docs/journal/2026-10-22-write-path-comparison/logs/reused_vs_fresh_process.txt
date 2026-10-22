@@ -1,0 +1,52 @@
+== reused process, round 1
+imports 0.38s
+reprof/chunk_0.parquet: wall 8.00 user 10.00 sys 14.95 faults 141k rss_after 1673 MB
+chunks/chunk_10.parquet: wall 0.46 user 1.08 sys 0.20 faults 43k rss_after 884 MB
+scholar/chunk_10.parquet: wall 0.43 user 1.09 sys 0.18 faults 37k rss_after 557 MB
+chunks/chunk_30.parquet: wall 0.20 user 0.39 sys 0.09 faults 11k rss_after 329 MB
+scholar/chunk_30.parquet: wall 1.29 user 3.08 sys 0.94 faults 64k rss_after 1092 MB
+chunks/chunk_50.parquet: wall 0.29 user 0.58 sys 0.14 faults 26k rss_after 595 MB
+scholar/chunk_50.parquet: wall 0.26 user 0.55 sys 0.11 faults 21k rss_after 385 MB
+chunks/chunk_70.parquet: wall 0.23 user 0.38 sys 0.08 faults 11k rss_after 327 MB
+scholar/chunk_70.parquet: wall 0.84 user 2.32 sys 0.28 faults 41k rss_after 758 MB
+chunks/chunk_90.parquet: wall 0.19 user 0.22 sys 0.05 faults 5k rss_after 438 MB
+scholar/chunk_90.parquet: wall 2.07 user 4.11 sys 2.23 faults 58k rss_after 1231 MB
+total process() wall 14.27s
+== fresh process per chunk, round 1
+c0: wall 6.35 user 10.34 sys 8.88 faults 113k imports 0.39 peak 1743 MB
+r10: wall 0.52 user 1.19 sys 0.20 faults 13k imports 0.33 peak 427 MB
+s10: wall 0.42 user 1.05 sys 0.12 faults 11k imports 0.42 peak 514 MB
+r30: wall 0.24 user 0.42 sys 0.07 faults 6k imports 0.33 peak 257 MB
+s30: wall 1.41 user 3.12 sys 1.49 faults 27k imports 0.31 peak 1036 MB
+r50: wall 0.31 user 0.61 sys 0.11 faults 10k imports 0.41 peak 309 MB
+s50: wall 0.28 user 0.58 sys 0.09 faults 7k imports 0.33 peak 329 MB
+r70: wall 0.20 user 0.35 sys 0.05 faults 6k imports 0.35 peak 258 MB
+s70: wall 0.84 user 2.19 sys 0.31 faults 23k imports 0.30 peak 708 MB
+r90: wall 0.17 user 0.23 sys 0.04 faults 4k imports 0.40 peak 191 MB
+s90: wall 2.60 user 3.89 sys 4.48 faults 60k imports 0.38 peak 1202 MB
+== reused process, round 2
+imports 0.32s
+reprof/chunk_0.parquet: wall 6.00 user 10.35 sys 7.84 faults 113k rss_after 1746 MB
+chunks/chunk_10.parquet: wall 0.49 user 1.16 sys 0.24 faults 46k rss_after 727 MB
+scholar/chunk_10.parquet: wall 0.41 user 1.03 sys 0.16 faults 28k rss_after 563 MB
+chunks/chunk_30.parquet: wall 0.21 user 0.37 sys 0.10 faults 15k rss_after 341 MB
+scholar/chunk_30.parquet: wall 1.49 user 3.16 sys 1.43 faults 59k rss_after 1083 MB
+chunks/chunk_50.parquet: wall 0.30 user 0.66 sys 0.10 faults 21k rss_after 517 MB
+scholar/chunk_50.parquet: wall 0.27 user 0.55 sys 0.12 faults 18k rss_after 373 MB
+chunks/chunk_70.parquet: wall 0.20 user 0.38 sys 0.06 faults 10k rss_after 306 MB
+scholar/chunk_70.parquet: wall 0.78 user 1.98 sys 0.25 faults 38k rss_after 775 MB
+chunks/chunk_90.parquet: wall 0.23 user 0.33 sys 0.10 faults 5k rss_after 266 MB
+scholar/chunk_90.parquet: wall 1.66 user 3.96 sys 1.33 faults 60k rss_after 1309 MB
+total process() wall 12.05s
+== fresh process per chunk, round 2
+c0: wall 6.98 user 10.57 sys 10.51 faults 123k imports 0.46 peak 1702 MB
+r10: wall 0.45 user 1.08 sys 0.11 faults 11k imports 0.34 peak 431 MB
+s10: wall 0.43 user 1.08 sys 0.14 faults 12k imports 0.32 peak 518 MB
+r30: wall 0.24 user 0.44 sys 0.06 faults 5k imports 0.43 peak 261 MB
+s30: wall 1.42 user 3.21 sys 1.33 faults 34k imports 0.36 peak 1030 MB
+r50: wall 0.29 user 0.56 sys 0.09 faults 8k imports 0.32 peak 309 MB
+s50: wall 0.24 user 0.46 sys 0.11 faults 7k imports 0.35 peak 330 MB
+r70: wall 0.22 user 0.41 sys 0.05 faults 6k imports 0.41 peak 256 MB
+s70: wall 0.91 user 2.02 sys 0.51 faults 26k imports 0.34 peak 737 MB
+r90: wall 0.15 user 0.20 sys 0.05 faults 4k imports 0.38 peak 192 MB
+s90: wall 3.20 user 4.15 sys 6.14 faults 63k imports 0.33 peak 1233 MB
