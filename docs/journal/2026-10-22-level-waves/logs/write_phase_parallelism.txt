@@ -1,0 +1,8 @@
+## c0 (bt 150)
+  levels (compute_leaves)   114 samples, 3.68 busy threads of 4
+  column writers             67 samples, 3.93 busy threads of 4
+  other                       3 samples, 1.00 busy threads of 4
+## s90 (bt 150)
+  levels (compute_leaves)    70 samples, 3.79 busy threads of 4
+  column writers             36 samples, 3.72 busy threads of 4
+  other                       1 samples, 1.00 busy threads of 4
