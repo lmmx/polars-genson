@@ -2,7 +2,9 @@
 
 It holds what the Parquet output holds (the same rows, columns, types and schema
 metadata), with and without a target schema and unnesting, is read once, and is refused
-with an output path or without typed output.
+with an output path or without typed output. A requested schema of the same data (its
+own, or another representation of it) gives the stream in its own schema, and one of
+other data raises, leaving the stream to be read.
 """
 
 import orjson
@@ -92,3 +94,66 @@ def test_refused(source, options, message):
     """Arrow output takes no path and typed output; Parquet output needs a path."""
     with pytest.raises(ValueError, match=message):
         normalise_from_parquet(source, **{**KW, **options})
+
+
+def arrow_stream(source):
+    """The unnested output as an Arrow C stream."""
+    return normalise_from_parquet(
+        source, output_path=None, output_format="arrow", unnest=True, **KW
+    )
+
+
+def test_requested_schema_of_the_same_data(source, tmp_path):
+    """A request for the same data gives the stream in its own schema.
+
+    The request is its own schema, or the same data in other representations (string for
+    large_string, list for large_list).
+    """
+    out = tmp_path / "out.parquet"
+    normalise_from_parquet(source, output_path=out, unnest=True, **KW)
+    want = pq.read_table(out)
+    own = pa.RecordBatchReader.from_stream(arrow_stream(source)).schema
+
+    def plain(t: pa.DataType) -> pa.DataType:
+        """The type with 32-bit offsets in place of 64-bit ones."""
+        if pa.types.is_large_string(t):
+            return pa.string()
+        if pa.types.is_large_list(t):
+            return pa.list_(plain(t.value_type))
+        if pa.types.is_struct(t):
+            return pa.struct([f.with_type(plain(f.type)) for f in t])
+        return t
+
+    other = pa.schema([f.with_type(plain(f.type)) for f in own])
+    assert other != own
+    for requested in (own, other):
+        reader = pa.RecordBatchReader.from_stream(
+            arrow_stream(source), schema=requested
+        )
+        assert reader.schema == own
+        assert reader.read_all().equals(want)
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["rename a field", "another type", "drop a field"],
+)
+def test_requested_schema_of_other_data(source, change):
+    """Other data raises ValueError, and the stream can still be read."""
+    stream = arrow_stream(source)
+    own = pa.RecordBatchReader.from_stream(arrow_stream(source)).schema
+    if change == "rename a field":
+        requested = own.set(0, own.field(0).with_name("other"))
+    elif change == "another type":
+        requested = own.set(0, own.field(0).with_type(pa.int64()))
+    else:
+        requested = own.remove(len(own) - 1)
+    with pytest.raises(ValueError, match="requested schema"):
+        pa.RecordBatchReader.from_stream(stream, schema=requested)
+    assert pa.table(stream).num_rows == len(ROWS)
+
+
+def test_requested_schema_not_a_schema(source):
+    """A requested_schema that is not an arrow_schema capsule raises TypeError."""
+    with pytest.raises(TypeError, match="arrow_schema"):
+        arrow_stream(source).__arrow_c_stream__("not a schema")
