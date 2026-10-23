@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import orjson
 import polars as pl
@@ -675,7 +675,7 @@ def infer_from_parquet(
 def normalise_from_parquet(
     input_path: str | Path,
     column: str,
-    output_path: str | Path,
+    output_path: str | Path | None,
     *,
     output_column: str | None = None,
     ignore_outer_array: bool = True,
@@ -705,7 +705,8 @@ def normalise_from_parquet(
     schema: pl.Schema | pl.Struct | None = None,
     schema_check: Literal["compatible", "strict", "none"] = "compatible",
     unnest: bool = False,
-) -> None:
+    output_format: Literal["parquet", "arrow"] = "parquet",
+) -> Any:
     """Normalise JSON data from a Parquet column and write back to Parquet.
 
     Parameters
@@ -714,8 +715,9 @@ def normalise_from_parquet(
         Path to input Parquet file
     column : str
         Name of column containing JSON strings
-    output_path : str | Path
-        Path to write normalised Parquet file (can be same as input_path for in-place)
+    output_path : str | Path | None
+        Path to write normalised Parquet file (can be same as input_path for in-place).
+        None with ``output_format="arrow"``, which writes no file
     output_column : str, optional
         Name for output column. Defaults to same as input column name
     ignore_outer_array : bool, default True
@@ -825,6 +827,17 @@ def normalise_from_parquet(
         Write the output struct's fields as top-level columns (after `keep_columns`) in
         place of the one struct column, as ``DataFrame.unnest`` would. Requires
         ``typed=True``.
+    output_format : {"parquet", "arrow"}, default "parquet"
+        "arrow" writes no output file and returns the output's record batches as an
+        Arrow C stream (the Arrow PyCapsule interface, ``__arrow_c_stream__``), read
+        once with ``pyarrow.RecordBatchReader.from_stream`` or ``pyarrow.table``. Its
+        buffers are moved to the reader, not copied, for a caller that transforms the
+        arrays before writing them itself. Requires ``typed=True`` and
+        ``output_path=None``.
+
+    Returns
+    -------
+    The Arrow C stream with ``output_format="arrow"``, else None.
 
     Examples
     --------
@@ -843,10 +856,14 @@ def normalise_from_parquet(
     ...     "data.parquet"
     ... )
     """
-    _rust_normalise_from_parquet(
+    if (output_format == "arrow") != (output_path is None):
+        raise ValueError(
+            'output_path must be None with output_format="arrow", and a path otherwise'
+        )
+    return _rust_normalise_from_parquet(
         input_path=str(input_path),
         column=column,
-        output_path=str(output_path),
+        output_path="" if output_path is None else str(output_path),
         output_column=output_column,
         ignore_outer_array=ignore_outer_array,
         ndjson=ndjson,
@@ -879,6 +896,7 @@ def normalise_from_parquet(
         schema=None if schema is None else orjson.dumps(dtype_spec(schema)).decode(),
         schema_check=schema_check,
         unnest=unnest,
+        output_format=output_format,
     )
 
 
