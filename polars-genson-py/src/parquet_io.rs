@@ -1,11 +1,12 @@
+use crate::arrow_stream::ArrowStream;
 use arrow::datatypes::DataType;
 use genson_core::conform::{conform, data_type_from_spec, incompatibilities, SchemaCheck};
 use genson_core::normalise::{
     prune_schema, MapEncoding, NormaliseConfig, NormalisePlan, PrunedValue,
 };
 use genson_core::parquet::{
-    avro_record_fields, read_columns, read_string_column_arrays, values_to_struct_array,
-    write_string_column_with, write_struct_columns, StructLayout,
+    avro_record_fields, read_columns, read_string_column_arrays, struct_batches,
+    values_to_struct_array, write_string_column_with, write_struct_columns, StructLayout,
 };
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use pyo3::prelude::*;
@@ -171,6 +172,7 @@ pub fn infer_from_parquet(
     schema=None,
     schema_check="compatible".to_string(),
     unnest=false,
+    output_format="parquet".to_string(),
 ))]
 #[allow(clippy::too_many_arguments)]
 pub fn normalise_from_parquet(
@@ -205,7 +207,20 @@ pub fn normalise_from_parquet(
     schema: Option<String>,
     schema_check: String,
     unnest: bool,
-) -> PyResult<()> {
+    output_format: String,
+) -> PyResult<Option<ArrowStream>> {
+    let arrow_out = match output_format.as_str() {
+        "parquet" => false,
+        "arrow" => true,
+        other => {
+            return Err(value_err(format!(
+                "output_format must be \"parquet\" or \"arrow\", not {other:?}"
+            )))
+        }
+    };
+    if arrow_out && !typed {
+        return Err(value_err("arrow output needs typed output (typed=True)"));
+    }
     if (schema.is_some() || unnest) && !typed {
         return Err(value_err(
             "schema and unnest need typed output (typed=True)",
@@ -484,6 +499,13 @@ pub fn normalise_from_parquet(
             None => (arrays, fields),
         };
         write_pruned(pruned.into_iter().flatten().flatten().collect())?;
+        if arrow_out {
+            let (schema, batches) =
+                struct_batches(&col_name, arrays, &fields, &keep, Some(metadata), unnest)
+                    .map_err(value_err)?;
+            tick("arrow_batches", &mut t0);
+            return Ok(Some(ArrowStream::new(schema, batches)));
+        }
         write_struct_columns(
             &output_path,
             &col_name,
@@ -501,7 +523,7 @@ pub fn normalise_from_parquet(
             pyo3::exceptions::PyIOError::new_err(format!("Failed to write Parquet: {}", e))
         })?;
         tick("write_parquet", &mut t0);
-        return Ok(());
+        return Ok(None);
     }
 
     // Parse, normalise and re-serialise each row in parallel (order-preserving)
@@ -539,7 +561,7 @@ pub fn normalise_from_parquet(
         );
     }
 
-    Ok(())
+    Ok(None)
 }
 
 #[pyfunction]

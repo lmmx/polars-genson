@@ -896,13 +896,30 @@ pub fn write_struct_columns(
     metadata: Option<HashMap<String, String>>,
     layout: StructLayout,
 ) -> Result<(), String> {
+    let (schema, batches) =
+        struct_batches(column_name, arrays, fields, keep, metadata, layout.unnest)?;
+    let writer = open_writer(path, schema.clone(), layout.spec_names, &batches)?;
+    write_batches(writer, &schema, batches)
+}
+
+/// The record batches [`write_struct_columns`] writes, and their schema: the `keep`
+/// columns beside the struct column `column_name`, or beside its fields if `unnest` (see
+/// [`StructLayout`]). One batch per array, its rows those of the `keep` columns in turn.
+pub fn struct_batches(
+    column_name: &str,
+    arrays: Vec<arrow::array::StructArray>,
+    fields: &arrow::datatypes::Fields,
+    keep: &[(FieldRef, ArrayRef)],
+    metadata: Option<HashMap<String, String>>,
+    unnest: bool,
+) -> Result<(SchemaRef, Vec<RecordBatch>), String> {
     check_keep_len(keep, arrays.iter().map(|a| a.len()).sum())?;
     let field = Arc::new(Field::new(
         column_name,
         DataType::Struct(fields.clone()),
         true,
     ));
-    let schema = if layout.unnest {
+    let schema = if unnest {
         let columns: Vec<FieldRef> = fields
             .iter()
             .map(|f| Arc::new(f.as_ref().clone().with_nullable(true)))
@@ -915,7 +932,7 @@ pub fn write_struct_columns(
     let mut batches = Vec::with_capacity(arrays.len());
     for array in arrays {
         let len = array.len();
-        let batch = if layout.unnest {
+        let batch = if unnest {
             let mut columns: Vec<ArrayRef> =
                 keep.iter().map(|(_, a)| a.slice(offset, len)).collect();
             columns.extend(crate::conform::unnest(&array)?.into_iter().map(|(_, c)| c));
@@ -927,8 +944,7 @@ pub fn write_struct_columns(
         batches.push(batch);
         offset += len;
     }
-    let writer = open_writer(path, schema.clone(), layout.spec_names, &batches)?;
-    write_batches(writer, &schema, batches)
+    Ok((schema, batches))
 }
 
 /// The `keep` columns' fields, then `columns`, which must not repeat their names.

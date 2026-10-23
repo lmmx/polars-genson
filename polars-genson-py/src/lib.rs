@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 
+mod arrow_stream;
 mod expressions;
 mod parquet_io;
 mod schema;
@@ -28,6 +29,7 @@ fn avro_to_polars_fields(schema_json: String, debug: bool) -> PyResult<Vec<(Stri
 #[pymodule]
 fn _polars_genson(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add_class::<arrow_stream::ArrowStream>()?;
     m.add_function(wrap_pyfunction!(json_to_schema, m)?)?;
     m.add_function(wrap_pyfunction!(schema_to_json, m)?)?;
     m.add_function(wrap_pyfunction!(infer_from_parquet, m)?)?;
