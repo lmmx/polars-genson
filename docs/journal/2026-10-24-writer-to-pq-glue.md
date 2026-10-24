@@ -5,7 +5,7 @@ Continues docs/journal/2026-10-23-arrow-output.md.
 ## Current State
 
 - genson-core's `parquet` feature depends on pq-glue (`write` feature), from its branch
-  (lmmx/pq-glue#2) until that is published to crates.io. Every Parquet file genson
+  (lmmx/pq-glue#2, merged; pinned to its master commit e47f28b) until it is published to crates.io. Every Parquet file genson
   writes (`write_string_column_with`, `write_struct_columns`, `write_arrow_batches`, so
   `write_parquet` and the normalised, lookup and pruned outputs) goes through
   `parquet::write`, which calls `pq_glue::write::write_batches` with genson's settings:

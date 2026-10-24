@@ -3371,7 +3371,7 @@ dependencies = [
 [[package]]
 name = "pq-glue"
 version = "0.1.0"
-source = "git+https://github.com/lmmx/pq-glue?rev=df5c80cf3cad9c3f68394505bec113475dbfadb5#df5c80cf3cad9c3f68394505bec113475dbfadb5"
+source = "git+https://github.com/lmmx/pq-glue?rev=e47f28b723d2365446ded628ac6c15f78fd75132#e47f28b723d2365446ded628ac6c15f78fd75132"
 dependencies = [
  "arrow-array",
  "arrow-schema",
