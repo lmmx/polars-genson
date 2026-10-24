@@ -45,6 +45,9 @@ codegen-units = 16
 [profile.release.package.polars-time]
 codegen-units = 16
 
+[profile.release.package.polars-genson-py]
+codegen-units = 16
+
 [workspace]
 members = [
   "genson-cli",
