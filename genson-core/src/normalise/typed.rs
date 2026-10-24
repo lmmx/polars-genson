@@ -111,12 +111,7 @@ impl<'p> Node<'p> {
 
     /// `plan` compiled against `data_type`, if that is the type `avro_to_arrow_type` gives
     /// for the schema node it was compiled from (under `encoding`'s map type), at every depth.
-    fn new(
-        plan: &'p Plan<'_>,
-        data_type: &DataType,
-        encoding: MapEncoding,
-        strict: bool,
-    ) -> Option<Self> {
+    fn new(plan: &'p Plan<'_>, data_type: &DataType, encoding: MapEncoding) -> Option<Self> {
         Some(match (plan, data_type) {
             (Plan::String, DataType::Utf8) => Node::String,
             (Plan::Int, DataType::Int64) => Node::Int,
@@ -124,40 +119,28 @@ impl<'p> Node<'p> {
             (Plan::Boolean, DataType::Boolean) => Node::Boolean,
             (Plan::Passthrough, DataType::Null) => Node::Passthrough,
             (Plan::Record(record), DataType::Struct(fields)) => {
-                Node::Record(Box::new(RecordNode::new(record, fields, encoding, strict)?))
+                Node::Record(Box::new(RecordNode::new(record, fields, encoding)?))
             }
-            (Plan::Array(items), DataType::List(field)) if field.is_nullable() => Node::Array(
-                Box::new(Node::new(items, field.data_type(), encoding, strict)?),
-            ),
+            (Plan::Array(items), DataType::List(field)) if field.is_nullable() => {
+                Node::Array(Box::new(Node::new(items, field.data_type(), encoding)?))
+            }
             (Plan::Map(values), DataType::List(field))
                 if encoding == MapEncoding::KeyValueEntries =>
             {
-                Node::Map(Box::new(Self::entry(
-                    values,
-                    field.data_type(),
-                    encoding,
-                    strict,
-                )?))
+                Node::Map(Box::new(Self::entry(values, field.data_type(), encoding)?))
             }
             (Plan::Map(values), DataType::Map(field, false))
                 if encoding == MapEncoding::Mapping =>
             {
-                Node::Map(Box::new(Self::entry(
-                    values,
-                    field.data_type(),
-                    encoding,
-                    strict,
-                )?))
+                Node::Map(Box::new(Self::entry(values, field.data_type(), encoding)?))
             }
             (Plan::Nullable(Some(branch)), data_type) => {
-                Node::Nullable(Box::new(Node::new(branch, data_type, encoding, strict)?))
+                Node::Nullable(Box::new(Node::new(branch, data_type, encoding)?))
             }
             (Plan::Nullable(None), DataType::Null) => Node::NullOnly,
-            // A union without null is normalised as its first branch. Not when strict: a
-            // value of another branch would infer to another schema than the union
-            (Plan::Union(branches), _) if strict && branches.len() > 1 => return None,
+            // A union without null is normalised as its first branch
             (Plan::Union(first), data_type) => match first.first() {
-                Some(first) => Node::new(first, data_type, encoding, strict)?,
+                Some(first) => Node::new(first, data_type, encoding)?,
                 None if data_type == &DataType::Null => Node::Never,
                 None => return None,
             },
@@ -166,12 +149,7 @@ impl<'p> Node<'p> {
     }
 
     /// A map's values compiled against its entries' type: a key string and a value.
-    fn entry(
-        values: &'p Plan<'_>,
-        entry: &DataType,
-        encoding: MapEncoding,
-        strict: bool,
-    ) -> Option<Self> {
+    fn entry(values: &'p Plan<'_>, entry: &DataType, encoding: MapEncoding) -> Option<Self> {
         let DataType::Struct(entry) = entry else {
             return None;
         };
@@ -182,7 +160,7 @@ impl<'p> Node<'p> {
                     && value.name() == "value"
                     && value.is_nullable() =>
             {
-                Node::new(values, value.data_type(), encoding, strict)
+                Node::new(values, value.data_type(), encoding)
             }
             _ => None,
         }
@@ -219,12 +197,7 @@ impl<'p> Node<'p> {
 }
 
 impl<'p> RecordNode<'p> {
-    fn new(
-        record: &'p Record<'_>,
-        fields: &Fields,
-        encoding: MapEncoding,
-        strict: bool,
-    ) -> Option<Self> {
+    fn new(record: &'p Record<'_>, fields: &Fields, encoding: MapEncoding) -> Option<Self> {
         let plan_fields = record.fields.as_deref().unwrap_or(&[]);
         if plan_fields.len() != fields.len() {
             return None;
@@ -237,7 +210,7 @@ impl<'p> RecordNode<'p> {
             compiled.push(FieldNode {
                 name: plan_field.name.as_str(),
                 promoted: Promoted::of(plan_field.name),
-                node: Node::new(&plan_field.plan, field.data_type(), encoding, strict)?,
+                node: Node::new(&plan_field.plan, field.data_type(), encoding)?,
             });
         }
         let mut pruning: Vec<(&str, Promoted)> = Vec::new();
@@ -312,14 +285,16 @@ impl NormalisePlan<'_> {
     fn compile(&self, fields: &Fields, strict: bool) -> Option<ArrowPlan<'_>> {
         let root_type = DataType::Struct(fields.clone());
         // `values_to_struct_array` fails to build a struct array without fields
+        // A value of a union's other branch would infer to another schema than the union
         if !matches!(self.root, Plan::Record(_))
+            || (strict && self.has_union)
             || fields.is_empty()
             || self.cfg.map_encoding == MapEncoding::Entries
         {
             return None;
         }
         Some(ArrowPlan {
-            root: Node::new(&self.root, &root_type, self.cfg.map_encoding, strict)?,
+            root: Node::new(&self.root, &root_type, self.cfg.map_encoding)?,
             root_type,
             cfg: self.cfg,
             strict,

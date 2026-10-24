@@ -1267,7 +1267,7 @@ fn test_strict_decodes_rows_that_fit() {
         r#"{"s":null,"i":null,"f":null,"b":false,"l":null,"r":null}"#,
     ];
     let decoded = strict_decoded(&schema, &rows).expect("the rows fit");
-    assert_eq!(decoded.len(), 4);
+    assert_eq!(arrow::array::Array::len(&decoded), 4);
 }
 
 /// A row with anything its schema would not already hold is not decoded strictly: a
