@@ -26,24 +26,31 @@ codegen-units = 16
 
 [profile.release.package.polars-core]
 codegen-units = 16
+opt-level = 1
 
 [profile.release.package.polars-expr]
 codegen-units = 16
+opt-level = 1
 
 [profile.release.package.polars-io]
 codegen-units = 16
+opt-level = 1
 
 [profile.release.package.polars-ops]
 codegen-units = 16
+opt-level = 1
 
 [profile.release.package.polars-parquet]
 codegen-units = 16
+opt-level = 1
 
 [profile.release.package.polars-plan]
 codegen-units = 16
+opt-level = 1
 
 [profile.release.package.polars-time]
 codegen-units = 16
+opt-level = 1
 
 [workspace]
 members = [
