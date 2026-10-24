@@ -40,12 +40,13 @@ See [Mixed types](https://lmmx.github.io/polars-genson/reference/concepts/mixed-
 
 See [Normalise a JSON column](https://lmmx.github.io/polars-genson/reference/guides/normalise.md).
 
-| Option          | Default                                        | Functions   | Description                                                                                                                                                               |
-| --------------- | ---------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `empty_as_null` | `True`                                         | nj, nfp     | If True, normalise empty arrays and empty maps to `null`.                                                                                                                 |
-| `map_encoding`  | `'mapping'` (ip) `None` (nj) `'mapping'` (nfp) | ip, nj, nfp | The `map_encoding` the JSON is normalised with: each map gets the dtype that encoding decodes to, a `pl.Map` for "mapping" and a list of `{key, value}` structs for "kv". |
-| `decode`        | `True`                                         | nj          | Controls how the normalised JSON strings are decoded after normalisation:                                                                                                 |
-| `unnest`        | `True` (nj) `False` (nfp)                      | nj, nfp     | Whether to expand the decoded struct into a column per field, in place of a single column of structs.                                                                     |
+| Option          | Default                                        | Functions   | Description                                                                                                                                                                                      |
+| --------------- | ---------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `empty_as_null` | `True`                                         | nj, nfp     | If True, normalise empty arrays and empty maps to `null`.                                                                                                                                        |
+| `map_encoding`  | `'mapping'` (ip) `None` (nj) `'mapping'` (nfp) | ip, nj, nfp | The `map_encoding` the JSON is normalised with: each map gets the dtype that encoding decodes to, a `pl.Map` for "mapping" and a list of `{key, value}` structs for "kv".                        |
+| `decode`        | `True`                                         | nj          | Controls how the normalised JSON strings are decoded after normalisation:                                                                                                                        |
+| `unnest`        | `True` (nj) `False` (nfp)                      | nj, nfp     | Whether to expand the decoded struct into a column per field, in place of a single column of structs.                                                                                            |
+| `avro_schema`   | `None`                                         | nj, nfp     | An Avro schema (as JSON text or a dict) to normalise against in place of inferring one, for data whose schema is known: the inference pass is skipped, and the inference options have no effect. |
 
 ## Schema output
 

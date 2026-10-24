@@ -1374,6 +1374,12 @@ polars-genson itself when these docs are built, so they match the released packa
 <td>nj, nfp</td>
 <td>Whether to expand the decoded struct into a column per field, in place of a single column of structs.</td>
 </tr>
+<tr>
+<td><code>avro_schema</code></td>
+<td><code>None</code></td>
+<td>nj, nfp</td>
+<td>An Avro schema (as JSON text or a dict) to normalise against in place of inferring one, for data whose schema is known: the inference pass is skipped, and the inference options have no effect.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="exec-53--schema-output">Schema output<a class="headerlink" href="#exec-53--schema-output" title="Permanent link">&para;</a></h2>
