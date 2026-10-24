@@ -133,6 +133,26 @@ pub struct NormalisePlan<'s> {
     pub(super) cfg: &'s NormaliseConfig,
     /// Nothing can be pruned without `prune`, so a record's input need not stay whole
     take: bool,
+    /// The schema has a union of two or more types besides null, normalised as the first
+    /// (see `to_arrow_strict`)
+    pub(super) has_union: bool,
+}
+
+/// Whether `schema` has a union of two or more types besides null, at any depth.
+fn has_union(schema: &Value) -> bool {
+    match schema {
+        Value::Array(types) => {
+            types.iter().filter(|t| *t != "null").count() > 1 || types.iter().any(has_union)
+        }
+        Value::Object(obj) => {
+            obj.get("fields")
+                .and_then(Value::as_array)
+                .is_some_and(|fields| fields.iter().any(|f| f.get("type").is_some_and(has_union)))
+                || obj.get("items").is_some_and(has_union)
+                || obj.get("values").is_some_and(has_union)
+        }
+        _ => false,
+    }
 }
 
 impl<'s> NormalisePlan<'s> {
@@ -143,6 +163,7 @@ impl<'s> NormalisePlan<'s> {
             root: Plan::new(schema, prune),
             cfg,
             take: prune.is_empty(),
+            has_union: has_union(schema),
         }
     }
 
