@@ -2,6 +2,12 @@ name: Deploy Release
 
 on:
   workflow_dispatch:
+    inputs:
+      bump:
+        description: "The Python package's version bump (the crates' come from their commits)"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
 
 jobs:
   deploy-release:
@@ -23,14 +29,15 @@ jobs:
       - name: Install just
         uses: taiki-e/install-action@64adfd9e935fa438859b9e080fd026720b2ba070 # tag=just
         with:
-          tool: just@1.38.0,echo-comment@0.2.0
+          tool: just@1.38.0,echo-comment@0.2.0,release-plz@0.3.172
 
       - name: Configure git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # Bump version, commit changes, tag as the version, and push both
-      # commit and tag (pushing the latter triggers package release)
+      # Bump the versions (the Python package's, and each changed crate's with its
+      # changelog), commit the changes, tag the Python version, and push both: CI then
+      # publishes the wheels to PyPI and the crates to crates.io
       - name: Run just release
-        run: just release
+        run: just release ${{ inputs.bump }}
