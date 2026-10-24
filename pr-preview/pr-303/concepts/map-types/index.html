@@ -1,0 +1,1446 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Infer a schema from JSON string columns and normalise them into typed Polars columns">
+      
+      
+        <meta name="author" content="Louis Maddox">
+      
+      
+        <link rel="canonical" href="https://lmmx.github.io/polars-genson/pr-preview/pr-303/concepts/map-types/">
+      
+      
+        <link rel="prev" href="../maps-and-records/">
+      
+      
+        <link rel="next" href="../mixed-types/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Map types - Polars Genson</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CSource+Code+Pro:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"Source Code Pro"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../docs/theme/stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#map-types-avro-polars-and-parquet" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Polars Genson" class="md-header__button md-logo" aria-label="Polars Genson" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Polars Genson
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Map types
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/lmmx/polars-genson" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lmmx/polars-genson
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../get_started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../guides/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Guides
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How it works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Polars Genson" class="md-nav__button md-logo" aria-label="Polars Genson" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Polars Genson
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/lmmx/polars-genson" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lmmx/polars-genson
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/infer-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Infer a schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/normalise/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Normalise a column
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/parquet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    JSON in Parquet
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/extract-invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Factor out repeated data
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/prune/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Remove malformed records
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/large-inputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Large inputs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    How it works
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            How it works
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../type-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Type mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nulls-and-empty-values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Nulls and empty values
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../maps-and-records/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Maps and records
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Map types
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Map types
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-schema-an-avro-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      In the schema: an Avro map
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-polars-plmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      In Polars: pl.Map
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#as-json-text-map_encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      As JSON text: map_encoding
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-parquet-a-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      In Parquet: a MAP
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-kv-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      The kv encoding
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limits
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mixed-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mixed types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../key-order/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Field order
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    How inference works
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/polars_genson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Options
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-schema-an-avro-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      In the schema: an Avro map
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-polars-plmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      In Polars: pl.Map
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#as-json-text-map_encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      As JSON text: map_encoding
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-parquet-a-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      In Parquet: a MAP
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-kv-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      The kv encoding
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limits
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="map-types-avro-polars-and-parquet">Map types: Avro, Polars and Parquet<a class="headerlink" href="#map-types-avro-polars-and-parquet" title="Permanent link">&para;</a></h1>
+<p>Once genson has decided that an object is a map, with keys that are data rather than
+field names (see <a href="../maps-and-records/">Maps and records</a>), that map passes through
+several formats on its way to a column. This page follows one map through each of them.</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>A map of language to label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JSON input</td>
+<td><code>{"en": "Hi", "es": "Hola"}</code></td>
+</tr>
+<tr>
+<td>The inferred Avro schema</td>
+<td><code>{"type": "map", "values": "string"}</code></td>
+</tr>
+<tr>
+<td>A Polars column</td>
+<td><code>pl.Map(pl.String, pl.String)</code></td>
+</tr>
+<tr>
+<td>A typed Parquet file</td>
+<td>a Parquet <code>MAP</code>, Arrow <code>map&lt;string, string&gt;</code></td>
+</tr>
+<tr>
+<td>The <code>kv</code> encoding</td>
+<td><code>pl.List(pl.Struct({"key": pl.String, "value": pl.String}))</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="in-the-schema-an-avro-map">In the schema: an Avro map<a class="headerlink" href="#in-the-schema-an-avro-map" title="Permanent link">&para;</a></h2>
+<p>genson records its decision in the schema it infers. In Avro, a map is a type of its
+own, with one type for all its values:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #2838B0">import</span><span style="color: #A89028"> </span><span style="color: #289870">json</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #2838B0">import</span><span style="color: #A89028"> </span><span style="color: #289870">polars</span><span style="color: #A89028"> </span><span style="color: #2838B0">as</span><span style="color: #A89028"> </span><span style="color: #289870">pl</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span style="color: #2838B0">import</span><span style="color: #A89028"> </span><span style="color: #289870">polars_genson</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>df <span style="color: #666">=</span> pl<span style="color: #666">.</span>DataFrame<span style="color: #888">({</span><span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">:</span> <span style="color: #888">[</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span style="color: #B83838">&#39;{&quot;id&quot;: 1, &quot;labels&quot;: {&quot;en&quot;: &quot;Hi&quot;, &quot;es&quot;: &quot;Hola&quot;}}&#39;</span><span style="color: #888">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span style="color: #B83838">&#39;{&quot;id&quot;: 2, &quot;labels&quot;: {&quot;fr&quot;: &quot;Bonjour&quot;}}&#39;</span><span style="color: #888">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span style="color: #888">]})</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>schema <span style="color: #666">=</span> df<span style="color: #666">.</span>genson<span style="color: #666">.</span>infer_json_schema<span style="color: #888">(</span><span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">,</span> map_threshold<span style="color: #666">=</span><span style="color: #444">1</span><span style="color: #888">,</span> avro<span style="color: #666">=</span><span style="color: #444; font-style: italic">True</span><span style="color: #888">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span style="color: #388038">print</span><span style="color: #888">(</span>json<span style="color: #666">.</span>dumps<span style="color: #888">(</span>schema<span style="color: #888">[</span><span style="color: #B83838">&quot;fields&quot;</span><span style="color: #888">][</span><span style="color: #444">1</span><span style="color: #888">],</span> indent<span style="color: #666">=</span><span style="color: #444">2</span><span style="color: #888">))</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  &quot;name&quot;: &quot;labels&quot;,
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  &quot;type&quot;: {
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    &quot;name&quot;: &quot;labels&quot;,
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    &quot;type&quot;: &quot;map&quot;,
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    &quot;values&quot;: &quot;string&quot;
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  }
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>}
+</span></code></pre></div>
+<p>Avro map keys are always strings, so every map genson infers has string keys.</p>
+<h2 id="in-polars-plmap">In Polars: <code>pl.Map</code><a class="headerlink" href="#in-polars-plmap" title="Permanent link">&para;</a></h2>
+<p><code>normalise_json</code> and <code>infer_polars_schema</code> give a map as a <code>pl.Map</code>. Each row holds its
+own keys, and only those:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>out <span style="color: #666">=</span> df<span style="color: #666">.</span>genson<span style="color: #666">.</span>normalise_json<span style="color: #888">(</span><span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">,</span> map_threshold<span style="color: #666">=</span><span style="color: #444">1</span><span style="color: #888">)</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #388038">print</span><span style="color: #888">(</span>out<span style="color: #888">)</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>shape: (2, 2)
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>┌─────┬────────────────────────────┐
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│ id  ┆ labels                     │
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│ --- ┆ ---                        │
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│ i64 ┆ map[str, str]              │
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>╞═════╪════════════════════════════╡
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│ 1   ┆ {&quot;en&quot;: &quot;Hi&quot;, &quot;es&quot;: &quot;Hola&quot;} │
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│ 2   ┆ {&quot;fr&quot;: &quot;Bonjour&quot;}          │
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>└─────┴────────────────────────────┘
+</span></code></pre></div>
+<p>Polars' <code>map</code> namespace reads it, for example <code>map.get</code> for one key, <code>map.keys</code> for the
+keys, and <code>map.entries</code> for the key/value pairs:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>labels <span style="color: #666">=</span> pl<span style="color: #666">.</span>col<span style="color: #888">(</span><span style="color: #B83838">&quot;labels&quot;</span><span style="color: #888">)</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #388038">print</span><span style="color: #888">(</span>out<span style="color: #666">.</span>select<span style="color: #888">(</span>labels<span style="color: #666">.</span>map<span style="color: #666">.</span>get<span style="color: #888">(</span><span style="color: #B83838">&quot;en&quot;</span><span style="color: #888">)</span><span style="color: #666">.</span>alias<span style="color: #888">(</span><span style="color: #B83838">&quot;en&quot;</span><span style="color: #888">),</span> labels<span style="color: #666">.</span>map<span style="color: #666">.</span>keys<span style="color: #888">()</span><span style="color: #666">.</span>alias<span style="color: #888">(</span><span style="color: #B83838">&quot;keys&quot;</span><span style="color: #888">)))</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>shape: (2, 2)
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>┌──────┬──────────────┐
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│ en   ┆ keys         │
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│ ---  ┆ ---          │
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│ str  ┆ list[str]    │
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>╞══════╪══════════════╡
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│ Hi   ┆ [&quot;en&quot;, &quot;es&quot;] │
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│ null ┆ [&quot;fr&quot;]       │
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>└──────┴──────────────┘
+</span></code></pre></div>
+<h2 id="as-json-text-map_encoding">As JSON text: <code>map_encoding</code><a class="headerlink" href="#as-json-text-map_encoding" title="Permanent link">&para;</a></h2>
+<p>With <code>decode=False</code>, <code>normalise_json</code> writes each row as a JSON string, and
+<code>map_encoding</code> chooses how a map is written:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #2838B0">for</span> encoding <span style="color: #A848A8">in</span> <span style="color: #888">(</span><span style="color: #B83838">&quot;mapping&quot;</span><span style="color: #888">,</span> <span style="color: #B83838">&quot;kv&quot;</span><span style="color: #888">,</span> <span style="color: #B83838">&quot;entries&quot;</span><span style="color: #888">):</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    text <span style="color: #666">=</span> df<span style="color: #666">.</span>genson<span style="color: #666">.</span>normalise_json<span style="color: #888">(</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        <span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">,</span> map_threshold<span style="color: #666">=</span><span style="color: #444">1</span><span style="color: #888">,</span> map_encoding<span style="color: #666">=</span>encoding<span style="color: #888">,</span> decode<span style="color: #666">=</span><span style="color: #444; font-style: italic">False</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span style="color: #888">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span style="color: #388038">print</span><span style="color: #888">(</span><span style="color: #444">f</span><span style="color: #B83838">&quot;</span><span style="color: #B83838; text-decoration: underline">{</span>encoding<span style="color: #B83838; text-decoration: underline">:</span><span style="color: #B83838">8s</span><span style="color: #B83838; text-decoration: underline">}</span><span style="color: #B83838">&quot;</span><span style="color: #888">,</span> text<span style="color: #888">[</span><span style="color: #444">0</span><span style="color: #888">])</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mapping  {&quot;id&quot;:1,&quot;labels&quot;:{&quot;en&quot;:&quot;Hi&quot;,&quot;es&quot;:&quot;Hola&quot;}}
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kv       {&quot;id&quot;:1,&quot;labels&quot;:[{&quot;key&quot;:&quot;en&quot;,&quot;value&quot;:&quot;Hi&quot;},{&quot;key&quot;:&quot;es&quot;,&quot;value&quot;:&quot;Hola&quot;}]}
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>entries  {&quot;id&quot;:1,&quot;labels&quot;:[{&quot;en&quot;:&quot;Hi&quot;},{&quot;es&quot;:&quot;Hola&quot;}]}
+</span></code></pre></div>
+<ul>
+<li><code>"mapping"</code> (the default) writes a JSON object, which <code>str.json_decode</code> reads as a
+  <code>pl.Map</code>.</li>
+<li><code>"kv"</code> writes a list of <code>{"key": ..., "value": ...}</code> objects, which it reads as a list
+  of <code>{key, value}</code> structs (see <a href="#the-kv-encoding">below</a>).</li>
+<li><code>"entries"</code> writes a list of one-key objects. No Polars dtype reads it, so it can't be
+  decoded.</li>
+</ul>
+<p>Pass the same <code>map_encoding</code> to <code>infer_polars_schema</code> or <code>avro_to_polars_schema</code> and the
+schema you get decodes the text:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>text <span style="color: #666">=</span> df<span style="color: #666">.</span>genson<span style="color: #666">.</span>normalise_json<span style="color: #888">(</span><span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">,</span> map_threshold<span style="color: #666">=</span><span style="color: #444">1</span><span style="color: #888">,</span> map_encoding<span style="color: #666">=</span><span style="color: #B83838">&quot;kv&quot;</span><span style="color: #888">,</span> decode<span style="color: #666">=</span><span style="color: #444; font-style: italic">False</span><span style="color: #888">)</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>dtype <span style="color: #666">=</span> pl<span style="color: #666">.</span>Struct<span style="color: #888">(</span>df<span style="color: #666">.</span>genson<span style="color: #666">.</span>infer_polars_schema<span style="color: #888">(</span><span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">,</span> map_threshold<span style="color: #666">=</span><span style="color: #444">1</span><span style="color: #888">,</span> map_encoding<span style="color: #666">=</span><span style="color: #B83838">&quot;kv&quot;</span><span style="color: #888">))</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span style="color: #388038">print</span><span style="color: #888">(</span>text<span style="color: #666">.</span>str<span style="color: #666">.</span>json_decode<span style="color: #888">(</span>dtype<span style="color: #888">)</span><span style="color: #666">.</span>struct<span style="color: #666">.</span>unnest<span style="color: #888">())</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>shape: (2, 2)
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>┌─────┬──────────────────────────────┐
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│ id  ┆ labels                       │
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│ --- ┆ ---                          │
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│ i64 ┆ list[struct[2]]              │
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>╞═════╪══════════════════════════════╡
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│ 1   ┆ [{&quot;en&quot;,&quot;Hi&quot;}, {&quot;es&quot;,&quot;Hola&quot;}] │
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│ 2   ┆ [{&quot;fr&quot;,&quot;Bonjour&quot;}]           │
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>└─────┴──────────────────────────────┘
+</span></code></pre></div>
+<h2 id="in-parquet-a-map">In Parquet: a <code>MAP</code><a class="headerlink" href="#in-parquet-a-map" title="Permanent link">&para;</a></h2>
+<p><code>normalise_from_parquet(typed=True)</code> writes the normalised rows as typed columns, and a
+map as a Parquet <code>MAP</code>. Polars reads it back as a <code>pl.Map</code>:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #2838B0">from</span><span style="color: #A89028"> </span><span style="color: #289870">polars_genson</span><span style="color: #A89028"> </span><span style="color: #2838B0">import</span> normalise_from_parquet
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>df<span style="color: #666">.</span>write_parquet<span style="color: #888">(</span><span style="color: #B83838">&quot;labels.parquet&quot;</span><span style="color: #888">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>normalise_from_parquet<span style="color: #888">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span style="color: #B83838">&quot;labels.parquet&quot;</span><span style="color: #888">,</span> column<span style="color: #666">=</span><span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">,</span> output_path<span style="color: #666">=</span><span style="color: #B83838">&quot;typed.parquet&quot;</span><span style="color: #888">,</span> map_threshold<span style="color: #666">=</span><span style="color: #444">1</span><span style="color: #888">,</span> typed<span style="color: #666">=</span><span style="color: #444; font-style: italic">True</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span style="color: #888">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span style="color: #388038">print</span><span style="color: #888">(</span>pl<span style="color: #666">.</span>read_parquet_schema<span style="color: #888">(</span><span style="color: #B83838">&quot;typed.parquet&quot;</span><span style="color: #888">)[</span><span style="color: #B83838">&quot;j&quot;</span><span style="color: #888">])</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Struct({&#39;id&#39;: Int64, &#39;labels&#39;: Map(String, String)})
+</span></code></pre></div>
+<p>Other Parquet readers see a map too: pyarrow reads <code>labels</code> as <code>map&lt;string, string&gt;</code>.</p>
+<p>The file's metadata holds the Avro schema and the options it was written with, including
+<code>map_encoding</code>, so its dtype can be rebuilt from the file alone:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #2838B0">from</span><span style="color: #A89028"> </span><span style="color: #289870">polars_genson</span><span style="color: #A89028"> </span><span style="color: #2838B0">import</span> avro_to_polars_schema<span style="color: #888">,</span> read_parquet_metadata
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>meta <span style="color: #666">=</span> read_parquet_metadata<span style="color: #888">(</span><span style="color: #B83838">&quot;typed.parquet&quot;</span><span style="color: #888">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>map_encoding <span style="color: #666">=</span> json<span style="color: #666">.</span>loads<span style="color: #888">(</span>meta<span style="color: #888">[</span><span style="color: #B83838">&quot;genson_normalise_config&quot;</span><span style="color: #888">])[</span><span style="color: #B83838">&quot;map_encoding&quot;</span><span style="color: #888">]</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span style="color: #388038">print</span><span style="color: #888">(</span>avro_to_polars_schema<span style="color: #888">(</span>meta<span style="color: #888">[</span><span style="color: #B83838">&quot;genson_avro_schema&quot;</span><span style="color: #888">],</span> map_encoding<span style="color: #666">=</span>map_encoding<span style="color: #888">))</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Schema({&#39;id&#39;: Int64, &#39;labels&#39;: Map(String, String)})
+</span></code></pre></div>
+<h2 id="the-kv-encoding">The <code>kv</code> encoding<a class="headerlink" href="#the-kv-encoding" title="Permanent link">&para;</a></h2>
+<p>A map can also be held as a list of <code>{key, value}</code> structs. Arrow and Parquet store a
+map this way underneath, and <code>map.entries</code> gives it from a <code>pl.Map</code>. A cast goes either
+way:</p>
+<div class="language-python highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kv <span style="color: #666">=</span> pl<span style="color: #666">.</span>List<span style="color: #888">(</span>pl<span style="color: #666">.</span>Struct<span style="color: #888">({</span><span style="color: #B83838">&quot;key&quot;</span><span style="color: #888">:</span> pl<span style="color: #666">.</span>String<span style="color: #888">,</span> <span style="color: #B83838">&quot;value&quot;</span><span style="color: #888">:</span> pl<span style="color: #666">.</span>String<span style="color: #888">}))</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #388038">print</span><span style="color: #888">(</span>out<span style="color: #888">[</span><span style="color: #B83838">&quot;labels&quot;</span><span style="color: #888">]</span><span style="color: #666">.</span>cast<span style="color: #888">(</span>kv<span style="color: #888">)</span><span style="color: #666">.</span>to_list<span style="color: #888">())</span>
+</span></code></pre></div>
+<div class="language-text highlight" style="background: #ffffff"><pre style="line-height: 125%;"><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>[[{&#39;key&#39;: &#39;en&#39;, &#39;value&#39;: &#39;Hi&#39;}, {&#39;key&#39;: &#39;es&#39;, &#39;value&#39;: &#39;Hola&#39;}], [{&#39;key&#39;: &#39;fr&#39;, &#39;value&#39;: &#39;Bonjour&#39;}]]
+</span></code></pre></div>
+<p><code>map_encoding="kv"</code> gives this form everywhere: in the JSON text, the dtypes from
+<code>infer_polars_schema</code>, <code>avro_to_polars_schema</code> and <code>normalise_json</code>, and the typed
+Parquet columns. Use it when your code works with maps as lists, for example to
+<code>explode</code> a map into one row per key.</p>
+<p>When you pass your own schema as <code>normalise_json(decode=...)</code>, its maps decide the
+encoding: a <code>pl.Map</code> is decoded from JSON objects and a list of <code>{key, value}</code> structs
+from <code>kv</code> lists, unless you pass <code>map_encoding</code> yourself.</p>
+<h2 id="limits">Limits<a class="headerlink" href="#limits" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>schema_to_json</code> writes a <code>pl.Map</code> as a list of <code>{key, value}</code> structs, the Arrow
+  storage, because the Rust polars crate has no map dtype. <code>json_to_schema</code> reads it
+  back as that list.</li>
+<li>A map's keys are always strings, as in Avro.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/lmmx" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.instant", "navigation.instant.progress", "navigation.indexes", "navigation.sections", "navigation.tabs", "search", "search.suggest"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+        <script src="../../docs/theme/js/katex.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>
