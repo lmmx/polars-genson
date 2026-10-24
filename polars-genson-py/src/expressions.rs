@@ -101,6 +101,46 @@ pub struct GensonKwargs {
     /// If None, processes all strings at once. Default is None.
     #[serde(default)]
     pub max_builders: Option<usize>,
+
+    /// An Avro schema (JSON text) to normalise against in place of inferring one: for
+    /// data whose schema is known, the inference pass skipped. Normalisation only, not
+    /// inference.
+    #[serde(default)]
+    pub avro_schema: Option<String>,
+}
+
+impl GensonKwargs {
+    /// The schema to normalise `json_strings` against: `avro_schema` if given, else
+    /// inferred from them (with `avro = true`).
+    pub fn normalisation_schema(&self, json_strings: &[&str]) -> Result<serde_json::Value, String> {
+        if let Some(schema) = &self.avro_schema {
+            return serde_json::from_str(schema).map_err(|e| format!("Invalid avro_schema: {e}"));
+        }
+        let config = SchemaInferenceConfig {
+            ignore_outer_array: self.ignore_outer_array,
+            delimiter: if self.ndjson { Some(b'\n') } else { None },
+            schema_uri: self.schema_uri.clone(),
+            map_threshold: self.map_threshold,
+            map_max_required_keys: self.map_max_required_keys,
+            unify_maps: self.unify_maps,
+            no_unify: self.no_unify.iter().cloned().collect(),
+            force_field_types: self.force_field_types.clone(),
+            force_parent_field_types: self.force_parent_field_types.clone(),
+            force_scalar_promotion: self.force_scalar_promotion.iter().cloned().collect(),
+            wrap_scalars: self.wrap_scalars,
+            coerce_strings: self.coerce_string,
+            avro: true, // normalisation implies Avro
+            wrap_root: self.wrap_root.clone(),
+            no_root_map: self.no_root_map,
+            max_builders: self.max_builders,
+            debug: self.debug,
+            profile: self.profile,
+            verbosity: self.verbosity,
+        };
+        infer_json_schema_from_strings(json_strings, config)
+            .map(|result| result.schema)
+            .map_err(|e| format!("Schema inference failed: {e}"))
+    }
 }
 
 fn default_map_threshold() -> usize {
@@ -488,36 +528,12 @@ pub fn normalise_json(inputs: &[Series], kwargs: GensonKwargs) -> PolarsResult<S
 
         let wrap_root_field = kwargs.wrap_root.clone();
 
-        // Infer schema ONCE
-        let config = SchemaInferenceConfig {
-            ignore_outer_array: kwargs.ignore_outer_array,
-            delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
-            schema_uri: kwargs.schema_uri.clone(),
-            map_threshold: kwargs.map_threshold,
-            map_max_required_keys: kwargs.map_max_required_keys,
-            unify_maps: kwargs.unify_maps,
-            no_unify: kwargs.no_unify.iter().cloned().collect(),
-            force_field_types: kwargs.force_field_types.clone(),
-            force_parent_field_types: kwargs.force_parent_field_types.clone(),
-            force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
-            wrap_scalars: kwargs.wrap_scalars,
-            coerce_strings: kwargs.coerce_string,
-            avro: true, // normalisation implies Avro
-            wrap_root: wrap_root_field.clone(),
-            no_root_map: kwargs.no_root_map,
-            max_builders: kwargs.max_builders,
-            debug: kwargs.debug,
-            profile: kwargs.profile,
-            verbosity: kwargs.verbosity,
-        };
-
-        let schema_result = infer_json_schema_from_strings(&json_strings, config).map_err(|e| {
-            PolarsError::ComputeError(format!("Schema inference failed: {e}").into())
-        })?;
-
+        // Inferred once (or given as avro_schema)
+        let schema = kwargs
+            .normalisation_schema(&json_strings)
+            .map_err(|e| PolarsError::ComputeError(e.into()))?;
         drop(json_strings);
-
-        let schema = &schema_result.schema;
+        let schema = &schema;
 
         // Parse each row and normalise
         let cfg = NormaliseConfig {
