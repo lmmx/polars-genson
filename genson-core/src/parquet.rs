@@ -978,11 +978,6 @@ fn unnested_schema(
     )))
 }
 
-#[cfg(test)]
-mod tests {
-    include!("tests/parquet.rs");
-}
-
 /// Write `batches` to `path` with genson's writer, as genson writes its own output: zstd at
 /// level 1, the Parquet schema's list and map groups named as the specification names
 /// them (as pyarrow writes them), a dictionary for each leaf column but those whose
@@ -997,4 +992,9 @@ pub fn write_arrow_batches(
 ) -> Result<(), String> {
     let writer = open_writer(path, schema.clone(), true, &batches, max_row_group_rows)?;
     write_batches(writer, &schema, batches)
+}
+
+#[cfg(test)]
+mod tests {
+    include!("tests/parquet.rs");
 }
