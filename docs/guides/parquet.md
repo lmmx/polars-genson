@@ -245,6 +245,36 @@ print(json.dumps(schema, indent=2))
 Pass `output_path` to write the schema to a file instead, and `avro=True` for an Avro
 schema.
 
+## Write Arrow data with genson's writer: `write_parquet`
+
+`write_parquet` writes any Arrow data with the Parquet writer genson writes its own
+output with. It takes anything with an `__arrow_c_stream__` method (a `pyarrow.Table` or
+`RecordBatchReader`, a Polars `DataFrame`, or the stream
+`normalise_from_parquet(..., output_format="arrow")` returns), without copying its
+buffers:
+
+```python exec="on" source="above" result="text" session="parquet"
+import pyarrow as pa
+from polars_genson import write_parquet
+
+table = pa.table({
+    "id": ["Q1", "Q2"],
+    "refs": [[{"hash": "a", "snaks": ["P1", "P2"]}], None],
+})
+write_parquet(table, "arrow.parquet", row_group_size=1_000_000)
+print(pl.read_parquet("arrow.parquet"))
+```
+
+Each row group's leaf columns are encoded in parallel, with the GIL released, so deeply
+nested tables, whose leaves a writer otherwise encodes one at a time, write several times
+faster: Wikidata's claims, one row per statement with their references and qualifiers
+(1.56 million rows), in 2.3 s on 4 threads against pyarrow's 8.5 s, 5% smaller.
+
+The file holds the same data in the same Arrow schema as `pyarrow.parquet` writes it:
+list and map groups take the specification's names (`element`, `key_value`), and the
+Arrow schema is stored in the file's metadata. It is compressed with zstd (level 1), and
+each leaf column is dictionary encoded but one whose first values are mostly distinct.
+
 ## See also
 
 - [Factor out repeated embedded data](extract-invariants.md), for JSON that carries the

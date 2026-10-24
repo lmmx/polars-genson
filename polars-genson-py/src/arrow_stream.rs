@@ -4,8 +4,8 @@ use std::sync::Mutex;
 
 use arrow::datatypes::{DataType, Fields, Schema, SchemaRef};
 use arrow::ffi::FFI_ArrowSchema;
-use arrow::ffi_stream::FFI_ArrowArrayStream;
-use arrow::record_batch::{RecordBatch, RecordBatchIterator};
+use arrow::ffi_stream::{ArrowArrayStreamReader, FFI_ArrowArrayStream};
+use arrow::record_batch::{RecordBatch, RecordBatchIterator, RecordBatchReader};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyCapsule;
@@ -118,4 +118,35 @@ fn same_data(a: &DataType, b: &DataType) -> bool {
         (Struct(a), Struct(b)) => incompatibility(a, b).is_none(),
         _ => a == b,
     }
+}
+
+/// The record batches of `data`, any object of the Arrow PyCapsule interface
+/// (`__arrow_c_stream__`: a pyarrow table or record batch reader, a Polars frame, an
+/// [`ArrowStream`]), read through its stream: their buffers are taken over, not copied.
+pub fn batches_of(data: &Bound<'_, PyAny>) -> PyResult<(SchemaRef, Vec<RecordBatch>)> {
+    if !data.hasattr("__arrow_c_stream__")? {
+        return Err(PyTypeError::new_err(format!(
+            "Expected Arrow data with an __arrow_c_stream__ method, not {}",
+            data.get_type().name()?
+        )));
+    }
+    let capsule = data.call_method0("__arrow_c_stream__")?;
+    let capsule = capsule.cast::<PyCapsule>().map_err(|_| {
+        PyTypeError::new_err(
+            "__arrow_c_stream__ must return a PyCapsule named 'arrow_array_stream'",
+        )
+    })?;
+    let pointer = capsule.pointer_checked(Some(c"arrow_array_stream"))?;
+    // SAFETY: a capsule named `arrow_array_stream` holds an FFI_ArrowArrayStream (the Arrow
+    // PyCapsule interface); `from_raw` moves it out, leaving the capsule's released, as a
+    // consumer of the interface does
+    let reader = unsafe {
+        ArrowArrayStreamReader::from_raw(pointer.cast::<FFI_ArrowArrayStream>().as_ptr())
+    }
+    .map_err(|e| PyValueError::new_err(format!("Invalid Arrow stream: {e}")))?;
+    let schema = reader.schema();
+    let batches = reader
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| PyValueError::new_err(format!("Failed to read the Arrow stream: {e}")))?;
+    Ok((schema, batches))
 }

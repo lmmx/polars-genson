@@ -468,3 +468,55 @@ fn test_flat_pages_end_at_the_page_size_limit() {
         .collect();
     assert_eq!(read, values.values().to_vec());
 }
+
+#[test]
+fn test_write_arrow_batches_round_trip() {
+    use arrow::array::{Int64Array, ListArray, StringArray};
+    use arrow::datatypes::{DataType, Field, Int64Type, Schema};
+    use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
+    use std::sync::Arc;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_str().unwrap();
+    let schema = Arc::new(Schema::new(vec![
+        Field::new("id", DataType::Utf8, true),
+        Field::new(
+            "values",
+            DataType::List(Arc::new(Field::new_list_field(DataType::Int64, true))),
+            true,
+        ),
+        Field::new("n", DataType::Int64, false),
+    ]));
+    let batch = |offset: i64| {
+        RecordBatch::try_new(
+            schema.clone(),
+            vec![
+                Arc::new(StringArray::from(vec![Some("Q1"), None, Some("Q3")])),
+                Arc::new(ListArray::from_iter_primitive::<Int64Type, _, _>(vec![
+                    Some(vec![Some(1), None]),
+                    None,
+                    Some(vec![]),
+                ])),
+                Arc::new(Int64Array::from(vec![offset, offset + 1, offset + 2])),
+            ],
+        )
+        .unwrap()
+    };
+    let batches = vec![batch(0), batch(3), batch(6)];
+    write_arrow_batches(path, schema.clone(), batches.clone(), Some(4)).unwrap();
+
+    let reader = ParquetRecordBatchReaderBuilder::try_new(File::open(path).unwrap()).unwrap();
+    let meta = reader.metadata().clone();
+    let rows: Vec<usize> = meta.row_groups().iter().map(|g| g.num_rows() as usize).collect();
+    assert_eq!(rows, vec![4, 4, 1]);
+    // List items take the specification's name, as pyarrow writes them
+    let leaf = meta.file_metadata().schema_descr().column(1).path().string();
+    assert_eq!(leaf, "values.list.element");
+    let read: Vec<RecordBatch> = reader.build().unwrap().map(|b| b.unwrap()).collect();
+    let read = arrow::compute::concat_batches(&read[0].schema(), &read).unwrap();
+    let written = arrow::compute::concat_batches(&schema, &batches).unwrap();
+    // The same values; the list's item field is named `element` as read back
+    for (r, w) in read.columns().iter().zip(written.columns()) {
+        assert_eq!(r, &arrow::compute::cast(w, r.data_type()).unwrap());
+    }
+}

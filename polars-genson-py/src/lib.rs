@@ -8,6 +8,7 @@ mod typed;
 
 use parquet_io::{
     infer_from_parquet, normalise_from_parquet, read_parquet_metadata, schema_incompatibilities,
+    write_parquet,
 };
 use schema::{json_to_schema, schema_to_json};
 use typed::normalise_json_typed;
@@ -35,6 +36,7 @@ fn _polars_genson(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(infer_from_parquet, m)?)?;
     m.add_function(wrap_pyfunction!(normalise_from_parquet, m)?)?;
     m.add_function(wrap_pyfunction!(read_parquet_metadata, m)?)?;
+    m.add_function(wrap_pyfunction!(write_parquet, m)?)?;
     m.add_function(wrap_pyfunction!(schema_incompatibilities, m)?)?;
     m.add_function(wrap_pyfunction!(avro_to_polars_fields, m)?)?;
     m.add_function(wrap_pyfunction!(normalise_json_typed, m)?)?;

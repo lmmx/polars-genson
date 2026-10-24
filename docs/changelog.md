@@ -5,6 +5,14 @@ Release notes for earlier versions are on
 
 ## Unreleased
 
+- **`write_parquet` writes Arrow data with genson's Parquet writer.** Any object with
+  `__arrow_c_stream__` (a pyarrow table or record batch reader, a Polars frame, genson's
+  Arrow stream) is written as genson writes its own output, each row group's leaf columns
+  encoded in parallel with the GIL released, its buffers not copied. Wikidata's claims
+  statements (1.56 million deeply nested rows) write in 2.3 s on 4 threads against
+  pyarrow's 8.5 s, 5% smaller, with the same schema and data as pyarrow writes. In Rust,
+  `genson_core::parquet::write_arrow_batches`.
+
 - **Tall flat Parquet output is smaller.** Data pages end at 1 MiB, as Polars' do,
   rather than every 20,000 rows (arrow-rs's default). zstd compresses each page on its
   own, so larger pages compress better: a 12.5-million-row table of a string and an

@@ -19,6 +19,7 @@ from ._polars_genson import normalise_json_typed as _rust_normalise_json_typed
 from ._polars_genson import read_parquet_metadata as _rust_read_parquet_metadata
 from ._polars_genson import schema_incompatibilities as _rust_schema_incompatibilities
 from ._polars_genson import schema_to_json as _rust_schema_to_json
+from ._polars_genson import write_parquet as _rust_write_parquet
 from .dtypes import (
     _parse_polars_dtype,
     contains_map,
@@ -40,6 +41,7 @@ __all__ = [
     "infer_from_parquet",
     "normalise_from_parquet",
     "read_parquet_metadata",
+    "write_parquet",
     "schema_to_dict",
     "check_schema_compatibility",
 ]
@@ -1473,6 +1475,46 @@ def read_parquet_metadata(path: str | Path) -> dict[str, str]:
         Dictionary of metadata key-value pairs
     """
     return _rust_read_parquet_metadata(str(path))
+
+
+def write_parquet(data: Any, path: str | Path, *, row_group_size: int | None = None) -> None:
+    """Write Arrow data to a Parquet file with genson's Parquet writer.
+
+    The writer genson writes its own output with, for any Arrow data: its row groups'
+    leaf columns are encoded in parallel, so a deeply nested table (lists of structs of
+    lists) writes in a fraction of the time of a writer that encodes them one at a time.
+    The data is taken through the Arrow PyCapsule interface, its buffers not copied, and
+    the GIL is released while it is encoded.
+
+    The file holds the same data in the same Arrow schema as ``pyarrow.parquet`` writes
+    it: list and map groups take the Parquet specification's names (``element``,
+    ``key_value``), as pyarrow names them, and the Arrow schema is stored in the file's
+    metadata. It is compressed with zstd (level 1). Each leaf column is dictionary
+    encoded but one whose first values (up to 16,384, at least 128) are more than three
+    quarters distinct, for which a dictionary costs a hash per value and grows the file.
+
+    Parameters
+    ----------
+    data : Any
+        Arrow data with an ``__arrow_c_stream__`` method: a ``pyarrow.Table`` or
+        ``pyarrow.RecordBatchReader``, a Polars ``DataFrame``, or the stream
+        ``normalise_from_parquet(..., output_format="arrow")`` returns. A stream is read
+        to its end.
+    path : str | Path
+        Path to write the Parquet file to. An existing file is replaced.
+    row_group_size : int, optional
+        Rows to a row group. Defaults to 1,048,576 (arrow-rs's default, and pyarrow's).
+
+    Raises
+    ------
+    TypeError
+        If ``data`` has no ``__arrow_c_stream__`` method.
+    OSError
+        If the file cannot be written.
+    """
+    if row_group_size is not None and row_group_size < 1:
+        raise ValueError(f"row_group_size must be at least 1, not {row_group_size}")
+    _rust_write_parquet(data, str(path), row_group_size)
 
 
 def avro_to_polars_schema(
