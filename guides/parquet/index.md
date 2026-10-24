@@ -309,6 +309,8 @@ Each row group's leaf columns are encoded in parallel, with the GIL released, so
 
 The file holds the same data in the same Arrow schema as `pyarrow.parquet` writes it: list and map groups take the specification's names (`element`, `key_value`), and the Arrow schema is stored in the file's metadata. It is compressed with zstd (level 1), and each leaf column is dictionary encoded but one whose first values are mostly distinct.
 
+The writer is [pq-glue](https://github.com/lmmx/pq-glue)'s (`pq_glue::write`), which genson's writer moved to: genson calls it from Rust, and writes the same files it wrote before. For its other engines and options (sorting columns, content-defined chunking, a bound on the threads), use `pq_glue.write_parquet`.
+
 ## See also
 
 - [Factor out repeated embedded data](https://lmmx.github.io/polars-genson/guides/extract-invariants/index.md), for JSON that carries the same nested data in many rows.
