@@ -4,8 +4,9 @@ Continues docs/journal/2026-10-23-arrow-output.md.
 
 ## Current State
 
-- genson-core's `parquet` feature depends on pq-glue (`write` feature), from its branch
-  (lmmx/pq-glue#2, merged; pinned to its master commit e47f28b) until it is published to crates.io. Every Parquet file genson
+- genson-core's `parquet` feature depends on pq-glue 0.2.0 from crates.io (`write`
+  feature; lmmx/pq-glue#2, its `src/write.rs` the same as at e47f28b, the commit this
+  branch was first pinned to). Every Parquet file genson
   writes (`write_string_column_with`, `write_struct_columns`, `write_arrow_batches`, so
   `write_parquet` and the normalised, lookup and pruned outputs) goes through
   `parquet::write`, which calls `pq_glue::write::write_batches` with genson's settings:
@@ -43,7 +44,12 @@ costs genson nothing. The same code takes longer and holds more in genson's proc
 than in pq-glue's: genson-core installs mimalloc as the global allocator, pq-glue the
 system's (not changed here).
 
+Checked again on pq-glue 0.2.0: a harness writing the same data through this branch and
+through master (genson's own writer) gave 16 files byte for byte the same (struct columns
+in all four layouts, with and without native maps, `write_arrow_batches` with one, many
+and tiny row groups, and string columns, empty included), on 1, 3 and 4 threads.
+
 ## Missing
 
-- pq-glue published to crates.io with `write`, and genson-core's dependency moved from
-  the branch to that version, before this merges.
+- Nothing for the move. Not carried over: #294 (levels computed a few batches at a time)
+  was never merged into genson's writer, so pq-glue's writer does not have it either.

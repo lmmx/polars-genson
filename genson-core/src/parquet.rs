@@ -746,8 +746,8 @@ fn unnested_schema(
 /// Write `batches` to `path` with pq-glue's writer, as genson writes its own output: zstd
 /// at level 1, the Parquet schema's list and map groups named as the specification names
 /// them (as pyarrow writes them), a dictionary for each leaf column but those whose
-/// values are mostly distinct, and the row groups' leaf columns encoded in parallel. `max_row_group_rows` rows to a row group, arrow-rs's default
-/// (1,048,576) if `None`.
+/// values are mostly distinct, and the row groups' leaf columns encoded in parallel.
+/// `max_row_group_rows` rows to a row group, arrow-rs's default (1,048,576) if `None`.
 pub fn write_arrow_batches(
     path: &str,
     schema: SchemaRef,
