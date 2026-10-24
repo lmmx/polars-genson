@@ -1,5 +1,7 @@
 // genson-core/src/tests/parquet.rs
 use super::*;
+use parquet::arrow::ArrowWriter;
+use parquet::file::properties::WriterProperties;
 use tempfile::NamedTempFile;
 
 #[test]
@@ -165,115 +167,8 @@ fn test_output_is_zstd_compressed() {
 
     let reader = SerializedFileReader::new(File::open(path).unwrap()).unwrap();
     let column = reader.metadata().row_group(0).column(0);
-    assert_eq!(column.compression(), compression());
+    assert_eq!(column.compression(), parquet::basic::Compression::ZSTD(parquet::basic::ZstdLevel::try_new(1).unwrap()));
     assert_eq!(read_string_column(path, "json").unwrap(), strings);
-}
-
-/// `rows` rows of an `id` column and a struct column, `claims`, of a string, a list of
-/// integers and a struct of a float, any of them null, in batches of uneven sizes (some
-/// of them empty).
-fn struct_batches(rows: usize, seed: u64) -> (SchemaRef, Vec<RecordBatch>) {
-    use arrow::array::{Float64Array, ListArray, StructArray};
-    use arrow::buffer::NullBuffer;
-    use arrow::datatypes::{Fields, Int64Type};
-    let mut state = seed;
-    let mut next = move || {
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        (state >> 33) as usize
-    };
-    let draws: Vec<[usize; 4]> = (0..rows).map(|_| [next(), next(), next(), next()]).collect();
-    let s: ArrayRef = Arc::new(StringArray::from_iter(
-        draws.iter().map(|d| (d[0] % 5 != 0).then(|| "s".repeat(d[0] % 13))),
-    ));
-    let xs: ArrayRef = Arc::new(ListArray::from_iter_primitive::<Int64Type, _, _>(draws.iter().map(|d| {
-        (d[1] % 7 != 0).then(|| (0..d[1] % 6).map(|j| (j != 3).then_some((d[1] * j) as i64)).collect::<Vec<_>>())
-    })));
-    let v: ArrayRef = Arc::new(Float64Array::from_iter(
-        draws.iter().map(|d| (d[2] % 4 != 0).then_some(d[2] as f64 / 7.0)),
-    ));
-    let inner_fields = Fields::from(vec![Field::new("v", DataType::Float64, true)]);
-    let inner_nulls = NullBuffer::from(draws.iter().map(|d| d[3] % 6 != 0).collect::<Vec<_>>());
-    let inner: ArrayRef = Arc::new(StructArray::try_new(inner_fields.clone(), vec![v], Some(inner_nulls)).unwrap());
-    let claims_fields = Fields::from(vec![
-        Field::new("s", DataType::Utf8, true),
-        Field::new("xs", xs.data_type().clone(), true),
-        Field::new("inner", DataType::Struct(inner_fields), true),
-    ]);
-    let claims_nulls = NullBuffer::from(draws.iter().map(|d| d[3] % 9 != 0).collect::<Vec<_>>());
-    let claims: ArrayRef =
-        Arc::new(StructArray::try_new(claims_fields.clone(), vec![s, xs, inner], Some(claims_nulls)).unwrap());
-    let ids: ArrayRef = Arc::new(StringArray::from_iter_values((0..rows).map(|i| format!("Q{i}"))));
-    let schema = Arc::new(Schema::new(vec![
-        Field::new("id", DataType::Utf8, false),
-        Field::new("claims", DataType::Struct(claims_fields), true),
-    ]));
-    let mut batches = vec![RecordBatch::new_empty(schema.clone())];
-    let mut from = 0;
-    while from < rows {
-        let len = (next() % 23).min(rows - from);
-        batches.push(RecordBatch::try_new(schema.clone(), vec![ids.slice(from, len), claims.slice(from, len)]).unwrap());
-        from += len;
-    }
-    (schema, batches)
-}
-
-#[test]
-fn test_write_batches_matches_arrow_writer() {
-    use parquet::file::properties::EnabledStatistics;
-    let zstd = || WriterProperties::builder().set_compression(compression());
-    let layouts = [
-        ("as opened", zstd().build()),
-        (
-            "small pages, row groups of 37",
-            zstd()
-                .set_write_batch_size(3)
-                .set_data_page_row_count_limit(4)
-                .set_max_row_group_row_count(Some(37))
-                .build(),
-        ),
-        (
-            "row groups of 1, page statistics, bloom filters",
-            WriterProperties::builder()
-                .set_max_row_group_row_count(Some(1))
-                .set_statistics_enabled(EnabledStatistics::Page)
-                .set_bloom_filter_enabled(true)
-                .build(),
-        ),
-        (
-            "no dictionary, no offset index",
-            zstd()
-                .set_dictionary_enabled(false)
-                .set_statistics_enabled(EnabledStatistics::Chunk)
-                .set_offset_index_disabled(true)
-                .set_max_row_group_row_count(Some(50))
-                .build(),
-        ),
-    ];
-    // Row groups are encoded up to one per thread at a time: waves of one row group, uneven
-    // waves, and waves wider than the row groups there are
-    let pools = [1, 3, 8].map(|n| rayon::ThreadPoolBuilder::new().num_threads(n).build().unwrap());
-    for (layout, props) in layouts {
-        for rows in [0, 1, 2, 37, 38, 74, 300] {
-            let (schema, batches) = struct_batches(rows, rows as u64 + 1);
-            let one = NamedTempFile::new().unwrap();
-            let mut writer =
-                ArrowWriter::try_new(File::create(one.path()).unwrap(), schema.clone(), Some(props.clone())).unwrap();
-            for batch in &batches {
-                writer.write(batch).unwrap();
-            }
-            writer.close().unwrap();
-            let one = std::fs::read(one.path()).unwrap();
-            for pool in &pools {
-                let parallel = NamedTempFile::new().unwrap();
-                let writer = ArrowWriter::try_new(File::create(parallel.path()).unwrap(), schema.clone(), Some(props.clone()))
-                    .unwrap();
-                pool.install(|| write_batches(writer, &schema, batches.clone())).unwrap();
-                let parallel = std::fs::read(parallel.path()).unwrap();
-                let threads = pool.current_num_threads();
-                assert!(one == parallel, "{layout}, {rows} rows, {threads} threads: {} and {} bytes", one.len(), parallel.len());
-            }
-        }
-    }
 }
 
 /// A file of `rows` rows with an `id` column and a `json` column of uneven, sometimes

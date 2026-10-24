@@ -7,10 +7,8 @@ use parquet::arrow::arrow_reader::{
     ArrowReaderMetadata, ArrowReaderOptions, ParquetRecordBatchReaderBuilder, RowSelection,
     RowSelector,
 };
-use parquet::arrow::{ArrowWriter, ProjectionMask};
-use parquet::basic::{Compression, ZstdLevel};
+use parquet::arrow::ProjectionMask;
 use parquet::file::metadata::{PageIndexPolicy, ParquetMetaData};
-use parquet::file::properties::WriterProperties;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::fs::File;
@@ -319,8 +317,7 @@ pub fn write_string_column_with(
     check_keep_len(keep, array.len())?;
     let schema = output_schema(field, keep, metadata)?;
     let batches = vec![batch_of(&schema, keep, 0, array)?];
-    let writer = open_writer(path, schema.clone(), false, &batches, None)?;
-    write_batches(writer, &schema, batches)
+    write(path, schema, batches, false, None)
 }
 
 /// Write an `extract_invariants` lookup table: `field`, `key` and `value` (as JSON).
@@ -449,160 +446,6 @@ fn check_keep_len(keep: &[(FieldRef, ArrayRef)], rows: usize) -> Result<(), Stri
     }
 }
 
-/// zstd at level 1: on Wikidata claims, typed output a third the size of uncompressed in
-/// the same write time, and normalised JSON an eighth
-fn compression() -> Compression {
-    Compression::ZSTD(ZstdLevel::try_new(1).expect("1 is a zstd level"))
-}
-
-/// A writer for `batches` (which it does not write): with `spec_names`, the Parquet
-/// schema's list and map groups take the specification's names (arrow-rs's
-/// `coerce_types`, which changes nothing else for genson's types), leaf columns whose
-/// values are mostly distinct are not dictionary encoded (see [`unrepeated_leaves`]), and
-/// a data page ends at arrow-rs's page size limit (1 MiB) alone, as Polars' do, rather
-/// than also at 20,000 rows: zstd compresses each page on its own, and pages of 20,000
-/// fixed-width values (160 kB of Int64) compress worse. `max_row_group_rows` rows to a row
-/// group, arrow-rs's default (1,048,576) if `None`.
-fn open_writer(
-    path: &str,
-    schema: SchemaRef,
-    spec_names: bool,
-    batches: &[RecordBatch],
-    max_row_group_rows: Option<usize>,
-) -> Result<ArrowWriter<File>, String> {
-    let file = File::create(path)
-        .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
-    let mut props = WriterProperties::builder()
-        .set_compression(compression())
-        .set_coerce_types(spec_names)
-        .set_data_page_row_count_limit(usize::MAX);
-    if let Some(rows) = max_row_group_rows {
-        props = props.set_max_row_group_row_count(Some(rows));
-    }
-    for column in unrepeated_leaves(&schema, spec_names, batches) {
-        props = props.set_column_dictionary_enabled(column, false);
-    }
-    ArrowWriter::try_new(file, schema, Some(props.build()))
-        .map_err(|e| format!("Failed to create Parquet writer: {}", e))
-}
-
-/// Values sampled from each leaf column, from its first rows
-const DICTIONARY_SAMPLE: usize = 16_384;
-
-/// The Parquet leaf columns of `batches` whose sampled values are more than three
-/// quarters distinct (of at least 128 sampled), for which a dictionary costs a hash per
-/// value and grows the file until arrow-rs gives it up at its page size limit: Polars
-/// skips dictionaries at the same ratio, and no other ratio from 0 to 1 measured better
-/// across flat, nested and Wikidata tables (docs/journal/2026-10-21-adaptive-dictionary.md).
-/// None when the Arrow leaves do not line up with the Parquet leaf columns one to one.
-fn unrepeated_leaves(
-    schema: &SchemaRef,
-    spec_names: bool,
-    batches: &[RecordBatch],
-) -> Vec<parquet::schema::types::ColumnPath> {
-    let Ok(descr) = parquet::arrow::ArrowSchemaConverter::new()
-        .with_coerce_types(spec_names)
-        .convert(schema)
-    else {
-        return Vec::new();
-    };
-    // Each batch's leaf arrays, in Parquet leaf order
-    let leaves: Vec<Vec<ArrayRef>> = batches
-        .iter()
-        .map(|batch| {
-            let mut leaves = Vec::new();
-            for column in batch.columns() {
-                leaf_arrays(column, &mut leaves);
-            }
-            leaves
-        })
-        .collect();
-    if leaves.iter().any(|l| l.len() != descr.num_columns()) {
-        return Vec::new();
-    }
-    (0..descr.num_columns())
-        .into_par_iter()
-        .filter(|&i| {
-            let mut seen = rustc_hash::FxHashSet::default();
-            let mut sampled = 0;
-            for batch_leaves in &leaves {
-                if !sample(&batch_leaves[i], &mut seen, &mut sampled) {
-                    return false;
-                }
-                if sampled >= DICTIONARY_SAMPLE {
-                    break;
-                }
-            }
-            sampled >= 128 && seen.len() * 4 > sampled * 3
-        })
-        .map(|i| descr.column(i).path().clone())
-        .collect()
-}
-
-/// The leaf arrays under `array`, depth first, as Parquet's leaf columns are ordered.
-fn leaf_arrays(array: &ArrayRef, out: &mut Vec<ArrayRef>) {
-    use arrow::array::AsArray;
-    match array.data_type() {
-        DataType::Struct(_) => array
-            .as_struct()
-            .columns()
-            .iter()
-            .for_each(|c| leaf_arrays(c, out)),
-        DataType::List(_) => leaf_arrays(array.as_list::<i32>().values(), out),
-        DataType::LargeList(_) => leaf_arrays(array.as_list::<i64>().values(), out),
-        DataType::FixedSizeList(..) => leaf_arrays(array.as_fixed_size_list().values(), out),
-        DataType::Map(..) => {
-            let entries = array.as_map().entries();
-            entries.columns().iter().for_each(|c| leaf_arrays(c, out))
-        }
-        _ => out.push(array.clone()),
-    }
-}
-
-/// Hash `array`'s non-null values into `seen` until `sampled` reaches the sample size;
-/// false for a type not sampled (its dictionary setting is left as it is).
-fn sample(array: &ArrayRef, seen: &mut rustc_hash::FxHashSet<u64>, sampled: &mut usize) -> bool {
-    use arrow::array::AsArray;
-    use arrow::datatypes::*;
-    use xxhash_rust::xxh64::xxh64;
-    let mut take = |bytes: &[u8]| {
-        seen.insert(xxh64(bytes, 0));
-        *sampled += 1;
-        *sampled < DICTIONARY_SAMPLE
-    };
-    macro_rules! each {
-        ($iter:expr, $bytes:expr) => {{
-            for v in $iter.flatten() {
-                let bytes = $bytes(v);
-                if !take(AsRef::<[u8]>::as_ref(&bytes)) {
-                    break;
-                }
-            }
-        }};
-    }
-    match array.data_type() {
-        DataType::Utf8 => each!(array.as_string::<i32>().iter(), str::as_bytes),
-        DataType::LargeUtf8 => each!(array.as_string::<i64>().iter(), str::as_bytes),
-        DataType::Utf8View => each!(array.as_string_view().iter(), str::as_bytes),
-        DataType::Binary => each!(array.as_binary::<i32>().iter(), |b| b),
-        DataType::LargeBinary => each!(array.as_binary::<i64>().iter(), |b| b),
-        DataType::Int32 => each!(array.as_primitive::<Int32Type>().iter(), |v: i32| v
-            .to_le_bytes()),
-        DataType::Int64 => each!(array.as_primitive::<Int64Type>().iter(), |v: i64| v
-            .to_le_bytes()),
-        DataType::UInt32 => each!(array.as_primitive::<UInt32Type>().iter(), |v: u32| v
-            .to_le_bytes()),
-        DataType::UInt64 => each!(array.as_primitive::<UInt64Type>().iter(), |v: u64| v
-            .to_le_bytes()),
-        DataType::Float32 => each!(array.as_primitive::<Float32Type>().iter(), |v: f32| v
-            .to_le_bytes()),
-        DataType::Float64 => each!(array.as_primitive::<Float64Type>().iter(), |v: f64| v
-            .to_le_bytes()),
-        _ => return false,
-    }
-    true
-}
-
 /// `array` as one batch, with the rows of each `keep` column starting at `offset`.
 fn batch_of(
     schema: &SchemaRef,
@@ -617,104 +460,27 @@ fn batch_of(
         .map_err(|e| format!("Failed to create RecordBatch: {}", e))
 }
 
-/// Write `batches` with `writer` and close it: the same file, byte for byte, as
-/// `ArrowWriter::write` of each batch and `close` write, with the work done in parallel.
-/// The rows go to row groups as there, `max_row_group_row_count` to each (`open_writer`
-/// sets no byte limit or content-defined chunking), and each column's writer is handed its
-/// leaf of each batch in turn, as `ArrowWriter`'s are.
-///
-/// Row groups are encoded a few at a time, up to one per thread, each row group's leaf
-/// columns (and each batch's levels) a task of their own: a wide table's columns fill the
-/// threads within one row group, and a narrow table's row groups fill them side by side.
-/// The encoded chunks are then written in row group order, so at most that many row
-/// groups' levels and encoded chunks are held at once.
-fn write_batches(
-    writer: ArrowWriter<File>,
-    schema: &SchemaRef,
+/// Write `batches` to `path` with pq-glue's writer (`pq_glue::write`, polars-genson's
+/// writer, moved there): zstd at level 1, a dictionary for each leaf column but those
+/// whose values are mostly distinct, data pages ended at the page size limit alone,
+/// each row group's leaf columns encoded in parallel. With `spec_names`, the Parquet
+/// schema's list and map groups take the specification's names. `max_row_group_rows`
+/// rows to a row group, arrow-rs's default (1,048,576) if `None`.
+fn write(
+    path: &str,
+    schema: SchemaRef,
     batches: Vec<RecordBatch>,
+    spec_names: bool,
+    max_row_group_rows: Option<usize>,
 ) -> Result<(), String> {
-    use parquet::arrow::arrow_writer::{
-        compute_leaves, ArrowColumnChunk, ArrowColumnWriter, ArrowLeafColumn,
+    let options = pq_glue::write::WriteOptions {
+        spec_names,
+        max_row_group_rows,
+        ..Default::default()
     };
-    let failed = |e: parquet::errors::ParquetError| format!("Failed to write Parquet: {}", e);
-    let (mut file_writer, factory) = writer.into_serialized_writer().map_err(failed)?;
-    let props = file_writer.properties();
-    debug_assert!(props.max_row_group_bytes().is_none());
-    debug_assert!(props.content_defined_chunking().is_none());
-    let max_rows = props.max_row_group_row_count().unwrap_or(usize::MAX);
-    let mut row_groups: Vec<Vec<RecordBatch>> = Vec::new();
-    let mut current: Vec<RecordBatch> = Vec::new();
-    let mut buffered = 0;
-    for batch in batches {
-        let mut remaining = batch;
-        while remaining.num_rows() > 0 {
-            let rows = (max_rows - buffered).min(remaining.num_rows());
-            current.push(remaining.slice(0, rows));
-            remaining = remaining.slice(rows, remaining.num_rows() - rows);
-            buffered += rows;
-            if buffered >= max_rows {
-                row_groups.push(std::mem::take(&mut current));
-                buffered = 0;
-            }
-        }
-    }
-    if !current.is_empty() {
-        row_groups.push(current);
-    }
-    let in_flight = rayon::current_num_threads().max(1);
-    for (wave, groups) in row_groups.chunks(in_flight).enumerate() {
-        let first = wave * in_flight;
-        let writers: Vec<Vec<ArrowColumnWriter>> = (0..groups.len())
-            .map(|g| factory.create_column_writers(first + g))
-            .collect::<Result<_, _>>()
-            .map_err(failed)?;
-        let columns = writers.first().map_or(0, Vec::len);
-        // Each row group's batches' leaf columns, in the order of the column writers
-        let leaves: Vec<Vec<Vec<ArrowLeafColumn>>> = groups
-            .par_iter()
-            .map(|batches| {
-                batches
-                    .par_iter()
-                    .map(|batch| {
-                        let mut leaves = Vec::with_capacity(columns);
-                        for (field, column) in schema.fields().iter().zip(batch.columns()) {
-                            leaves.extend(compute_leaves(field, column)?);
-                        }
-                        Ok(leaves)
-                    })
-                    .collect::<Result<_, parquet::errors::ParquetError>>()
-            })
-            .collect::<Result<_, _>>()
-            .map_err(failed)?;
-        // One task per (row group, leaf column), collected in row group then column order
-        let tasks: Vec<(usize, usize, ArrowColumnWriter)> = writers
-            .into_iter()
-            .enumerate()
-            .flat_map(|(g, ws)| ws.into_iter().enumerate().map(move |(i, w)| (g, i, w)))
-            .collect();
-        let chunks: Vec<ArrowColumnChunk> = tasks
-            .into_par_iter()
-            .map(|(g, i, mut writer)| {
-                for batch_leaves in &leaves[g] {
-                    writer.write(&batch_leaves[i])?;
-                }
-                writer.close()
-            })
-            .collect::<Result<_, _>>()
-            .map_err(failed)?;
-        let mut chunks = chunks.into_iter();
-        for _ in groups {
-            let mut row_group = file_writer.next_row_group().map_err(failed)?;
-            for chunk in chunks.by_ref().take(columns) {
-                chunk.append_to_row_group(&mut row_group).map_err(failed)?;
-            }
-            row_group.close().map_err(failed)?;
-        }
-    }
-    file_writer
-        .close()
-        .map_err(|e| format!("Failed to close Parquet writer: {}", e))?;
-    Ok(())
+    pq_glue::write::write_batches(std::path::Path::new(path), schema, batches, &options)
+        .map(|_| ())
+        .map_err(|e| format!("Failed to write Parquet: {}", e))
 }
 
 pub fn read_parquet_metadata(path: &str) -> Result<HashMap<String, String>, String> {
@@ -903,8 +669,7 @@ pub fn write_struct_columns(
 ) -> Result<(), String> {
     let (schema, batches) =
         struct_batches(column_name, arrays, fields, keep, metadata, layout.unnest)?;
-    let writer = open_writer(path, schema.clone(), layout.spec_names, &batches, None)?;
-    write_batches(writer, &schema, batches)
+    write(path, schema, batches, layout.spec_names, None)
 }
 
 /// The record batches [`write_struct_columns`] writes, and their schema: the `keep`
@@ -978,20 +743,18 @@ fn unnested_schema(
     )))
 }
 
-/// Write `batches` to `path` with genson's writer, as genson writes its own output: zstd at
-/// level 1, the Parquet schema's list and map groups named as the specification names
+/// Write `batches` to `path` with pq-glue's writer, as genson writes its own output: zstd
+/// at level 1, the Parquet schema's list and map groups named as the specification names
 /// them (as pyarrow writes them), a dictionary for each leaf column but those whose
-/// values are mostly distinct, and the row groups' leaf columns encoded in parallel
-/// ([`write_batches`]). `max_row_group_rows` rows to a row group, arrow-rs's default
-/// (1,048,576) if `None`.
+/// values are mostly distinct, and the row groups' leaf columns encoded in parallel.
+/// `max_row_group_rows` rows to a row group, arrow-rs's default (1,048,576) if `None`.
 pub fn write_arrow_batches(
     path: &str,
     schema: SchemaRef,
     batches: Vec<RecordBatch>,
     max_row_group_rows: Option<usize>,
 ) -> Result<(), String> {
-    let writer = open_writer(path, schema.clone(), true, &batches, max_row_group_rows)?;
-    write_batches(writer, &schema, batches)
+    write(path, schema, batches, true, max_row_group_rows)
 }
 
 #[cfg(test)]
