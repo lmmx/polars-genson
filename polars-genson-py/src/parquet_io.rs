@@ -1,4 +1,4 @@
-use crate::arrow_stream::ArrowStream;
+use crate::arrow_stream::{batches_of, ArrowStream};
 use arrow::datatypes::DataType;
 use genson_core::conform::{conform, data_type_from_spec, incompatibilities, SchemaCheck};
 use genson_core::normalise::{
@@ -6,7 +6,8 @@ use genson_core::normalise::{
 };
 use genson_core::parquet::{
     avro_record_fields, read_columns, read_string_column_arrays, struct_batches,
-    values_to_struct_array, write_string_column_with, write_struct_columns, StructLayout,
+    values_to_struct_array, write_arrow_batches, write_string_column_with, write_struct_columns,
+    StructLayout,
 };
 use genson_core::{infer_json_schema_from_strings, DebugVerbosity, SchemaInferenceConfig};
 use pyo3::prelude::*;
@@ -562,6 +563,22 @@ pub fn normalise_from_parquet(
     }
 
     Ok(None)
+}
+
+/// Write `data` (Arrow data of the PyCapsule interface) to a Parquet file at `path` with
+/// genson's writer (`genson_core::parquet::write_arrow_batches`), the GIL released while it
+/// encodes.
+#[pyfunction]
+#[pyo3(signature = (data, path, row_group_size=None))]
+pub fn write_parquet(
+    py: Python<'_>,
+    data: Bound<'_, PyAny>,
+    path: String,
+    row_group_size: Option<usize>,
+) -> PyResult<()> {
+    let (schema, batches) = batches_of(&data)?;
+    py.detach(|| write_arrow_batches(&path, schema, batches, row_group_size))
+        .map_err(pyo3::exceptions::PyIOError::new_err)
 }
 
 #[pyfunction]

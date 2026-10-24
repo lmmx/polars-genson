@@ -319,7 +319,7 @@ pub fn write_string_column_with(
     check_keep_len(keep, array.len())?;
     let schema = output_schema(field, keep, metadata)?;
     let batches = vec![batch_of(&schema, keep, 0, array)?];
-    let writer = open_writer(path, schema.clone(), false, &batches)?;
+    let writer = open_writer(path, schema.clone(), false, &batches, None)?;
     write_batches(writer, &schema, batches)
 }
 
@@ -461,12 +461,14 @@ fn compression() -> Compression {
 /// values are mostly distinct are not dictionary encoded (see [`unrepeated_leaves`]), and
 /// a data page ends at arrow-rs's page size limit (1 MiB) alone, as Polars' do, rather
 /// than also at 20,000 rows: zstd compresses each page on its own, and pages of 20,000
-/// fixed-width values (160 kB of Int64) compress worse.
+/// fixed-width values (160 kB of Int64) compress worse. `max_row_group_rows` rows to a row
+/// group, arrow-rs's default (1,048,576) if `None`.
 fn open_writer(
     path: &str,
     schema: SchemaRef,
     spec_names: bool,
     batches: &[RecordBatch],
+    max_row_group_rows: Option<usize>,
 ) -> Result<ArrowWriter<File>, String> {
     let file = File::create(path)
         .map_err(|e| format!("Failed to create output file '{}': {}", path, e))?;
@@ -474,6 +476,9 @@ fn open_writer(
         .set_compression(compression())
         .set_coerce_types(spec_names)
         .set_data_page_row_count_limit(usize::MAX);
+    if let Some(rows) = max_row_group_rows {
+        props = props.set_max_row_group_row_count(Some(rows));
+    }
     for column in unrepeated_leaves(&schema, spec_names, batches) {
         props = props.set_column_dictionary_enabled(column, false);
     }
@@ -898,7 +903,7 @@ pub fn write_struct_columns(
 ) -> Result<(), String> {
     let (schema, batches) =
         struct_batches(column_name, arrays, fields, keep, metadata, layout.unnest)?;
-    let writer = open_writer(path, schema.clone(), layout.spec_names, &batches)?;
+    let writer = open_writer(path, schema.clone(), layout.spec_names, &batches, None)?;
     write_batches(writer, &schema, batches)
 }
 
@@ -976,4 +981,20 @@ fn unnested_schema(
 #[cfg(test)]
 mod tests {
     include!("tests/parquet.rs");
+}
+
+/// Write `batches` to `path` with genson's writer, as genson writes its own output: zstd at
+/// level 1, the Parquet schema's list and map groups named as the specification names
+/// them (as pyarrow writes them), a dictionary for each leaf column but those whose
+/// values are mostly distinct, and the row groups' leaf columns encoded in parallel
+/// ([`write_batches`]). `max_row_group_rows` rows to a row group, arrow-rs's default
+/// (1,048,576) if `None`.
+pub fn write_arrow_batches(
+    path: &str,
+    schema: SchemaRef,
+    batches: Vec<RecordBatch>,
+    max_row_group_rows: Option<usize>,
+) -> Result<(), String> {
+    let writer = open_writer(path, schema.clone(), true, &batches, max_row_group_rows)?;
+    write_batches(writer, &schema, batches)
 }
