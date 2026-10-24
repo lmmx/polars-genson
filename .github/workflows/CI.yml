@@ -177,8 +177,8 @@ jobs:
             manylinux: auto
             extra-args: ""
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - name: Build wheels
@@ -200,7 +200,7 @@ jobs:
           path: dist
       - name: Attest wheels
         if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*"
       - name: Publish wheels to PyPI
@@ -230,8 +230,8 @@ jobs:
             target: x86
             skip: true
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
@@ -250,7 +250,7 @@ jobs:
           path: dist
       - name: Attest wheels
         if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*"
       - name: Publish wheels to PyPI
@@ -280,8 +280,8 @@ jobs:
             target: aarch64
             skip: false
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - name: Build wheels
@@ -299,7 +299,7 @@ jobs:
           path: dist
       - name: Attest wheels
         if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*"
       - name: Publish wheels to PyPI
@@ -313,7 +313,7 @@ jobs:
     needs: [check-commit]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
@@ -343,7 +343,7 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install just and release-plz
@@ -377,7 +377,7 @@ jobs:
     env:
       ALL_BUILT: ${{ needs.linux.result == 'success' && needs.windows.result == 'success' && needs.macos.result == 'success' }}
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
       - name: Choose files
         id: files
         run: |
@@ -390,7 +390,7 @@ jobs:
             exit 1
           fi
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: ${{ steps.files.outputs.glob }}
       - name: Publish to PyPI
