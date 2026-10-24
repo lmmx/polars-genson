@@ -1,0 +1,8 @@
+{"rows": 1250, "write_s": 3.994, "user_s": 3.53, "sys_s": 0.43}
+{"rows": 2500, "write_s": 6.568, "user_s": 6.05, "sys_s": 0.45}
+{"rows": 5000, "write_s": 9.692, "user_s": 9.24, "sys_s": 0.43}
+{"rows": 10000, "write_s": 18.079, "user_s": 17.41, "sys_s": 0.42}
+{"rows": 1250, "write_s": 3.901, "user_s": 3.53, "sys_s": 0.39}
+{"rows": 2500, "write_s": 6.56, "user_s": 6.19, "sys_s": 0.4}
+{"rows": 5000, "write_s": 9.56, "user_s": 9.15, "sys_s": 0.36}
+{"rows": 10000, "write_s": 18.225, "user_s": 17.48, "sys_s": 0.4}

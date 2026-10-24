@@ -1,0 +1,25 @@
+diff --git a/genson-core/src/parquet.rs b/genson-core/src/parquet.rs
+index cc0b6e6..feafc08 100644
+--- a/genson-core/src/parquet.rs
++++ b/genson-core/src/parquet.rs
+@@ -473,7 +473,10 @@ fn open_writer(
+     let mut props = WriterProperties::builder()
+         .set_compression(compression())
+         .set_coerce_types(spec_names)
+-        .set_data_page_row_count_limit(usize::MAX);
++        .set_data_page_row_count_limit(usize::MAX)
++        .set_max_row_group_row_count(Some(
++            std::env::var("GENSON_RG_ROWS").ok().and_then(|v| v.parse().ok()).unwrap_or(1024 * 1024),
++        ));
+     for column in unrepeated_leaves(&schema, spec_names, batches) {
+         props = props.set_column_dictionary_enabled(column, false);
+     }
+@@ -656,7 +659,7 @@ fn write_batches(
+     if !current.is_empty() {
+         row_groups.push(current);
+     }
+-    let in_flight = rayon::current_num_threads().max(1);
++    let in_flight = rayon::current_num_threads().max(1) * (1024 * 1024 / max_rows).max(1);
+     for (wave, groups) in row_groups.chunks(in_flight).enumerate() {
+         let first = wave * in_flight;
+         let writers: Vec<Vec<ArrowColumnWriter>> = (0..groups.len())

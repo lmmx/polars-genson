@@ -1,0 +1,14 @@
+huge pages default
+  list_str     Polars wheel  n=10 wall 0.627 (0.546-0.720)  proc user 2.79 sys 0.56
+  list_str     #292 (1Mi)    n=10 wall 1.320 (1.024-1.499)  proc user 2.46 sys 2.55
+  list_str     branch        n=10 wall 0.601 (0.528-1.003)  proc user 2.33 sys 0.77
+  list_struct  Polars wheel  n=10 wall 1.440 (1.126-1.619)  proc user 6.06 sys 0.79
+  list_struct  #292 (1Mi)    n=10 wall 1.192 (0.873-1.353)  proc user 3.83 sys 2.81
+  list_struct  branch        n=10 wall 1.448 (1.247-1.984)  proc user 3.88 sys 4.04
+huge pages off for the process
+  list_str     Polars wheel  n=10 wall 0.690 (0.568-0.810)  proc user 2.81 sys 0.55
+  list_str     #292 (1Mi)    n=10 wall 0.796 (0.728-0.903)  proc user 2.27 sys 1.10
+  list_str     branch        n=10 wall 0.565 (0.520-0.725)  proc user 2.31 sys 1.21
+  list_struct  Polars wheel  n=10 wall 1.376 (1.221-1.558)  proc user 5.81 sys 0.79
+  list_struct  #292 (1Mi)    n=10 wall 1.228 (1.060-1.535)  proc user 3.70 sys 1.84
+  list_struct  branch        n=10 wall 0.960 (0.816-1.411)  proc user 3.85 sys 1.84

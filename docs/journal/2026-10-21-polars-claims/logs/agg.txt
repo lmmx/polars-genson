@@ -1,0 +1,28 @@
+samples 35 busy threads per sample [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+-- innermost
+  22 polars_parquet::arrow::write::nested::write_rep_and_def
+   7 polars_parquet::arrow::write::binary::nested::array_to_page::<i64>
+   3 polars_parquet::arrow::write::array_to_page_nested
+   1 polars_compute::cast::binview_to::view_to_binary::<i64>
+   1 ZSTD_compressBlock_fast
+   1 __GI_madvise
+   1 <polars_arrow::bitmap::utils::iterator::BitmapIter>::new
+
+-- inclusive (polars/parquet frames)
+  35 std::sys::backtrace::__rust_begin_short_backtrace::<<polars_async::executor::Executor>::global::{closure#0}::{closure#0}::{closure#0},
+  35 <polars_async::executor::Executor>::runner
+  35 <polars_stream::nodes::io_sinks::writers::parquet::row_group_encoder::RowGroupEncoder>::run::{closure#0}::{closure#0}::{closure#0}::{closure#0}
+  35 <std::thread::lifecycle::spawn_unchecked<<polars_async::executor::Executor>::global::{closure#0}::{closure#0}::{closure#0},
+  33 polars_parquet::arrow::write::array_to_page_nested
+  33 polars_parquet::arrow::write::array_to_pages::{closure#0}
+  23 polars_parquet::arrow::write::nested::write_rep_and_def
+  21 polars_parquet::arrow::write::binary::nested::array_to_page::<i64>
+   1 <polars_core::series::arrow_export::ToArrowConverter>::array_to_arrow
+   1 polars_compute::cast::binview_to::view_to_binary::<i64>
+   1 polars_compute::cast::binview_to::utf8view_to_utf8::<i64>
+   1 <polars_core::series::Series>::to_arrow_with_field
+   1 <polars_core::series::arrow_export::ToArrowConverter>::array_to_arrow_impl
+   1 polars_compute::cast::cast
+   1 polars_parquet::parquet::compression::compress
+   1 <polars_arrow::bitmap::utils::iterator::BitmapIter>::new
