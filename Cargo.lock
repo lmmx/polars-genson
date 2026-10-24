@@ -1414,6 +1414,7 @@ dependencies = [
  "mimalloc",
  "ordermap",
  "parquet",
+ "pq-glue",
  "predicates",
  "rayon",
  "regex",
@@ -3365,6 +3366,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
  "zerocopy",
+]
+
+[[package]]
+name = "pq-glue"
+version = "0.1.0"
+source = "git+https://github.com/lmmx/pq-glue?rev=e47f28b723d2365446ded628ac6c15f78fd75132#e47f28b723d2365446ded628ac6c15f78fd75132"
+dependencies = [
+ "arrow-array",
+ "arrow-schema",
+ "bytes",
+ "parquet",
+ "rayon",
+ "rustc-hash",
+ "xxhash-rust",
 ]
 
 [[package]]
