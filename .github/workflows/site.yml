@@ -4,10 +4,10 @@ name: Documentation site
 # publishes it to GitHub Pages from the gh-pages branch.
 #
 # Production (pushes to master) goes to the root of gh-pages, served at
-# https://lmmx.github.io/polars-genson/. Each pull request from this repository that
-# touches the site or the Python package's source gets a preview under
-# gh-pages/pr-preview/pr-<number>/, linked from a comment on the pull request, updated on
-# every push and removed when it closes.
+# https://lmmx.github.io/polars-genson/. Each pull request from this repository gets a
+# preview under gh-pages/pr-preview/pr-<number>/, linked from a comment on the pull
+# request, updated on every push and removed when it closes: every pull request, as the
+# site is built from the code too (its API reference).
 # Production deploys leave pr-preview/ alone, and previews touch only their own directory.
 #
 # Previews are deployed only once Pages serves the gh-pages branch (the pages job reads the
@@ -26,14 +26,6 @@ on:
       - master
   pull_request:
     types: [opened, reopened, synchronize, closed]
-    paths:
-      - ".github/workflows/site.yml"
-      - "README.md"
-      - "docs/**"
-      - "mkdocs.yml"
-      - "polars-genson-py/pyproject.toml"
-      - "polars-genson-py/python/**"
-      - "polars-genson-py/uv.lock"
   workflow_dispatch:
 
 permissions:
