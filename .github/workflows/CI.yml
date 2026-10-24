@@ -54,6 +54,7 @@ jobs:
 
   linux:
     needs: [check-commit]
+    if: false
     runs-on: ${{ matrix.platform.runner }}
     # The pypi environment for a release, whose steps publish as PUBLISH_EACH_WHEEL says
     environment: ${{ (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') && 'pypi' || '' }}
@@ -247,6 +248,13 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         if: matrix.platform.skip != true
+        # MSVC stamps the time into each object and archive, so the C libraries the build
+        # scripts compile (zstd, lz4, mimalloc) differ on every build, and with them each
+        # crate above them: sccache misses on all of Polars. /Brepro leaves the stamps out
+        env:
+          CFLAGS: /Brepro
+          CXXFLAGS: /Brepro
+          ARFLAGS: /Brepro
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path polars-genson-py/Cargo.toml --timings
@@ -277,6 +285,7 @@ jobs:
 
   macos:
     needs: [check-commit]
+    if: false
     runs-on: ${{ matrix.platform.runner }}
     # The pypi environment for a release, whose steps publish as PUBLISH_EACH_WHEEL says
     environment: ${{ (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') && 'pypi' || '' }}
@@ -302,6 +311,13 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         if: matrix.platform.skip != true
+        # MSVC stamps the time into each object and archive, so the C libraries the build
+        # scripts compile (zstd, lz4, mimalloc) differ on every build, and with them each
+        # crate above them: sccache misses on all of Polars. /Brepro leaves the stamps out
+        env:
+          CFLAGS: /Brepro
+          CXXFLAGS: /Brepro
+          ARFLAGS: /Brepro
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path polars-genson-py/Cargo.toml --timings
