@@ -14,6 +14,37 @@ opt-level = 2
 panic = "unwind"
 strip = "symbols"
 
+# Polars is the plugin's glue and schema conversion, not genson's hot path (simd-json,
+# inference, arrow, parquet): its crates get rustc's default codegen units, so each
+# compiles on every core rather than one (polars-core alone took 335 s of a 543 s
+# release build; polars-genson#300)
+[profile.release.package.polars-arrow]
+codegen-units = 16
+
+[profile.release.package.polars-compute]
+codegen-units = 16
+
+[profile.release.package.polars-core]
+codegen-units = 16
+
+[profile.release.package.polars-expr]
+codegen-units = 16
+
+[profile.release.package.polars-io]
+codegen-units = 16
+
+[profile.release.package.polars-ops]
+codegen-units = 16
+
+[profile.release.package.polars-parquet]
+codegen-units = 16
+
+[profile.release.package.polars-plan]
+codegen-units = 16
+
+[profile.release.package.polars-time]
+codegen-units = 16
+
 [workspace]
 members = [
   "genson-cli",
