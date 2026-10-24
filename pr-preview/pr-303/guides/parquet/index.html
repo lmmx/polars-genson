@@ -1580,6 +1580,10 @@ faster: Wikidata's claims, one row per statement with their references and quali
 list and map groups take the specification's names (<code>element</code>, <code>key_value</code>), and the
 Arrow schema is stored in the file's metadata. It is compressed with zstd (level 1), and
 each leaf column is dictionary encoded but one whose first values are mostly distinct.</p>
+<p>The writer is <a href="https://github.com/lmmx/pq-glue">pq-glue</a>'s (<code>pq_glue::write</code>), which
+genson's writer moved to: genson calls it from Rust, and writes the same files it wrote
+before. For its other engines and options (sorting columns, content-defined chunking, a
+bound on the threads), use <code>pq_glue.write_parquet</code>.</p>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../extract-invariants/">Factor out repeated embedded data</a>, for JSON that carries the
