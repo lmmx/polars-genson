@@ -1,0 +1,110 @@
+# Maps and records: objects with fixed or varying keys
+
+A JSON object can play two different roles:
+
+- A **record** has a fixed set of fields, like `{"name": ..., "age": ...}`. Each field is its own column, so it becomes a Polars **struct**.
+- A **map** has keys that are data, like `{"en": "hello", "fr": "bonjour"}` or scores keyed by subject. The keys vary from row to row, so making each key a struct field would give one field per distinct key. genson instead makes it a Polars **map**, `pl.Map`, where each row holds only its own keys.
+
+genson decides which role an object plays from what it sees across all rows.
+
+## How genson decides
+
+An object becomes a map when it has more than `map_threshold` distinct keys across all rows (default 20) and its values all have the same type. Otherwise it stays a record.
+
+```python
+import polars as pl
+import polars_genson
+
+df = pl.DataFrame({"j": [
+    '{"scores": {"maths": 90, "art": 75}}',
+    '{"scores": {"history": 60}}',
+]})
+print(df.genson.infer_polars_schema("j"))                   # 3 distinct keys: a record
+print(df.genson.infer_polars_schema("j", map_threshold=1))  # threshold lowered: a map
+```
+
+```text
+Schema({'scores': Struct({'maths': Int64, 'art': Int64, 'history': Int64})})
+Schema({'scores': Map(String, Int64)})
+```
+
+As a record, `scores` has one field per subject seen in any row, and each row has nulls for the subjects it doesn't have. As a map, each row lists only its own subjects:
+
+```python
+print(df.genson.normalise_json("j", map_threshold=1))
+```
+
+```text
+shape: (2, 1)
+┌──────────────────────────┐
+│ scores                   │
+│ ---                      │
+│ map[str, i64]            │
+╞══════════════════════════╡
+│ {"maths": 90, "art": 75} │
+│ {"history": 60}          │
+└──────────────────────────┘
+```
+
+Use a map when the keys are data (IDs, languages, dates, names) and a record when they are a known set of fields.
+
+## Choosing per field
+
+`map_threshold` applies to every object. To set the role of particular fields, use `force_field_types`:
+
+```python
+print(df.genson.infer_polars_schema("j", force_field_types={"scores": "record"}, map_threshold=1))
+```
+
+```text
+Schema({'scores': Struct({'maths': Int64, 'art': Int64, 'history': Int64})})
+```
+
+Forcing a field to `"map"` makes it a map whatever its number of keys, and its values keep their type:
+
+```python
+print(df.genson.infer_polars_schema("j", force_field_types={"scores": "map"}))
+```
+
+```text
+Schema({'scores': Map(String, Int64)})
+```
+
+If the values differ, genson unifies them the same way as for `unify_maps` below. Only values with no common type, such as numbers in some keys and strings in others, fall back to strings, so that no value is lost.
+
+`map_max_required_keys` adds a second condition: an object with more than that many keys present in *every* row stays a record, however many keys it has in total.
+
+## Maps of records that differ: `unify_maps`
+
+When a map's values are themselves objects with different fields, they can't share one value type, so by default genson keeps the whole object as a record:
+
+```python
+letters = pl.DataFrame({"j": [
+    '{"letters": {"a": {"vowel": true, "n": 3}, "b": {"consonant": true, "n": 1}}}'
+]})
+print(letters.genson.infer_polars_schema("j", map_threshold=1))
+```
+
+```text
+Schema({'letters': Struct({'a': Struct({'vowel': Boolean, 'n': Int64}), 'b': Struct({'consonant': Boolean, 'n': Int64})})})
+```
+
+With `unify_maps=True`, genson merges the values into one record type, with a field for every field seen and nulls where a value lacks one, and the object becomes a map:
+
+```python
+print(letters.genson.infer_polars_schema("j", map_threshold=1, unify_maps=True))
+print(letters.genson.normalise_json("j", map_threshold=1, unify_maps=True)["letters"].to_list())
+```
+
+```text
+Schema({'letters': Map(String, Struct({'n': Int64, 'vowel': Boolean, 'consonant': Boolean}))})
+[{'a': {'n': 3, 'vowel': True, 'consonant': None}, 'b': {'n': 1, 'vowel': None, 'consonant': True}}]
+```
+
+To keep particular fields out of this merging, list them in `no_unify`.
+
+## How a map is stored
+
+A map is a `pl.Map` in Polars and a `MAP` in typed Parquet output. In JSON text it's written as an object by default, and `map_encoding="kv"` gives lists of `{key, value}` structs instead, in the text and the dtypes alike. See [Map types](https://lmmx.github.io/polars-genson/pr-preview/pr-302/concepts/map-types/index.md).
+
+Empty maps become null by default, like empty arrays; see [Nulls, missing keys and empty values](https://lmmx.github.io/polars-genson/pr-preview/pr-302/concepts/nulls-and-empty-values/index.md).
