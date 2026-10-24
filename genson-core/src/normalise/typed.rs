@@ -111,7 +111,12 @@ impl<'p> Node<'p> {
 
     /// `plan` compiled against `data_type`, if that is the type `avro_to_arrow_type` gives
     /// for the schema node it was compiled from (under `encoding`'s map type), at every depth.
-    fn new(plan: &'p Plan<'_>, data_type: &DataType, encoding: MapEncoding) -> Option<Self> {
+    fn new(
+        plan: &'p Plan<'_>,
+        data_type: &DataType,
+        encoding: MapEncoding,
+        strict: bool,
+    ) -> Option<Self> {
         Some(match (plan, data_type) {
             (Plan::String, DataType::Utf8) => Node::String,
             (Plan::Int, DataType::Int64) => Node::Int,
@@ -119,28 +124,40 @@ impl<'p> Node<'p> {
             (Plan::Boolean, DataType::Boolean) => Node::Boolean,
             (Plan::Passthrough, DataType::Null) => Node::Passthrough,
             (Plan::Record(record), DataType::Struct(fields)) => {
-                Node::Record(Box::new(RecordNode::new(record, fields, encoding)?))
+                Node::Record(Box::new(RecordNode::new(record, fields, encoding, strict)?))
             }
-            (Plan::Array(items), DataType::List(field)) if field.is_nullable() => {
-                Node::Array(Box::new(Node::new(items, field.data_type(), encoding)?))
-            }
+            (Plan::Array(items), DataType::List(field)) if field.is_nullable() => Node::Array(
+                Box::new(Node::new(items, field.data_type(), encoding, strict)?),
+            ),
             (Plan::Map(values), DataType::List(field))
                 if encoding == MapEncoding::KeyValueEntries =>
             {
-                Node::Map(Box::new(Self::entry(values, field.data_type(), encoding)?))
+                Node::Map(Box::new(Self::entry(
+                    values,
+                    field.data_type(),
+                    encoding,
+                    strict,
+                )?))
             }
             (Plan::Map(values), DataType::Map(field, false))
                 if encoding == MapEncoding::Mapping =>
             {
-                Node::Map(Box::new(Self::entry(values, field.data_type(), encoding)?))
+                Node::Map(Box::new(Self::entry(
+                    values,
+                    field.data_type(),
+                    encoding,
+                    strict,
+                )?))
             }
             (Plan::Nullable(Some(branch)), data_type) => {
-                Node::Nullable(Box::new(Node::new(branch, data_type, encoding)?))
+                Node::Nullable(Box::new(Node::new(branch, data_type, encoding, strict)?))
             }
             (Plan::Nullable(None), DataType::Null) => Node::NullOnly,
-            // A union without null is normalised as its first branch
+            // A union without null is normalised as its first branch. Not when strict: a
+            // value of another branch would infer to another schema than the union
+            (Plan::Union(branches), _) if strict && branches.len() > 1 => return None,
             (Plan::Union(first), data_type) => match first.first() {
-                Some(first) => Node::new(first, data_type, encoding)?,
+                Some(first) => Node::new(first, data_type, encoding, strict)?,
                 None if data_type == &DataType::Null => Node::Never,
                 None => return None,
             },
@@ -149,7 +166,12 @@ impl<'p> Node<'p> {
     }
 
     /// A map's values compiled against its entries' type: a key string and a value.
-    fn entry(values: &'p Plan<'_>, entry: &DataType, encoding: MapEncoding) -> Option<Self> {
+    fn entry(
+        values: &'p Plan<'_>,
+        entry: &DataType,
+        encoding: MapEncoding,
+        strict: bool,
+    ) -> Option<Self> {
         let DataType::Struct(entry) = entry else {
             return None;
         };
@@ -160,7 +182,7 @@ impl<'p> Node<'p> {
                     && value.name() == "value"
                     && value.is_nullable() =>
             {
-                Node::new(values, value.data_type(), encoding)
+                Node::new(values, value.data_type(), encoding, strict)
             }
             _ => None,
         }
@@ -197,7 +219,12 @@ impl<'p> Node<'p> {
 }
 
 impl<'p> RecordNode<'p> {
-    fn new(record: &'p Record<'_>, fields: &Fields, encoding: MapEncoding) -> Option<Self> {
+    fn new(
+        record: &'p Record<'_>,
+        fields: &Fields,
+        encoding: MapEncoding,
+        strict: bool,
+    ) -> Option<Self> {
         let plan_fields = record.fields.as_deref().unwrap_or(&[]);
         if plan_fields.len() != fields.len() {
             return None;
@@ -210,7 +237,7 @@ impl<'p> RecordNode<'p> {
             compiled.push(FieldNode {
                 name: plan_field.name.as_str(),
                 promoted: Promoted::of(plan_field.name),
-                node: Node::new(&plan_field.plan, field.data_type(), encoding)?,
+                node: Node::new(&plan_field.plan, field.data_type(), encoding, strict)?,
             });
         }
         let mut pruning: Vec<(&str, Promoted)> = Vec::new();
@@ -257,6 +284,9 @@ pub struct ArrowPlan<'p> {
     root: Node<'p>,
     root_type: DataType,
     cfg: &'p NormaliseConfig,
+    /// Rows are decoded only where they fit the schema as their own inferred schema would
+    /// (see [`NormalisePlan::to_arrow_strict`])
+    strict: bool,
 }
 
 impl NormalisePlan<'_> {
@@ -264,6 +294,22 @@ impl NormalisePlan<'_> {
     /// gives for the schema without the fields `prune` names), or `None` where that is not
     /// done exactly (see [`ArrowPlan::normalise`]).
     pub fn to_arrow(&self, fields: &Fields) -> Option<ArrowPlan<'_>> {
+        self.compile(fields, false)
+    }
+
+    /// [`Self::to_arrow`], decoding only rows that fit the schema strictly: rows whose
+    /// own inferred schema the schema already holds, so that they normalise as they would
+    /// against the schema inferred from them. A row with a member the schema has no field
+    /// for, a value of a type its node does not hold (a number where a string is, a
+    /// fraction where an integer is, a scalar where an array, a map or a record is, but a
+    /// scalar a record's promoted field takes), or a value where the schema saw only
+    /// nulls, is not decoded: [`ArrowPlan::normalise`] gives `None`. A schema with a union
+    /// of two or more types (normalised as its first) is not compiled.
+    pub fn to_arrow_strict(&self, fields: &Fields) -> Option<ArrowPlan<'_>> {
+        self.compile(fields, true)
+    }
+
+    fn compile(&self, fields: &Fields, strict: bool) -> Option<ArrowPlan<'_>> {
         let root_type = DataType::Struct(fields.clone());
         // `values_to_struct_array` fails to build a struct array without fields
         if !matches!(self.root, Plan::Record(_))
@@ -273,9 +319,10 @@ impl NormalisePlan<'_> {
             return None;
         }
         Some(ArrowPlan {
-            root: Node::new(&self.root, &root_type, self.cfg.map_encoding)?,
+            root: Node::new(&self.root, &root_type, self.cfg.map_encoding, strict)?,
             root_type,
             cfg: self.cfg,
+            strict,
         })
     }
 }
@@ -532,6 +579,10 @@ enum Put {
 /// The decoding of one batch of rows.
 struct Decoder<'a, 'r> {
     cfg: &'a NormaliseConfig,
+    /// See [`ArrowPlan::strict`]
+    strict: bool,
+    /// A member the schema has no field for was found, when strict
+    misfit: bool,
     row: &'r str,
     toks: Vec<Tok>,
     row_index: usize,
@@ -676,9 +727,13 @@ impl<'a, 'r> Decoder<'a, 'r> {
                 Some(name) if *name == key => Some(next as u32),
                 _ => record.slots.get(&*key).copied(),
             };
-            if let Some(slot) = slot {
-                self.slots[base + slot as usize] = j as u32 + 1;
-                next = slot as usize + 1;
+            match slot {
+                Some(slot) => {
+                    self.slots[base + slot as usize] = j as u32 + 1;
+                    next = slot as usize + 1;
+                }
+                None if self.strict => self.misfit = true,
+                None => {}
             }
             j = self.after(j + 1);
         }
@@ -772,6 +827,33 @@ impl<'a, 'r> Decoder<'a, 'r> {
         }
     }
 
+    /// Whether a value (not null) fits `node` as its inferred schema would (see
+    /// [`NormalisePlan::to_arrow_strict`]); a record's members are checked as its slots
+    /// are found, and the items of an array or map as they are put.
+    fn fits(&self, node: &Node<'_>, input: Input<'_>) -> bool {
+        let Input::Tok(i) = input else {
+            // The row wrapped as the root record's one field
+            return matches!(node, Node::Record(_));
+        };
+        match (node, self.toks[i]) {
+            (Node::String, Tok::Str(..)) => true,
+            (Node::Int, Tok::Num(s, e)) => self.number(s, e).is_i64(),
+            (Node::Double, Tok::Num(..)) => true,
+            (Node::Boolean, Tok::Bool(_)) => true,
+            (Node::Record(_), Tok::Obj { .. }) => true,
+            (Node::Record(record), Tok::Str(..) | Tok::Num(..) | Tok::Bool(_)) => {
+                record.fields.iter().any(|f| {
+                    f.promoted != Promoted::No
+                        && self.promoted_matches(i, f.promoted, record.has_int_field)
+                })
+            }
+            (Node::Array(_), Tok::Arr { .. }) => true,
+            (Node::Map(_), Tok::Obj { .. }) => true,
+            (Node::Nullable(branch), _) => self.fits(branch, input),
+            _ => false,
+        }
+    }
+
     fn record_pruned(&mut self, input: Input<'_>) {
         let value = self.value_of(input);
         let path = self
@@ -804,6 +886,9 @@ impl<'a, 'r> Decoder<'a, 'r> {
             Input::Null | Input::Wrapped(..) => None,
         };
         let null = self.is_null(input);
+        if self.strict && !null && !self.fits(node, input) {
+            return Err(Unsupported);
+        }
         match (node, col) {
             (Node::String, Column::Utf8(b)) => {
                 match tok {
@@ -1141,6 +1226,8 @@ impl ArrowPlan<'_> {
         let mut col = Column::new(&self.root_type).ok()?;
         let mut d = Decoder {
             cfg: self.cfg,
+            strict: self.strict,
+            misfit: false,
             row: "",
             toks: Vec::new(),
             row_index: 0,
@@ -1181,6 +1268,9 @@ impl ArrowPlan<'_> {
                 col.append_null();
             } else if let Put::Emptied = d.put(&self.root, &mut col, input, None).ok()? {
                 col.append_null();
+            }
+            if d.misfit {
+                return None;
             }
         }
         // `arrow-json` holds no more strings in a batch than its tape's `u32` offsets count

@@ -1226,3 +1226,95 @@ fn test_normalise_to_json_matches_the_value_path() {
     // The typed decoder declines the entries encoding, among the configs
     assert!(compared > 1500 && typed_cases * 2 > compared, "{compared} compared, {typed_cases} typed");
 }
+
+/// The rows decoded strictly against `schema` (`to_arrow_strict`), if they all fit it.
+#[cfg(all(feature = "avro", feature = "parquet"))]
+fn strict_decoded(schema: &Value, rows: &[&str]) -> Option<arrow::array::StructArray> {
+    let cfg = NormaliseConfig::default();
+    let plan = NormalisePlan::new(schema, &cfg, &HashSet::new());
+    let fields = crate::parquet::avro_record_fields(schema, false).unwrap();
+    let borrowed: Vec<Option<&str>> = rows.iter().copied().map(Some).collect();
+    let strict = plan.to_arrow_strict(&fields)?.normalise(&borrowed, 0)?.0;
+    // As the plan decodes them when not strict
+    let (loose, _) = plan.to_arrow(&fields).unwrap().normalise(&borrowed, 0).unwrap();
+    assert_eq!(strict, loose, "{schema}");
+    Some(strict)
+}
+
+#[cfg(all(feature = "avro", feature = "parquet"))]
+fn inferred(rows: &[&str]) -> Value {
+    let config = crate::SchemaInferenceConfig {
+        delimiter: Some(b'\n'),
+        avro: true,
+        ..Default::default()
+    };
+    crate::infer_json_schema_from_strings(rows, config).unwrap().schema
+}
+
+/// Rows whose own inferred schema the schema holds decode strictly, as they do when not
+/// strict: fields they lack, an integer where a double is, an empty array, nulls.
+#[cfg(all(feature = "avro", feature = "parquet"))]
+#[test]
+fn test_strict_decodes_rows_that_fit() {
+    let schema = inferred(&[
+        r#"{"s":"x","i":1,"f":1.5,"b":true,"l":[1,2],"r":{"a":"b"},"z":null}"#,
+        r#"{"s":null,"l":[3]}"#,
+    ]);
+    let rows = [
+        r#"{"s":"y","i":2,"f":2,"l":[],"r":{"a":"c"}}"#,
+        r#"{"z":null,"r":{}}"#,
+        r#"{}"#,
+        r#"{"s":null,"i":null,"f":null,"b":false,"l":null,"r":null}"#,
+    ];
+    let decoded = strict_decoded(&schema, &rows).expect("the rows fit");
+    assert_eq!(decoded.len(), 4);
+}
+
+/// A row with anything its schema would not already hold is not decoded strictly: a
+/// member it has no field for (at the root or nested), a value of another type, a scalar
+/// in place of an array or a record, a value where it saw only nulls.
+#[cfg(all(feature = "avro", feature = "parquet"))]
+#[test]
+fn test_strict_rejects_rows_that_do_not_fit() {
+    let schema = inferred(&[
+        r#"{"s":"x","i":1,"f":1.5,"b":true,"l":[1,2],"r":{"a":"b"},"z":null}"#,
+    ]);
+    assert!(strict_decoded(&schema, &[r#"{"s":"y"}"#]).is_some());
+    for misfit in [
+        r#"{"q":1}"#,
+        r#"{"r":{"a":"b","c":1}}"#,
+        r#"{"s":1}"#,
+        r#"{"s":true}"#,
+        r#"{"i":1.5}"#,
+        r#"{"i":"1"}"#,
+        r#"{"f":"1.5"}"#,
+        r#"{"b":1}"#,
+        r#"{"l":3}"#,
+        r#"{"l":[1.5]}"#,
+        r#"{"r":"b"}"#,
+        r#"{"r":[]}"#,
+        r#"{"z":0}"#,
+    ] {
+        assert!(
+            strict_decoded(&schema, &[r#"{"s":"y"}"#, misfit]).is_none(),
+            "{misfit} fits {schema}"
+        );
+    }
+}
+
+/// A union of two or more types is normalised as its first branch, so it is not
+/// compiled strictly: a value of another branch infers to another schema.
+#[cfg(all(feature = "avro", feature = "parquet"))]
+#[test]
+fn test_strict_does_not_compile_a_union() {
+    let schema = serde_json::json!({
+        "type": "record",
+        "name": "document",
+        "fields": [{"name": "u", "type": ["null", "string", "long"]}]
+    });
+    let cfg = NormaliseConfig::default();
+    let plan = NormalisePlan::new(&schema, &cfg, &HashSet::new());
+    if let Ok(fields) = crate::parquet::avro_record_fields(&schema, false) {
+        assert!(plan.to_arrow_strict(&fields).is_none());
+    }
+}

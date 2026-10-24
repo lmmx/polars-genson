@@ -721,6 +721,7 @@ def normalise_from_parquet(
     schema_check: Literal["compatible", "strict", "none"] = "compatible",
     unnest: bool = False,
     output_format: Literal["parquet", "arrow"] = "parquet",
+    avro_schema: str | dict | None = None,
 ) -> Any:
     """Normalise JSON data from a Parquet column and write back to Parquet.
 
@@ -849,6 +850,17 @@ def normalise_from_parquet(
         buffers are moved to the reader, not copied, for a caller that transforms the
         arrays before writing them itself. Requires ``typed=True`` and
         ``output_path=None``.
+    avro_schema : str | dict, optional
+        An Avro schema (JSON text or a dict) expected to hold the rows, such as one
+        inferred before from data of the same shape with the same options. Where every
+        row fits it strictly (its own inferred schema adds nothing to it: no member it
+        lacks, no value of a type its node does not hold, no union of two or more types
+        in it) and it fits ``schema``, the rows are decoded against it and nothing is
+        inferred. Otherwise they are normalised as without it, against the schema
+        inferred from them, checked as ``schema_check`` says. It changes how fast the
+        rows are normalised, not what they are normalised to, but for the
+        ``genson_avro_schema`` metadata, which is the schema they were normalised
+        against. Requires ``typed=True``.
 
     Returns
     -------
@@ -912,6 +924,11 @@ def normalise_from_parquet(
         schema_check=schema_check,
         unnest=unnest,
         output_format=output_format,
+        avro_schema=(
+            avro_schema
+            if avro_schema is None or isinstance(avro_schema, str)
+            else orjson.dumps(avro_schema).decode()
+        ),
     )
 
 
