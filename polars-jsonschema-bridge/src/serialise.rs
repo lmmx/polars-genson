@@ -249,10 +249,6 @@ pub fn polars_dtype_to_json_schema(
         }
 
         // Handle newer Polars types
-        DataType::Object(_) => Err(conversion_error(
-            "Object types cannot be converted to JSON Schema".to_string(),
-        )),
-
         DataType::Unknown(_) => Err(conversion_error(
             "Unknown types cannot be converted to JSON Schema".to_string(),
         )),
