@@ -105,3 +105,6 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/lmmx/polars-genson"
 version = "0.1.0"
+
+[patch.crates-io]
+avrotize = { branch = "feat/optional-http", git = "https://github.com/lmmx/avrotize-rs" }
