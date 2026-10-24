@@ -440,7 +440,7 @@ In the example above, `normalise_json` reshaped jagged JSON into a consistent, s
 To get maps as lists of `{key, value}` structs instead (the form Arrow stores a map in),
 pass `map_encoding="kv"`. The same option gives that form in `infer_polars_schema`,
 `avro_to_polars_schema` and typed Parquet output. See
-[Map types](https://polars-genson.vercel.app/concepts/map-types/) in the docs.
+[Map types](https://lmmx.github.io/polars-genson/concepts/map-types/) in the docs.
 
 ### Example: Empty Arrays
 

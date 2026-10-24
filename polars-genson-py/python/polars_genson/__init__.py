@@ -379,6 +379,7 @@ def normalise_json(
     wrap_root: str | None = None,
     no_root_map: bool = True,
     max_builders: int | None = None,
+    avro_schema: str | dict | None = None,
 ) -> pl.Expr:
     """Normalise a JSON string column against an inferred Avro schema.
 
@@ -448,6 +449,10 @@ def normalise_json(
         Maximum number of schema builders to create in parallel at once.
         Lower values reduce peak memory usage during schema inference.
         If None, processes all strings at once. Default is None.
+    avro_schema : str | dict, optional
+        An Avro schema (as JSON text or a dict) to normalise against in place of
+        inferring one, for data whose schema is known: the inference pass is skipped,
+        and the inference options have no effect.
 
     Returns
     -------
@@ -492,6 +497,7 @@ def normalise_json(
         wrap_root=wrap_root,
         no_root_map=no_root_map,
         max_builders=max_builders,
+        avro_schema=avro_schema,
     )
     return plug(expr, changes_length=True, **kwargs)
 
@@ -515,6 +521,7 @@ def _normalise_kwargs(
     wrap_root,
     no_root_map,
     max_builders,
+    avro_schema=None,
 ) -> dict:
     """The keyword arguments the Rust side reads for normalisation."""
     kwargs = {
@@ -540,6 +547,12 @@ def _normalise_kwargs(
         kwargs["force_field_types"] = force_field_types
     if force_parent_field_types is not None:
         kwargs["force_parent_field_types"] = force_parent_field_types
+    if avro_schema is not None:
+        kwargs["avro_schema"] = (
+            avro_schema
+            if isinstance(avro_schema, str)
+            else orjson.dumps(avro_schema).decode()
+        )
     return kwargs
 
 
@@ -708,6 +721,7 @@ def normalise_from_parquet(
     schema_check: Literal["compatible", "strict", "none"] = "compatible",
     unnest: bool = False,
     output_format: Literal["parquet", "arrow"] = "parquet",
+    avro_schema: str | dict | None = None,
 ) -> Any:
     """Normalise JSON data from a Parquet column and write back to Parquet.
 
@@ -836,6 +850,17 @@ def normalise_from_parquet(
         buffers are moved to the reader, not copied, for a caller that transforms the
         arrays before writing them itself. Requires ``typed=True`` and
         ``output_path=None``.
+    avro_schema : str | dict, optional
+        An Avro schema (JSON text or a dict) expected to hold the rows, such as one
+        inferred before from data of the same shape with the same options. Where every
+        row fits it strictly (its own inferred schema adds nothing to it: no member it
+        lacks, no value of a type its node does not hold, no union of two or more types
+        in it) and it fits ``schema``, the rows are decoded against it and nothing is
+        inferred. Otherwise they are normalised as without it, against the schema
+        inferred from them, checked as ``schema_check`` says. It changes how fast the
+        rows are normalised, not what they are normalised to, but for the
+        ``genson_avro_schema`` metadata, which is the schema they were normalised
+        against. Requires ``typed=True``.
 
     Returns
     -------
@@ -899,6 +924,11 @@ def normalise_from_parquet(
         schema_check=schema_check,
         unnest=unnest,
         output_format=output_format,
+        avro_schema=(
+            avro_schema
+            if avro_schema is None or isinstance(avro_schema, str)
+            else orjson.dumps(avro_schema).decode()
+        ),
     )
 
 
@@ -1251,6 +1281,7 @@ class GensonNamespace:
         wrap_root: bool | str | None = None,
         no_root_map: bool = True,
         max_builders: int | None = None,
+        avro_schema: str | dict | None = None,
     ) -> pl.Series:
         """Normalise a JSON string column to conform to an inferred Avro schema.
 
@@ -1336,6 +1367,12 @@ class GensonNamespace:
             Maximum number of schema builders to create in parallel at once.
             Lower values reduce peak memory usage during schema inference.
             If None, processes all strings at once. Default is None.
+        avro_schema : str | dict, optional
+            An Avro schema (as JSON text or a dict) to normalise against in place of
+            inferring one, for data whose schema is known: the inference pass is
+            skipped, and the inference options have no effect. Rows are normalised to
+            it as to an inferred one (fields it lacks dropped, those the rows lack
+            null, empty arrays and maps null under ``empty_as_null``).
 
         Returns
         -------
@@ -1374,6 +1411,7 @@ class GensonNamespace:
             wrap_root=wrap_root_field,
             no_root_map=no_root_map,
             max_builders=max_builders,
+            avro_schema=avro_schema,
         )
         if decode:
             if map_encoding == "entries":
@@ -1409,13 +1447,14 @@ class GensonNamespace:
                             wrap_root=wrap_root_field,
                             no_root_map=no_root_map,
                             max_builders=max_builders,
+                            avro_schema=avro_schema,
                         )
                     ).decode(),
                 )
             if typed is not None:
-                series, avro_schema = typed
+                series, normalised_schema = typed
                 inferred = pl.Struct(
-                    avro_to_polars_schema(avro_schema, map_encoding=map_encoding)
+                    avro_to_polars_schema(normalised_schema, map_encoding=map_encoding)
                 )
                 result = series.cast(inferred).to_frame()
                 if decode is True:
@@ -1426,7 +1465,16 @@ class GensonNamespace:
                     if result.schema[column] == dtype:
                         return result.unnest(column) if unnest else result
                 # Otherwise the JSON text route, decoded by json_decode itself
-            if decode is True:
+            if decode is True and avro_schema is not None:
+                dtype = pl.Struct(
+                    avro_to_polars_schema(
+                        avro_schema
+                        if isinstance(avro_schema, str)
+                        else orjson.dumps(avro_schema).decode(),
+                        map_encoding=map_encoding,
+                    )
+                )
+            elif decode is True:
                 # Infer Avro schema and convert it to Polars Schema
                 schema = self.infer_polars_schema(
                     column,

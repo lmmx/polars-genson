@@ -174,6 +174,7 @@ pub fn infer_from_parquet(
     schema_check="compatible".to_string(),
     unnest=false,
     output_format="parquet".to_string(),
+    avro_schema=None,
 ))]
 #[allow(clippy::too_many_arguments)]
 pub fn normalise_from_parquet(
@@ -209,6 +210,7 @@ pub fn normalise_from_parquet(
     schema_check: String,
     unnest: bool,
     output_format: String,
+    avro_schema: Option<String>,
 ) -> PyResult<Option<ArrowStream>> {
     let arrow_out = match output_format.as_str() {
         "parquet" => false,
@@ -222,11 +224,18 @@ pub fn normalise_from_parquet(
     if arrow_out && !typed {
         return Err(value_err("arrow output needs typed output (typed=True)"));
     }
-    if (schema.is_some() || unnest) && !typed {
+    if (schema.is_some() || unnest || avro_schema.is_some()) && !typed {
         return Err(value_err(
-            "schema and unnest need typed output (typed=True)",
+            "schema, unnest and avro_schema need typed output (typed=True)",
         ));
     }
+    let known: Option<serde_json::Value> = match &avro_schema {
+        Some(text) => Some(
+            serde_json::from_str(text)
+                .map_err(|e| value_err(format!("Invalid avro_schema: {e}")))?,
+        ),
+        None => None,
+    };
     let check: SchemaCheck = schema_check.parse().map_err(value_err)?;
     // The output column's target type, a struct (see genson_core::conform)
     let target = match &schema {
@@ -322,6 +331,61 @@ pub fn normalise_from_parquet(
         (None, Some(column_data)) => column_data.rows(),
         (None, None) => unreachable!("the read rows are kept when nothing was extracted"),
     };
+    // Parse map encoding
+    let map_enc = match map_encoding.as_str() {
+        "mapping" => MapEncoding::Mapping,
+        "entries" => MapEncoding::Entries,
+        "kv" => MapEncoding::KeyValueEntries,
+        _ => {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "Invalid map_encoding: {}",
+                map_encoding
+            )))
+        }
+    };
+
+    let norm_config = NormaliseConfig {
+        empty_as_null,
+        coerce_string: coerce_strings,
+        map_encoding: map_enc,
+        wrap_root: wrap_root.clone(),
+    };
+
+    // Several batches per thread so uneven row sizes still spread over the pool
+    let batch_rows = json_strings
+        .len()
+        .div_ceil(rayon::current_num_threads() * 4)
+        .max(1);
+    // With `avro_schema`, the rows are decoded against it, and nothing inferred, where
+    // every row fits it strictly, as its own inferred schema would (see
+    // `NormalisePlan::to_arrow_strict`) and the schema fits the target. Otherwise (a row
+    // that does not fit, or a schema not compiled strictly) they are normalised as they
+    // are without it, against the schema inferred from them: `avro_schema` changes how
+    // fast, not what
+    let mut strict_decoded: Option<Vec<(arrow::array::StructArray, Vec<PrunedValue>)>> = None;
+    if let Some(known) = &known {
+        let mut pruned_schema = known.clone();
+        prune_schema(&mut pruned_schema, &prune);
+        let fields = avro_record_fields(&pruned_schema, map_encoding == "mapping")
+            .map_err(pyo3::exceptions::PyValueError::new_err)?;
+        let fits_target = target.as_ref().is_none_or(|target| {
+            incompatibilities(&DataType::Struct(fields.clone()), target, check).is_empty()
+        });
+        let plan = NormalisePlan::new(known, &norm_config, &prune);
+        if let Some(arrow_plan) = fits_target.then(|| plan.to_arrow_strict(&fields)).flatten() {
+            strict_decoded = json_strings
+                .par_chunks(batch_rows)
+                .enumerate()
+                .map(|(b, chunk)| arrow_plan.normalise(chunk, b * batch_rows))
+                .collect();
+        }
+        let what = if strict_decoded.is_some() {
+            "decode (avro_schema)"
+        } else {
+            "decode (avro_schema): the rows do not all fit it"
+        };
+        tick(what, &mut t0);
+    }
     // Infer schema first (Avro mode)
     let config = SchemaInferenceConfig {
         ignore_outer_array,
@@ -348,45 +412,31 @@ pub fn normalise_from_parquet(
         verbosity: DebugVerbosity::Normal,
     };
 
-    let present: Vec<&str> = json_strings.iter().flatten().copied().collect();
-    let result = infer_json_schema_from_strings(&present, config).map_err(|e| {
-        pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
-    })?;
-    drop(present);
-    // Rows are normalised against the inferred schema (prune names are matched against its
-    // fields) and written with the pruned one
-    let mut out_schema = result.schema.clone();
-    prune_schema(&mut out_schema, &prune);
-
-    if debug {
-        anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
-    }
-
-    tick("infer", &mut t0);
-
-    // Parse map encoding
-    let map_enc = match map_encoding.as_str() {
-        "mapping" => MapEncoding::Mapping,
-        "entries" => MapEncoding::Entries,
-        "kv" => MapEncoding::KeyValueEntries,
+    // The schema the rows are normalised against: `avro_schema` where they were decoded
+    // against it, else inferred from them
+    let schema = match (&known, &strict_decoded) {
+        (Some(known), Some(_)) => known.clone(),
         _ => {
-            return Err(pyo3::exceptions::PyValueError::new_err(format!(
-                "Invalid map_encoding: {}",
-                map_encoding
-            )))
+            let present: Vec<&str> = json_strings.iter().flatten().copied().collect();
+            let result = infer_json_schema_from_strings(&present, config).map_err(|e| {
+                pyo3::exceptions::PyRuntimeError::new_err(format!("Schema inference failed: {}", e))
+            })?;
+            drop(present);
+            if debug {
+                anstream::eprintln!("Processed {} JSON object(s)", result.processed_count);
+            }
+            tick("infer", &mut t0);
+            result.schema
         }
     };
-
-    let norm_config = NormaliseConfig {
-        empty_as_null,
-        coerce_string: coerce_strings,
-        map_encoding: map_enc,
-        wrap_root: wrap_root.clone(),
-    };
+    // Rows are normalised against that schema (prune names are matched against its
+    // fields) and written with the pruned one
+    let mut out_schema = schema.clone();
+    prune_schema(&mut out_schema, &prune);
 
     // Normalise one row, numbering its pruned values with the row's index; the schema is
     // compiled once for all the rows
-    let plan = NormalisePlan::new(&result.schema, &norm_config, &prune);
+    let plan = NormalisePlan::new(&schema, &norm_config, &prune);
     let normalise_row = |row: usize, s: &Option<&str>| -> (serde_json::Value, Vec<PrunedValue>) {
         let Some(s) = s else {
             return (serde_json::Value::Null, Vec::new());
@@ -448,30 +498,31 @@ pub fn normalise_from_parquet(
         // Rows go straight from their text into Arrow where the plan can do that exactly,
         // else (a batch at a time) by way of `Value`s
         let arrow_plan = plan.to_arrow(&fields);
-        // Several batches per thread so uneven row sizes still spread over the pool
-        let batch_rows = json_strings
-            .len()
-            .div_ceil(rayon::current_num_threads() * 4)
-            .max(1);
-        let batches = json_strings
-            .par_chunks(batch_rows)
-            .enumerate()
-            .map(|(b, chunk)| {
-                let decoded = arrow_plan
-                    .as_ref()
-                    .and_then(|p| p.normalise(chunk, b * batch_rows));
-                if let Some((array, pruned)) = decoded {
-                    return Ok((array, vec![pruned]));
-                }
-                let (rows, pruned): (Vec<_>, Vec<_>) = chunk
-                    .iter()
-                    .enumerate()
-                    .map(|(i, s)| normalise_row(b * batch_rows + i, s))
-                    .unzip();
-                values_to_struct_array(&rows, &fields).map(|a| (a, pruned))
-            })
-            .collect::<Result<Vec<_>, String>>()
-            .map_err(pyo3::exceptions::PyValueError::new_err)?;
+        let batches = match strict_decoded {
+            Some(decoded) => decoded
+                .into_iter()
+                .map(|(array, pruned)| (array, vec![pruned]))
+                .collect(),
+            None => json_strings
+                .par_chunks(batch_rows)
+                .enumerate()
+                .map(|(b, chunk)| {
+                    let decoded = arrow_plan
+                        .as_ref()
+                        .and_then(|p| p.normalise(chunk, b * batch_rows));
+                    if let Some((array, pruned)) = decoded {
+                        return Ok((array, vec![pruned]));
+                    }
+                    let (rows, pruned): (Vec<_>, Vec<_>) = chunk
+                        .iter()
+                        .enumerate()
+                        .map(|(i, s)| normalise_row(b * batch_rows + i, s))
+                        .unzip();
+                    values_to_struct_array(&rows, &fields).map(|a| (a, pruned))
+                })
+                .collect::<Result<Vec<_>, String>>()
+                .map_err(pyo3::exceptions::PyValueError::new_err)?,
+        };
         let (arrays, pruned): (Vec<_>, Vec<_>) = batches.into_iter().unzip();
         drop(json_strings);
         tick("parse+normalise+decode", &mut t0);

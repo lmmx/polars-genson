@@ -28,11 +28,11 @@ GROUPS = [
      ("Maps and records", "../concepts/maps-and-records.md")),
     ("Mixed types", ["wrap_scalars", "force_scalar_promotion", "coerce_strings"],
      ("Mixed types", "../concepts/mixed-types.md")),
-    ("Normalised output", ["empty_as_null", "map_encoding", "decode", "unnest"],
+    ("Normalised output", ["empty_as_null", "map_encoding", "decode", "unnest", "avro_schema"],
      ("Normalise a JSON column", "../guides/normalise.md")),
     ("Schema output", ["avro", "merge_schemas", "schema_uri"],
      ("Infer a schema", "../guides/infer-schema.md")),
-    ("Parquet output", ["output_path", "output_column", "typed", "keep_columns",
+    ("Parquet output", ["output_path", "output_format", "output_column", "typed", "keep_columns",
       "schema", "schema_check", "extract_invariants", "lookup_output_path", "prune",
       "prune_output_path"],
      ("Normalise JSON stored in Parquet", "../guides/parquet.md")),
@@ -90,6 +90,8 @@ for title, names, link in GROUPS:
     print("| Option | Default | Functions | Description |")
     print("|---|---|---|---|")
     for name in names:
+        if name not in defaults:  # an option newer than the installed release
+            continue
         desc = docs.get(name, "").replace("|", "\\|")
         print(f"| `{name}` | {fmt_default(name)} | {', '.join(where[name])} | {desc} |")
     print()

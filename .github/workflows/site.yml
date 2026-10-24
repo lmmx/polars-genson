@@ -1,0 +1,157 @@
+name: Documentation site
+
+# Builds the site (docs/, mkdocs.yml, the API reference from polars-genson-py/python/) and
+# publishes it to GitHub Pages from the gh-pages branch.
+#
+# Production (pushes to master) goes to the root of gh-pages, served at
+# https://lmmx.github.io/polars-genson/. Each pull request from this repository gets a
+# preview under gh-pages/pr-preview/pr-<number>/, linked from a comment on the pull
+# request, updated on every push and removed when it closes: every pull request, as the
+# site is built from the code too (its API reference).
+# Production deploys leave pr-preview/ alone, and previews touch only their own directory.
+#
+# Previews are deployed only once Pages serves the gh-pages branch (the pages job reads the
+# Pages build type: "legacy" is a branch source). Until then only production is pushed to
+# gh-pages, which creates the branch for the owner to select as the Pages source.
+#
+# Adapted from lmmx/wend's site.yml (as in lmmx/pq-glue). Differences: the site is MkDocs,
+# built as Vercel built it (a venv in polars-genson-py/ with the doc dependency group and
+# the released polars-genson from PyPI, not the local project, then mkdocs build, strict
+# per mkdocs.yml, into site/), the preview path is set in mkdocs.yml's site_url, and there
+# are no check_site.py or pytest steps (the examples run in the build, via markdown-exec).
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PAGES_URL: https://lmmx.github.io/polars-genson/
+
+jobs:
+  # "legacy" once Pages serves a branch; "unknown" while Pages is not enabled.
+  pages:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: read
+    outputs:
+      build_type: ${{ steps.pages.outputs.build_type }}
+    steps:
+      - id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type=$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .build_type 2>/dev/null || true)
+          case "${build_type}" in
+            legacy | workflow) ;;
+            *) build_type=unknown ;;
+          esac
+          echo "Pages build type: ${build_type}"
+          echo "build_type=${build_type}" >> "$GITHUB_OUTPUT"
+
+  build:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v8.1.0
+      - name: Point the site at its preview path
+        if: github.event_name == 'pull_request'
+        env:
+          PREVIEW_URL: ${{ env.PAGES_URL }}pr-preview/pr-${{ github.event.pull_request.number }}/
+        run: |
+          sed -i "s|^site_url: .*|site_url: ${PREVIEW_URL}|" mkdocs.yml
+      # A venv with the runner's Python, the doc dependency group and not the project. The
+      # docs run their examples at build time (markdown-exec), against the released
+      # polars-genson from PyPI rather than the unbuilt local project.
+      - name: Install the docs packages
+        run: |
+          uv venv --directory polars-genson-py
+          source polars-genson-py/.venv/bin/activate
+          python --version
+          uv pip install "urllib3<2"
+          uv sync --directory polars-genson-py --no-install-project --only-group doc
+          uv pip install --directory polars-genson-py "polars-genson[polars]>=$(uv version --short --project polars-genson-py)"
+      - name: Build
+        run: |
+          source polars-genson-py/.venv/bin/activate
+          mkdocs build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site
+          retention-days: 7
+
+  # Production, on the gh-pages branch (created by the first run).
+  deploy-branch:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-production
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+      # Serve the files as built, without Jekyll.
+      - run: touch site/.nojekyll
+      - uses: JamesIves/github-pages-deploy-action@v4.7.4
+        with:
+          branch: gh-pages
+          folder: site
+          clean: true
+          clean-exclude: pr-preview/
+          force: false
+          commit-message: Deploy the documentation site from ${{ github.sha }}
+
+  # Pull request previews. Only for pull requests from this repository: a fork's workflow
+  # has a read-only token, and this job runs none of the pull request's code, only the
+  # built files from the build job.
+  preview:
+    if: >-
+      !cancelled()
+      && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && needs.pages.outputs.build_type == 'legacy'
+      && (needs.build.result == 'success' || github.event.action == 'closed')
+    needs: [pages, build]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pages: read
+      pull-requests: write
+    steps:
+      # The deploy step needs a checkout to work in; the default branch, not the pull request.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - if: github.event.action != 'closed'
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+      - uses: rossjrw/pr-preview-action@v1.8.1
+        with:
+          source-dir: site
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          qr-code: "false"
+          wait-for-pages-deployment: true

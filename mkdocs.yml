@@ -2,7 +2,7 @@ site_name: Polars Genson
 site_author: Louis Maddox
 site_description: >-
   Infer a schema from JSON string columns and normalise them into typed Polars columns
-site_url: https://polars-genson.vercel.app
+site_url: https://lmmx.github.io/polars-genson/
 repo_name: lmmx/polars-genson
 repo_url: https://github.com/lmmx/polars-genson
 strict: true
@@ -11,7 +11,6 @@ strict: true
 exclude_docs: |
   JOURNAL.md
   journal/
-  vercel/
 
 # Rebuild when your Python sources change
 watch:
