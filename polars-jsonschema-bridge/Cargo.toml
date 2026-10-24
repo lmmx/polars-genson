@@ -17,6 +17,10 @@ anstream = { workspace = true }
 polars.workspace = true
 serde_json.workspace = true
 
+[features]
+# Polars' Object dtype, refused with an error (without it, Polars has no Object dtype)
+object = ["polars/object"]
+
 [dev-dependencies]
 eyre = "0.6.12"
 insta = { features = ["yaml"], version = "1.43.1" }

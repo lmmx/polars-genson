@@ -70,7 +70,8 @@ xxhash-rust = { features = ["xxh64"], version = "0.8.15" }
 polars = { default-features = false, features = [
   "dtype-full",
   # "fmt",        # show nice printouts (for debugging only)
-  "object",
+  # not "object": genson converts no Object column, and Polars builds faster without it
+  # (polars-genson#300); polars-jsonschema-bridge's `object` feature turns it on
 ], version = "0.55.2" }
 polars-arrow = { default-features = false, version = "0.55.2" }
 # polars/dtype-array does not enable polars-expr/dtype-array in 0.55, which breaks the build
