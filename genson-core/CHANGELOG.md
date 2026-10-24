@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0](https://github.com/lmmx/polars-genson/compare/genson-core-v1.2.2...genson-core-v1.3.0) - 2026-10-24
+
+### <!-- 1 -->Features
+
+- normalise_from_parquet(avro_schema=...) decodes strictly against a known schema, inferring only where a row does not fit ([#305](https://github.com/lmmx/polars-genson/pull/305))
+- write_parquet writes Arrow data with genson's parallel Parquet writer ([#298](https://github.com/lmmx/polars-genson/pull/298))
+- *(parquet)* normalise_from_parquet returns its output as an Arrow C stream ([#296](https://github.com/lmmx/polars-genson/pull/296))
+
 ## [1.2.2](https://github.com/lmmx/polars-genson/compare/genson-core-v1.2.1...genson-core-v1.2.2) - 2026-10-21
 
 ### <!-- 3 -->Performance

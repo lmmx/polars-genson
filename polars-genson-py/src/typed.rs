@@ -6,7 +6,6 @@ use crate::expressions::GensonKwargs;
 use arrow::array::{Array, StructArray};
 use genson_core::normalise::{NormaliseConfig, NormalisePlan};
 use genson_core::parquet::{avro_record_fields, values_to_struct_array};
-use genson_core::{infer_json_schema_from_strings, SchemaInferenceConfig};
 use polars::prelude::*;
 use pyo3::prelude::*;
 use pyo3_polars::PySeries;
@@ -44,31 +43,10 @@ pub fn normalise_json_typed(
         .copied()
         .filter(|s| !s.trim().is_empty())
         .collect();
-    let config = SchemaInferenceConfig {
-        ignore_outer_array: kwargs.ignore_outer_array,
-        delimiter: if kwargs.ndjson { Some(b'\n') } else { None },
-        schema_uri: kwargs.schema_uri.clone(),
-        map_threshold: kwargs.map_threshold,
-        map_max_required_keys: kwargs.map_max_required_keys,
-        unify_maps: kwargs.unify_maps,
-        no_unify: kwargs.no_unify.iter().cloned().collect(),
-        force_field_types: kwargs.force_field_types.clone(),
-        force_parent_field_types: kwargs.force_parent_field_types.clone(),
-        force_scalar_promotion: kwargs.force_scalar_promotion.iter().cloned().collect(),
-        wrap_scalars: kwargs.wrap_scalars,
-        coerce_strings: kwargs.coerce_string,
-        avro: true,
-        wrap_root: kwargs.wrap_root.clone(),
-        no_root_map: kwargs.no_root_map,
-        max_builders: kwargs.max_builders,
-        debug: kwargs.debug,
-        profile: kwargs.profile,
-        verbosity: kwargs.verbosity,
-    };
-    let Ok(result) = infer_json_schema_from_strings(&json_strings, config) else {
+    // (or given as avro_schema)
+    let Ok(schema) = kwargs.normalisation_schema(&json_strings) else {
         return Ok(None);
     };
-    let schema = result.schema;
     drop(json_strings);
     if schema.get("type").and_then(|t| t.as_str()) != Some("record") {
         return Ok(None);
