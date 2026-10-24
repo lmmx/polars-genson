@@ -249,6 +249,7 @@ pub fn polars_dtype_to_json_schema(
         }
 
         // Handle newer Polars types
+        #[cfg(feature = "object")]
         DataType::Object(_) => Err(conversion_error(
             "Object types cannot be converted to JSON Schema".to_string(),
         )),
