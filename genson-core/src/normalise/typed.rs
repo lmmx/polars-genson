@@ -861,7 +861,15 @@ impl<'a, 'r> Decoder<'a, 'r> {
             Input::Null | Input::Wrapped(..) => None,
         };
         let null = self.is_null(input);
-        if self.strict && !null && !self.fits(node, input) {
+        // Null where a record is not nullable is a record of nulls, where the schema
+        // inferred from the rows would hold it nullable and give null
+        if self.strict
+            && (if null {
+                matches!(node, Node::Record(_))
+            } else {
+                !self.fits(node, input)
+            })
+        {
             return Err(Unsupported);
         }
         match (node, col) {

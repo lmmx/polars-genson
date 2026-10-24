@@ -1279,7 +1279,8 @@ fn test_strict_rejects_rows_that_do_not_fit() {
     let schema = inferred(&[
         r#"{"s":"x","i":1,"f":1.5,"b":true,"l":[1,2],"r":{"a":"b"},"z":null}"#,
     ]);
-    assert!(strict_decoded(&schema, &[r#"{"s":"y"}"#]).is_some());
+    let base = r#"{"s":"y","r":{"a":"c"}}"#;
+    assert!(strict_decoded(&schema, &[base]).is_some());
     for misfit in [
         r#"{"q":1}"#,
         r#"{"r":{"a":"b","c":1}}"#,
@@ -1294,9 +1295,12 @@ fn test_strict_rejects_rows_that_do_not_fit() {
         r#"{"r":"b"}"#,
         r#"{"r":[]}"#,
         r#"{"z":0}"#,
+        // `r` was in every row the schema was inferred from: not nullable
+        r#"{"r":null}"#,
+        r#"{"s":"y","i":1,"f":1.5,"b":true,"l":[1]}"#,
     ] {
         assert!(
-            strict_decoded(&schema, &[r#"{"s":"y"}"#, misfit]).is_none(),
+            strict_decoded(&schema, &[base, misfit]).is_none(),
             "{misfit} fits {schema}"
         );
     }
