@@ -14,11 +14,9 @@ on:
     tags:
       - "*"
   pull_request:
+  # Deploy Release starts a release's run on its py-* tag (a tag its token pushes starts
+  # no workflow). Not workflow_run: crates.io's Trusted Publishing does not accept it
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Deploy Release"]
-    types:
-      - completed
 
 permissions:
   contents: read
@@ -46,7 +44,6 @@ jobs:
         )
       )
       || (github.event_name == 'workflow_dispatch')
-      || (github.event_name == 'workflow_run')
       || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'lmmx')
     steps:
       - name: Confirm commit message matched
@@ -56,7 +53,7 @@ jobs:
     needs: [check-commit]
     runs-on: ${{ matrix.platform.runner }}
     # The pypi environment for a release, whose steps publish as PUBLISH_EACH_WHEEL says
-    environment: ${{ (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') && 'pypi' || '' }}
+    environment: ${{ startsWith(github.ref, 'refs/tags/') && 'pypi' || '' }}
     permissions:
       contents: read
       id-token: write
@@ -202,12 +199,12 @@ jobs:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
       - name: Attest wheels
-        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') }}
+        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: "dist/*"
       - name: Publish wheels to PyPI
-        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') }}
+        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
         with:
           command: upload
@@ -217,7 +214,7 @@ jobs:
     needs: [check-commit]
     runs-on: ${{ matrix.platform.runner }}
     # The pypi environment for a release, whose steps publish as PUBLISH_EACH_WHEEL says
-    environment: ${{ (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') && 'pypi' || '' }}
+    environment: ${{ startsWith(github.ref, 'refs/tags/') && 'pypi' || '' }}
     permissions:
       contents: read
       id-token: write
@@ -252,12 +249,12 @@ jobs:
           name: wheels-windows-${{ matrix.platform.target }}
           path: dist
       - name: Attest wheels
-        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') }}
+        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: "dist/*"
       - name: Publish wheels to PyPI
-        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') }}
+        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
         with:
           command: upload
@@ -267,7 +264,7 @@ jobs:
     needs: [check-commit]
     runs-on: ${{ matrix.platform.runner }}
     # The pypi environment for a release, whose steps publish as PUBLISH_EACH_WHEEL says
-    environment: ${{ (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') && 'pypi' || '' }}
+    environment: ${{ startsWith(github.ref, 'refs/tags/') && 'pypi' || '' }}
     permissions:
       contents: read
       id-token: write
@@ -301,12 +298,12 @@ jobs:
           name: wheels-macos-${{ matrix.platform.target }}
           path: dist
       - name: Attest wheels
-        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') }}
+        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: "dist/*"
       - name: Publish wheels to PyPI
-        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') }}
+        if: ${{ env.PUBLISH_EACH_WHEEL == 'true' && matrix.platform.skip != true && startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
         with:
           command: upload
@@ -328,7 +325,8 @@ jobs:
           name: wheels-sdist
           path: dist
 
-  # The crates the release commit bumped (`just release` runs release-plz update),
+  # The crates the release commit bumped (`just release` runs release-plz update), on the
+  # release's py-* tag,
   # published to crates.io by release-plz (`just publish-rust`), with a short-lived token
   # from crates.io's Trusted Publishing rather than a stored secret: each crate's
   # crates.io settings trust this repository's CI.yml in the crates-io environment.
@@ -339,7 +337,7 @@ jobs:
     name: Publish crates
     environment: crates-io
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/py-') || github.event_name == 'workflow_run' }}
+    if: ${{ startsWith(github.ref, 'refs/tags/py-') }}
     needs: [check-commit]
     permissions:
       contents: write
@@ -370,7 +368,7 @@ jobs:
     name: Release
     environment: pypi
     runs-on: ubuntu-latest
-    if: ${{ !cancelled() && needs.sdist.result == 'success' && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run') }}
+    if: ${{ !cancelled() && needs.sdist.result == 'success' && startsWith(github.ref, 'refs/tags/') }}
     needs: [linux, windows, macos, sdist]
     permissions:
       contents: read
