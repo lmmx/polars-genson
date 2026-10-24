@@ -1,10 +1,6 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
-
-[options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
-exclude-newer-span = "PT0S"
 
 [[package]]
 name = "annotated-types"
@@ -1341,8 +1337,9 @@ rtcompat = [
 
 [[package]]
 name = "polars-genson"
-version = "0.9.7"
+version = "1.3.3"
 source = { editable = "." }
+default-groups = ["build", "debug", "dev", "doc", "test"]
 dependencies = [
     { name = "orjson" },
 ]
@@ -1383,6 +1380,7 @@ doc = [
     { name = "mkdocs-material", extra = ["imaging", "recommended"] },
     { name = "mkdocs-section-index" },
     { name = "mkdocstrings", extra = ["python"] },
+    { name = "pyarrow" },
     { name = "ruff" },
     { name = "urllib3" },
 ]
@@ -1424,6 +1422,7 @@ doc = [
     { name = "mkdocs-material", extras = ["imaging", "recommended"], specifier = ">=9.6.18" },
     { name = "mkdocs-section-index", specifier = ">=0.3.10" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.30.0" },
+    { name = "pyarrow", specifier = ">=21.0.0" },
     { name = "ruff", specifier = ">=0.12.10" },
     { name = "urllib3", specifier = "<2" },
 ]
