@@ -13,6 +13,11 @@ release bump_level="patch":
     
     # 📈 Bump the version in pyproject.toml (patch/minor/major: {{bump_level}})
     uv version --frozen --bump {{bump_level}}
+
+    # 🦀 Bump each changed crate's version and write its changelog (release-plz, from the
+    # commits since the crate's last release), in this release commit: CI publishes them
+    # to crates.io (the crates job in CI.yml)
+    (cd .. && release-plz update --allow-dirty)
     
     # 📦 Stage all changes (including the version bump)
     git add --all
