@@ -249,12 +249,13 @@ jobs:
         uses: PyO3/maturin-action@v1
         if: matrix.platform.skip != true
         # MSVC stamps the time into each object and archive, so the C libraries the build
-        # scripts compile (zstd, lz4, mimalloc) differ on every build, and with them each
+        # scripts compile (psm, blake3, zstd, lz4, mimalloc) differ on every build, and with them each
         # crate above them: sccache misses on all of Polars. /Brepro leaves the stamps out
         env:
           CFLAGS: /Brepro
           CXXFLAGS: /Brepro
           ARFLAGS: /Brepro
+          ASMFLAGS: /Brepro
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path polars-genson-py/Cargo.toml --timings
@@ -312,12 +313,13 @@ jobs:
         uses: PyO3/maturin-action@v1
         if: matrix.platform.skip != true
         # MSVC stamps the time into each object and archive, so the C libraries the build
-        # scripts compile (zstd, lz4, mimalloc) differ on every build, and with them each
+        # scripts compile (psm, blake3, zstd, lz4, mimalloc) differ on every build, and with them each
         # crate above them: sccache misses on all of Polars. /Brepro leaves the stamps out
         env:
           CFLAGS: /Brepro
           CXXFLAGS: /Brepro
           ARFLAGS: /Brepro
+          ASMFLAGS: /Brepro
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path polars-genson-py/Cargo.toml --timings
