@@ -179,3 +179,48 @@ fn test_target_dtypes_have_polars_offsets() {
     let inferred = DataType::new_list(DataType::Utf8, true);
     assert!(incompatibilities(&inferred, &spec(json!({"List": "String"})), SchemaCheck::Strict).is_empty());
 }
+
+/// The decode type takes 64-bit offsets where the target has them, through structs (by
+/// name), lists and maps, and keeps everything else: a field the target lacks, other
+/// scalars, names and nullability.
+#[test]
+fn test_with_target_offsets_widens_where_the_target_does() {
+    let entries = |key: DataType, value: DataType| {
+        let kv = DataType::Struct(
+            vec![Field::new("key", key, false), Field::new("value", value, true)].into(),
+        );
+        DataType::Map(Arc::new(Field::new("entries", kv, false)), false)
+    };
+    let have = DataType::Struct(
+        vec![
+            Field::new("s", DataType::Utf8, true),
+            Field::new("l", DataType::new_list(DataType::Utf8, true), true),
+            Field::new("extra", DataType::Utf8, true),
+            Field::new("i", DataType::Int64, true),
+            Field::new("m", entries(DataType::Utf8, DataType::Utf8), true),
+            Field::new("n", DataType::Utf8, true),
+        ]
+        .into(),
+    );
+    let target = spec(json!({"Struct": [
+        ["i", "Int64"],
+        ["l", {"List": "String"}],
+        ["m", {"Map": ["String", "String"]}],
+        ["s", "String"],
+        ["n", "Int64"],
+        ["t", "String"],
+    ]}));
+    let want = DataType::Struct(
+        vec![
+            Field::new("s", DataType::LargeUtf8, true),
+            Field::new("l", DataType::new_large_list(DataType::LargeUtf8, true), true),
+            Field::new("extra", DataType::Utf8, true),
+            Field::new("i", DataType::Int64, true),
+            Field::new("m", entries(DataType::LargeUtf8, DataType::LargeUtf8), true),
+            Field::new("n", DataType::Utf8, true),
+        ]
+        .into(),
+    );
+    assert_eq!(with_target_offsets(&have, &target), want);
+    assert_eq!(with_target_offsets(&have, &have), have);
+}

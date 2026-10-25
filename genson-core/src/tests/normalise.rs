@@ -634,11 +634,81 @@ fn typed_by_value(
     .unwrap_or_else(|_| Err("panicked".to_string()))
 }
 
+/// `data_type` with 64-bit offsets for every string and list, as a target schema has them
+/// (`conform::data_type_from_spec`).
+#[cfg(feature = "parquet")]
+fn all_large(data_type: &arrow::datatypes::DataType) -> arrow::datatypes::DataType {
+    use arrow::datatypes::{DataType, FieldRef};
+    let field = |f: &FieldRef| {
+        std::sync::Arc::new(f.as_ref().clone().with_data_type(all_large(f.data_type())))
+    };
+    match data_type {
+        DataType::Utf8 => DataType::LargeUtf8,
+        DataType::List(f) | DataType::LargeList(f) => DataType::LargeList(field(f)),
+        DataType::Struct(fields) => DataType::Struct(fields.iter().map(field).collect()),
+        DataType::Map(entries, sorted) => DataType::Map(field(entries), *sorted),
+        other => other.clone(),
+    }
+}
+
+/// The same arrays, buffer for buffer: types, lengths, offsets, validity, buffers and
+/// children.
+#[cfg(feature = "parquet")]
+fn assert_same_layout(a: &arrow::array::ArrayData, b: &arrow::array::ArrayData) {
+    assert_eq!(a.data_type(), b.data_type());
+    assert_eq!((a.len(), a.offset()), (b.len(), b.offset()), "{:?}", a.data_type());
+    assert_eq!(a.nulls(), b.nulls(), "{:?}", a.data_type());
+    assert_eq!(a.buffers(), b.buffers(), "{:?}", a.data_type());
+    assert_eq!(a.child_data().len(), b.child_data().len());
+    for (a, b) in a.child_data().iter().zip(b.child_data()) {
+        assert_same_layout(a, b);
+    }
+}
+
+/// The rows decoded into `fields` with 64-bit offsets, as into a target schema
+/// (`with_target_offsets`): declined where the 32-bit decode is, and otherwise the
+/// arrays that conforming the 32-bit ones to that schema gives, buffer for buffer, with
+/// the same pruned values.
+#[cfg(feature = "parquet")]
+fn assert_large_decode_conforms(
+    plan: &NormalisePlan<'_>,
+    fields: &arrow::datatypes::Fields,
+    rows: &[Option<&str>],
+    small: Option<&(arrow::array::StructArray, Vec<PrunedValue>)>,
+) -> bool {
+    use arrow::array::{Array, ArrayRef};
+    use arrow::datatypes::DataType;
+    let have = DataType::Struct(fields.clone());
+    let target = all_large(&have);
+    let wide = crate::conform::with_target_offsets(&have, &target);
+    assert_eq!(wide, target);
+    let DataType::Struct(wide_fields) = &wide else {
+        unreachable!("a struct")
+    };
+    let large = plan.to_arrow(wide_fields).and_then(|p| p.normalise(rows, 0));
+    match (small, large) {
+        (None, None) => false,
+        (Some((small, small_pruned)), Some((large, large_pruned))) => {
+            let small: ArrayRef = std::sync::Arc::new(small.clone());
+            let conformed = crate::conform::conform(&small, &target).unwrap();
+            assert_same_layout(&conformed.to_data(), &large.to_data());
+            assert_eq!(small_pruned, &large_pruned);
+            true
+        }
+        (small, large) => panic!(
+            "decoded with 32-bit offsets: {}, with 64-bit: {}",
+            small.is_some(),
+            large.is_some()
+        ),
+    }
+}
+
 /// For random JSON text (valid, invalid and null rows), schemas inferred from the valid
 /// rows (wrapped, with a field beside them or not, or as they are; with all of them or all
 /// but the last) and every option and prune set: the typed decoder gives the arrays and
 /// pruned values the `Value` path gives, or declines (`None`) where that path fails or
-/// might differ, and declines rarely.
+/// might differ, and declines rarely. With 64-bit offsets it gives the arrays conform
+/// makes of those (`assert_large_decode_conforms`).
 #[cfg(feature = "parquet")]
 #[test]
 fn test_typed_decode_matches_the_value_path() {
@@ -655,7 +725,7 @@ fn test_typed_decode_matches_the_value_path() {
         ["b".to_string()].into(),
     ];
     let (mut decoded, mut declined, mut failing, mut pruned_seen) = (0, 0, 0, 0);
-    let mut decoded_unwrapped = 0;
+    let (mut decoded_unwrapped, mut decoded_large) = (0, 0);
     for case in 0..2500 {
         // Mostly with each row wrapped as `w`, else the rows as they are: then mostly objects,
         // for a record at the root
@@ -732,6 +802,12 @@ fn test_typed_decode_matches_the_value_path() {
         let typed = plan
             .to_arrow(&fields)
             .and_then(|p| p.normalise(&borrowed, 0));
+        decoded_large += usize::from(assert_large_decode_conforms(
+            &plan,
+            &fields,
+            &borrowed,
+            typed.as_ref(),
+        ));
         match (typed, reference) {
             (Some(typed), Ok(reference)) => {
                 assert_eq!(
@@ -758,7 +834,8 @@ fn test_typed_decode_matches_the_value_path() {
             (None, Err(_)) => failing += 1,
         }
     }
-    eprintln!("typed decode: decoded {decoded} ({decoded_unwrapped} unwrapped), declined {declined}, failing {failing}, pruned {pruned_seen}");
+    eprintln!("typed decode: decoded {decoded} ({decoded_unwrapped} unwrapped, {decoded_large} with 64-bit offsets), declined {declined}, failing {failing}, pruned {pruned_seen}");
+    assert_eq!(decoded_large, decoded);
     assert!(
         decoded > 500,
         "decoded {decoded}, declined {declined}, failing {failing}"

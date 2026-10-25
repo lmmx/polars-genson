@@ -214,7 +214,8 @@ fn walk(
 
 /// `array` in the shape of `target`: struct fields in the target's order, those it lacks
 /// as nulls, `Null` arrays as nulls of the target's type, and 32-bit offsets (of lists and
-/// strings) widened where the target has 64-bit ones. Values are not copied; containers
+/// strings) widened where the target has 64-bit ones (arrays decoded into
+/// [`with_target_offsets`]'s type have them already). Values are not copied; containers
 /// are rebuilt over them. Under `SchemaCheck::None` the target's struct fields are taken
 /// by name whatever else the array holds, and other scalar types are cast; otherwise the
 /// array's schema must already have passed `incompatibilities`.
@@ -321,6 +322,38 @@ pub fn conform(array: &ArrayRef, target: &DataType) -> Result<ArrayRef, String> 
         // Strings to 64-bit offsets (the values buffer is shared), or under
         // `SchemaCheck::None` another scalar type
         _ => arrow::compute::cast(array, target).map_err(|e| e.to_string()),
+    }
+}
+
+/// `have` with 64-bit offsets wherever `target` has them in its place: a `Utf8` where the
+/// target has `LargeUtf8`, a `List` where it has `LargeList`, through struct fields (by
+/// name), list items and map keys and values. Everything else is as in `have`, names and
+/// nullability included. Arrays decoded into this type conform to `target` as those
+/// decoded into `have` do, to the same arrays, with no offsets to widen.
+pub fn with_target_offsets(have: &DataType, target: &DataType) -> DataType {
+    let field = |f: &FieldRef, t: &DataType| {
+        Arc::new(
+            f.as_ref()
+                .clone()
+                .with_data_type(with_target_offsets(f.data_type(), t)),
+        )
+    };
+    match (have, target) {
+        (DataType::Utf8, DataType::LargeUtf8) => DataType::LargeUtf8,
+        (DataType::List(f), DataType::LargeList(t)) => DataType::LargeList(field(f, t.data_type())),
+        (DataType::List(f), DataType::List(t)) => DataType::List(field(f, t.data_type())),
+        (DataType::Struct(have), DataType::Struct(want)) => DataType::Struct(
+            have.iter()
+                .map(|f| match want.find(f.name()) {
+                    Some((_, w)) => field(f, w.data_type()),
+                    None => f.clone(),
+                })
+                .collect(),
+        ),
+        (DataType::Map(entries, sorted), DataType::Map(want, _)) => {
+            DataType::Map(field(entries, want.data_type()), *sorted)
+        }
+        _ => have.clone(),
     }
 }
 

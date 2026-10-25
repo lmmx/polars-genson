@@ -17,6 +17,12 @@
 //! - a value in a column of nulls;
 //! - more than `arrow-json` decodes in one batch: over `i32::MAX` bytes in a string column
 //!   or items in a list column, or (roughly) `u32::MAX` strings and keys in all.
+//!
+//! Strings and lists are built with the offsets their Arrow types have: 32-bit for `Utf8`
+//! and `List`, as `avro_record_fields` gives them, or 64-bit for `LargeUtf8` and
+//! `LargeList`, where the fields are those types (as a target schema's are, see
+//! `conform::with_target_offsets`). Either holds the same values, so the limits above are
+//! the same for both.
 
 use super::plan::{Plan, Record};
 use super::{
@@ -24,9 +30,12 @@ use super::{
 };
 use crate::tape::{lex, unescape, unescape_into, Tok};
 use arrow::array::builder::{
-    ArrayBuilder, BooleanBuilder, Float64Builder, Int64Builder, NullBufferBuilder, StringBuilder,
+    ArrayBuilder, BooleanBuilder, Float64Builder, GenericStringBuilder, Int64Builder,
+    LargeStringBuilder, NullBufferBuilder, StringBuilder,
 };
-use arrow::array::{Array, ArrayRef, ListArray, MapArray, NullArray, StructArray};
+use arrow::array::{
+    Array, ArrayRef, LargeListArray, ListArray, MapArray, NullArray, OffsetSizeTrait, StructArray,
+};
 use arrow::buffer::{NullBuffer, OffsetBuffer};
 use arrow::datatypes::{DataType, FieldRef, Fields};
 use arrow::error::ArrowError;
@@ -113,7 +122,7 @@ impl<'p> Node<'p> {
     /// for the schema node it was compiled from (under `encoding`'s map type), at every depth.
     fn new(plan: &'p Plan<'_>, data_type: &DataType, encoding: MapEncoding) -> Option<Self> {
         Some(match (plan, data_type) {
-            (Plan::String, DataType::Utf8) => Node::String,
+            (Plan::String, DataType::Utf8 | DataType::LargeUtf8) => Node::String,
             (Plan::Int, DataType::Int64) => Node::Int,
             (Plan::Double, DataType::Float64) => Node::Double,
             (Plan::Boolean, DataType::Boolean) => Node::Boolean,
@@ -121,10 +130,12 @@ impl<'p> Node<'p> {
             (Plan::Record(record), DataType::Struct(fields)) => {
                 Node::Record(Box::new(RecordNode::new(record, fields, encoding)?))
             }
-            (Plan::Array(items), DataType::List(field)) if field.is_nullable() => {
+            (Plan::Array(items), DataType::List(field) | DataType::LargeList(field))
+                if field.is_nullable() =>
+            {
                 Node::Array(Box::new(Node::new(items, field.data_type(), encoding)?))
             }
-            (Plan::Map(values), DataType::List(field))
+            (Plan::Map(values), DataType::List(field) | DataType::LargeList(field))
                 if encoding == MapEncoding::KeyValueEntries =>
             {
                 Node::Map(Box::new(Self::entry(values, field.data_type(), encoding)?))
@@ -156,7 +167,7 @@ impl<'p> Node<'p> {
         match &entry.iter().collect::<Vec<_>>()[..] {
             [key, value]
                 if key.name() == "key"
-                    && key.data_type() == &DataType::Utf8
+                    && matches!(key.data_type(), DataType::Utf8 | DataType::LargeUtf8)
                     && value.name() == "value"
                     && value.is_nullable() =>
             {
@@ -321,16 +332,107 @@ enum Seg<'a, 'r> {
     Key(Cow<'r, str>),
 }
 
-/// A column being built, of one of the Arrow types `avro_to_arrow_type` gives.
+/// A string column being built, with 32-bit (`Utf8`) or 64-bit (`LargeUtf8`) offsets.
+enum Strings {
+    Small(StringBuilder),
+    Large(LargeStringBuilder),
+}
+
+impl Strings {
+    fn new(data_type: &DataType) -> Result<Self, Unsupported> {
+        match data_type {
+            DataType::Utf8 => Ok(Strings::Small(StringBuilder::new())),
+            DataType::LargeUtf8 => Ok(Strings::Large(LargeStringBuilder::new())),
+            _ => Err(Unsupported),
+        }
+    }
+
+    fn append(&mut self, s: &str) -> Result<(), Unsupported> {
+        match self {
+            Strings::Small(b) => append_str(b, s),
+            Strings::Large(b) => append_str(b, s),
+        }
+    }
+
+    fn append_nulls(&mut self, n: usize) {
+        match self {
+            Strings::Small(b) => b.append_nulls(n),
+            Strings::Large(b) => b.append_nulls(n),
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            Strings::Small(b) => b.len(),
+            Strings::Large(b) => b.len(),
+        }
+    }
+
+    fn finish(self) -> ArrayRef {
+        match self {
+            Strings::Small(mut b) => Arc::new(b.finish()),
+            Strings::Large(mut b) => Arc::new(b.finish()),
+        }
+    }
+}
+
+/// A list's (or map's) offsets, 32-bit (`List`, `Map`) or 64-bit (`LargeList`).
+enum Offsets {
+    Small(Vec<i32>),
+    Large(Vec<i64>),
+}
+
+impl Offsets {
+    fn new(large: bool) -> Self {
+        match large {
+            false => Offsets::Small(vec![0]),
+            true => Offsets::Large(vec![0]),
+        }
+    }
+
+    /// The last offset `n` more times: `n` empty or null entries.
+    fn repeat_last(&mut self, n: usize) {
+        match self {
+            Offsets::Small(o) => o.extend(std::iter::repeat_n(*o.last().unwrap(), n)),
+            Offsets::Large(o) => o.extend(std::iter::repeat_n(*o.last().unwrap(), n)),
+        }
+    }
+
+    /// The offset `added` items on, unless past what `arrow-json` decodes into a list or
+    /// map (whichever the offsets' width).
+    fn push(&mut self, added: usize) -> Result<(), Unsupported> {
+        let last = match self {
+            Offsets::Small(o) => *o.last().unwrap() as usize,
+            Offsets::Large(o) => *o.last().unwrap() as usize,
+        };
+        let next = i32::try_from(last + added).map_err(|_| Unsupported)?;
+        match self {
+            Offsets::Small(o) => o.push(next),
+            Offsets::Large(o) => o.push(i64::from(next)),
+        }
+        Ok(())
+    }
+
+    /// The entries they bound.
+    fn len(&self) -> usize {
+        match self {
+            Offsets::Small(o) => o.len() - 1,
+            Offsets::Large(o) => o.len() - 1,
+        }
+    }
+}
+
+/// A column being built, of one of the Arrow types `avro_to_arrow_type` gives, or one of
+/// those with 64-bit offsets.
 enum Column {
-    Utf8(StringBuilder),
+    Str(Strings),
     Int(Int64Builder),
     Float(Float64Builder),
     Bool(BooleanBuilder),
     Null(usize),
     List {
         field: FieldRef,
-        offsets: Vec<i32>,
+        offsets: Offsets,
         valid: NullBufferBuilder,
         items: Box<Column>,
     },
@@ -342,9 +444,10 @@ enum Column {
     },
     Map {
         field: FieldRef,
-        offsets: Vec<i32>,
+        /// Always 32-bit: a map's offsets are
+        offsets: Offsets,
         valid: NullBufferBuilder,
-        keys: StringBuilder,
+        keys: Strings,
         values: Box<Column>,
     },
 }
@@ -355,14 +458,14 @@ struct Unsupported;
 impl Column {
     fn new(data_type: &DataType) -> Result<Self, Unsupported> {
         Ok(match data_type {
-            DataType::Utf8 => Column::Utf8(StringBuilder::new()),
+            DataType::Utf8 | DataType::LargeUtf8 => Column::Str(Strings::new(data_type)?),
             DataType::Int64 => Column::Int(Int64Builder::new()),
             DataType::Float64 => Column::Float(Float64Builder::new()),
             DataType::Boolean => Column::Bool(BooleanBuilder::new()),
             DataType::Null => Column::Null(0),
-            DataType::List(field) => Column::List {
+            DataType::List(field) | DataType::LargeList(field) => Column::List {
                 field: field.clone(),
-                offsets: vec![0],
+                offsets: Offsets::new(matches!(data_type, DataType::LargeList(_))),
                 valid: NullBufferBuilder::new(0),
                 items: Box::new(Column::new(field.data_type())?),
             },
@@ -379,14 +482,14 @@ impl Column {
                 let DataType::Struct(entry) = field.data_type() else {
                     return Err(Unsupported);
                 };
-                let [_, value] = &entry.iter().collect::<Vec<_>>()[..] else {
+                let [key, value] = &entry.iter().collect::<Vec<_>>()[..] else {
                     return Err(Unsupported);
                 };
                 Column::Map {
                     field: field.clone(),
-                    offsets: vec![0],
+                    offsets: Offsets::new(false),
                     valid: NullBufferBuilder::new(0),
-                    keys: StringBuilder::new(),
+                    keys: Strings::new(key.data_type())?,
                     values: Box::new(Column::new(value.data_type())?),
                 }
             }
@@ -403,14 +506,13 @@ impl Column {
     /// `n` nulls.
     fn append_nulls(&mut self, n: usize) {
         match self {
-            Column::Utf8(b) => b.append_nulls(n),
+            Column::Str(b) => b.append_nulls(n),
             Column::Int(b) => b.append_nulls(n),
             Column::Float(b) => b.append_nulls(n),
             Column::Bool(b) => b.append_nulls(n),
             Column::Null(k) => *k += n,
             Column::List { offsets, valid, .. } | Column::Map { offsets, valid, .. } => {
-                let last = *offsets.last().unwrap();
-                offsets.extend(std::iter::repeat_n(last, n));
+                offsets.repeat_last(n);
                 valid.append_n_nulls(n);
             }
             Column::Struct { valid, len, .. } => {
@@ -423,12 +525,12 @@ impl Column {
     /// The rows the column holds.
     fn len(&self) -> usize {
         match self {
-            Column::Utf8(b) => b.len(),
+            Column::Str(b) => b.len(),
             Column::Int(b) => b.len(),
             Column::Float(b) => b.len(),
             Column::Bool(b) => b.len(),
             Column::Null(n) => *n,
-            Column::List { offsets, .. } | Column::Map { offsets, .. } => offsets.len() - 1,
+            Column::List { offsets, .. } | Column::Map { offsets, .. } => offsets.len(),
             Column::Struct { len, .. } => *len,
         }
     }
@@ -444,7 +546,7 @@ impl Column {
 
     fn finish(self) -> Result<ArrayRef, ArrowError> {
         Ok(match self {
-            Column::Utf8(mut b) => Arc::new(b.finish()),
+            Column::Str(b) => b.finish(),
             Column::Int(mut b) => Arc::new(b.finish()),
             Column::Float(mut b) => Arc::new(b.finish()),
             Column::Bool(mut b) => Arc::new(b.finish()),
@@ -454,12 +556,20 @@ impl Column {
                 offsets,
                 mut valid,
                 items,
-            } => Arc::new(ListArray::try_new(
-                field,
-                OffsetBuffer::new(offsets.into()),
-                items.finish()?,
-                valid.finish(),
-            )?),
+            } => match offsets {
+                Offsets::Small(offsets) => Arc::new(ListArray::try_new(
+                    field,
+                    OffsetBuffer::new(offsets.into()),
+                    items.finish()?,
+                    valid.finish(),
+                )?),
+                Offsets::Large(offsets) => Arc::new(LargeListArray::try_new(
+                    field,
+                    OffsetBuffer::new(offsets.into()),
+                    items.finish()?,
+                    valid.finish(),
+                )?),
+            },
             Column::Struct {
                 fields,
                 mut valid,
@@ -477,8 +587,11 @@ impl Column {
                     unreachable!("a map's entries are a struct")
                 };
                 let len = keys.len();
-                let children = vec![Column::Utf8(keys), *values];
+                let children = vec![Column::Str(keys), *values];
                 let entries = Self::finish_struct(entry.clone(), None, len, children)?;
+                let Offsets::Small(offsets) = offsets else {
+                    unreachable!("a map's offsets are 32-bit")
+                };
                 Arc::new(MapArray::try_new(
                     field,
                     OffsetBuffer::new(offsets.into()),
@@ -510,8 +623,12 @@ impl Column {
     }
 }
 
-/// `s` appended, unless the column would then hold more than `arrow-json` decodes into one.
-fn append_str(b: &mut StringBuilder, s: &str) -> Result<(), Unsupported> {
+/// `s` appended, unless the column would then hold more than `arrow-json` decodes into one
+/// (whichever the offsets' width).
+fn append_str<O: OffsetSizeTrait>(
+    b: &mut GenericStringBuilder<O>,
+    s: &str,
+) -> Result<(), Unsupported> {
     if b.values_slice().len() + s.len() > i32::MAX as usize {
         return Err(Unsupported);
     }
@@ -519,11 +636,27 @@ fn append_str(b: &mut StringBuilder, s: &str) -> Result<(), Unsupported> {
     Ok(())
 }
 
-/// The offset `added` items on, unless past what `arrow-json` decodes into a list or map.
-fn push_offset(offsets: &mut Vec<i32>, added: usize) -> Result<(), Unsupported> {
-    let last = *offsets.last().unwrap() as usize;
-    offsets.push(i32::try_from(last + added).map_err(|_| Unsupported)?);
-    Ok(())
+/// A string token (or another value, as its JSON text) appended to a string column.
+fn put_str<'t, O: OffsetSizeTrait>(
+    b: &mut GenericStringBuilder<O>,
+    tok: Option<Tok>,
+    text: impl Fn((u32, u32)) -> &'t str,
+    other: impl FnOnce() -> String,
+) -> Result<(), Unsupported> {
+    match tok {
+        // Unescaped into the column, no longer than its text
+        Some(Tok::Str(s, e, true)) => {
+            let raw = text((s, e));
+            if b.values_slice().len() + raw.len() > i32::MAX as usize {
+                return Err(Unsupported);
+            }
+            unescape_into(raw, b);
+            b.append_value("");
+            Ok(())
+        }
+        Some(Tok::Str(s, e, false)) => append_str(b, text((s, e))),
+        _ => append_str(b, &other()),
+    }
 }
 
 /// Whether a key (by its text, without escapes) is given twice among `members`.
@@ -873,23 +1006,16 @@ impl<'a, 'r> Decoder<'a, 'r> {
             return Err(Unsupported);
         }
         match (node, col) {
-            (Node::String, Column::Utf8(b)) => {
-                match tok {
-                    _ if null => {
-                        b.append_null();
-                        return Ok(Put::Kept);
-                    }
-                    // Unescaped into the column, no longer than its text
-                    Some(Tok::Str(s, e, true)) => {
-                        let raw = self.text((s, e));
-                        if b.values_slice().len() + raw.len() > i32::MAX as usize {
-                            return Err(Unsupported);
-                        }
-                        unescape_into(raw, b);
-                        b.append_value("");
-                    }
-                    Some(Tok::Str(s, e, false)) => append_str(b, self.text((s, e)))?,
-                    _ => append_str(b, &self.value_of(input).to_string())?,
+            (Node::String, Column::Str(b)) => {
+                if null {
+                    b.append_nulls(1);
+                    return Ok(Put::Kept);
+                }
+                let text = |span| self.text(span);
+                let other = || self.value_of(input).to_string();
+                match b {
+                    Strings::Small(b) => put_str(b, tok, text, other)?,
+                    Strings::Large(b) => put_str(b, tok, text, other)?,
                 }
                 self.strings += 1;
             }
@@ -964,12 +1090,12 @@ impl<'a, 'r> Decoder<'a, 'r> {
                 },
             ) => match (tok, input) {
                 _ if null => {
-                    offsets.push(*offsets.last().unwrap());
+                    offsets.repeat_last(1);
                     valid.append_null();
                 }
                 (Some(Tok::Arr { len, .. }), Input::Tok(i)) => {
                     if len == 0 && cfg.empty_as_null {
-                        offsets.push(*offsets.last().unwrap());
+                        offsets.repeat_last(1);
                         valid.append_null();
                         return Ok(Put::Kept);
                     }
@@ -984,7 +1110,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
                     if kept == 0 && len > 0 {
                         return Ok(Put::Emptied);
                     }
-                    push_offset(offsets, kept)?;
+                    offsets.push(kept)?;
                     valid.append_non_null();
                 }
                 // Any other value is normalised as an array of itself
@@ -992,7 +1118,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
                     if !self.put_item(items, item_col, input, 0, field_name)? {
                         return Ok(Put::Emptied);
                     }
-                    push_offset(offsets, 1)?;
+                    offsets.push(1)?;
                     valid.append_non_null();
                 }
             },
@@ -1065,7 +1191,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
                     children,
                     ..
                 } => match &mut children[..] {
-                    [Column::Utf8(keys), value_col] => {
+                    [Column::Str(keys), value_col] => {
                         (offsets, valid, keys, value_col, Some((entry_valid, len)))
                     }
                     _ => return Err(Unsupported),
@@ -1085,7 +1211,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
             Input::Tok(i) if !matches!(self.toks[i], Tok::Null) => i,
             Input::Wrapped(..) => return Err(Unsupported),
             _ => {
-                offsets.push(*offsets.last().unwrap());
+                offsets.repeat_last(1);
                 valid.append_null();
                 return Ok(Put::Kept);
             }
@@ -1097,7 +1223,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
         match self.toks[i] {
             Tok::Obj { len, escaped, .. } => {
                 if len == 0 && cfg.empty_as_null {
-                    offsets.push(*offsets.last().unwrap());
+                    offsets.repeat_last(1);
                     valid.append_null();
                     return Ok(Put::Kept);
                 }
@@ -1144,7 +1270,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
             self.path.pop();
             match put.and_then(|kept| {
                 if kept {
-                    append_str(keys, &key).map(|_| true)
+                    keys.append(&key).map(|_| true)
                 } else {
                     Ok(false)
                 }
@@ -1169,7 +1295,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
         if kept == 0 && len > 0 {
             return Ok(Put::Emptied);
         }
-        push_offset(offsets, kept)?;
+        offsets.push(kept)?;
         valid.append_non_null();
         Ok(Put::Kept)
     }

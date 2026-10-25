@@ -1,6 +1,8 @@
 use crate::arrow_stream::{batches_of, ArrowStream};
-use arrow::datatypes::DataType;
-use genson_core::conform::{conform, data_type_from_spec, incompatibilities, SchemaCheck};
+use arrow::datatypes::{DataType, Fields};
+use genson_core::conform::{
+    conform, data_type_from_spec, incompatibilities, with_target_offsets, SchemaCheck,
+};
 use genson_core::extract::{extract_invariants_rows, Extracted, Scan};
 use genson_core::normalise::{
     prune_schema, MapEncoding, NormaliseConfig, NormalisePlan, PrunedValue,
@@ -141,6 +143,19 @@ pub fn infer_from_parquet(
     }
 }
 
+/// The fields the typed decoder builds: `fields`, with 64-bit offsets where `target` has
+/// them (a target schema's strings and lists do, see `data_type_from_spec`), so that
+/// `conform` has none to widen. The arrays are the ones conforming the 32-bit ones gives.
+fn decode_fields(fields: &Fields, target: Option<&DataType>) -> Fields {
+    match target {
+        Some(target) => match with_target_offsets(&DataType::Struct(fields.clone()), target) {
+            DataType::Struct(fields) => fields,
+            _ => unreachable!("a struct keeps its type"),
+        },
+        None => fields.clone(),
+    }
+}
+
 #[pyfunction]
 #[pyo3(signature = (
     input_path,
@@ -178,6 +193,7 @@ pub fn infer_from_parquet(
     avro_schema=None,
 ))]
 #[allow(clippy::too_many_arguments)]
+
 pub fn normalise_from_parquet(
     input_path: String,
     column: String,
@@ -383,6 +399,7 @@ pub fn normalise_from_parquet(
             incompatibilities(&DataType::Struct(fields.clone()), target, check).is_empty()
         });
         let plan = NormalisePlan::new(known, &norm_config, &prune);
+        let fields = decode_fields(&fields, target.as_ref());
         if let Some(arrow_plan) = fits_target.then(|| plan.to_arrow_strict(&fields)).flatten() {
             strict_decoded = json_strings
                 .par_chunks(batch_rows)
@@ -521,9 +538,9 @@ pub fn normalise_from_parquet(
             }
         }
         write_lookup(lookup)?;
-        // Rows go straight from their text into Arrow where the plan can do that exactly,
-        // else (a batch at a time) by way of `Value`s
-        let arrow_plan = plan.to_arrow(&fields);
+        // Rows go straight from their text into Arrow where the plan can do that exactly
+        // (with the target's offsets), else (a batch at a time) by way of `Value`s
+        let arrow_plan = plan.to_arrow(&decode_fields(&fields, target.as_ref()));
         let batches = match strict_decoded {
             Some(decoded) => decoded
                 .into_iter()
