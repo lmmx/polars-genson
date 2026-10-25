@@ -246,7 +246,11 @@ pub fn extract_invariants_rows<'r, S: AsRef<str> + Sync>(
 impl From<ExtractedRows<'_>> for Extracted {
     fn from(e: ExtractedRows<'_>) -> Self {
         Extracted {
-            rows: e.rows.into_iter().map(|r| r.map(Cow::into_owned)).collect(),
+            rows: e
+                .rows
+                .into_par_iter()
+                .map(|r| r.map(Cow::into_owned))
+                .collect(),
             lookup: e.lookup,
         }
     }
