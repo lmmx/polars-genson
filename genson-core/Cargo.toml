@@ -13,7 +13,7 @@ crustrace = { features = ["debug"], optional = true, version = "0.1.9" }
 crustrace-mermaid = { optional = true, version = "0.1.6" }
 parquet = { optional = true, version = "60.0.0" }
 # The Parquet writer (pq_glue::write)
-pq-glue = { features = ["write"], optional = true, version = "0.2.0" }
+pq-glue = { features = ["write"], git = "https://github.com/lmmx/pq-glue", optional = true, rev = "905d02a7f1f78a1fc2940973dae860460c488018" }
 tracing = { optional = true, version = "0.1.41" }
 tracing-subscriber = { optional = true, version = "0.3.20" }
 
