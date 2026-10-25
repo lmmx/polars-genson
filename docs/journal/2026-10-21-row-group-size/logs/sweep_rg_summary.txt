@@ -1,0 +1,64 @@
+flat_1       polars          rg  203    90.34 MB  wall 0.498 (0.449-0.705)  cpu  1.55  read pl 0.198 pa 0.256  equal=True
+flat_1       genson_1048576  rg   24    90.05 MB  wall 0.694 (0.489-0.830)  cpu  1.96  read pl 0.315 pa 0.529  equal=True
+flat_1       genson_524288   rg   48    90.11 MB  wall 0.719 (0.546-0.758)  cpu  2.17  read pl 0.214 pa 0.235  equal=True
+flat_1       genson_262144   rg   96    90.24 MB  wall 0.545 (0.462-0.684)  cpu  1.82  read pl 0.254 pa 0.247  equal=True
+flat_1       genson_131072   rg  191    90.26 MB  wall 0.484 (0.461-0.585)  cpu  1.67  read pl 0.192 pa 0.216  equal=True
+flat_1       genson_65536    rg  382    90.30 MB  wall 0.520 (0.440-0.604)  cpu  1.73  read pl 0.218 pa 0.245  equal=True
+flat_1       genson_32768    rg  763    91.07 MB  wall 0.511 (0.429-0.542)  cpu  1.65  read pl 0.231 pa 0.255  equal=True
+
+flat_2       polars          rg  102    63.27 MB  wall 0.368 (0.344-0.405)  cpu  1.25  read pl 0.129 pa 0.140  equal=True
+flat_2       genson_1048576  rg   12    62.38 MB  wall 0.535 (0.333-0.838)  cpu  1.65  read pl 0.169 pa 0.187  equal=True
+flat_2       genson_524288   rg   24    62.41 MB  wall 0.482 (0.387-0.630)  cpu  1.56  read pl 0.135 pa 0.157  equal=True
+flat_2       genson_262144   rg   48    62.47 MB  wall 0.368 (0.309-0.449)  cpu  1.25  read pl 0.146 pa 0.136  equal=True
+flat_2       genson_131072   rg   96    62.49 MB  wall 0.350 (0.320-0.551)  cpu  1.19  read pl 0.134 pa 0.165  equal=True
+flat_2       genson_65536    rg  191    63.22 MB  wall 0.318 (0.275-0.398)  cpu  1.08  read pl 0.142 pa 0.138  equal=True
+flat_2       genson_32768    rg  382    64.95 MB  wall 0.337 (0.307-0.547)  cpu  1.13  read pl 0.135 pa 0.172  equal=True
+
+flat_4       polars          rg   51    60.32 MB  wall 0.358 (0.350-0.400)  cpu  1.21  read pl 0.139 pa 0.141  equal=True
+flat_4       genson_1048576  rg    6    59.59 MB  wall 0.564 (0.399-0.881)  cpu  1.81  read pl 0.165 pa 0.150  equal=True
+flat_4       genson_524288   rg   12    59.67 MB  wall 0.460 (0.285-0.513)  cpu  1.52  read pl 0.131 pa 0.147  equal=True
+flat_4       genson_262144   rg   24    59.74 MB  wall 0.368 (0.305-0.686)  cpu  1.25  read pl 0.154 pa 0.130  equal=True
+flat_4       genson_131072   rg   48    59.81 MB  wall 0.324 (0.309-0.359)  cpu  1.15  read pl 0.123 pa 0.133  equal=True
+flat_4       genson_65536    rg   96    60.31 MB  wall 0.334 (0.303-0.373)  cpu  1.14  read pl 0.137 pa 0.164  equal=True
+flat_4       genson_32768    rg  191    61.67 MB  wall 0.395 (0.362-0.686)  cpu  1.33  read pl 0.137 pa 0.181  equal=True
+
+flat_8       polars          rg   25    56.17 MB  wall 0.309 (0.304-0.383)  cpu  1.06  read pl 0.154 pa 0.151  equal=True
+flat_8       genson_1048576  rg    3    55.05 MB  wall 0.554 (0.285-0.766)  cpu  2.00  read pl 0.207 pa 0.151  equal=True
+flat_8       genson_524288   rg    6    55.11 MB  wall 0.445 (0.296-0.697)  cpu  1.65  read pl 0.167 pa 0.129  equal=True
+flat_8       genson_262144   rg   12    55.23 MB  wall 0.306 (0.303-0.355)  cpu  1.09  read pl 0.168 pa 0.140  equal=True
+flat_8       genson_131072   rg   24    55.34 MB  wall 0.398 (0.296-0.770)  cpu  1.43  read pl 0.128 pa 0.115  equal=True
+flat_8       genson_65536    rg   48    55.99 MB  wall 0.330 (0.285-0.339)  cpu  1.15  read pl 0.134 pa 0.153  equal=True
+flat_8       genson_32768    rg   96    57.91 MB  wall 0.337 (0.306-0.386)  cpu  1.14  read pl 0.143 pa 0.214  equal=True
+
+flat_32      polars          rg    6    57.44 MB  wall 0.327 (0.296-0.364)  cpu  1.11  read pl 0.168 pa 0.152  equal=True
+flat_32      genson_1048576  rg    1    56.69 MB  wall 0.514 (0.297-0.826)  cpu  1.75  read pl 0.315 pa 0.164  equal=True
+flat_32      genson_524288   rg    2    56.70 MB  wall 0.505 (0.286-0.760)  cpu  1.86  read pl 0.402 pa 0.150  equal=True
+flat_32      genson_262144   rg    3    56.72 MB  wall 0.298 (0.289-0.356)  cpu  1.09  read pl 0.199 pa 0.144  equal=True
+flat_32      genson_131072   rg    6    56.79 MB  wall 0.382 (0.269-0.466)  cpu  1.39  read pl 0.200 pa 0.136  equal=True
+flat_32      genson_65536    rg   12    57.34 MB  wall 0.326 (0.310-0.401)  cpu  1.12  read pl 0.162 pa 0.175  equal=True
+flat_32      genson_32768    rg   24    58.76 MB  wall 0.349 (0.333-0.422)  cpu  1.16  read pl 0.137 pa 0.170  equal=True
+
+flat_94      polars          rg    2    58.93 MB  wall 0.359 (0.343-0.401)  cpu  1.21  read pl 0.282 pa 0.178  equal=True
+flat_94      genson_1048576  rg    1    58.34 MB  wall 0.602 (0.415-1.208)  cpu  2.07  read pl 0.401 pa 0.149  equal=True
+flat_94      genson_524288   rg    1    58.34 MB  wall 0.425 (0.334-0.617)  cpu  1.54  read pl 0.368 pa 0.135  equal=True
+flat_94      genson_262144   rg    2    58.56 MB  wall 0.363 (0.317-0.592)  cpu  1.28  read pl 0.334 pa 0.139  equal=True
+flat_94      genson_131072   rg    3    58.60 MB  wall 0.297 (0.289-0.374)  cpu  1.06  read pl 0.280 pa 0.136  equal=True
+flat_94      genson_65536    rg    5    59.22 MB  wall 0.386 (0.307-0.425)  cpu  1.35  read pl 0.215 pa 0.168  equal=True
+flat_94      genson_32768    rg    9    60.54 MB  wall 0.522 (0.387-0.589)  cpu  1.71  read pl 0.150 pa 0.163  equal=True
+
+list_str     polars          rg   20    80.33 MB  wall 0.652 (0.592-0.730)  cpu  2.09  read pl 0.399 pa 0.354  equal=True
+list_str     genson_1048576  rg    3    80.40 MB  wall 1.520 (1.208-1.634)  cpu  3.28  read pl 0.479 pa 0.880  equal=True
+list_str     genson_524288   rg    5    80.39 MB  wall 0.664 (0.624-0.958)  cpu  1.66  read pl 0.367 pa 0.527  equal=True
+list_str     genson_262144   rg   10    80.38 MB  wall 0.908 (0.597-1.067)  cpu  2.83  read pl 0.340 pa 0.369  equal=True
+list_str     genson_131072   rg   20    80.40 MB  wall 0.853 (0.540-0.988)  cpu  2.96  read pl 0.323 pa 0.250  equal=True
+list_str     genson_65536    rg   39    80.40 MB  wall 0.814 (0.703-0.918)  cpu  3.03  read pl 0.280 pa 0.288  equal=True
+list_str     genson_32768    rg   77    80.42 MB  wall 0.648 (0.532-0.879)  cpu  2.30  read pl 0.296 pa 0.260  equal=True
+
+list_struct  polars          rg   20   113.37 MB  wall 1.327 (1.247-2.082)  cpu  4.55  read pl 0.542 pa 0.504  equal=True
+list_struct  genson_1048576  rg    3   113.34 MB  wall 1.049 (0.829-1.279)  cpu  2.82  read pl 0.840 pa 1.303  equal=True
+list_struct  genson_524288   rg    5   113.30 MB  wall 0.899 (0.850-0.942)  cpu  2.85  read pl 0.673 pa 1.226  equal=True
+list_struct  genson_262144   rg   10   113.29 MB  wall 0.821 (0.775-1.016)  cpu  2.94  read pl 0.597 pa 0.547  equal=True
+list_struct  genson_131072   rg   20   113.30 MB  wall 0.834 (0.798-0.883)  cpu  2.91  read pl 0.531 pa 0.508  equal=True
+list_struct  genson_65536    rg   39   113.30 MB  wall 0.822 (0.779-0.892)  cpu  2.92  read pl 0.592 pa 0.489  equal=True
+list_struct  genson_32768    rg   77   113.65 MB  wall 0.830 (0.808-0.918)  cpu  3.04  read pl 0.503 pa 0.446  equal=True
+

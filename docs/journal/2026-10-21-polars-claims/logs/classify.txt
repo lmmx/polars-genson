@@ -1,0 +1,8 @@
+busy-thread samples: 35
+ 14   40%  BufferedDremelIter under write_rep_and_def: def levels
+  9   26%  BufferedDremelIter under write_rep_and_def: rep levels
+  7   20%  BufferedDremelIter called from polars_parquet::arrow::write::binary::nested::array_to_page::<i64>
+  2    6%  BufferedDremelIter called from polars_parquet::arrow::write::primitive::nested::array_to_page::<i64, i64>
+  1    3%  cast to Arrow (utf8view to utf8)
+  1    3%  zstd
+  1    3%  BufferedDremelIter called from polars_parquet::arrow::write::array_to_page_nested

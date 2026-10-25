@@ -1,0 +1,4 @@
+{"copies": 2, "distinct_buffers": true, "write_s": 19.212, "user_s": 36.21, "sys_s": 1.06, "cores": 1.94}
+{"copies": 4, "distinct_buffers": true, "write_s": 20.005, "user_s": 67.91, "sys_s": 7.97, "cores": 3.79}
+{"copies": 2, "distinct_buffers": true, "write_s": 17.911, "user_s": 33.89, "sys_s": 0.97, "cores": 1.95}
+{"copies": 4, "distinct_buffers": true, "write_s": 19.595, "user_s": 68.62, "sys_s": 5.57, "cores": 3.79}

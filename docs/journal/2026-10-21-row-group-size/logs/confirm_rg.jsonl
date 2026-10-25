@@ -1,0 +1,390 @@
+{"write_s": 0.484, "cpu_s": 1.58, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "warmup": true, "check": "equal=True rgs=203 mb="}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.545, "cpu_s": 1.65, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "warmup": true, "check": "equal=True rgs=24 mb="}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.467, "cpu_s": 1.59, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "warmup": true, "check": "equal=True rgs=191 mb="}
+{"table": "flat_1", "lane": "polars", "read_round": 0, "polars_read_s": 0.23958845699985432, "pyarrow_read_s": 0.6374230930000522}
+{"table": "flat_1", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.36705088100006833, "pyarrow_read_s": 0.9257154209999499}
+{"table": "flat_1", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.22623467899984462, "pyarrow_read_s": 0.25921834499990837}
+{"table": "flat_1", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.4687111549999372, "pyarrow_read_s": 0.42603690600003574}
+{"table": "flat_1", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.43095261199982815, "pyarrow_read_s": 0.23257898200017735}
+{"table": "flat_1", "lane": "polars", "read_round": 1, "polars_read_s": 0.18124248599997372, "pyarrow_read_s": 0.18344357000000855}
+{"table": "flat_1", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.2181436500000018, "pyarrow_read_s": 0.24483516600002986}
+{"table": "flat_1", "lane": "polars", "read_round": 2, "polars_read_s": 0.205334152000205, "pyarrow_read_s": 0.16721384099992065}
+{"table": "flat_1", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.3196867880001264, "pyarrow_read_s": 0.44500975100004325}
+{"table": "flat_1", "lane": "polars", "read_round": 3, "polars_read_s": 0.2139711879999595, "pyarrow_read_s": 0.16906260200016732}
+{"table": "flat_1", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.2254934059999414, "pyarrow_read_s": 0.42959642100004203}
+{"table": "flat_1", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.21222590500019578, "pyarrow_read_s": 0.1924334570001065}
+{"table": "flat_1", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.2975459369999953, "pyarrow_read_s": 0.4161958479999157}
+{"table": "flat_1", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.20933365800010506, "pyarrow_read_s": 0.20787147600003664}
+{"table": "flat_1", "lane": "polars", "read_round": 4, "polars_read_s": 0.21997160000000804, "pyarrow_read_s": 0.23479335599995466}
+{"write_s": 0.605, "cpu_s": 1.89, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "round": 0}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.685, "cpu_s": 2.16, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "round": 0}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.411, "cpu_s": 1.43, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "round": 0}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.561, "cpu_s": 1.62, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "round": 1}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.505, "cpu_s": 1.7, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "round": 1}
+{"write_s": 0.465, "cpu_s": 1.49, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "round": 1}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.523, "cpu_s": 1.81, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "round": 2}
+{"write_s": 0.615, "cpu_s": 1.9, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "round": 2}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.576, "cpu_s": 1.73, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "round": 2}
+{"write_s": 0.449, "cpu_s": 1.42, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "round": 3}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.458, "cpu_s": 1.41, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "round": 3}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.469, "cpu_s": 1.6, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "round": 3}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.473, "cpu_s": 1.42, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "round": 4}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.438, "cpu_s": 1.54, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "round": 4}
+{"write_s": 0.572, "cpu_s": 1.93, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "round": 4}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.534, "cpu_s": 1.82, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "round": 5}
+{"write_s": 0.5, "cpu_s": 1.55, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "round": 5}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.519, "cpu_s": 1.51, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "round": 5}
+{"write_s": 0.441, "cpu_s": 1.47, "table": "flat_1", "lane": "polars", "bytes": 90343093, "row_groups": 203, "footer": 21069, "round": 6}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.658, "cpu_s": 1.88, "table": "flat_1", "lane": "genson_292", "bytes": 90052313, "row_groups": 24, "footer": 3350, "round": 6}
+{"rows": 25000000, "batch_rows": 1562500, "write_s": 0.458, "cpu_s": 1.5, "table": "flat_1", "lane": "genson_new", "bytes": 90258295, "row_groups": 191, "footer": 23971, "round": 6}
+{"write_s": 0.359, "cpu_s": 1.19, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "warmup": true, "check": "equal=True rgs=102 mb="}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.32, "cpu_s": 1.0, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "warmup": true, "check": "equal=True rgs=12 mb="}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.363, "cpu_s": 1.29, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "warmup": true, "check": "equal=True rgs=96 mb="}
+{"table": "flat_2", "lane": "polars", "read_round": 0, "polars_read_s": 0.1767736120000336, "pyarrow_read_s": 0.1719862859999921}
+{"table": "flat_2", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.17560289800007922, "pyarrow_read_s": 0.20639915200013093}
+{"table": "flat_2", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.17060574599986467, "pyarrow_read_s": 0.12690036100002544}
+{"table": "flat_2", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.1470041699999456, "pyarrow_read_s": 0.22650512799987155}
+{"table": "flat_2", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.1448502330001702, "pyarrow_read_s": 0.11891648199980409}
+{"table": "flat_2", "lane": "polars", "read_round": 1, "polars_read_s": 0.11756602200011912, "pyarrow_read_s": 0.11713348300008875}
+{"table": "flat_2", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.1420753689999401, "pyarrow_read_s": 0.13474426400011907}
+{"table": "flat_2", "lane": "polars", "read_round": 2, "polars_read_s": 0.14987955899982808, "pyarrow_read_s": 0.1865090930000406}
+{"table": "flat_2", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.2003054719998545, "pyarrow_read_s": 0.4015317809999033}
+{"table": "flat_2", "lane": "polars", "read_round": 3, "polars_read_s": 0.15090233799992347, "pyarrow_read_s": 0.18564755700003843}
+{"table": "flat_2", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.21220547200005058, "pyarrow_read_s": 0.4131408680000277}
+{"table": "flat_2", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.15984428199999456, "pyarrow_read_s": 0.1504093420001027}
+{"table": "flat_2", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.14127925499997218, "pyarrow_read_s": 0.19488772199997584}
+{"table": "flat_2", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.14030719300012606, "pyarrow_read_s": 0.1443608760000643}
+{"table": "flat_2", "lane": "polars", "read_round": 4, "polars_read_s": 0.17365728899994792, "pyarrow_read_s": 0.14848221400006878}
+{"write_s": 0.291, "cpu_s": 1.02, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "round": 0}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.621, "cpu_s": 1.85, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "round": 0}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.342, "cpu_s": 1.19, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "round": 0}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.464, "cpu_s": 1.44, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "round": 1}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.33, "cpu_s": 1.16, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "round": 1}
+{"write_s": 0.393, "cpu_s": 1.29, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "round": 1}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.563, "cpu_s": 2.0, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "round": 2}
+{"write_s": 0.344, "cpu_s": 1.13, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "round": 2}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.767, "cpu_s": 2.32, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "round": 2}
+{"write_s": 0.395, "cpu_s": 1.33, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "round": 3}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.582, "cpu_s": 1.82, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "round": 3}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.408, "cpu_s": 1.43, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "round": 3}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.372, "cpu_s": 1.21, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "round": 4}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.34, "cpu_s": 1.19, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "round": 4}
+{"write_s": 0.326, "cpu_s": 1.11, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "round": 4}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.416, "cpu_s": 1.4, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "round": 5}
+{"write_s": 0.314, "cpu_s": 1.06, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "round": 5}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.375, "cpu_s": 1.13, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "round": 5}
+{"write_s": 0.335, "cpu_s": 1.14, "table": "flat_2", "lane": "polars", "bytes": 63266478, "row_groups": 102, "footer": 18527, "round": 6}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.505, "cpu_s": 1.53, "table": "flat_2", "lane": "genson_292", "bytes": 62378644, "row_groups": 12, "footer": 3297, "round": 6}
+{"rows": 12500000, "batch_rows": 781250, "write_s": 0.323, "cpu_s": 1.12, "table": "flat_2", "lane": "genson_new", "bytes": 62486261, "row_groups": 96, "footer": 23065, "round": 6}
+{"write_s": 0.417, "cpu_s": 1.06, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "warmup": true, "check": "equal=True rgs=51 mb="}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.361, "cpu_s": 1.21, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "warmup": true, "check": "equal=True rgs=6 mb="}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.322, "cpu_s": 1.12, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "warmup": true, "check": "equal=True rgs=48 mb="}
+{"table": "flat_4", "lane": "polars", "read_round": 0, "polars_read_s": 0.17488039699992441, "pyarrow_read_s": 0.17208994099996744}
+{"table": "flat_4", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.28216984499999853, "pyarrow_read_s": 0.14509261800003515}
+{"table": "flat_4", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.2093898860000536, "pyarrow_read_s": 0.12668615900020086}
+{"table": "flat_4", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.19268211399980828, "pyarrow_read_s": 0.16319100499981687}
+{"table": "flat_4", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.1497378439999011, "pyarrow_read_s": 0.13029497299999093}
+{"table": "flat_4", "lane": "polars", "read_round": 1, "polars_read_s": 0.11929634200009787, "pyarrow_read_s": 0.13046512500000063}
+{"table": "flat_4", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.14231627199978902, "pyarrow_read_s": 0.12274844299986398}
+{"table": "flat_4", "lane": "polars", "read_round": 2, "polars_read_s": 0.11620018999997228, "pyarrow_read_s": 0.15025865200004773}
+{"table": "flat_4", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.202517564000118, "pyarrow_read_s": 0.2200314089998301}
+{"table": "flat_4", "lane": "polars", "read_round": 3, "polars_read_s": 0.1702852729999904, "pyarrow_read_s": 0.133866825000041}
+{"table": "flat_4", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.1614740630000142, "pyarrow_read_s": 0.19532558500009145}
+{"table": "flat_4", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.12906916499991894, "pyarrow_read_s": 0.11676083199995446}
+{"table": "flat_4", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.15716459800000848, "pyarrow_read_s": 0.12691573699999026}
+{"table": "flat_4", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.13261648000002424, "pyarrow_read_s": 0.11334303100011311}
+{"table": "flat_4", "lane": "polars", "read_round": 4, "polars_read_s": 0.12112188900005094, "pyarrow_read_s": 0.1443016829998669}
+{"write_s": 0.364, "cpu_s": 1.25, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "round": 0}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.823, "cpu_s": 2.81, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "round": 0}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.367, "cpu_s": 1.29, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "round": 0}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.43, "cpu_s": 1.35, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "round": 1}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.442, "cpu_s": 1.58, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "round": 1}
+{"write_s": 0.341, "cpu_s": 1.12, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "round": 1}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.315, "cpu_s": 1.1, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "round": 2}
+{"write_s": 0.365, "cpu_s": 1.24, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "round": 2}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.514, "cpu_s": 1.59, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "round": 2}
+{"write_s": 0.352, "cpu_s": 1.2, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "round": 3}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.523, "cpu_s": 1.76, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "round": 3}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.403, "cpu_s": 1.47, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "round": 3}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.405, "cpu_s": 1.29, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "round": 4}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.305, "cpu_s": 1.11, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "round": 4}
+{"write_s": 0.407, "cpu_s": 1.37, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "round": 4}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.317, "cpu_s": 1.12, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "round": 5}
+{"write_s": 0.379, "cpu_s": 1.31, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "round": 5}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.564, "cpu_s": 1.93, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "round": 5}
+{"write_s": 0.308, "cpu_s": 1.03, "table": "flat_4", "lane": "polars", "bytes": 60315449, "row_groups": 51, "footer": 17516, "round": 6}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.603, "cpu_s": 1.73, "table": "flat_4", "lane": "genson_292", "bytes": 59592481, "row_groups": 6, "footer": 3277, "round": 6}
+{"rows": 6250000, "batch_rows": 390625, "write_s": 0.296, "cpu_s": 1.07, "table": "flat_4", "lane": "genson_new", "bytes": 59812599, "row_groups": 48, "footer": 22124, "round": 6}
+{"write_s": 0.341, "cpu_s": 1.17, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "warmup": true, "check": "equal=True rgs=25 mb="}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.394, "cpu_s": 1.4, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "warmup": true, "check": "equal=True rgs=3 mb="}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.401, "cpu_s": 1.46, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "warmup": true, "check": "equal=True rgs=24 mb="}
+{"table": "flat_8", "lane": "polars", "read_round": 0, "polars_read_s": 0.1670283290000043, "pyarrow_read_s": 0.1549030109999876}
+{"table": "flat_8", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.2434784029999264, "pyarrow_read_s": 0.13544397199984815}
+{"table": "flat_8", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.1292608389999259, "pyarrow_read_s": 0.10836141300001145}
+{"table": "flat_8", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.16312667600004715, "pyarrow_read_s": 0.1705821770001421}
+{"table": "flat_8", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.2351606049999191, "pyarrow_read_s": 0.17134727500001645}
+{"table": "flat_8", "lane": "polars", "read_round": 1, "polars_read_s": 0.13307019200010473, "pyarrow_read_s": 0.14458365399991635}
+{"table": "flat_8", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.138177960999883, "pyarrow_read_s": 0.1462781879999966}
+{"table": "flat_8", "lane": "polars", "read_round": 2, "polars_read_s": 0.1553328299999066, "pyarrow_read_s": 0.12680135400000836}
+{"table": "flat_8", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.16185255100003815, "pyarrow_read_s": 0.13334245900000496}
+{"table": "flat_8", "lane": "polars", "read_round": 3, "polars_read_s": 0.16115532499998153, "pyarrow_read_s": 0.12435686499998155}
+{"table": "flat_8", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.16293325500009814, "pyarrow_read_s": 0.1680439239999032}
+{"table": "flat_8", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.1818919760000881, "pyarrow_read_s": 0.1543568279998908}
+{"table": "flat_8", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.18604600999992726, "pyarrow_read_s": 0.17493615900002624}
+{"table": "flat_8", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.1450497450000512, "pyarrow_read_s": 0.15899268999987726}
+{"table": "flat_8", "lane": "polars", "read_round": 4, "polars_read_s": 0.14401624299989635, "pyarrow_read_s": 0.12052415499988456}
+{"write_s": 0.3, "cpu_s": 1.06, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "round": 0}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.698, "cpu_s": 2.44, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "round": 0}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.352, "cpu_s": 1.28, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "round": 0}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.455, "cpu_s": 1.53, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "round": 1}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.307, "cpu_s": 1.13, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "round": 1}
+{"write_s": 0.299, "cpu_s": 1.02, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "round": 1}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.569, "cpu_s": 2.04, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "round": 2}
+{"write_s": 0.286, "cpu_s": 0.97, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "round": 2}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.306, "cpu_s": 1.01, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "round": 2}
+{"write_s": 0.337, "cpu_s": 1.12, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "round": 3}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.585, "cpu_s": 2.05, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "round": 3}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.288, "cpu_s": 1.04, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "round": 3}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.417, "cpu_s": 1.46, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "round": 4}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.427, "cpu_s": 1.51, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "round": 4}
+{"write_s": 0.36, "cpu_s": 1.2, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "round": 4}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.322, "cpu_s": 1.06, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "round": 5}
+{"write_s": 0.296, "cpu_s": 1.02, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "round": 5}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.411, "cpu_s": 1.43, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "round": 5}
+{"write_s": 0.293, "cpu_s": 0.98, "table": "flat_8", "lane": "polars", "bytes": 56166372, "row_groups": 25, "footer": 16956, "round": 6}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.416, "cpu_s": 1.43, "table": "flat_8", "lane": "genson_292", "bytes": 55053729, "row_groups": 3, "footer": 3481, "round": 6}
+{"rows": 3125000, "batch_rows": 195313, "write_s": 0.474, "cpu_s": 1.66, "table": "flat_8", "lane": "genson_new", "bytes": 55343086, "row_groups": 24, "footer": 21802, "round": 6}
+{"write_s": 0.459, "cpu_s": 1.56, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "warmup": true, "check": "equal=True rgs=6 mb="}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.378, "cpu_s": 1.34, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "warmup": true, "check": "equal=True rgs=1 mb="}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.285, "cpu_s": 1.01, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "warmup": true, "check": "equal=True rgs=6 mb="}
+{"table": "flat_32", "lane": "polars", "read_round": 0, "polars_read_s": 0.18491547799999353, "pyarrow_read_s": 0.1376959959998203}
+{"table": "flat_32", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.45807447099991805, "pyarrow_read_s": 0.17208112799994524}
+{"table": "flat_32", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.21909012299988717, "pyarrow_read_s": 0.16540479199989022}
+{"table": "flat_32", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.3482599679998657, "pyarrow_read_s": 0.13395826700002544}
+{"table": "flat_32", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.1983395339998424, "pyarrow_read_s": 0.1777319239999997}
+{"table": "flat_32", "lane": "polars", "read_round": 1, "polars_read_s": 0.16881261999992603, "pyarrow_read_s": 0.15312818999996125}
+{"table": "flat_32", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.17015274799996405, "pyarrow_read_s": 0.13276223899993056}
+{"table": "flat_32", "lane": "polars", "read_round": 2, "polars_read_s": 0.16507565700021587, "pyarrow_read_s": 0.11943209699984436}
+{"table": "flat_32", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.3594710339998528, "pyarrow_read_s": 0.15051655999968716}
+{"table": "flat_32", "lane": "polars", "read_round": 3, "polars_read_s": 0.15821378499958882, "pyarrow_read_s": 0.1532215189999988}
+{"table": "flat_32", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.3833538200001385, "pyarrow_read_s": 0.12305619299968384}
+{"table": "flat_32", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.17996048599979986, "pyarrow_read_s": 0.17812721800009967}
+{"table": "flat_32", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.2806660709998141, "pyarrow_read_s": 0.13778789400021196}
+{"table": "flat_32", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.19433981600013794, "pyarrow_read_s": 0.12290438699983497}
+{"table": "flat_32", "lane": "polars", "read_round": 4, "polars_read_s": 0.1532873579999432, "pyarrow_read_s": 0.14645819199995458}
+{"write_s": 0.407, "cpu_s": 1.35, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "round": 0}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.715, "cpu_s": 2.59, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "round": 0}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.375, "cpu_s": 1.37, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "round": 0}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.306, "cpu_s": 1.1, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "round": 1}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.296, "cpu_s": 1.04, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "round": 1}
+{"write_s": 0.313, "cpu_s": 1.12, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "round": 1}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.66, "cpu_s": 2.42, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "round": 2}
+{"write_s": 0.344, "cpu_s": 1.16, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "round": 2}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.446, "cpu_s": 1.58, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "round": 2}
+{"write_s": 0.38, "cpu_s": 1.28, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "round": 3}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.396, "cpu_s": 1.3, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "round": 3}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.348, "cpu_s": 1.11, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "round": 3}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.371, "cpu_s": 1.29, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "round": 4}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.327, "cpu_s": 1.15, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "round": 4}
+{"write_s": 0.598, "cpu_s": 1.34, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "round": 4}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.537, "cpu_s": 1.85, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "round": 5}
+{"write_s": 0.409, "cpu_s": 1.4, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "round": 5}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.349, "cpu_s": 1.27, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "round": 5}
+{"write_s": 0.458, "cpu_s": 1.48, "table": "flat_32", "lane": "polars", "bytes": 57440843, "row_groups": 6, "footer": 17726, "round": 6}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.529, "cpu_s": 1.8, "table": "flat_32", "lane": "genson_292", "bytes": 56690059, "row_groups": 1, "footer": 6002, "round": 6}
+{"rows": 781250, "batch_rows": 48829, "write_s": 0.565, "cpu_s": 2.05, "table": "flat_32", "lane": "genson_new", "bytes": 56786035, "row_groups": 6, "footer": 23200, "round": 6}
+{"write_s": 0.444, "cpu_s": 1.45, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "warmup": true, "check": "equal=True rgs=2 mb="}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.358, "cpu_s": 1.25, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "warmup": true, "check": "equal=True rgs=1 mb="}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.445, "cpu_s": 1.56, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "warmup": true, "check": "equal=True rgs=3 mb="}
+{"table": "flat_94", "lane": "polars", "read_round": 0, "polars_read_s": 0.3272030289999748, "pyarrow_read_s": 0.1763764759998594}
+{"table": "flat_94", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.3486040990001129, "pyarrow_read_s": 0.1247544329999073}
+{"table": "flat_94", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.33205836000024647, "pyarrow_read_s": 0.20304315299972586}
+{"table": "flat_94", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.4548056409998935, "pyarrow_read_s": 0.18581357099992601}
+{"table": "flat_94", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.3599462309998671, "pyarrow_read_s": 0.18301180200023737}
+{"table": "flat_94", "lane": "polars", "read_round": 1, "polars_read_s": 0.2863016940000307, "pyarrow_read_s": 0.20005215000037424}
+{"table": "flat_94", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.37000233099979596, "pyarrow_read_s": 0.19084269399991172}
+{"table": "flat_94", "lane": "polars", "read_round": 2, "polars_read_s": 0.3025681590002023, "pyarrow_read_s": 0.18300754199981384}
+{"table": "flat_94", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.43658164299995406, "pyarrow_read_s": 0.1802192139998624}
+{"table": "flat_94", "lane": "polars", "read_round": 3, "polars_read_s": 0.3153255520001039, "pyarrow_read_s": 0.13982084200006284}
+{"table": "flat_94", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.5032574179999756, "pyarrow_read_s": 0.1807996729999104}
+{"table": "flat_94", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.2964786870002172, "pyarrow_read_s": 0.12367196900004274}
+{"table": "flat_94", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.33891078500028016, "pyarrow_read_s": 0.1518500919996768}
+{"table": "flat_94", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.31492392700010896, "pyarrow_read_s": 0.15977023200002805}
+{"table": "flat_94", "lane": "polars", "read_round": 4, "polars_read_s": 0.2999042900000859, "pyarrow_read_s": 0.1500810279999314}
+{"write_s": 0.368, "cpu_s": 1.21, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "round": 0}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.943, "cpu_s": 3.57, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "round": 0}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.359, "cpu_s": 1.23, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "round": 0}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.434, "cpu_s": 1.54, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "round": 1}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.457, "cpu_s": 1.61, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "round": 1}
+{"write_s": 0.415, "cpu_s": 1.3, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "round": 1}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.337, "cpu_s": 1.21, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "round": 2}
+{"write_s": 0.436, "cpu_s": 1.48, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "round": 2}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.772, "cpu_s": 2.82, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "round": 2}
+{"write_s": 0.368, "cpu_s": 1.14, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "round": 3}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.589, "cpu_s": 1.94, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "round": 3}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.555, "cpu_s": 1.92, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "round": 3}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.469, "cpu_s": 1.64, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "round": 4}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.557, "cpu_s": 1.9, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "round": 4}
+{"write_s": 0.367, "cpu_s": 1.18, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "round": 4}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.365, "cpu_s": 1.29, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "round": 5}
+{"write_s": 0.436, "cpu_s": 1.38, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "round": 5}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.576, "cpu_s": 1.9, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "round": 5}
+{"write_s": 0.363, "cpu_s": 1.21, "table": "flat_94", "lane": "polars", "bytes": 58934900, "row_groups": 2, "footer": 21865, "round": 6}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.299, "cpu_s": 1.06, "table": "flat_94", "lane": "genson_292", "bytes": 58337513, "row_groups": 1, "footer": 17076, "round": 6}
+{"rows": 265957, "batch_rows": 16623, "write_s": 0.477, "cpu_s": 1.56, "table": "flat_94", "lane": "genson_new", "bytes": 58604112, "row_groups": 3, "footer": 36898, "round": 6}
+{"write_s": 0.643, "cpu_s": 2.06, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "warmup": true, "check": "equal=True rgs=20 mb="}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.76, "cpu_s": 1.62, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "warmup": true, "check": "equal=True rgs=3 mb="}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.448, "cpu_s": 1.52, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "warmup": true, "check": "equal=True rgs=20 mb="}
+{"table": "list_str", "lane": "polars", "read_round": 0, "polars_read_s": 0.2616458050001711, "pyarrow_read_s": 0.22534175200007667}
+{"table": "list_str", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.46900975900007325, "pyarrow_read_s": 0.6369372210001529}
+{"table": "list_str", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.3428471749998607, "pyarrow_read_s": 0.29534378600010314}
+{"table": "list_str", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.4256716630002302, "pyarrow_read_s": 0.7307307269998091}
+{"table": "list_str", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.3063689380001051, "pyarrow_read_s": 0.3012769209999533}
+{"table": "list_str", "lane": "polars", "read_round": 1, "polars_read_s": 0.29090571899996576, "pyarrow_read_s": 0.26074744599964106}
+{"table": "list_str", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.3062671779998709, "pyarrow_read_s": 0.27482380199990075}
+{"table": "list_str", "lane": "polars", "read_round": 2, "polars_read_s": 0.26047724699992614, "pyarrow_read_s": 0.3769088170001851}
+{"table": "list_str", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.5213083740000002, "pyarrow_read_s": 1.9269769009997617}
+{"table": "list_str", "lane": "polars", "read_round": 3, "polars_read_s": 0.2718767689998458, "pyarrow_read_s": 0.3009591579998414}
+{"table": "list_str", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.44885542999963945, "pyarrow_read_s": 0.5584389129999181}
+{"table": "list_str", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.2702627589997064, "pyarrow_read_s": 0.35259698200025014}
+{"table": "list_str", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.5101452509998126, "pyarrow_read_s": 0.6362063920000764}
+{"table": "list_str", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.28826898400029677, "pyarrow_read_s": 0.3342729200003305}
+{"table": "list_str", "lane": "polars", "read_round": 4, "polars_read_s": 0.2891599760000645, "pyarrow_read_s": 0.25040851300036593}
+{"write_s": 0.612, "cpu_s": 1.98, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "round": 0}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.057, "cpu_s": 2.51, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "round": 0}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.015, "cpu_s": 3.61, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "round": 0}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.001, "cpu_s": 2.26, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "round": 1}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.532, "cpu_s": 1.71, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "round": 1}
+{"write_s": 0.602, "cpu_s": 1.96, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "round": 1}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.924, "cpu_s": 3.19, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "round": 2}
+{"write_s": 0.567, "cpu_s": 1.89, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "round": 2}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.972, "cpu_s": 2.16, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "round": 2}
+{"write_s": 0.614, "cpu_s": 1.9, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "round": 3}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.091, "cpu_s": 2.47, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "round": 3}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.597, "cpu_s": 1.94, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "round": 3}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.808, "cpu_s": 1.71, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "round": 4}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.476, "cpu_s": 1.68, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "round": 4}
+{"write_s": 0.74, "cpu_s": 2.31, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "round": 4}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.031, "cpu_s": 3.68, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "round": 5}
+{"write_s": 0.677, "cpu_s": 2.09, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "round": 5}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.219, "cpu_s": 2.77, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "round": 5}
+{"write_s": 0.643, "cpu_s": 2.16, "table": "list_str", "lane": "polars", "bytes": 80325797, "row_groups": 20, "footer": 2735, "round": 6}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.989, "cpu_s": 2.15, "table": "list_str", "lane": "genson_292", "bytes": 80396235, "row_groups": 3, "footer": 782, "round": 6}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.82, "cpu_s": 2.96, "table": "list_str", "lane": "genson_new", "bytes": 80399782, "row_groups": 20, "footer": 3346, "round": 6}
+{"write_s": 1.614, "cpu_s": 5.18, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "warmup": true, "check": "equal=True rgs=20 mb="}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.352, "cpu_s": 3.09, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "warmup": true, "check": "equal=True rgs=3 mb="}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.717, "cpu_s": 2.5, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "warmup": true, "check": "equal=True rgs=20 mb="}
+{"table": "list_struct", "lane": "polars", "read_round": 0, "polars_read_s": 0.5150913200000105, "pyarrow_read_s": 0.4149780509997072}
+{"table": "list_struct", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.8576345199999196, "pyarrow_read_s": 0.8853174709997802}
+{"table": "list_struct", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.5764889719998791, "pyarrow_read_s": 0.47040090700011206}
+{"table": "list_struct", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.9447774749996825, "pyarrow_read_s": 0.8891752709996581}
+{"table": "list_struct", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.48326975999998467, "pyarrow_read_s": 0.44698457499998767}
+{"table": "list_struct", "lane": "polars", "read_round": 1, "polars_read_s": 0.5194406440000421, "pyarrow_read_s": 0.38945335399967007}
+{"table": "list_struct", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.5287733169998319, "pyarrow_read_s": 0.4518969650002873}
+{"table": "list_struct", "lane": "polars", "read_round": 2, "polars_read_s": 0.5233098210001117, "pyarrow_read_s": 0.4088838510001551}
+{"table": "list_struct", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.7560017250002602, "pyarrow_read_s": 1.4452734029996464}
+{"table": "list_struct", "lane": "polars", "read_round": 3, "polars_read_s": 0.560471267000139, "pyarrow_read_s": 0.4146293179996974}
+{"table": "list_struct", "lane": "genson_292", "read_round": 3, "polars_read_s": 1.1259474299999965, "pyarrow_read_s": 1.5752810620001583}
+{"table": "list_struct", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.6199895019999531, "pyarrow_read_s": 0.5938341490000312}
+{"table": "list_struct", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.9810448039997937, "pyarrow_read_s": 1.153056554000159}
+{"table": "list_struct", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.5525610750000851, "pyarrow_read_s": 0.4244588820001809}
+{"table": "list_struct", "lane": "polars", "read_round": 4, "polars_read_s": 0.6164915640001709, "pyarrow_read_s": 0.46481112999981633}
+{"write_s": 2.303, "cpu_s": 5.03, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "round": 0}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.801, "cpu_s": 2.71, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "round": 0}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.224, "cpu_s": 4.41, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "round": 0}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.076, "cpu_s": 2.92, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "round": 1}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.592, "cpu_s": 5.88, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "round": 1}
+{"write_s": 1.356, "cpu_s": 4.77, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "round": 1}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.577, "cpu_s": 5.71, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "round": 2}
+{"write_s": 1.601, "cpu_s": 5.11, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "round": 2}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.16, "cpu_s": 2.96, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "round": 2}
+{"write_s": 1.54, "cpu_s": 4.91, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "round": 3}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.297, "cpu_s": 3.09, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "round": 3}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.125, "cpu_s": 4.02, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "round": 3}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 0.912, "cpu_s": 3.07, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "round": 4}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.529, "cpu_s": 5.61, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "round": 4}
+{"write_s": 1.529, "cpu_s": 4.64, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "round": 4}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.544, "cpu_s": 5.53, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "round": 5}
+{"write_s": 1.436, "cpu_s": 4.95, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "round": 5}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.12, "cpu_s": 2.78, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "round": 5}
+{"write_s": 1.193, "cpu_s": 4.32, "table": "list_struct", "lane": "polars", "bytes": 113373114, "row_groups": 20, "footer": 4822, "round": 6}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.136, "cpu_s": 2.86, "table": "list_struct", "lane": "genson_292", "bytes": 113335831, "row_groups": 3, "footer": 1374, "round": 6}
+{"rows": 2500000, "batch_rows": 156250, "write_s": 1.518, "cpu_s": 5.66, "table": "list_struct", "lane": "genson_new", "bytes": 113301161, "row_groups": 20, "footer": 6426, "round": 6}
+{"write_s": 0.687, "cpu_s": 2.33, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "warmup": true, "check": "equal=True rgs=17 mb="}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.584, "cpu_s": 2.01, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "warmup": true, "check": "equal=True rgs=2 mb="}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.582, "cpu_s": 2.08, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "warmup": true, "check": "equal=True rgs=16 mb="}
+{"table": "graded_tall", "lane": "polars", "read_round": 0, "polars_read_s": 0.2943288090000351, "pyarrow_read_s": 0.5036528219998218}
+{"table": "graded_tall", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.4156121210003221, "pyarrow_read_s": 0.3817178320000494}
+{"table": "graded_tall", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.2698487809998369, "pyarrow_read_s": 0.2859917430000678}
+{"table": "graded_tall", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.3527508840002156, "pyarrow_read_s": 0.3583918250001261}
+{"table": "graded_tall", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.27153124000005846, "pyarrow_read_s": 0.31260483300002306}
+{"table": "graded_tall", "lane": "polars", "read_round": 1, "polars_read_s": 0.1967683479997504, "pyarrow_read_s": 0.3713343489998806}
+{"table": "graded_tall", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.19847672000014427, "pyarrow_read_s": 0.27904903200033004}
+{"table": "graded_tall", "lane": "polars", "read_round": 2, "polars_read_s": 0.1663620870003797, "pyarrow_read_s": 0.40679244300008577}
+{"table": "graded_tall", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.3023322840003857, "pyarrow_read_s": 0.2717422630003057}
+{"table": "graded_tall", "lane": "polars", "read_round": 3, "polars_read_s": 0.1928355959998953, "pyarrow_read_s": 0.35603649599988785}
+{"table": "graded_tall", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.3470300369999677, "pyarrow_read_s": 0.33374959599996146}
+{"table": "graded_tall", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.2327171920001092, "pyarrow_read_s": 0.3364852519998749}
+{"table": "graded_tall", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.31932097799972325, "pyarrow_read_s": 0.27558286099974794}
+{"table": "graded_tall", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.25379935099999784, "pyarrow_read_s": 0.29317615799982377}
+{"table": "graded_tall", "lane": "polars", "read_round": 4, "polars_read_s": 0.21039351900026304, "pyarrow_read_s": 0.30897723899988705}
+{"write_s": 0.663, "cpu_s": 2.2, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "round": 0}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 1.26, "cpu_s": 4.43, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "round": 0}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 1.08, "cpu_s": 3.94, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "round": 0}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.82, "cpu_s": 2.9, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "round": 1}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 1.075, "cpu_s": 3.9, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "round": 1}
+{"write_s": 0.703, "cpu_s": 2.41, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "round": 1}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.91, "cpu_s": 3.33, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "round": 2}
+{"write_s": 0.659, "cpu_s": 2.21, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "round": 2}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.946, "cpu_s": 3.34, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "round": 2}
+{"write_s": 0.721, "cpu_s": 2.51, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "round": 3}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 1.134, "cpu_s": 3.93, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "round": 3}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.767, "cpu_s": 2.84, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "round": 3}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.469, "cpu_s": 1.62, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "round": 4}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.811, "cpu_s": 2.93, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "round": 4}
+{"write_s": 0.69, "cpu_s": 2.36, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "round": 4}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.95, "cpu_s": 3.34, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "round": 5}
+{"write_s": 0.631, "cpu_s": 2.15, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "round": 5}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.769, "cpu_s": 2.72, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "round": 5}
+{"write_s": 0.536, "cpu_s": 1.81, "table": "graded_tall", "lane": "polars", "bytes": 88957531, "row_groups": 17, "footer": 35016, "round": 6}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.687, "cpu_s": 2.36, "table": "graded_tall", "lane": "genson_292", "bytes": 77131264, "row_groups": 2, "footer": 6967, "round": 6}
+{"rows": 2097152, "batch_rows": 131072, "write_s": 0.954, "cpu_s": 3.4, "table": "graded_tall", "lane": "genson_new", "bytes": 80669705, "row_groups": 16, "footer": 40968, "round": 6}
+{"write_s": 0.714, "cpu_s": 2.46, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "warmup": true, "check": "equal=True rgs=3 mb="}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.475, "cpu_s": 1.75, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "warmup": true, "check": "equal=True rgs=1 mb="}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.622, "cpu_s": 2.21, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "warmup": true, "check": "equal=True rgs=4 mb="}
+{"table": "graded_wide", "lane": "polars", "read_round": 0, "polars_read_s": 0.31226198200010913, "pyarrow_read_s": 0.5143509550002818}
+{"table": "graded_wide", "lane": "genson_292", "read_round": 0, "polars_read_s": 0.3066727779996654, "pyarrow_read_s": 0.3156099800003176}
+{"table": "graded_wide", "lane": "genson_new", "read_round": 0, "polars_read_s": 0.2368013880000035, "pyarrow_read_s": 0.2913825440000437}
+{"table": "graded_wide", "lane": "genson_292", "read_round": 1, "polars_read_s": 0.32997852900007274, "pyarrow_read_s": 0.3528108020000218}
+{"table": "graded_wide", "lane": "genson_new", "read_round": 1, "polars_read_s": 0.291821169999821, "pyarrow_read_s": 0.2530971969999882}
+{"table": "graded_wide", "lane": "polars", "read_round": 1, "polars_read_s": 0.2007421250000334, "pyarrow_read_s": 0.4208149969999795}
+{"table": "graded_wide", "lane": "genson_new", "read_round": 2, "polars_read_s": 0.2517797639998207, "pyarrow_read_s": 0.2539712440002404}
+{"table": "graded_wide", "lane": "polars", "read_round": 2, "polars_read_s": 0.237587115000224, "pyarrow_read_s": 0.4283516129999043}
+{"table": "graded_wide", "lane": "genson_292", "read_round": 2, "polars_read_s": 0.3488557050000054, "pyarrow_read_s": 0.23025494300009086}
+{"table": "graded_wide", "lane": "polars", "read_round": 3, "polars_read_s": 0.23866087100032018, "pyarrow_read_s": 0.37210826099999395}
+{"table": "graded_wide", "lane": "genson_292", "read_round": 3, "polars_read_s": 0.3092340149996744, "pyarrow_read_s": 0.26974498300023697}
+{"table": "graded_wide", "lane": "genson_new", "read_round": 3, "polars_read_s": 0.2432579880000958, "pyarrow_read_s": 0.2866460929999448}
+{"table": "graded_wide", "lane": "genson_292", "read_round": 4, "polars_read_s": 0.3320134309997229, "pyarrow_read_s": 0.26330869699995674}
+{"table": "graded_wide", "lane": "genson_new", "read_round": 4, "polars_read_s": 0.2148520309997366, "pyarrow_read_s": 0.3184061969996037}
+{"table": "graded_wide", "lane": "polars", "read_round": 4, "polars_read_s": 0.24361816200007524, "pyarrow_read_s": 0.3699512169996524}
+{"write_s": 0.866, "cpu_s": 2.93, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "round": 0}
+{"rows": 419430, "batch_rows": 26215, "write_s": 1.334, "cpu_s": 5.02, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "round": 0}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.749, "cpu_s": 2.65, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "round": 0}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.504, "cpu_s": 1.8, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "round": 1}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.944, "cpu_s": 3.29, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "round": 1}
+{"write_s": 0.731, "cpu_s": 2.45, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "round": 1}
+{"rows": 419430, "batch_rows": 26215, "write_s": 1.038, "cpu_s": 3.67, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "round": 2}
+{"write_s": 0.63, "cpu_s": 2.13, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "round": 2}
+{"rows": 419430, "batch_rows": 26215, "write_s": 1.188, "cpu_s": 4.27, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "round": 2}
+{"write_s": 0.78, "cpu_s": 2.64, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "round": 3}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.958, "cpu_s": 3.47, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "round": 3}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.783, "cpu_s": 2.85, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "round": 3}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.782, "cpu_s": 2.76, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "round": 4}
+{"rows": 419430, "batch_rows": 26215, "write_s": 1.06, "cpu_s": 3.78, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "round": 4}
+{"write_s": 0.773, "cpu_s": 2.65, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "round": 4}
+{"rows": 419430, "batch_rows": 26215, "write_s": 0.974, "cpu_s": 3.37, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "round": 5}
+{"write_s": 0.696, "cpu_s": 2.33, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "round": 5}
+{"rows": 419430, "batch_rows": 26215, "write_s": 1.227, "cpu_s": 4.46, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "round": 5}
+{"write_s": 0.734, "cpu_s": 2.5, "table": "graded_wide", "lane": "polars", "bytes": 93268853, "row_groups": 3, "footer": 37779, "round": 6}
+{"rows": 419430, "batch_rows": 26215, "write_s": 1.048, "cpu_s": 3.71, "table": "graded_wide", "lane": "genson_292", "bytes": 83208165, "row_groups": 1, "footer": 21111, "round": 6}
+{"rows": 419430, "batch_rows": 26215, "write_s": 1.04, "cpu_s": 3.63, "table": "graded_wide", "lane": "genson_new", "bytes": 86590199, "row_groups": 4, "footer": 57142, "round": 6}

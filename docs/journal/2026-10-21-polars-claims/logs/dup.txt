@@ -1,0 +1,6 @@
+{"copies": 1, "write_s": 17.364, "user_s": 16.72, "sys_s": 0.44, "cores": 0.99}
+{"copies": 2, "write_s": 46.81, "user_s": 90.72, "sys_s": 0.99, "cores": 1.96}
+{"copies": 4, "write_s": 72.868, "user_s": 241.61, "sys_s": 2.3, "cores": 3.35}
+{"copies": 1, "write_s": 16.974, "user_s": 16.3, "sys_s": 0.47, "cores": 0.99}
+{"copies": 2, "write_s": 46.162, "user_s": 89.15, "sys_s": 1.02, "cores": 1.95}
+{"copies": 4, "write_s": 66.55, "user_s": 206.07, "sys_s": 2.05, "cores": 3.13}
