@@ -106,3 +106,10 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/lmmx/polars-genson"
 version = "0.1.0"
+
+# Measurement only, not to merge: arrow-rs's parquet with each list's repetition levels
+# computed once and shared by its leaves, vendored in lmmx/pq-glue#11, and pq-glue taken from
+# the same commit (genson-core's write is pq-glue's)
+[patch.crates-io]
+parquet = { git = "https://github.com/lmmx/pq-glue", rev = "b0ecc511f34f4b667661c39587f265b26ef46021" }
+pq-glue = { git = "https://github.com/lmmx/pq-glue", rev = "b0ecc511f34f4b667661c39587f265b26ef46021" }

@@ -2502,8 +2502,7 @@ dependencies = [
 [[package]]
 name = "parquet"
 version = "60.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8af83d2940bc0510f9aef86d865f56fdc6095f87ab115ac885a80b7c5226d3ba"
+source = "git+https://github.com/lmmx/pq-glue?rev=b0ecc511f34f4b667661c39587f265b26ef46021#b0ecc511f34f4b667661c39587f265b26ef46021"
 dependencies = [
  "ahash",
  "arrow-array",
@@ -3338,8 +3337,7 @@ dependencies = [
 [[package]]
 name = "pq-glue"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "499f35850d0ecb9409298d8d5c22c6b9b8b9a5e76e7b98390e945c14fee44007"
+source = "git+https://github.com/lmmx/pq-glue?rev=b0ecc511f34f4b667661c39587f265b26ef46021#b0ecc511f34f4b667661c39587f265b26ef46021"
 dependencies = [
  "arrow-array",
  "arrow-schema",
