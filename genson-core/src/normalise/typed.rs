@@ -339,22 +339,25 @@ fn reserve<T>(v: &mut Vec<T>, additional: usize) {
 
 /// `v` grown to the length it would have at the end of its batch if it went on filling as
 /// it has, by the batch's bytes read ([`READ`]), and a sixteenth more, rather than doubled:
-/// its buffer, handed over with the array, keeps its capacity. It grows by an eighth at
-/// least (so that it is grown a few times, not at every row) and is never more than
-/// doubled, as a builder's buffer is, and once the batch is read it is grown to fit.
+/// its buffer, handed over with the array, keeps its capacity. However it is estimated, it
+/// grows by an eighth (and to 64 values) at least, so that appends take amortised constant
+/// time even where the estimate is short (once the batch's last row is being read, or with
+/// no `READ` set, the estimate is the length needed now), and it is never more than
+/// doubled, as a builder's buffer is.
 #[cold]
 #[inline(never)]
 fn grow<T>(v: &mut Vec<T>, additional: usize) {
     let needed = v.len() + additional;
     let (read, total) = READ.with(Cell::get);
-    let target = if read >= total {
+    let at_end = if read >= total {
         needed
     } else {
         let at_end = (needed as u128 * total as u128 / read.max(1) as u128) as usize;
-        let least = needed.max(v.capacity() + v.capacity() / 8);
-        let most = needed.max(v.capacity() * 2).max(64);
-        (at_end + at_end / 16).clamp(least, most)
+        at_end + at_end / 16
     };
+    let least = needed.max(v.capacity() + v.capacity() / 8).max(64);
+    let most = needed.max(v.capacity() * 2).max(64);
+    let target = at_end.clamp(least, most);
     v.reserve_exact(target - v.len());
 }
 
@@ -1432,5 +1435,65 @@ impl ArrowPlan<'_> {
         let array = col.finish().ok()?;
         let array = array.as_any().downcast_ref::<StructArray>()?.clone();
         Some((array, d.pruned))
+    }
+}
+
+#[cfg(test)]
+mod growth_tests {
+    use super::*;
+
+    /// Appends to a full column: its capacity changes (with how much it grew by), each
+    /// append being one value or `chunk` values.
+    fn regrowths(start: usize, appends: usize, chunk: usize) -> Vec<(usize, usize)> {
+        let mut v: Vec<u64> = Vec::with_capacity(start);
+        v.extend(std::iter::repeat_n(0, start));
+        let mut changes = Vec::new();
+        for i in 0..appends {
+            let before = v.capacity();
+            if chunk == 1 {
+                push(&mut v, i as u64);
+            } else {
+                reserve(&mut v, chunk);
+                v.extend(std::iter::repeat_n(i as u64, chunk));
+            }
+            if v.capacity() != before {
+                changes.push((before, v.capacity()));
+            }
+        }
+        changes
+    }
+
+    /// A column full when the batch's last row starts (the whole batch read, as `normalise`
+    /// sets `READ` for that row), or with no `READ` set, that then takes many values: it is
+    /// grown by an eighth at least each time, so a logarithmic number of times, not once
+    /// for every value.
+    #[test]
+    fn test_a_full_column_grows_geometrically_in_the_last_row() {
+        for read in [(1_000, 1_000), (0, 0), (999, 1_000)] {
+            READ.with(|r| r.set(read));
+            for (start, appends, chunk) in [(1_000, 200_000, 1), (5_000, 20_000, 7), (0, 50_000, 1)]
+            {
+                let changes = regrowths(start, appends, chunk);
+                let end = start + appends * chunk;
+                // Growing by at least an eighth from 64: at most log_{9/8}(end / 64) + 1 times
+                let bound = ((end as f64 / 64.0).ln() / (9.0f64 / 8.0).ln()).ceil() as usize + 1;
+                assert!(
+                    changes.len() <= bound,
+                    "{read:?} {start} {appends}x{chunk}: {} regrowths, more than {bound}",
+                    changes.len()
+                );
+                for (before, after) in changes {
+                    assert!(
+                        after >= (before + before / 8).max(64),
+                        "{read:?}: {before} -> {after}"
+                    );
+                    assert!(
+                        after <= (before * 2).max(64).max(before + chunk),
+                        "{read:?}: {before} -> {after}"
+                    );
+                }
+            }
+        }
+        READ.with(|r| r.set((0, 0)));
     }
 }
