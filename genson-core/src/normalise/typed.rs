@@ -23,16 +23,18 @@ use super::{
     make_promoted_scalar_key, MapEncoding, NormaliseConfig, NormalisePlan, PathSegment, PrunedValue,
 };
 use crate::tape::{lex, unescape, unescape_into, Tok};
-use arrow::array::builder::{
-    ArrayBuilder, BooleanBuilder, Float64Builder, Int64Builder, NullBufferBuilder, StringBuilder,
+use arrow::array::builder::{ArrayBuilder, BooleanBuilder, NullBufferBuilder};
+use arrow::array::{
+    Array, ArrayRef, Float64Array, Int64Array, ListArray, MapArray, NullArray, StringArray,
+    StructArray,
 };
-use arrow::array::{Array, ArrayRef, ListArray, MapArray, NullArray, StructArray};
-use arrow::buffer::{NullBuffer, OffsetBuffer};
+use arrow::buffer::{Buffer, NullBuffer, OffsetBuffer, ScalarBuffer};
 use arrow::datatypes::{DataType, FieldRef, Fields};
 use arrow::error::ArrowError;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::{Number, Value};
 use std::borrow::Cow;
+use std::cell::Cell;
 use std::sync::Arc;
 
 /// The suffix of a promoted field's name (`name__type`): the scalars that go to it.
@@ -321,11 +323,157 @@ enum Seg<'a, 'r> {
     Key(Cow<'r, str>),
 }
 
+thread_local! {
+    /// The bytes of its batch's rows the decoder on this thread has read (to the end of the
+    /// row it is decoding) and the batch's bytes in all, by which a column is grown.
+    static READ: Cell<(usize, usize)> = const { Cell::new((0, 0)) };
+}
+
+/// Room for `additional` more values in `v`, grown (see [`grow`]) if it has not.
+#[inline]
+fn reserve<T>(v: &mut Vec<T>, additional: usize) {
+    if v.capacity() - v.len() < additional {
+        grow(v, additional);
+    }
+}
+
+/// `v` grown to the length it would have at the end of its batch if it went on filling as
+/// it has, by the batch's bytes read ([`READ`]), and a sixteenth more, rather than doubled:
+/// its buffer, handed over with the array, keeps its capacity. It grows by an eighth at
+/// least (so that it is grown a few times, not at every row) and is never more than
+/// doubled, as a builder's buffer is, and once the batch is read it is grown to fit.
+#[cold]
+#[inline(never)]
+fn grow<T>(v: &mut Vec<T>, additional: usize) {
+    let needed = v.len() + additional;
+    let (read, total) = READ.with(Cell::get);
+    let target = if read >= total {
+        needed
+    } else {
+        let at_end = (needed as u128 * total as u128 / read.max(1) as u128) as usize;
+        let least = needed.max(v.capacity() + v.capacity() / 8);
+        let most = needed.max(v.capacity() * 2).max(64);
+        (at_end + at_end / 16).clamp(least, most)
+    };
+    v.reserve_exact(target - v.len());
+}
+
+/// A string column: offsets, values and nulls, as `StringBuilder` builds them, in buffers
+/// grown by [`grow`].
+struct Strings {
+    offsets: Vec<i32>,
+    values: Vec<u8>,
+    nulls: NullBufferBuilder,
+}
+
+impl Strings {
+    fn new() -> Self {
+        Strings {
+            offsets: vec![0],
+            values: Vec::new(),
+            nulls: NullBufferBuilder::new(0),
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.offsets.len() - 1
+    }
+
+    /// The value ended: the offset of the bytes written since the last one.
+    fn end_value(&mut self) {
+        reserve(&mut self.offsets, 1);
+        // `append_str` has checked the bytes fit an `i32`
+        self.offsets.push(self.values.len() as i32);
+        self.nulls.append_non_null();
+    }
+
+    fn append_value(&mut self, s: &str) {
+        reserve(&mut self.values, s.len());
+        self.values.extend_from_slice(s.as_bytes());
+        self.end_value();
+    }
+
+    fn append_nulls(&mut self, n: usize) {
+        reserve(&mut self.offsets, n);
+        let last = *self.offsets.last().unwrap();
+        self.offsets.extend(std::iter::repeat_n(last, n));
+        self.nulls.append_n_nulls(n);
+    }
+
+    fn finish(mut self) -> StringArray {
+        // SAFETY: the offsets start at 0 and rise to the values' length, each at the end of
+        // a `str` appended whole, so every value is valid UTF-8
+        unsafe {
+            StringArray::new_unchecked(
+                OffsetBuffer::new_unchecked(ScalarBuffer::from(self.offsets)),
+                Buffer::from_vec(self.values),
+                self.nulls.finish(),
+            )
+        }
+    }
+}
+
+/// A value's text written into the column (by `unescape_into`), ended by `end_value`.
+impl std::fmt::Write for Strings {
+    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+        reserve(&mut self.values, s.len());
+        self.values.extend_from_slice(s.as_bytes());
+        Ok(())
+    }
+}
+
+/// A column of 64-bit integers or floats: values and nulls, as `PrimitiveBuilder` builds
+/// them (a null's value being 0), in a buffer grown by [`grow`].
+struct Primitive<T> {
+    values: Vec<T>,
+    nulls: NullBufferBuilder,
+}
+
+impl<T: Copy + Default> Primitive<T> {
+    fn new() -> Self {
+        Primitive {
+            values: Vec::new(),
+            nulls: NullBufferBuilder::new(0),
+        }
+    }
+
+    fn append_option(&mut self, v: Option<T>) {
+        reserve(&mut self.values, 1);
+        match v {
+            Some(v) => {
+                self.values.push(v);
+                self.nulls.append_non_null();
+            }
+            None => {
+                self.values.push(T::default());
+                self.nulls.append_null();
+            }
+        }
+    }
+
+    fn append_nulls(&mut self, n: usize) {
+        reserve(&mut self.values, n);
+        self.values.extend(std::iter::repeat_n(T::default(), n));
+        self.nulls.append_n_nulls(n);
+    }
+
+    fn len(&self) -> usize {
+        self.values.len()
+    }
+
+    fn finish(mut self) -> (ScalarBuffer<T>, Option<NullBuffer>)
+    where
+        T: arrow::datatypes::ArrowNativeType,
+    {
+        (ScalarBuffer::from(self.values), self.nulls.finish())
+    }
+}
+
 /// A column being built, of one of the Arrow types `avro_to_arrow_type` gives.
 enum Column {
-    Utf8(StringBuilder),
-    Int(Int64Builder),
-    Float(Float64Builder),
+    Utf8(Strings),
+    Int(Primitive<i64>),
+    Float(Primitive<f64>),
     Bool(BooleanBuilder),
     Null(usize),
     List {
@@ -344,7 +492,7 @@ enum Column {
         field: FieldRef,
         offsets: Vec<i32>,
         valid: NullBufferBuilder,
-        keys: StringBuilder,
+        keys: Strings,
         values: Box<Column>,
     },
 }
@@ -355,9 +503,9 @@ struct Unsupported;
 impl Column {
     fn new(data_type: &DataType) -> Result<Self, Unsupported> {
         Ok(match data_type {
-            DataType::Utf8 => Column::Utf8(StringBuilder::new()),
-            DataType::Int64 => Column::Int(Int64Builder::new()),
-            DataType::Float64 => Column::Float(Float64Builder::new()),
+            DataType::Utf8 => Column::Utf8(Strings::new()),
+            DataType::Int64 => Column::Int(Primitive::new()),
+            DataType::Float64 => Column::Float(Primitive::new()),
             DataType::Boolean => Column::Bool(BooleanBuilder::new()),
             DataType::Null => Column::Null(0),
             DataType::List(field) => Column::List {
@@ -386,7 +534,7 @@ impl Column {
                     field: field.clone(),
                     offsets: vec![0],
                     valid: NullBufferBuilder::new(0),
-                    keys: StringBuilder::new(),
+                    keys: Strings::new(),
                     values: Box::new(Column::new(value.data_type())?),
                 }
             }
@@ -409,6 +557,7 @@ impl Column {
             Column::Bool(b) => b.append_nulls(n),
             Column::Null(k) => *k += n,
             Column::List { offsets, valid, .. } | Column::Map { offsets, valid, .. } => {
+                reserve(offsets, n);
                 let last = *offsets.last().unwrap();
                 offsets.extend(std::iter::repeat_n(last, n));
                 valid.append_n_nulls(n);
@@ -444,9 +593,15 @@ impl Column {
 
     fn finish(self) -> Result<ArrayRef, ArrowError> {
         Ok(match self {
-            Column::Utf8(mut b) => Arc::new(b.finish()),
-            Column::Int(mut b) => Arc::new(b.finish()),
-            Column::Float(mut b) => Arc::new(b.finish()),
+            Column::Utf8(b) => Arc::new(b.finish()),
+            Column::Int(b) => {
+                let (values, nulls) = b.finish();
+                Arc::new(Int64Array::new(values, nulls))
+            }
+            Column::Float(b) => {
+                let (values, nulls) = b.finish();
+                Arc::new(Float64Array::new(values, nulls))
+            }
             Column::Bool(mut b) => Arc::new(b.finish()),
             Column::Null(n) => Arc::new(NullArray::new(n)),
             Column::List {
@@ -511,8 +666,8 @@ impl Column {
 }
 
 /// `s` appended, unless the column would then hold more than `arrow-json` decodes into one.
-fn append_str(b: &mut StringBuilder, s: &str) -> Result<(), Unsupported> {
-    if b.values_slice().len() + s.len() > i32::MAX as usize {
+fn append_str(b: &mut Strings, s: &str) -> Result<(), Unsupported> {
+    if b.values.len() + s.len() > i32::MAX as usize {
         return Err(Unsupported);
     }
     b.append_value(s);
@@ -522,8 +677,16 @@ fn append_str(b: &mut StringBuilder, s: &str) -> Result<(), Unsupported> {
 /// The offset `added` items on, unless past what `arrow-json` decodes into a list or map.
 fn push_offset(offsets: &mut Vec<i32>, added: usize) -> Result<(), Unsupported> {
     let last = *offsets.last().unwrap() as usize;
-    offsets.push(i32::try_from(last + added).map_err(|_| Unsupported)?);
+    let offset = i32::try_from(last + added).map_err(|_| Unsupported)?;
+    push(offsets, offset);
     Ok(())
+}
+
+/// `value` pushed onto `v`, grown by [`grow`] if it is full.
+#[inline]
+fn push<T>(v: &mut Vec<T>, value: T) {
+    reserve(v, 1);
+    v.push(value);
 }
 
 /// Whether a key (by its text, without escapes) is given twice among `members`.
@@ -876,17 +1039,17 @@ impl<'a, 'r> Decoder<'a, 'r> {
             (Node::String, Column::Utf8(b)) => {
                 match tok {
                     _ if null => {
-                        b.append_null();
+                        b.append_nulls(1);
                         return Ok(Put::Kept);
                     }
                     // Unescaped into the column, no longer than its text
                     Some(Tok::Str(s, e, true)) => {
                         let raw = self.text((s, e));
-                        if b.values_slice().len() + raw.len() > i32::MAX as usize {
+                        if b.values.len() + raw.len() > i32::MAX as usize {
                             return Err(Unsupported);
                         }
                         unescape_into(raw, b);
-                        b.append_value("");
+                        b.end_value();
                     }
                     Some(Tok::Str(s, e, false)) => append_str(b, self.text((s, e)))?,
                     _ => append_str(b, &self.value_of(input).to_string())?,
@@ -898,7 +1061,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
                 Some(Tok::Str(s, e, escaped)) if cfg.coerce_string => {
                     b.append_option(self.str_of(s, e, escaped).parse::<i64>().ok())
                 }
-                _ => b.append_null(),
+                _ => b.append_option(None),
             },
             (Node::Double, Column::Float(b)) => match tok {
                 Some(Tok::Num(s, e)) => b.append_option(self.number(s, e).as_f64()),
@@ -908,7 +1071,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
                         .ok()
                         .filter(|f| f.is_finite()),
                 ),
-                _ => b.append_null(),
+                _ => b.append_option(None),
             },
             (Node::Boolean, Column::Bool(b)) => match tok {
                 Some(Tok::Bool(v)) => b.append_value(v),
@@ -964,12 +1127,12 @@ impl<'a, 'r> Decoder<'a, 'r> {
                 },
             ) => match (tok, input) {
                 _ if null => {
-                    offsets.push(*offsets.last().unwrap());
+                    push(offsets, *offsets.last().unwrap());
                     valid.append_null();
                 }
                 (Some(Tok::Arr { len, .. }), Input::Tok(i)) => {
                     if len == 0 && cfg.empty_as_null {
-                        offsets.push(*offsets.last().unwrap());
+                        push(offsets, *offsets.last().unwrap());
                         valid.append_null();
                         return Ok(Put::Kept);
                     }
@@ -1085,7 +1248,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
             Input::Tok(i) if !matches!(self.toks[i], Tok::Null) => i,
             Input::Wrapped(..) => return Err(Unsupported),
             _ => {
-                offsets.push(*offsets.last().unwrap());
+                push(offsets, *offsets.last().unwrap());
                 valid.append_null();
                 return Ok(Put::Kept);
             }
@@ -1097,7 +1260,7 @@ impl<'a, 'r> Decoder<'a, 'r> {
         match self.toks[i] {
             Tok::Obj { len, escaped, .. } => {
                 if len == 0 && cfg.empty_as_null {
-                    offsets.push(*offsets.last().unwrap());
+                    push(offsets, *offsets.last().unwrap());
                     valid.append_null();
                     return Ok(Put::Kept);
                 }
@@ -1224,11 +1387,17 @@ impl ArrowPlan<'_> {
             strings: 0,
         };
         let wrap_root = self.cfg.wrap_root.as_deref();
+        // The batch's bytes, by which its columns are grown (see `grow`)
+        let total = rows.iter().flatten().map(|row| row.len()).sum::<usize>();
+        let mut read = 0;
+        READ.with(|r| r.set((0, total)));
         for (i, row) in rows.iter().enumerate() {
             let Some(row) = row else {
                 col.append_null();
                 continue;
             };
+            read += row.len();
+            READ.with(|r| r.set((read, total)));
             let valid = lex(row, &mut d.toks).is_ok();
             d.row = row;
             d.row_index = first_row + i;
