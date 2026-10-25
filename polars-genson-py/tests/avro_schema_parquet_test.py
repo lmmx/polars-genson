@@ -141,12 +141,24 @@ def test_invalid_schema_raises(rows, capfd):
 # Rows with label maps to extract (one with its key spelt with an escape), and rows without:
 # one with a key given twice, which the extraction's scan would write again
 LABELLED = [
-    '{"P1": [{"mainsnak": {"value": "a", "id": "Q5", "labels": {"en": "five"}}}]}',
-    '{"P2": [{"mainsnak": {"value": "b", "id": "Q5", "l\\u0061bels": {"en": "five"}}}]}',
+    '{"P1": [{"mainsnak": {"value": "a", "hash": "h5", "labels": {"en": "five"}}}]}',
+    '{"P2": [{"mainsnak": {"value": "b", "hash": "h5", "l\\u0061bels": {"en": "five"}}}]}',
     '{"P3": [{"mainsnak": {"value": "c", "n": 1, "n": 2}}]}',
     None,
     '{"P4": [{"mainsnak": {"value": "d"}, "rank": "normal"}]}',
 ]
+
+
+def without_field(node, name):
+    """An Avro schema with every record's field `name` left out."""
+    if isinstance(node, list):
+        return [without_field(n, name) for n in node]
+    if not isinstance(node, dict):
+        return node
+    node = {k: without_field(v, name) for k, v in node.items()}
+    if isinstance(node.get("fields"), list):
+        node["fields"] = [f for f in node["fields"] if f.get("name") != name]
+    return node
 
 
 @pytest.mark.parametrize("fits", [True, False])
@@ -157,7 +169,7 @@ def test_extracted_rows_decode_as_inferred(tmp_path, capfd, fits):
     src = tmp_path / "labelled.parquet"
     ids = [f"Q{i}" for i in range(len(LABELLED))]
     pl.DataFrame({"id": ids, "claims": LABELLED}).write_parquet(src)
-    kw = dict(extract_invariants={"labels": "id"}, force_field_types={"claims": "map"})
+    kw = dict(extract_invariants={"labels": "hash"}, force_field_types={"claims": "map"})
 
     def run(name, **extra):
         lookup = tmp_path / f"lookup_{name}.parquet"
@@ -167,7 +179,7 @@ def test_extracted_rows_decode_as_inferred(tmp_path, capfd, fits):
     inferred, lookup, _ = run("inferred")
     schema = inferred.schema.metadata[b"genson_avro_schema"].decode()
     if not fits:
-        schema = schema.replace('{"name":"rank","type":["null","string"]},', "")
+        schema = json.dumps(without_field(json.loads(schema), "rank"))
         assert '"rank"' not in schema
     known, known_lookup, log = run("known", avro_schema=schema)
     assert ("infer" in log) != fits
