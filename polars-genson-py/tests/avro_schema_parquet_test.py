@@ -136,3 +136,40 @@ def test_needs_typed_output(rows):
 def test_invalid_schema_raises(rows, capfd):
     with pytest.raises(ValueError, match="avro_schema"):
         normalised(rows, capfd, avro_schema="{not json")
+
+
+# Rows with label maps to extract (one with its key spelt with an escape), and rows without:
+# one with a key given twice, which the extraction's scan would write again
+LABELLED = [
+    '{"P1": [{"mainsnak": {"value": "a", "id": "Q5", "labels": {"en": "five"}}}]}',
+    '{"P2": [{"mainsnak": {"value": "b", "id": "Q5", "l\\u0061bels": {"en": "five"}}}]}',
+    '{"P3": [{"mainsnak": {"value": "c", "n": 1, "n": 2}}]}',
+    None,
+    '{"P4": [{"mainsnak": {"value": "d"}, "rank": "normal"}]}',
+]
+
+
+@pytest.mark.parametrize("fits", [True, False])
+def test_extracted_rows_decode_as_inferred(tmp_path, capfd, fits):
+    """Rows the extraction leaves unscanned (no key can be a label map) are decoded as they
+    are, with the same output and lookup as inference gives; where they do not all fit,
+    they are scanned and inferred as before."""
+    src = tmp_path / "labelled.parquet"
+    ids = [f"Q{i}" for i in range(len(LABELLED))]
+    pl.DataFrame({"id": ids, "claims": LABELLED}).write_parquet(src)
+    kw = dict(extract_invariants={"labels": "id"}, force_field_types={"claims": "map"})
+
+    def run(name, **extra):
+        lookup = tmp_path / f"lookup_{name}.parquet"
+        out, log = normalised(src, capfd, **kw, lookup_output_path=lookup, **extra)
+        return out, pl.read_parquet(lookup), log
+
+    inferred, lookup, _ = run("inferred")
+    schema = inferred.schema.metadata[b"genson_avro_schema"].decode()
+    if not fits:
+        schema = schema.replace('{"name":"rank","type":["null","string"]},', "")
+        assert '"rank"' not in schema
+    known, known_lookup, log = run("known", avro_schema=schema)
+    assert ("infer" in log) != fits
+    assert known.equals(inferred)
+    assert known_lookup.equals(lookup) and lookup.height == 1

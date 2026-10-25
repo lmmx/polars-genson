@@ -1,6 +1,7 @@
 use crate::arrow_stream::{batches_of, ArrowStream};
 use arrow::datatypes::DataType;
 use genson_core::conform::{conform, data_type_from_spec, incompatibilities, SchemaCheck};
+use genson_core::extract::{extract_invariants_rows, Scan};
 use genson_core::normalise::{
     prune_schema, MapEncoding, NormaliseConfig, NormalisePlan, PrunedValue,
 };
@@ -294,43 +295,6 @@ pub fn normalise_from_parquet(
     }
 
     tick("read_parquet", &mut t0);
-    // Move the extract_invariants fields out of the rows before inference sees them
-    let slim_rows = match (&extract_invariants, &lookup_output_path) {
-        (Some(spec), Some(path)) => {
-            let extracted =
-                genson_core::extract::extract_invariants_from(&column_data.rows(), spec)
-                    .map_err(pyo3::exceptions::PyValueError::new_err)?;
-            tick("extract_invariants", &mut t0);
-            Some((extracted.rows, extracted.lookup, path.clone()))
-        }
-        _ => None,
-    };
-    // Written once the inferred schema has passed its check, so that nothing is written
-    // for a chunk whose schema is rejected
-    let (slim_rows, lookup) = match slim_rows {
-        Some((rows, lookup, path)) => (Some(rows), Some((lookup, path))),
-        None => (None, None),
-    };
-    let write_lookup =
-        |lookup: Option<(Vec<genson_core::extract::LookupEntry>, String)>| -> PyResult<()> {
-            match lookup {
-                Some((table, path)) => genson_core::parquet::write_lookup_table(&path, &table)
-                    .map_err(|e| {
-                        pyo3::exceptions::PyIOError::new_err(format!(
-                            "Failed to write lookup table: {}",
-                            e
-                        ))
-                    }),
-                None => Ok(()),
-            }
-        };
-    // The slim rows replace the read ones, which are then no longer needed
-    let column_data = slim_rows.is_none().then_some(column_data);
-    let json_strings: Vec<Option<&str>> = match (&slim_rows, &column_data) {
-        (Some(rows), _) => rows.iter().map(Option::as_deref).collect(),
-        (None, Some(column_data)) => column_data.rows(),
-        (None, None) => unreachable!("the read rows are kept when nothing was extracted"),
-    };
     // Parse map encoding
     let map_enc = match map_encoding.as_str() {
         "mapping" => MapEncoding::Mapping,
@@ -352,7 +316,7 @@ pub fn normalise_from_parquet(
     };
 
     // Several batches per thread so uneven row sizes still spread over the pool
-    let batch_rows = json_strings
+    let batch_rows = column_data
         .len()
         .div_ceil(rayon::current_num_threads() * 4)
         .max(1);
@@ -361,9 +325,26 @@ pub fn normalise_from_parquet(
     // `NormalisePlan::to_arrow_strict`) and the schema fits the target. Otherwise (a row
     // that does not fit, or a schema not compiled strictly) they are normalised as they
     // are without it, against the schema inferred from them: `avro_schema` changes how
-    // fast, not what
+    // fast, not what. The extract_invariants fields are moved out of the rows first: the
+    // decoding reads each row as its `Value`, so a row in which no key can be one of them
+    // is kept as it is, unscanned (`Scan::Keyed`), and the lookup is the same
     let mut strict_decoded: Option<Vec<(arrow::array::StructArray, Vec<PrunedValue>)>> = None;
+    let mut keyed_lookup = None;
     if let Some(known) = &known {
+        let read_rows = column_data.rows();
+        let keyed = match &extract_invariants {
+            Some(spec) => {
+                let extracted = extract_invariants_rows(&read_rows, spec, Scan::Keyed)
+                    .map_err(pyo3::exceptions::PyValueError::new_err)?;
+                tick("extract_invariants", &mut t0);
+                Some(extracted)
+            }
+            None => None,
+        };
+        let rows: Vec<Option<&str>> = match &keyed {
+            Some(extracted) => extracted.rows.iter().map(Option::as_deref).collect(),
+            None => read_rows.clone(),
+        };
         let mut pruned_schema = known.clone();
         prune_schema(&mut pruned_schema, &prune);
         let fields = avro_record_fields(&pruned_schema, map_encoding == "mapping")
@@ -373,7 +354,7 @@ pub fn normalise_from_parquet(
         });
         let plan = NormalisePlan::new(known, &norm_config, &prune);
         if let Some(arrow_plan) = fits_target.then(|| plan.to_arrow_strict(&fields)).flatten() {
-            strict_decoded = json_strings
+            strict_decoded = rows
                 .par_chunks(batch_rows)
                 .enumerate()
                 .map(|(b, chunk)| arrow_plan.normalise(chunk, b * batch_rows))
@@ -385,7 +366,45 @@ pub fn normalise_from_parquet(
             "decode (avro_schema): the rows do not all fit it"
         };
         tick(what, &mut t0);
+        keyed_lookup = keyed.map(|extracted| extracted.lookup);
     }
+    // The typed output decoded against `avro_schema` reads the rows no more
+    let decoded = typed && strict_decoded.is_some();
+    // Move the extract_invariants fields out of the rows before inference sees them, and
+    // keep the lookup (written once the inferred schema has passed its check, so that
+    // nothing is written for a chunk whose schema is rejected)
+    let (slim_rows, lookup) = match (&extract_invariants, &lookup_output_path) {
+        (Some(_), Some(path)) if decoded => (None, keyed_lookup.map(|l| (l, path.clone()))),
+        (Some(spec), Some(path)) => {
+            let extracted =
+                genson_core::extract::extract_invariants_from(&column_data.rows(), spec)
+                    .map_err(pyo3::exceptions::PyValueError::new_err)?;
+            tick("extract_invariants", &mut t0);
+            (Some(extracted.rows), Some((extracted.lookup, path.clone())))
+        }
+        _ => (None, None),
+    };
+    let write_lookup =
+        |lookup: Option<(Vec<genson_core::extract::LookupEntry>, String)>| -> PyResult<()> {
+            match lookup {
+                Some((table, path)) => genson_core::parquet::write_lookup_table(&path, &table)
+                    .map_err(|e| {
+                        pyo3::exceptions::PyIOError::new_err(format!(
+                            "Failed to write lookup table: {}",
+                            e
+                        ))
+                    }),
+                None => Ok(()),
+            }
+        };
+    // The slim rows replace the read ones, which are then no longer needed, as no rows are
+    // once decoded
+    let column_data = (slim_rows.is_none() && !decoded).then_some(column_data);
+    let json_strings: Vec<Option<&str>> = match (&slim_rows, &column_data) {
+        (Some(rows), _) => rows.iter().map(Option::as_deref).collect(),
+        (None, Some(column_data)) => column_data.rows(),
+        (None, None) => Vec::new(),
+    };
     // Infer schema first (Avro mode)
     let config = SchemaInferenceConfig {
         ignore_outer_array,
