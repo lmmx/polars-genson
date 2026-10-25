@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v1.1.0...polars-jsonschema-bridge-v1.1.1) - 2026-10-25
+
+### <!-- 7 -->Build System and CI
+
+- Polars without the object feature; avrotize without its default features ([#303](https://github.com/lmmx/polars-genson/pull/303))
+
 ## [1.1.0](https://github.com/lmmx/polars-genson/compare/polars-jsonschema-bridge-v0.9.0...polars-jsonschema-bridge-v1.1.0) - 2026-10-07
 
 ### <!-- 9 -->Other

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1](https://github.com/lmmx/polars-genson/compare/genson-core-v1.3.0...genson-core-v1.3.1) - 2026-10-25
+
+### <!-- 3 -->Performance
+
+- *(core)* rows decoded against avro_schema are scanned for extract_invariants only where a key can be a field ([#311](https://github.com/lmmx/polars-genson/pull/311))
+
+### <!-- 7 -->Build System and CI
+
+- Polars without the object feature; avrotize without its default features ([#303](https://github.com/lmmx/polars-genson/pull/303))
+- Polars crates on 16 codegen units, sonic-rs removed, sccache on release builds ([#301](https://github.com/lmmx/polars-genson/pull/301))
+
+### <!-- 9 -->Other
+
+- Parquet written by pq-glue's writer, genson's copy removed ([#302](https://github.com/lmmx/polars-genson/pull/302))
+
 ## [1.3.0](https://github.com/lmmx/polars-genson/compare/genson-core-v1.2.2...genson-core-v1.3.0) - 2026-10-24
 
 ### <!-- 1 -->Features
