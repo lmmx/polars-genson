@@ -262,6 +262,77 @@ fn test_scan_matches_the_value_path() {
     assert!(scanned_rows > 3000 && fallbacks > 300 && errors > 50, "{scanned_rows} {fallbacks} {errors}");
 }
 
+/// `Scan::Keyed` gives the slim rows `Scan::All` gives as `Value`s (an invalid row passing
+/// through as it is), the same lookup entries in the same order, and the same errors,
+/// with the rows in which no key can be a field kept as they are.
+#[test]
+fn test_keyed_scan_matches_scanning_every_row() {
+    let spec = spec();
+    let mut rng = Rng(0x6c07_8965_2a3b_91d7);
+    let (mut kept, mut errors) = (0, 0);
+    for _ in 0..3000 {
+        let rows: Vec<Option<String>> = (0..1 + rng.below(5))
+            .map(|_| match rng.below(30) {
+                0 => None,
+                1 => Some(r#"{"a": 1e400}"#.to_string()),
+                // A field's name spelt with an escape, and a repeated key in a row without one
+                2 => Some(r#"{"id":"Q1","l\u0061bels":{"en":"x"}}"#.to_string()),
+                3 => Some(r#"{"a":1,"b":[2],"a":"x"}"#.to_string()),
+                _ => Some(random_value(&mut rng, 4)),
+            })
+            .collect();
+        let all = extract_invariants_rows(&rows, &spec, Scan::All);
+        let keyed = extract_invariants_rows(&rows, &spec, Scan::Keyed);
+        let (all, keyed) = match (all, keyed) {
+            (Err(a), Err(b)) => {
+                assert_eq!(a, b, "{rows:?}");
+                errors += 1;
+                continue;
+            }
+            (Ok(a), Ok(b)) => (a, b),
+            (a, b) => panic!("{rows:?}: {:?} against {:?}", a.err(), b.err()),
+        };
+        assert!(!all.unscanned);
+        assert_eq!(all.lookup, keyed.lookup, "{rows:?}");
+        for ((a, k), row) in all.rows.iter().zip(&keyed.rows).zip(&rows) {
+            match (a, k, row) {
+                (Some(a), Some(k), Some(row)) => {
+                    let parsed = |t: &str| serde_json::from_str::<Value>(t).ok().map(|v| v.to_string());
+                    assert_eq!(parsed(a), parsed(k), "{a} against {k}");
+                    if parsed(row).is_none() {
+                        assert_eq!(k, row, "an invalid row passes through");
+                    }
+                    // No name in the spec has a character only a short escape spells
+                    let keyed_row = row.contains("\\u")
+                        || spec.iter().any(|(f, _)| row.contains(&format!("\"{f}\"")));
+                    if !keyed_row {
+                        assert!(matches!(k, Cow::Borrowed(_)) && k == row, "{row}");
+                        kept += 1;
+                    }
+                }
+                (a, k, _) => assert_eq!(a, k),
+            }
+        }
+    }
+    assert!(kept > 2000 && errors > 50, "{kept} {errors}");
+}
+
+#[test]
+fn test_keyed_scan_extracts_a_field_spelt_with_an_escape() {
+    let rows = vec![
+        Some(r#"{"id":"Q1","l\u0061bels":{"en":"x"}}"#),
+        Some(r#"{"a":1,"a":2}"#),
+    ];
+    let out = extract_invariants_rows(&rows, &spec(), Scan::Keyed).unwrap();
+    assert_eq!(out.lookup.len(), 1);
+    assert_eq!(parse(&out.rows[0].as_deref().map(String::from)), json!({"id": "Q1"}));
+    // Kept as it is, where the scan would give up on the repeated key and write it again
+    assert_eq!(out.rows[1].as_deref(), Some(r#"{"a":1,"a":2}"#));
+    assert!(out.unscanned);
+    let all = extract_invariants_rows(&rows, &spec(), Scan::All).unwrap();
+    assert_eq!(all.rows[1].as_deref(), Some(r#"{"a":2}"#));
+}
+
 /// Whatever the scan accepts, serde_json accepts too: valid rows with one byte changed,
 /// removed or inserted.
 #[test]

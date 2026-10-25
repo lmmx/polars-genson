@@ -1,6 +1,7 @@
 use crate::arrow_stream::{batches_of, ArrowStream};
 use arrow::datatypes::DataType;
 use genson_core::conform::{conform, data_type_from_spec, incompatibilities, SchemaCheck};
+use genson_core::extract::{extract_invariants_rows, Extracted, Scan};
 use genson_core::normalise::{
     prune_schema, MapEncoding, NormaliseConfig, NormalisePlan, PrunedValue,
 };
@@ -294,12 +295,22 @@ pub fn normalise_from_parquet(
     }
 
     tick("read_parquet", &mut t0);
-    // Move the extract_invariants fields out of the rows before inference sees them
+    // Move the extract_invariants fields out of the rows before inference sees them. Rows
+    // decoded against `avro_schema` are read as their `Value`s, so a row in which no key
+    // can be one of the fields is kept as it is, unscanned (`Scan::Keyed`)
+    let scan = if known.is_some() {
+        Scan::Keyed
+    } else {
+        Scan::All
+    };
+    let mut unscanned = false;
     let slim_rows = match (&extract_invariants, &lookup_output_path) {
         (Some(spec), Some(path)) => {
-            let extracted =
-                genson_core::extract::extract_invariants_from(&column_data.rows(), spec)
-                    .map_err(pyo3::exceptions::PyValueError::new_err)?;
+            let rows = column_data.rows();
+            let extracted = extract_invariants_rows(&rows, spec, scan)
+                .map_err(pyo3::exceptions::PyValueError::new_err)?;
+            unscanned = extracted.unscanned;
+            let extracted = Extracted::from(extracted);
             tick("extract_invariants", &mut t0);
             Some((extracted.rows, extracted.lookup, path.clone()))
         }
@@ -386,6 +397,21 @@ pub fn normalise_from_parquet(
         };
         tick(what, &mut t0);
     }
+    // Inference reads the rows' text, so those kept unscanned are scanned now. A slim row
+    // scanned again is left as it is, and the lookup is the one already made
+    let rescanned = match (&extract_invariants, unscanned && strict_decoded.is_none()) {
+        (Some(spec), true) => {
+            let extracted = extract_invariants_rows(&json_strings, spec, Scan::All)
+                .map_err(pyo3::exceptions::PyValueError::new_err)?;
+            tick("extract_invariants (rows kept unscanned)", &mut t0);
+            Some(extracted.rows)
+        }
+        _ => None,
+    };
+    let json_strings: Vec<Option<&str>> = match &rescanned {
+        Some(rows) => rows.iter().map(Option::as_deref).collect(),
+        None => json_strings.clone(),
+    };
     // Infer schema first (Avro mode)
     let config = SchemaInferenceConfig {
         ignore_outer_array,

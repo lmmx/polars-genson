@@ -39,9 +39,10 @@ pub(crate) struct Removed<'a> {
 /// determinant's value, and how deeply it nests: what an earlier row's scan removed.
 pub(crate) type Known<'k> = dyn Fn(usize, &str) -> Option<(&'k str, usize)> + 'k;
 
-/// A row's slim text and its removed fields, in the order `strip` records them.
+/// A row's slim text (the row itself where nothing is removed) and its removed fields, in
+/// the order `strip` records them.
 pub(crate) struct Scanned<'a> {
-    pub slim: String,
+    pub slim: std::borrow::Cow<'a, str>,
     pub removed: Vec<Removed<'a>>,
 }
 
@@ -83,6 +84,12 @@ pub(crate) fn scan_known<'a, 'k>(
         return Err(Fallback);
     }
     let mut cuts = s.cuts;
+    if cuts.is_empty() {
+        return Ok(Scanned {
+            slim: row.into(),
+            removed: s.removed,
+        });
+    }
     cuts.sort_by_key(|c| c.start);
     let cut: usize = cuts.iter().map(|c| c.len()).sum();
     let mut slim = String::with_capacity(row.len() - cut);
@@ -93,7 +100,7 @@ pub(crate) fn scan_known<'a, 'k>(
     }
     slim.push_str(&row[at..]);
     Ok(Scanned {
-        slim,
+        slim: slim.into(),
         removed: s.removed,
     })
 }

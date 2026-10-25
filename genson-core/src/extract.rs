@@ -7,6 +7,7 @@
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
+use std::borrow::Cow;
 
 pub(crate) mod scan;
 
@@ -28,8 +29,35 @@ pub struct Extracted {
     pub lookup: Vec<LookupEntry>,
 }
 
-/// A chunk of rows extracted: its slim rows and its lookup entries.
-type Chunk = (Vec<Option<String>>, Lookup);
+/// [`Extracted`] with each slim row borrowed from its row where nothing was removed from it.
+#[derive(Debug)]
+pub struct ExtractedRows<'r> {
+    pub rows: Vec<Option<Cow<'r, str>>>,
+    pub lookup: Vec<LookupEntry>,
+    /// Whether a row was kept unscanned ([`Scan::Keyed`])
+    pub unscanned: bool,
+}
+
+/// Which rows [`extract_invariants_rows`] scans.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Scan {
+    /// Every row, as [`extract_invariants_from`] does.
+    All,
+    /// Only the rows in which a key can be one of the fields: a field's name in quotes, or
+    /// an escape that can spell one of its characters (`\\u`, or any escape where a name
+    /// has a character only a short escape spells: a quote, a backslash, a slash or a
+    /// control character). The others hold no field to remove and
+    /// are kept as they are, unread, where the scan would give up on one that is not valid
+    /// JSON (kept as it is too), or has a key twice or a line break (written again as
+    /// `serde_json` writes its `Value`). Each slim row has the `Value` that `All` gives
+    /// it, so this is for rows read as `Value`s (as the typed decoder reads them), not for
+    /// inference, which reads a repeated key's values and may split rows at line breaks.
+    Keyed,
+}
+
+/// A chunk of rows extracted: its slim rows, its lookup entries, and whether a row was
+/// kept unscanned.
+type Chunk<'r> = (Vec<Option<Cow<'r, str>>>, Lookup, bool);
 
 /// A removed field's value as a lookup holds it: its JSON text where the row was scanned,
 /// and its `Value`, parsed from the text only once it is needed.
@@ -202,7 +230,30 @@ pub fn extract_invariants_from<S: AsRef<str> + Sync>(
     rows: &[Option<S>],
     spec: &[(String, String)],
 ) -> Result<Extracted, String> {
-    extract(rows, spec, true)
+    extract(rows, spec, Some(Scan::All)).map(Extracted::from)
+}
+
+/// [`extract_invariants_from`] with the slim rows borrowed where nothing was removed, and
+/// the rows to scan given by `scan`.
+pub fn extract_invariants_rows<'r, S: AsRef<str> + Sync>(
+    rows: &'r [Option<S>],
+    spec: &[(String, String)],
+    scan: Scan,
+) -> Result<ExtractedRows<'r>, String> {
+    extract(rows, spec, Some(scan))
+}
+
+impl From<ExtractedRows<'_>> for Extracted {
+    fn from(e: ExtractedRows<'_>) -> Self {
+        Extracted {
+            rows: e
+                .rows
+                .into_par_iter()
+                .map(|r| r.map(Cow::into_owned))
+                .collect(),
+            lookup: e.lookup,
+        }
+    }
 }
 
 /// [`extract_invariants_from`] with every row read as a `Value`, never by scanning its
@@ -213,14 +264,37 @@ pub fn extract_invariants_by_value<S: AsRef<str> + Sync>(
     rows: &[Option<S>],
     spec: &[(String, String)],
 ) -> Result<Extracted, String> {
-    extract(rows, spec, false)
+    extract(rows, spec, None).map(Extracted::from)
 }
 
-fn extract<S: AsRef<str> + Sync>(
-    rows: &[Option<S>],
+/// The rows extracted: by scanning those `scan` gives, or each read as a `Value` (`None`).
+fn extract<'r, S: AsRef<str> + Sync>(
+    rows: &'r [Option<S>],
     spec: &[(String, String)],
-    scan_rows: bool,
-) -> Result<Extracted, String> {
+    scan: Option<Scan>,
+) -> Result<ExtractedRows<'r>, String> {
+    let scan_rows = scan.is_some();
+    // The fields' names in quotes, as a key that is one is written without an escape
+    let names: Vec<memchr::memmem::Finder> = spec
+        .iter()
+        .map(|(field, _)| {
+            memchr::memmem::Finder::new(format!("\"{field}\"").as_bytes()).into_owned()
+        })
+        .collect();
+    // An escape in a key spelling a name: `\u` spells any character, the short escapes
+    // only quotes, backslashes, slashes and control characters
+    let short = spec.iter().any(|(field, _)| {
+        field
+            .bytes()
+            .any(|c| matches!(c, b'"' | b'\\' | b'/') || c < 0x20)
+    });
+    let unicode = memchr::memmem::Finder::new(b"\\u");
+    let escaped = |s: &[u8]| match short {
+        true => memchr::memchr(b'\\', s).is_some(),
+        false => unicode.find(s).is_some(),
+    };
+    let keyed =
+        |s: &str| escaped(s.as_bytes()) || names.iter().any(|n| n.find(s.as_bytes()).is_some());
     let chunk = rows.len().div_ceil(rayon::current_num_threads() * 4).max(1);
     // Each chunk keeps its own distinct entries, so repeats are dropped as they are seen
     // Each chunk's result is kept, so that the error reported is the first in row order
@@ -229,11 +303,16 @@ fn extract<S: AsRef<str> + Sync>(
         .par_chunks(chunk)
         .map(|rows| {
             let mut lookup = Lookup::default();
+            let mut unscanned = false;
             let slim = rows
                 .iter()
                 .map(|row| {
                     let Some(s) = row else { return Ok(None) };
                     let s = s.as_ref();
+                    if scan == Some(Scan::Keyed) && !keyed(s) {
+                        unscanned = true;
+                        return Ok(Some(Cow::Borrowed(s)));
+                    }
                     // One pass over the row's text when it can be read exactly so, else
                     // the row as a `Value`
                     // A value this chunk's lookup holds as scanned text is validated
@@ -252,21 +331,23 @@ fn extract<S: AsRef<str> + Sync>(
                         return Ok(Some(scanned.slim));
                     }
                     let Ok(mut v) = serde_json::from_str::<Value>(s) else {
-                        return Ok(Some(s.to_string()));
+                        return Ok(Some(Cow::Borrowed(s)));
                     };
                     strip(&mut v, spec, &mut lookup)?;
-                    Ok(Some(serde_json::to_string(&v).unwrap()))
+                    Ok(Some(Cow::Owned(serde_json::to_string(&v).unwrap())))
                 })
                 .collect::<Result<Vec<_>, String>>()?;
-            Ok((slim, lookup))
+            Ok((slim, lookup, unscanned))
         })
         .collect();
 
     let mut slim_rows = Vec::new();
     let mut lookup = Lookup::default();
+    let mut unscanned = false;
     for chunk in chunks {
-        let (rows, part) = chunk?;
+        let (rows, part, kept) = chunk?;
         slim_rows.extend(rows);
+        unscanned |= kept;
         for ((field, key), held) in part.ids.into_iter().zip(part.held) {
             let determinant = spec
                 .iter()
@@ -275,9 +356,10 @@ fn extract<S: AsRef<str> + Sync>(
             lookup.insert_held(&field, &key, held, determinant)?;
         }
     }
-    Ok(Extracted {
+    Ok(ExtractedRows {
         rows: slim_rows,
         lookup: lookup.into_entries(),
+        unscanned,
     })
 }
 
