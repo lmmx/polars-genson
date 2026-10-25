@@ -44,7 +44,9 @@ pub enum Scan {
     /// Every row, as [`extract_invariants_from`] does.
     All,
     /// Only the rows in which a key can be one of the fields: a field's name in quotes, or
-    /// an escape (a key can spell a name with one). The others hold no field to remove and
+    /// an escape that can spell one of its characters (`\\u`, or any escape where a name
+    /// has a character only a short escape spells: a quote, a backslash, a slash or a
+    /// control character). The others hold no field to remove and
     /// are kept as they are, unread, where the scan would give up on one that is not valid
     /// JSON (kept as it is too), or has a key twice or a line break (written again as
     /// `serde_json` writes its `Value`). Each slim row has the `Value` that `All` gives
@@ -275,10 +277,20 @@ fn extract<'r, S: AsRef<str> + Sync>(
             memchr::memmem::Finder::new(format!("\"{field}\"").as_bytes()).into_owned()
         })
         .collect();
-    let keyed = |s: &str| {
-        memchr::memchr(b'\\', s.as_bytes()).is_some()
-            || names.iter().any(|n| n.find(s.as_bytes()).is_some())
+    // An escape in a key spelling a name: `\u` spells any character, the short escapes
+    // only quotes, backslashes, slashes and control characters
+    let short = spec.iter().any(|(field, _)| {
+        field
+            .bytes()
+            .any(|c| matches!(c, b'"' | b'\\' | b'/') || c < 0x20)
+    });
+    let unicode = memchr::memmem::Finder::new(b"\\u");
+    let escaped = |s: &[u8]| match short {
+        true => memchr::memchr(b'\\', s).is_some(),
+        false => unicode.find(s).is_some(),
     };
+    let keyed =
+        |s: &str| escaped(s.as_bytes()) || names.iter().any(|n| n.find(s.as_bytes()).is_some());
     let chunk = rows.len().div_ceil(rayon::current_num_threads() * 4).max(1);
     // Each chunk keeps its own distinct entries, so repeats are dropped as they are seen
     // Each chunk's result is kept, so that the error reported is the first in row order

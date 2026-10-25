@@ -302,7 +302,8 @@ fn test_keyed_scan_matches_scanning_every_row() {
                     if parsed(row).is_none() {
                         assert_eq!(k, row, "an invalid row passes through");
                     }
-                    let keyed_row = row.contains('\\')
+                    // No name in the spec has a character only a short escape spells
+                    let keyed_row = row.contains("\\u")
                         || spec.iter().any(|(f, _)| row.contains(&format!("\"{f}\"")));
                     if !keyed_row {
                         assert!(matches!(k, Cow::Borrowed(_)) && k == row, "{row}");
