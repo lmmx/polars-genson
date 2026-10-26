@@ -86,7 +86,7 @@ jobs:
         run: |
           source polars-genson-py/.venv/bin/activate
           mkdocs build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: site
           path: site
