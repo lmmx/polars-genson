@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0](https://github.com/lmmx/polars-genson/compare/genson-core-v1.3.1...genson-core-v1.4.0) - 2026-10-26
+
+### <!-- 1 -->Features
+
+- write_parquet's column_encoding, leaf columns in an encoding of their own (pq-glue) ([#322](https://github.com/lmmx/polars-genson/pull/322))
+
 ## [1.3.1](https://github.com/lmmx/polars-genson/compare/genson-core-v1.3.0...genson-core-v1.3.1) - 2026-10-25
 
 ### <!-- 3 -->Performance
