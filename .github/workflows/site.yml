@@ -110,7 +110,7 @@ jobs:
           path: site
       # Serve the files as built, without Jekyll.
       - run: touch site/.nojekyll
-      - uses: JamesIves/github-pages-deploy-action@v4.7.4
+      - uses: JamesIves/github-pages-deploy-action@v4.9.0
         with:
           branch: gh-pages
           folder: site
