@@ -415,3 +415,59 @@ fn test_write_arrow_batches_round_trip() {
         assert_eq!(r, &arrow::compute::cast(w, r.data_type()).unwrap());
     }
 }
+
+/// A column asked for in DELTA_BYTE_ARRAY is written in it, with no dictionary, and reads
+/// back the same; an unknown encoding or column is an error.
+#[test]
+fn test_write_arrow_batches_encoded() {
+    use arrow::array::StringArray;
+    use arrow::datatypes::{DataType, Field, Schema};
+    use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
+    use std::sync::Arc;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_str().unwrap();
+    let schema = Arc::new(Schema::new(vec![
+        Field::new("id", DataType::Utf8, false),
+        Field::new("statement_id", DataType::Utf8, true),
+    ]));
+    let ids: Vec<String> = (0..3000).map(|i| format!("Q{}", i / 4)).collect();
+    let statements: Vec<String> =
+        ids.iter().enumerate().map(|(i, id)| format!("{id}${:032X}", (i as u128).wrapping_mul(0x9E3779B97F4A7C15F39CC0605CEDC835))).collect();
+    let batch = RecordBatch::try_new(
+        schema.clone(),
+        vec![
+            Arc::new(StringArray::from_iter_values(&ids)),
+            Arc::new(StringArray::from_iter_values(&statements)),
+        ],
+    )
+    .unwrap();
+    let names = [("statement_id".to_string(), "delta_byte_array".to_string())];
+    let encodings = column_encodings(&schema, &names).unwrap();
+    assert_eq!(encodings, vec![("statement_id".to_string(), Encoding::DELTA_BYTE_ARRAY)]);
+    write_arrow_batches_encoded(path, schema.clone(), vec![batch.clone()], Some(1000), encodings)
+        .unwrap();
+    let reader = ParquetRecordBatchReaderBuilder::try_new(File::open(path).unwrap()).unwrap();
+    for rg in reader.metadata().row_groups() {
+        let c = rg.column(1);
+        let e: Vec<Encoding> = c.encodings().collect();
+        assert!(e.contains(&Encoding::DELTA_BYTE_ARRAY), "{e:?}");
+        assert!(c.dictionary_page_offset().is_none());
+        let e: Vec<Encoding> = rg.column(0).encodings().collect();
+        assert!(!e.contains(&Encoding::DELTA_BYTE_ARRAY), "{e:?}");
+    }
+    let read: Vec<RecordBatch> = reader.build().unwrap().map(|b| b.unwrap()).collect();
+    let read = arrow::compute::concat_batches(&read[0].schema(), &read).unwrap();
+    assert_eq!(read.columns(), batch.columns());
+
+    for (column, name, says) in [
+        ("statement_id", "NOPE", "no encoding"),
+        ("nope", "DELTA_BYTE_ARRAY", "no leaf column"),
+        ("statement_id", "DELTA_BINARY_PACKED", "does not encode"),
+    ] {
+        let e = column_encodings(&schema, &[(column.to_string(), name.to_string())]).unwrap_err();
+        assert!(e.contains(says), "{e}");
+    }
+    let bad = vec![("nope".to_string(), Encoding::DELTA_BYTE_ARRAY)];
+    assert!(write_arrow_batches_encoded(path, schema.clone(), vec![batch], None, bad).is_err());
+}

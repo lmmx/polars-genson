@@ -644,18 +644,31 @@ pub fn normalise_from_parquet(
 
 /// Write `data` (Arrow data of the PyCapsule interface) to a Parquet file at `path` with
 /// genson's writer (`genson_core::parquet::write_arrow_batches`), the GIL released while it
-/// encodes.
+/// encodes. Each of `column_encoding`'s leaf columns (by path) is written in its encoding
+/// (by name), with no dictionary (`write_arrow_batches_encoded`).
 #[pyfunction]
-#[pyo3(signature = (data, path, row_group_size=None))]
+#[pyo3(signature = (data, path, row_group_size=None, column_encoding=None))]
 pub fn write_parquet(
     py: Python<'_>,
     data: Bound<'_, PyAny>,
     path: String,
     row_group_size: Option<usize>,
+    column_encoding: Option<Vec<(String, String)>>,
 ) -> PyResult<()> {
     let (schema, batches) = batches_of(&data)?;
-    py.detach(|| write_arrow_batches(&path, schema, batches, row_group_size))
-        .map_err(pyo3::exceptions::PyIOError::new_err)
+    let encodings =
+        genson_core::parquet::column_encodings(&schema, &column_encoding.unwrap_or_default())
+            .map_err(pyo3::exceptions::PyValueError::new_err)?;
+    py.detach(|| {
+        genson_core::parquet::write_arrow_batches_encoded(
+            &path,
+            schema,
+            batches,
+            row_group_size,
+            encodings,
+        )
+    })
+    .map_err(pyo3::exceptions::PyIOError::new_err)
 }
 
 #[pyfunction]

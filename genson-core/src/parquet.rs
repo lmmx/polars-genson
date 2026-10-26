@@ -8,6 +8,7 @@ use parquet::arrow::arrow_reader::{
     RowSelector,
 };
 use parquet::arrow::ProjectionMask;
+pub use parquet::basic::Encoding;
 use parquet::file::metadata::{PageIndexPolicy, ParquetMetaData};
 use rayon::prelude::*;
 use std::collections::HashMap;
@@ -473,9 +474,28 @@ fn write(
     spec_names: bool,
     max_row_group_rows: Option<usize>,
 ) -> Result<(), String> {
+    write_encoded(
+        path,
+        schema,
+        batches,
+        spec_names,
+        max_row_group_rows,
+        Vec::new(),
+    )
+}
+
+fn write_encoded(
+    path: &str,
+    schema: SchemaRef,
+    batches: Vec<RecordBatch>,
+    spec_names: bool,
+    max_row_group_rows: Option<usize>,
+    column_encodings: Vec<(String, Encoding)>,
+) -> Result<(), String> {
     let options = pq_glue::write::WriteOptions {
         spec_names,
         max_row_group_rows,
+        column_encodings,
         ..Default::default()
     };
     pq_glue::write::write_batches(std::path::Path::new(path), schema, batches, &options)
@@ -755,6 +775,50 @@ pub fn write_arrow_batches(
     max_row_group_rows: Option<usize>,
 ) -> Result<(), String> {
     write(path, schema, batches, true, max_row_group_rows)
+}
+
+/// `column_encodings` (each a leaf column's path in the Parquet schema that
+/// [`write_arrow_batches`] writes for `schema`, `"statement_id"` or `"refs.list.element"`,
+/// and an encoding's name, `"DELTA_BYTE_ARRAY"` in any case) parsed and checked against
+/// `schema`: an error names an unknown encoding or column, or an encoding the column's
+/// type does not take (pq-glue's `write::leaf_encodings`).
+pub fn column_encodings(
+    schema: &SchemaRef,
+    column_encodings: &[(String, String)],
+) -> Result<Vec<(String, Encoding)>, String> {
+    let encodings = column_encodings
+        .iter()
+        .map(|(column, name)| {
+            name.to_ascii_uppercase()
+                .parse::<Encoding>()
+                .map(|e| (column.clone(), e))
+                .map_err(|_| format!("{column:?}: no encoding {name:?}"))
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    pq_glue::write::leaf_encodings(schema, true, &encodings).map_err(|e| e.to_string())?;
+    Ok(encodings)
+}
+
+/// [`write_arrow_batches`], with each of `column_encodings`' leaf columns (by path, as
+/// [`column_encodings`] gives them) written in its encoding, with no dictionary (pq-glue's
+/// `WriteOptions::column_encodings`). Only the file's bytes change: it reads back the same
+/// values, in the same schema, with the same statistics. A column or encoding not taken is
+/// an error, and no file is left.
+pub fn write_arrow_batches_encoded(
+    path: &str,
+    schema: SchemaRef,
+    batches: Vec<RecordBatch>,
+    max_row_group_rows: Option<usize>,
+    column_encodings: Vec<(String, Encoding)>,
+) -> Result<(), String> {
+    write_encoded(
+        path,
+        schema,
+        batches,
+        true,
+        max_row_group_rows,
+        column_encodings,
+    )
 }
 
 #[cfg(test)]

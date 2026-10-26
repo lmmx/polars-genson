@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Any, Literal
 
 import orjson
@@ -1525,7 +1526,13 @@ def read_parquet_metadata(path: str | Path) -> dict[str, str]:
     return _rust_read_parquet_metadata(str(path))
 
 
-def write_parquet(data: Any, path: str | Path, *, row_group_size: int | None = None) -> None:
+def write_parquet(
+    data: Any,
+    path: str | Path,
+    *,
+    row_group_size: int | None = None,
+    column_encoding: Mapping[str, str] | None = None,
+) -> None:
     """Write Arrow data to a Parquet file with genson's Parquet writer.
 
     The writer genson writes its own output with, for any Arrow data: its row groups'
@@ -1552,17 +1559,32 @@ def write_parquet(data: Any, path: str | Path, *, row_group_size: int | None = N
         Path to write the Parquet file to. An existing file is replaced.
     row_group_size : int, optional
         Rows to a row group. Defaults to 1,048,576 (arrow-rs's default, and pyarrow's).
+    column_encoding : Mapping[str, str], optional
+        Leaf columns written in an encoding of their own, with no dictionary: each leaf's
+        path in the Parquet schema (``"id"``, ``"refs.list.element"``) to its encoding's
+        name, e.g. ``{"statement_id": "DELTA_BYTE_ARRAY"}`` for strings that share a
+        prefix with the value before. Only the file's bytes change: it reads back the same
+        values, in the same schema, with the same statistics. The encodings are
+        pq-glue's: ``"PLAIN"``, ``"RLE"`` (booleans), ``"DELTA_BINARY_PACKED"`` (32 and
+        64-bit integers), ``"DELTA_LENGTH_BYTE_ARRAY"`` (strings and binary),
+        ``"DELTA_BYTE_ARRAY"`` (strings and binary, fixed-length too),
+        ``"BYTE_STREAM_SPLIT"`` (floats, integers, fixed-length binary) and ``"ALP"``
+        (floats).
 
     Raises
     ------
     TypeError
         If ``data`` has no ``__arrow_c_stream__`` method.
+    ValueError
+        If ``column_encoding`` names a column the data lacks, an unknown encoding, or one
+        its column's type does not take.
     OSError
         If the file cannot be written.
     """
     if row_group_size is not None and row_group_size < 1:
         raise ValueError(f"row_group_size must be at least 1, not {row_group_size}")
-    _rust_write_parquet(data, str(path), row_group_size)
+    encodings = list(column_encoding.items()) if column_encoding else None
+    _rust_write_parquet(data, str(path), row_group_size, encodings)
 
 
 def avro_to_polars_schema(
