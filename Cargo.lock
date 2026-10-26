@@ -3337,9 +3337,9 @@ dependencies = [
 
 [[package]]
 name = "pq-glue"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "499f35850d0ecb9409298d8d5c22c6b9b8b9a5e76e7b98390e945c14fee44007"
+checksum = "2f0e08dbdef32a089d77a21821b8c08a20d16f6322b6a8b032f36b033b23a452"
 dependencies = [
  "arrow-array",
  "arrow-schema",
