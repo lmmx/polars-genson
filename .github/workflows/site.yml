@@ -148,7 +148,7 @@ jobs:
         with:
           name: site
           path: site
-      - uses: rossjrw/pr-preview-action@v1.8.1
+      - uses: rossjrw/pr-preview-action@v1.8.2
         with:
           source-dir: site
           preview-branch: gh-pages
